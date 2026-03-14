@@ -64,7 +64,6 @@ def charts():
     assets = get_user_assets(current_user.id)
     charts = {}
 
-    # Graphique global portefeuille
     dates, invested, market = get_portfolio_chart_data(current_user.id)
     if dates:
         fig = go.Figure()
@@ -85,9 +84,8 @@ def charts():
         b_dates, b_values = get_benchmark_curve(dates[0], dates[-1],
                                                  purchases=[dict(p) for p in all_p])
         if b_dates and b_values:
-            b_scaled = b_values
             fig.add_trace(go.Scatter(
-                x=b_dates, y=b_scaled,
+                x=b_dates, y=b_values,
                 name='MSCI World (base €)',
                 line=dict(color='#F6C90E', width=1.8, dash='dot'),
             ))
@@ -102,7 +100,6 @@ def charts():
     else:
         portfolio_chart = None
 
-    # Graphiques par actif
     for asset in assets:
         purchases = get_purchases_by_asset(asset['id'], current_user.id)
         sales     = get_sales_by_asset(asset['id'], current_user.id)
@@ -125,9 +122,8 @@ def charts():
         b_dates, b_values = get_benchmark_curve(dates[0], dates[-1],
                                                  purchases=[dict(p) for p in purchases])
         if b_dates and b_values:
-            b_scaled = b_values
             fig.add_trace(go.Scatter(
-                x=b_dates, y=b_scaled,
+                x=b_dates, y=b_values,
                 name='MSCI World (base €)',
                 line=dict(color='#F6C90E', width=1.8, dash='dot'),
             ))
@@ -183,7 +179,7 @@ def delete_asset_route(asset_id):
     flash(f'{asset["name"]} supprimé.', 'success')
     return redirect(url_for('main.dashboard'))
 
-# ── Ajouter achats (saisie multiple) ──────────────────────────────────────────
+# ── Ajouter achats ────────────────────────────────────────────────────────────
 @main_bp.route('/purchases/add', methods=['GET', 'POST'])
 @login_required
 def add_purchase_route():
@@ -415,14 +411,17 @@ def download_template():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': 'attachment; filename=template_import.xlsx'}
     )
+
 # ── Simulateur DCA ────────────────────────────────────────────────────────────
 @main_bp.route('/simulateur')
 def simulateur():
     return render_template('simulateur.html')
+
 # ── Contact ───────────────────────────────────────────────────────────────────
 @main_bp.route('/contact')
 def contact():
     return render_template('contact.html')
+
 # ── Profil ────────────────────────────────────────────────────────────────────
 @main_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -436,12 +435,12 @@ def profile():
         if action == 'email':
             new_email    = request.form.get('new_email', '').strip()
             confirm_pass = request.form.get('confirm_password', '')
-            from auth import get_user_by_email
             from database import get_db
             conn = get_db()
-            user = conn.execute(
-                'SELECT * FROM users WHERE id = ?', (current_user.id,)
-            ).fetchone()
+            c = conn.cursor()
+            c.execute('SELECT * FROM users WHERE id = %s' if hasattr(conn, 'autocommit') else 'SELECT * FROM users WHERE id = ?', (current_user.id,))
+            from database import fetchone_as_dict
+            user = fetchone_as_dict(c)
             conn.close()
             if not check_password_hash(user['password_hash'], confirm_pass):
                 flash('Mot de passe incorrect.', 'error')
@@ -460,9 +459,10 @@ def profile():
             confirm_pass = request.form.get('confirm_new_password', '')
             from database import get_db
             conn = get_db()
-            user = conn.execute(
-                'SELECT * FROM users WHERE id = ?', (current_user.id,)
-            ).fetchone()
+            c = conn.cursor()
+            c.execute('SELECT * FROM users WHERE id = %s' if hasattr(conn, 'autocommit') else 'SELECT * FROM users WHERE id = ?', (current_user.id,))
+            from database import fetchone_as_dict
+            user = fetchone_as_dict(c)
             conn.close()
             if not check_password_hash(user['password_hash'], current_pass):
                 flash('Mot de passe actuel incorrect.', 'error')
@@ -475,9 +475,11 @@ def profile():
                 flash('Mot de passe mis à jour ✓', 'success')
 
     return render_template('profile.html')
+
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)
 
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True)
