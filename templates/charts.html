@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Graphiques{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Graphiques</h1>
+        <p>Évolution de ton portefeuille — valeur investie vs valeur marché.</p>
+    </div>
+</div>
+
+{% if not charts %}
+<div class="card empty-state">
+    <h3>Aucune donnée à afficher</h3>
+    <p>Ajoute des achats pour voir tes graphiques apparaître.</p>
+    <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter un achat</a>
+</div>
+
+{% else %}
+<!-- Graphique global -->
+{% if portfolio_chart %}
+<div class="card" style="margin-bottom:1.5rem; border-top:4px solid #5B5FED;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+            <strong style="font-size:1.05rem;">📊 Portefeuille total</strong>
+            <span style="font-size:0.82rem; color:#9CA3AF; margin-left:0.5rem;">
+                Tous actifs confondus
+            </span>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-sm btn-primary"
+                    onclick="setMode('portfolio', 'eur', this)">
+                Valeur (€)
+            </button>
+            <button class="btn btn-sm btn-ghost"
+                    onclick="setMode('portfolio', 'pct', this)">
+                Performance (%)
+            </button>
+        </div>
+    </div>
+    <div id="chart-portfolio"></div>
+</div>
+{% endif %}
+{% for etf_id, data in charts.items() %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+            <span class="badge badge-blue">{{ data.asset.ticker }}</span>
+            <strong style="margin-left:0.5rem;">{{ data.asset.name }}</strong>
+            {% if data.asset.isin %}
+            <span style="font-size:0.8rem; color:#9CA3AF; margin-left:0.5rem;">
+                {{ data.asset.isin }}
+            </span>
+            {% endif %}
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-sm btn-primary"
+                    onclick="setMode('{{ etf_id }}', 'eur', this)">
+                Valeur (€)
+            </button>
+            <button class="btn btn-sm btn-ghost"
+                    onclick="setMode('{{ etf_id }}', 'pct', this)">
+                Performance (%)
+            </button>
+        </div>
+    </div>
+    <div id="chart-{{ etf_id }}"></div>
+</div>
+{% endfor %}
+
+<script>
+const chartsData = {};
+const originalY  = {};
+{% if portfolio_chart %}
+chartsData["portfolio"] = {{ portfolio_chart | safe }};
+{% endif %}
+{% for etf_id, data in charts.items() %}
+chartsData["{{ etf_id }}"] = {{ data.plot | safe }};
+{% endfor %}
+
+// Sauvegarde les données originales AVANT tout rendu
+Object.keys(chartsData).forEach(id => {
+    const fig = chartsData[id];
+    originalY[id] = {
+        inv: [...fig.data[0].y],
+        mkt: [...fig.data[1].y]
+    };
+    Plotly.newPlot('chart-' + id, fig.data, fig.layout,
+        { responsive: true, displayModeBar: false });
+});
+
+function setMode(id, mode, btn) {
+    const orig  = originalY[id];
+    const baseY = orig.inv[0];
+
+    // Boutons
+    btn.parentElement.querySelectorAll('.btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-ghost');
+    });
+    btn.classList.remove('btn-ghost');
+    btn.classList.add('btn-primary');
+
+    if (mode === 'pct') {
+        const yInv = orig.inv.map(v => baseY > 0 ? +((v - baseY) / baseY * 100).toFixed(2) : 0);
+        const yMkt = orig.mkt.map(v => baseY > 0 ? +((v - baseY) / baseY * 100).toFixed(2) : 0);
+        Plotly.update('chart-' + id,
+            { y: [yInv, yMkt] },
+            { 'yaxis.ticksuffix': '%', 'yaxis.tickprefix': '' }
+        );
+    } else {
+        Plotly.update('chart-' + id,
+            { y: [orig.inv, orig.mkt] },
+            { 'yaxis.ticksuffix': ' €', 'yaxis.tickprefix': '' }
+        );
+    }
+}
+</script>
+
+{% endif %}
+{% endblock %}

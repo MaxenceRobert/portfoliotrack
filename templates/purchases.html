@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Historique des achats{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Historique des achats</h1>
+        <p>Tous tes achats DCA enregistrés.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter</a>
+        <a href="{{ url_for('main.export_csv') }}" class="btn btn-ghost">↓ Export CSV</a>
+    </div>
+</div>
+
+{% if not purchases %}
+<div class="card empty-state">
+    <h3>Aucun achat enregistré</h3>
+    <p>Commence par saisir ton premier achat DCA.</p>
+    <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter des achats</a>
+</div>
+
+{% else %}
+
+<!-- Filtre par actif -->
+<div style="margin-bottom:1rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+    <span style="font-size:0.82rem; color:#6B7280; font-weight:600;">Filtrer :</span>
+    <button class="btn btn-sm btn-primary filter-btn" onclick="filterAsset('all', this)">Tous</button>
+    {% for a in assets %}
+    <button class="btn btn-sm btn-ghost filter-btn"
+            onclick="filterAsset('{{ a['ticker'] }}', this)">
+        {{ a['ticker'] }}
+    </button>
+    {% endfor %}
+</div>
+
+<div class="card table-card">
+    <div class="table-wrap">
+        <table id="purchases-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Actif</th>
+                    <th>Type</th>
+                    <th>Parts</th>
+                    <th>Prix / part</th>
+                    <th>Frais</th>
+                    <th>Total investi</th>
+                    <th>Note</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in purchases %}
+            <tr data-ticker="{{ p['ticker'] }}"
+                data-cost="{{ p['total_cost'] }}"
+                data-fees="{{ p['fees'] or 0 }}">
+                <td>{{ p['date'] }}</td>
+                <td>
+                    <span class="badge badge-etf">{{ p['ticker'] }}</span>
+                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">
+                        {{ p['name'] }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge {{ 'badge-etf' if p['asset_type'] == 'ETF'
+                                      else 'badge-action' if p['asset_type'] == 'Action'
+                                      else 'badge-crypto' if p['asset_type'] == 'Crypto'
+                                      else 'badge-other' }}">
+                        {{ p['asset_type'] }}
+                    </span>
+                </td>
+                <td>{{ p['shares'] }}</td>
+                <td>{{ p['price_per_share'] }} {{ p['currency'] }}</td>
+                <td class="neutral">
+                    {% if p['fees'] and p['fees'] > 0 %}
+                        {{ p['fees'] }} €
+                    {% else %}—{% endif %}
+                </td>
+                <td><strong>{{ p['total_cost'] }} €</strong></td>
+                <td style="color:#9CA3AF; font-size:0.82rem;">
+                    {{ p['notes'] or '—' }}
+                </td>
+                <td>
+                    <div style="display:flex; gap:0.4rem;">
+                        <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
+                           class="btn btn-ghost btn-sm">Éditer</a>
+                        <form method="POST"
+                              action="{{ url_for('main.delete_purchase_route', purchase_id=p['id']) }}"
+                              onsubmit="return confirm('Supprimer cet achat ?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Totaux dynamiques -->
+<div class="kpi-grid" style="margin-top:1rem;">
+    <div class="kpi-card">
+        <div class="kpi-label">Achats affichés</div>
+        <div class="kpi-value" id="kpi-count">{{ purchases|length }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total investi</div>
+        <div class="kpi-value neutral" id="kpi-total">
+            {{ purchases|sum(attribute='total_cost')|round(2) }} €
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total frais</div>
+        <div class="kpi-value neutral" id="kpi-fees">
+            {{ purchases|sum(attribute='fees')|round(2) }} €
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<script>
+function filterAsset(ticker, btn) {
+    const rows    = document.querySelectorAll('#purchases-table tbody tr');
+    let count     = 0;
+    let total     = 0;
+    let fees      = 0;
+
+    rows.forEach(row => {
+        const visible = ticker === 'all' || row.dataset.ticker === ticker;
+        row.style.display = visible ? '' : 'none';
+        if (visible) {
+            count++;
+            total += parseFloat(row.dataset.cost  || 0);
+            fees  += parseFloat(row.dataset.fees  || 0);
+        }
+    });
+
+    document.getElementById('kpi-count').textContent = count;
+    document.getElementById('kpi-total').textContent = total.toFixed(2) + ' €';
+    document.getElementById('kpi-fees').textContent  = fees.toFixed(2)  + ' €';
+
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-ghost');
+    });
+    btn.classList.remove('btn-ghost');
+    btn.classList.add('btn-primary');
+}
+</script>
+
+{% endblock %}

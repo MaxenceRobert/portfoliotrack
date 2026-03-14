@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — PortfolioTrack{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Mon Portefeuille</h1>
+        <p>Prix mis à jour en temps réel via Yahoo Finance</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Achat</a>
+        <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Vente</a>
+        <a href="{{ url_for('main.add_asset_route') }}" class="btn btn-ghost">+ Actif</a>
+    </div>
+</div>
+
+{% if not summary.assets %}
+<div class="card empty-state">
+    <h3>Ton portefeuille est vide</h3>
+    <p>Commence par ajouter un actif (ETF, action, crypto), puis enregistre tes achats.</p>
+    <a href="{{ url_for('main.add_asset_route') }}" class="btn btn-primary">+ Ajouter un actif</a>
+</div>
+
+{% else %}
+
+<!-- ── KPI Globaux ── -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Valeur actuelle</div>
+        <div class="kpi-value">{{ summary.total_value }} €</div>
+        <div class="kpi-sub">{{ summary.assets|length }} actif(s) en portefeuille</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Dividendes reçus</div>
+        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
+        <div class="kpi-sub">Rendement encaissé</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total investi</div>
+        <div class="kpi-value neutral">{{ summary.total_invested }} €</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Plus-value latente</div>
+        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
+            {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
+        </div>
+        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}">
+            {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Plus-value réalisée</div>
+        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
+            {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
+        </div>
+        <div class="kpi-sub">Sur ventes clôturées</div>
+    </div>
+</div>
+
+<!-- ── Objectif DCA ── -->
+{% if summary.dca_target > 0 %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <div>
+            <span style="font-weight:700;">Objectif DCA ce mois</span>
+            <span class="neutral" style="font-size:0.85rem; margin-left:0.75rem;">
+                {{ summary.invested_month }} € / {{ summary.dca_target }} €
+            </span>
+        </div>
+        <span style="font-weight:700; font-size:1.1rem;
+              color: {{ '#00C9A7' if summary.dca_progress >= 100 else '#5B5FED' }};">
+            {{ summary.dca_progress }}%
+        </span>
+    </div>
+    <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width: {{ [summary.dca_progress, 100]|min }}%;"></div>
+    </div>
+    {% if summary.dca_progress >= 100 %}
+    <div style="font-size:0.82rem; color:#00C9A7; margin-top:0.4rem; font-weight:600;">
+        ✓ Objectif atteint ce mois !
+    </div>
+    {% else %}
+    <div style="font-size:0.82rem; color:#9CA3AF; margin-top:0.4rem;">
+        Il reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
+        à investir pour atteindre ton objectif.
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('main.settings') }}"
+       style="font-size:0.82rem; color:#9CA3AF; text-decoration:none;">
+        ＋ Définir un objectif DCA mensuel →
+    </a>
+</div>
+{% endif %}
+
+<!-- ── Actifs par type ── -->
+{% for asset_type, assets in summary.by_type.items() %}
+<div class="section-title">{{ asset_type }}s</div>
+<div class="asset-grid">
+{% for a in assets %}
+{% if not a.fully_sold %}
+<div class="asset-card">
+    <h3>
+        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF'
+                          else 'badge-action' if a.asset_type == 'Action'
+                          else 'badge-crypto' if a.asset_type == 'Crypto'
+                          else 'badge-other' }}">
+            {{ a.ticker }}
+        </span>
+        <span>{{ a.name }}</span>
+        {% if a.isin %}
+        <span style="font-size:0.72rem; color:#9CA3AF; font-weight:400;">{{ a.isin }}</span>
+        {% endif %}
+    </h3>
+    <table class="asset-table">
+        <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
+        <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
+        <tr>
+            <td>Prix actuel</td>
+            <td>
+                <strong>{{ a.current_price }} {{ a.currency }}</strong>
+                {% if a.price_timestamp %}
+                <div style="font-size:0.72rem; color:#9CA3AF; font-weight:400;">
+                    {{ a.price_timestamp }}
+                </div>
+                {% endif %}
+            </td>
+        </tr>
+        <tr><td>Investi</td><td>{{ a.total_invested }} €</td></tr>
+        <tr><td>Frais cumulés</td><td class="neutral">{{ a.total_fees }} €</td></tr>
+        <tr><td>Valeur actuelle</td><td><strong>{{ a.current_value }} €</strong></td></tr>
+        <tr>
+            <td>Performance</td>
+            <td class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}">
+                <strong>
+                    {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
+                    ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
+                </strong>
+            </td>
+        </tr>
+        {% if a.realized_gain != 0 %}
+        <tr>
+            <td>P&L réalisé</td>
+            <td class="{{ 'positive' if a.realized_gain >= 0 else 'negative' }}">
+                {{ '+' if a.realized_gain >= 0 else '' }}{{ a.realized_gain }} €
+            </td>
+        </tr>
+        {% endif %}
+        {% if a.dividends_received > 0 %}
+        <tr>
+            <td>Dividendes reçus</td>
+            <td class="positive">+{{ a.dividends_received }} €</td>
+        </tr>
+        <tr>
+            <td>Rendement total</td>
+            <td class="{{ 'positive' if a.total_return >= 0 else 'negative' }}">
+                <strong>
+                    {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
+                    ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
+                </strong>
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+    <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
+        <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
+        <a href="{{ url_for('main.charts') }}" class="btn btn-ghost btn-sm">Graphique</a>
+        <form method="POST"
+              action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
+              style="display:inline;"
+              onsubmit="return confirm('Supprimer {{ a.name }} et tous ses achats/ventes ?')">
+            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+{% endfor %}
+
+<!-- ── Allocation ── -->
+{% if summary.allocation %}
+<div class="section-title">Allocation du portefeuille</div>
+<div class="card" style="margin-bottom:1.5rem;">
+    <div id="pie-chart"></div>
+</div>
+<script>
+const alloc = {{ summary.allocation | tojson }};
+const labels = alloc.map(a => a.ticker);
+const values = alloc.map(a => a.value);
+const colors = ['#5B5FED','#00C9A7','#F6C90E','#FF6B6B','#7C3AED',
+                '#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+Plotly.newPlot('pie-chart', [{
+    type: 'pie', labels: labels, values: values, hole: 0.45,
+    marker: { colors: colors }, textinfo: 'label+percent',
+    hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
+}], {
+    template: 'plotly_white', height: 320,
+    margin: { l: 20, r: 20, t: 20, b: 20 },
+    showlegend: true, legend: { orientation: 'h', y: -0.15 }
+}, { responsive: true, displayModeBar: false });
+</script>
+{% endif %}
+
+<!-- ── Diversification ── -->
+{% if summary.by_type %}
+<div class="section-title">Diversification par type</div>
+<div class="card" style="margin-bottom:1.5rem;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
+                            text-align:left; font-size:0.82rem;">Type</th>
+                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
+                            text-align:right; font-size:0.82rem;">Valeur</th>
+                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
+                            text-align:right; font-size:0.82rem;">Poids</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for asset_type, assets in summary.by_type.items() %}
+        {% set type_value = assets | selectattr('fully_sold', 'equalto', false)
+                                   | sum(attribute='current_value') %}
+        {% if type_value > 0 %}
+        <tr>
+            <td style="padding:0.6rem 1rem;">
+                <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
+                                  else 'badge-action' if asset_type == 'Action'
+                                  else 'badge-crypto' if asset_type == 'Crypto'
+                                  else 'badge-other' }}">{{ asset_type }}</span>
+            </td>
+            <td style="padding:0.6rem 1rem; text-align:right; font-weight:600;">
+                {{ type_value|round(2) }} €
+            </td>
+            <td style="padding:0.6rem 1rem; text-align:right;">
+                {% if summary.total_value > 0 %}
+                {{ ((type_value / summary.total_value) * 100)|round(1) }}%
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Importer des achats{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Importer des achats</h1>
+        <p>Importez votre historique complet depuis un fichier Excel.</p>
+    </div>
+    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">← Historique</a>
+</div>
+
+<!-- Étapes -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+        <div class="step" style="flex:1; min-width:200px;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <div class="step-num">1</div>
+                <strong>Téléchargez le template</strong>
+            </div>
+            <p style="font-size:0.875rem; color:#6B7280; line-height:1.6;">
+                Téléchargez le fichier Excel modèle et remplissez vos achats
+                en suivant le format des exemples.
+            </p>
+            <a href="{{ url_for('main.download_template') }}"
+               class="btn btn-ghost" style="margin-top:0.75rem;">
+                ↓ Télécharger le template Excel
+            </a>
+        </div>
+
+        <div class="step" style="flex:1; min-width:200px;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <div class="step-num">2</div>
+                <strong>Remplissez vos données</strong>
+            </div>
+            <p style="font-size:0.875rem; color:#6B7280; line-height:1.6;">
+                Remplissez le fichier avec vos achats. Les tickers doivent
+                déjà exister dans votre portefeuille.
+            </p>
+            <div style="margin-top:0.75rem; background:#F9FAFB; border-radius:8px;
+                        padding:0.75rem; font-size:0.78rem; font-family:monospace; color:#374151;">
+                ticker | date | shares | price_per_share | fees | notes<br>
+                ESE.PA | 17/01/2025 | 4 | 28.982 | 0 | DCA<br>
+                PAEEM.PA | 04/02/2025 | 2 | 15.50 | 0 | DCA
+            </div>
+        </div>
+
+        <div class="step" style="flex:1; min-width:200px;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <div class="step-num">3</div>
+                <strong>Importez le fichier</strong>
+            </div>
+            <p style="font-size:0.875rem; color:#6B7280; line-height:1.6;">
+                Enregistrez le fichier au format .xlsx et importez-le
+                directement ci-dessous.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Format attendu -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem;">
+        Format des colonnes
+    </h3>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Colonne</th>
+                    <th>Obligatoire</th>
+                    <th>Format</th>
+                    <th>Exemple</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>ticker</code></td>
+                    <td><span class="badge badge-action">Oui</span></td>
+                    <td>Ticker Yahoo Finance</td>
+                    <td>ESE.PA</td>
+                </tr>
+                <tr>
+                    <td><code>date</code></td>
+                    <td><span class="badge badge-action">Oui</span></td>
+                    <td>DD/MM/YYYY ou YYYY-MM-DD</td>
+                    <td>17/01/2025</td>
+                </tr>
+                <tr>
+                    <td><code>shares</code></td>
+                    <td><span class="badge badge-action">Oui</span></td>
+                    <td>Nombre décimal</td>
+                    <td>4 ou 3.5</td>
+                </tr>
+                <tr>
+                    <td><code>price_per_share</code></td>
+                    <td><span class="badge badge-action">Oui</span></td>
+                    <td>Nombre décimal</td>
+                    <td>28.982</td>
+                </tr>
+                <tr>
+                    <td><code>fees</code></td>
+                    <td><span class="badge badge-other">Non</span></td>
+                    <td>Nombre décimal</td>
+                    <td>1.99</td>
+                </tr>
+                <tr>
+                    <td><code>notes</code></td>
+                    <td><span class="badge badge-other">Non</span></td>
+                    <td>Texte libre</td>
+                    <td>Achat DCA janvier</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p style="font-size:0.8rem; color:#9CA3AF; margin-top:0.75rem;">
+        ⚠️ Les tickers doivent déjà être ajoutés dans ton portefeuille avant l'import.
+    </p>
+</div>
+
+<!-- Upload -->
+<div class="card form-card" style="max-width:560px;">
+    <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem;">
+        Importer votre fichier Excel
+    </h3>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="csv_file">Fichier Excel (.xlsx)</label>
+            <input type="file" id="csv_file" name="csv_file"
+                   accept=".xlsx" required>
+            <div class="form-hint">
+                Format accepté : .xlsx — utilise le template fourni ci-dessus.
+            </div>
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:1.25rem;">
+            <button type="submit" class="btn btn-primary">
+                Importer les achats
+            </button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

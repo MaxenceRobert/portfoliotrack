@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Enregistrer une vente{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Enregistrer une vente</h1>
+        <p>La plus-value réalisée sera calculée automatiquement.</p>
+    </div>
+    <a href="{{ url_for('main.sales') }}" class="btn btn-ghost">Voir les ventes</a>
+</div>
+
+<div class="card form-card">
+    <form method="POST">
+
+        <div class="form-group">
+            <label for="asset_id">Actif vendu</label>
+            <select id="asset_id" name="asset_id" required>
+                {% for a in assets %}
+                <option value="{{ a['id'] }}">{{ a['ticker'] }} — {{ a['name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="date">Date de vente</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="shares">Nombre de parts vendues</label>
+                <input type="number" id="shares" name="shares"
+                       step="0.000001" min="0.000001" required
+                       placeholder="ex: 2.5"
+                       oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+                <label for="price_per_share">Prix de vente par part</label>
+                <input type="number" id="price_per_share" name="price_per_share"
+                       step="0.0001" min="0.0001" required
+                       placeholder="ex: 102.50"
+                       oninput="calcTotal()">
+            </div>
+        </div>
+
+        <!-- Total produit de vente -->
+        <div class="form-group">
+            <label>Produit total de la vente</label>
+            <div id="total-display" style="
+                padding: 0.65rem 0.875rem;
+                background: #F9FAFB;
+                border: 1.5px solid #E5E7EB;
+                border-radius: 8px;
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #00C9A7;
+                min-height: 44px;
+            ">—</div>
+            <div class="form-hint">Calculé automatiquement (parts × prix de vente).</div>
+        </div>
+
+        <div class="form-group">
+            <label for="fees">Frais de courtage <span style="font-weight:400;color:#9CA3AF;">(optionnel)</span></label>
+            <input type="number" id="fees" name="fees"
+                   step="0.01" min="0" value="0"
+                   placeholder="ex: 1.99">
+            <div class="form-hint">Déduits du produit pour calculer la plus-value nette.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Note <span style="font-weight:400;color:#9CA3AF;">(optionnel)</span></label>
+            <input type="text" id="notes" name="notes"
+                   placeholder="ex: Prise de bénéfice partielle">
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-warning">
+                Enregistrer la vente
+            </button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    document.getElementById('date').valueAsDate = new Date();
+
+    function calcTotal() {
+        const shares = parseFloat(document.getElementById('shares').value) || 0;
+        const price  = parseFloat(document.getElementById('price_per_share').value) || 0;
+        const el     = document.getElementById('total-display');
+        if (shares > 0 && price > 0) {
+            el.textContent = (shares * price).toFixed(2) + ' €';
+        } else {
+            el.textContent = '—';
+        }
+    }
+</script>
+
+{% endblock %}

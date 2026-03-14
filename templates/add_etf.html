@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un ETF{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Ajouter un ETF</h1>
+        <p>L'ETF sera ajouté à ton portefeuille et disponible pour la saisie d'achats.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <form method="POST">
+
+        <div class="form-group">
+            <label for="name">Nom de l'ETF</label>
+            <input type="text" id="name" name="name" required
+                   placeholder="ex: iShares Core MSCI World">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="isin">ISIN</label>
+                <input type="text" id="isin" name="isin" required
+                       placeholder="ex: IE00B4L5Y983"
+                       maxlength="12" style="text-transform:uppercase;">
+                <div class="form-hint">12 caractères — visible sur ton broker.</div>
+            </div>
+            <div class="form-group">
+                <label for="ticker">Ticker Yahoo Finance</label>
+                <input type="text" id="ticker" name="ticker" required
+                       placeholder="ex: IWDA.AS"
+                       style="text-transform:uppercase;">
+                <div class="form-hint">
+                    Trouve-le sur
+                    <a href="https://finance.yahoo.com" target="_blank"
+                       style="color:#5B5FED;">finance.yahoo.com</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="currency">Devise de cotation</label>
+            <select id="currency" name="currency">
+                <option value="EUR">EUR — Euro</option>
+                <option value="USD">USD — Dollar américain</option>
+                <option value="GBP">GBP — Livre sterling</option>
+                <option value="CHF">CHF — Franc suisse</option>
+            </select>
+            <div class="form-hint">
+                La devise dans laquelle l'ETF est coté sur ton broker.
+            </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">
+                Vérifier et ajouter
+            </button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">
+                Annuler
+            </a>
+        </div>
+
+        <p style="margin-top:1rem; font-size:0.82rem; color:#9CA3AF;">
+            Le ticker sera vérifié en temps réel sur Yahoo Finance avant l'ajout.
+        </p>
+
+    </form>
+</div>
+
+{% endblock %}

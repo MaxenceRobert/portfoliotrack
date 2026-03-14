@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Historique des ventes{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Historique des ventes</h1>
+        <p>Toutes tes ventes et plus-values réalisées.</p>
+    </div>
+    <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Enregistrer une vente</a>
+</div>
+
+{% if not sales %}
+<div class="card empty-state">
+    <h3>Aucune vente enregistrée</h3>
+    <p>Tes ventes apparaîtront ici une fois enregistrées.</p>
+    <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Enregistrer une vente</a>
+</div>
+
+{% else %}
+
+<!-- KPI ventes -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Nombre de ventes</div>
+        <div class="kpi-value">{{ sales|length }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total encaissé</div>
+        <div class="kpi-value positive">
+            {{ sales|sum(attribute='total_proceeds')|round(2) }} €
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total frais ventes</div>
+        <div class="kpi-value neutral">
+            {{ sales|sum(attribute='fees')|round(2) }} €
+        </div>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Actif</th>
+                    <th>Parts vendues</th>
+                    <th>Prix / part</th>
+                    <th>Frais</th>
+                    <th>Produit total</th>
+                    <th>Note</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in sales %}
+            <tr>
+                <td>{{ s['date'] }}</td>
+                <td>
+                    <span class="badge badge-etf">{{ s['ticker'] }}</span>
+                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">
+                        {{ s['name'] }}
+                    </span>
+                </td>
+                <td>{{ s['shares'] }}</td>
+                <td>{{ s['price_per_share'] }} {{ s['currency'] }}</td>
+                <td class="neutral">
+                    {% if s['fees'] and s['fees'] > 0 %}
+                        {{ s['fees'] }} €
+                    {% else %}—{% endif %}
+                </td>
+                <td><strong class="positive">{{ s['total_proceeds'] }} €</strong></td>
+                <td style="color:#9CA3AF; font-size:0.82rem;">
+                    {{ s['notes'] or '—' }}
+                </td>
+                <td>
+                    <form method="POST"
+                          action="{{ url_for('main.delete_sale_route', sale_id=s['id']) }}"
+                          onsubmit="return confirm('Supprimer cette vente ?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

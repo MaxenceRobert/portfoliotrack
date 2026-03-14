@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1>Bon retour 👋</h1>
+        <p>Connecte-toi pour accéder à ton portefeuille.</p>
+
+        <div class="alerts">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="ton@email.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="auth-link">
+            Pas encore de compte ? <a href="{{ url_for('auth.register') }}">Créer un compte</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

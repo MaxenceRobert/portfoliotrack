@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter des achats{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Ajouter des achats</h1>
+        <p>Saisis plusieurs achats d'un coup — idéal pour rattraper ton historique.</p>
+    </div>
+    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">Voir l'historique</a>
+</div>
+
+<form method="POST" id="bulk-form">
+    <div id="rows-container"></div>
+
+    <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn btn-ghost" onclick="addRow()">
+            + Ajouter une ligne
+        </button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">
+            Enregistrer tous les achats
+        </button>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
+    </div>
+</form>
+
+<script>
+const assets = {{ assets | tojson }};
+let rowCount = 0;
+const today  = new Date().toISOString().split('T')[0];
+
+function getBadgeClass(type) {
+    const map = { 'ETF': 'badge-etf', 'Action': 'badge-action',
+                  'Crypto': 'badge-crypto' };
+    return map[type] || 'badge-other';
+}
+
+function addRow() {
+    const i   = rowCount++;
+    const div = document.createElement('div');
+    div.className = 'purchase-row';
+    div.id        = `row-${i}`;
+
+    const options = assets.map(a =>
+        `<option value="${a.id}">${a.ticker} — ${a.name}</option>`
+    ).join('');
+
+    div.innerHTML = `
+        <div class="row-num">Achat #${i + 1}</div>
+        <button type="button" class="remove-row"
+                onclick="removeRow(${i})" title="Supprimer cette ligne">✕</button>
+
+        <div class="form-row-3">
+            <div class="form-group">
+                <label>Actif</label>
+                <select name="asset_id_${i}" required>
+                    ${options}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date_${i}"
+                       value="${today}" required>
+            </div>
+            <div class="form-group">
+                <label>Frais (€)</label>
+                <input type="number" name="fees_${i}"
+                       step="0.01" min="0" value="0"
+                       placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nombre de parts</label>
+                <input type="number" name="shares_${i}"
+                       step="0.000001" min="0.000001"
+                       required placeholder="ex: 3.5"
+                       oninput="calcTotal(${i})">
+            </div>
+            <div class="form-group">
+                <label>Prix par part</label>
+                <input type="number" name="price_per_share_${i}"
+                       step="0.0001" min="0.0001"
+                       required placeholder="ex: 85.42"
+                       oninput="calcTotal(${i})">
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <div style="font-size:0.82rem; color:#6B7280;">Total :</div>
+            <div id="total-${i}" style="font-weight:700; color:#5B5FED; font-size:1rem;">—</div>
+        </div>
+
+        <div class="form-group" style="margin-top:0.75rem; margin-bottom:0;">
+            <label>Note <span style="font-weight:400; color:#9CA3AF;">(optionnel)</span></label>
+            <input type="text" name="notes_${i}"
+                   placeholder="ex: Achat mensuel DCA">
+        </div>
+    `;
+
+    document.getElementById('rows-container').appendChild(div);
+    updateSubmitBtn();
+}
+
+function removeRow(i) {
+    const el = document.getElementById(`row-${i}`);
+    if (el) el.remove();
+    updateSubmitBtn();
+}
+
+function calcTotal(i) {
+    const shares = parseFloat(document.querySelector(`[name="shares_${i}"]`)?.value) || 0;
+    const price  = parseFloat(document.querySelector(`[name="price_per_share_${i}"]`)?.value) || 0;
+    const el     = document.getElementById(`total-${i}`);
+    if (el) {
+        el.textContent = shares > 0 && price > 0
+            ? (shares * price).toFixed(2) + ' €'
+            : '—';
+    }
+}
+
+function updateSubmitBtn() {
+    const count = document.querySelectorAll('.purchase-row').length;
+    const btn   = document.getElementById('submit-btn');
+    btn.textContent = count > 1
+        ? `Enregistrer ${count} achats`
+        : 'Enregistrer l\'achat';
+}
+
+// Démarre avec 1 ligne par défaut
+addRow();
+</script>
+
+{% endblock %}

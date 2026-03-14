@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Contact — PortfolioTrack{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Contact</h1>
+        <p>Une question, un bug, une suggestion ? Écris-moi directement.</p>
+    </div>
+</div>
+
+<div class="card form-card" style="max-width:600px;">
+
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+        <div style="display:flex; align-items:flex-start; gap:1rem;">
+            <div style="font-size:1.5rem;">📧</div>
+            <div>
+                <div style="font-weight:600; margin-bottom:0.25rem;">Email</div>
+                <a href="mailto:maxencerbr@gmail.com"
+                   style="color:#5B5FED; text-decoration:none; font-size:0.95rem;">
+                    maxencerbr@gmail.com
+                </a>
+                <div style="font-size:0.82rem; color:#9CA3AF; margin-top:0.25rem;">
+                    Réponse sous 24-48h en général.
+                </div>
+            </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #F3F4F6;">
+
+        <div style="display:flex; align-items:flex-start; gap:1rem;">
+            <div style="font-size:1.5rem;">🐛</div>
+            <div>
+                <div style="font-weight:600; margin-bottom:0.25rem;">Signaler un bug</div>
+                <div style="font-size:0.82rem; color:#6B7280; line-height:1.6;">
+                    Décris ce que tu faisais, ce que tu as vu, et ce que tu attendais.
+                    Une capture d'écran est toujours utile.
+                </div>
+            </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #F3F4F6;">
+
+        <div style="display:flex; align-items:flex-start; gap:1rem;">
+            <div style="font-size:1.5rem;">💡</div>
+            <div>
+                <div style="font-weight:600; margin-bottom:0.25rem;">Suggérer une fonctionnalité</div>
+                <div style="font-size:0.82rem; color:#6B7280; line-height:1.6;">
+                    PortfolioTrack est en développement actif. Toutes les suggestions
+                    sont lues et prises en compte.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="margin-top:2rem; padding:1rem; background:#F9FAFB;
+                border-radius:0.5rem; font-size:0.82rem; color:#6B7280;">
+        PortfolioTrack est un projet indépendant créé par
+        <strong>Maxence Robert</strong>. Pas de support automatisé,
+        pas de bot — tu parles directement au développeur.
+    </div>
+
+</div>
+
+{% endblock %}

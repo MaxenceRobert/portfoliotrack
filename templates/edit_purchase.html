@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Éditer un achat{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Éditer un achat</h1>
+        <p>Modifie les informations de cet achat DCA.</p>
+    </div>
+    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">← Retour</a>
+</div>
+
+<div class="card form-card">
+    <form method="POST">
+
+        <div class="form-group">
+            <label>ETF</label>
+            <input type="text" value="{{ purchase['ticker'] if purchase['ticker'] else '' }}"
+                   disabled style="background:#F9FAFB; color:#6B7280;">
+            <div class="form-hint">L'ETF ne peut pas être modifié.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="date">Date d'achat</label>
+            <input type="date" id="date" name="date"
+                   value="{{ purchase['date'] }}" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="shares">Nombre de parts</label>
+                <input type="number" id="shares" name="shares"
+                       step="0.000001" min="0.000001" required
+                       value="{{ purchase['shares'] }}"
+                       oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+                <label for="price_per_share">Prix par part</label>
+                <input type="number" id="price_per_share" name="price_per_share"
+                       step="0.0001" min="0.0001" required
+                       value="{{ purchase['price_per_share'] }}"
+                       oninput="calcTotal()">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Montant total</label>
+            <div id="total-display" style="
+                padding: 0.65rem 0.875rem;
+                background: #F9FAFB;
+                border: 1.5px solid #E5E7EB;
+                border-radius: 8px;
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #5B5FED;
+            ">{{ purchase['total_cost'] }} €</div>
+            <div class="form-hint">Calculé automatiquement (parts × prix).</div>
+        </div>
+
+        <div class="form-group">
+            <label for="fees">Frais de courtage</label>
+            <input type="number" id="fees" name="fees"
+                   step="0.01" min="0"
+                   value="{{ purchase['fees'] or 0 }}"
+                   placeholder="ex: 1.99">
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+function calcTotal() {
+    const shares = parseFloat(document.getElementById('shares').value) || 0;
+    const price  = parseFloat(document.getElementById('price_per_share').value) || 0;
+    const total  = shares * price;
+    const el     = document.getElementById('total-display');
+    if (shares > 0 && price > 0) {
+        el.textContent = total.toFixed(2) + ' €';
+    } else {
+        el.textContent = '—';
+    }
+}
+</script>
+
+{% endblock %}

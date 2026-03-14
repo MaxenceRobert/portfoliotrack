@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Simulateur DCA — PortfolioTrack{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Simulateur DCA</h1>
+        <p>Projette la croissance de ton portefeuille avec un investissement mensuel régulier.</p>
+    </div>
+    {% if not current_user.is_authenticated %}
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+        Créer un compte gratuit
+    </a>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+
+        <div class="form-group" style="margin:0;">
+            <label for="monthly">Montant mensuel (€)</label>
+            <input type="number" id="monthly" value="300" min="10" max="100000" step="10">
+        </div>
+
+        <div class="form-group" style="margin:0;">
+            <label for="years">Durée (années)</label>
+            <input type="number" id="years" value="10" min="1" max="40" step="1">
+        </div>
+
+        <div class="form-group" style="margin:0;">
+            <label for="rate">Rendement annuel moyen (%)</label>
+            <input type="number" id="rate" value="8" min="0" max="30" step="0.5">
+            <div class="form-hint">MSCI World historique ≈ 8-10%/an</div>
+        </div>
+
+    </div>
+    <div style="margin-top:1.5rem;">
+        <button class="btn btn-primary" onclick="simulate()">Simuler</button>
+    </div>
+</div>
+
+<!-- KPI résultats -->
+<div class="kpi-grid" id="kpi-section" style="display:none;">
+    <div class="kpi-card">
+        <div class="kpi-label">Total investi</div>
+        <div class="kpi-value neutral" id="kpi-invested">—</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Valeur finale estimée</div>
+        <div class="kpi-value positive" id="kpi-final">—</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Intérêts composés</div>
+        <div class="kpi-value positive" id="kpi-gains">—</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Multiplicateur</div>
+        <div class="kpi-value positive" id="kpi-mult">—</div>
+    </div>
+</div>
+
+<!-- Graphique -->
+<div class="card" id="chart-section" style="display:none; margin-top:1.5rem;">
+    <div id="dca-chart"></div>
+</div>
+
+<!-- CTA -->
+<div class="card" id="cta-section"
+     style="display:none; margin-top:1.5rem; text-align:center; padding:2rem;">
+    <h3 style="margin-bottom:0.5rem;">Prêt à suivre ton vrai portefeuille ?</h3>
+    <p style="color:#6B7280; margin-bottom:1.5rem;">
+        PortfolioTrack te permet de suivre tes investissements réels,
+        comparer ta performance au MSCI World et visualiser ta progression DCA.
+    </p>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+        Voir mon portefeuille →
+    </a>
+    {% else %}
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+        Créer un compte gratuit →
+    </a>
+    {% endif %}
+</div>
+
+<script>
+function fmt(n) {
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function simulate() {
+    const monthly = parseFloat(document.getElementById('monthly').value) || 300;
+    const years   = parseInt(document.getElementById('years').value)     || 10;
+    const rate    = parseFloat(document.getElementById('rate').value)    || 8;
+
+    const months     = years * 12;
+    const monthlyRate = rate / 100 / 12;
+
+    const labels   = [];
+    const invested = [];
+    const value    = [];
+
+    let cumInvested = 0;
+    let cumValue    = 0;
+
+    for (let m = 1; m <= months; m++) {
+        cumInvested += monthly;
+        cumValue     = cumValue * (1 + monthlyRate) + monthly;
+
+        if (m % 12 === 0) {
+            const yr = m / 12;
+            labels.push('An ' + yr);
+            invested.push(parseFloat(cumInvested.toFixed(2)));
+            value.push(parseFloat(cumValue.toFixed(2)));
+        }
+    }
+
+    const finalValue   = cumValue;
+    const totalInvested = cumInvested;
+    const gains        = finalValue - totalInvested;
+    const mult         = finalValue / totalInvested;
+
+    // KPI
+    document.getElementById('kpi-invested').textContent = fmt(totalInvested);
+    document.getElementById('kpi-final').textContent    = fmt(finalValue);
+    document.getElementById('kpi-gains').textContent    = '+' + fmt(gains);
+    document.getElementById('kpi-mult').textContent     = 'x' + mult.toFixed(2);
+
+    document.getElementById('kpi-section').style.display  = '';
+    document.getElementById('chart-section').style.display = '';
+    document.getElementById('cta-section').style.display   = '';
+
+    // Graphique
+    Plotly.newPlot('dca-chart', [
+        {
+            x: labels, y: invested,
+            name: 'Total investi (€)',
+            type: 'scatter', mode: 'lines',
+            line: { color: '#6B7280', dash: 'dot', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(107,114,128,0.08)'
+        },
+        {
+            x: labels, y: value,
+            name: 'Valeur estimée (€)',
+            type: 'scatter', mode: 'lines',
+            line: { color: '#5B5FED', width: 2.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(91,95,237,0.12)'
+        }
+    ], {
+        template: 'plotly_white',
+        height: 380,
+        margin: { l: 20, r: 20, t: 20, b: 40 },
+        legend: { orientation: 'h', y: -0.15 },
+        hovermode: 'x unified',
+        yaxis: { ticksuffix: ' €' }
+    }, { responsive: true, displayModeBar: false });
+}
+
+// Lance la simulation au chargement
+window.onload = simulate;
+</script>
+
+{% endblock %}

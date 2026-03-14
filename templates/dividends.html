@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Historique des dividendes{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Dividendes reçus</h1>
+        <p>Tous les dividendes enregistrés sur ton portefeuille.</p>
+    </div>
+    <a href="{{ url_for('main.add_dividend_route') }}" class="btn btn-success">+ Dividende</a>
+</div>
+
+{% if not dividends %}
+<div class="card empty-state">
+    <h3>Aucun dividende enregistré</h3>
+    <p>Enregistre tes dividendes pour suivre ton rendement total.</p>
+    <a href="{{ url_for('main.add_dividend_route') }}" class="btn btn-success">+ Ajouter un dividende</a>
+</div>
+
+{% else %}
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Nombre de versements</div>
+        <div class="kpi-value">{{ dividends|length }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total dividendes reçus</div>
+        <div class="kpi-value positive">
+            {{ dividends|sum(attribute='amount')|round(2) }} €
+        </div>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Actif</th>
+                    <th>Montant reçu</th>
+                    <th>Note</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for d in dividends %}
+            <tr>
+                <td>{{ d['date'] }}</td>
+                <td>
+                    <span class="badge badge-etf">{{ d['ticker'] }}</span>
+                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">
+                        {{ d['name'] }}
+                    </span>
+                </td>
+                <td><strong class="positive">{{ d['amount'] }} €</strong></td>
+                <td style="color:#9CA3AF; font-size:0.82rem;">
+                    {{ d['notes'] or '—' }}
+                </td>
+                <td>
+                    <form method="POST"
+                          action="{{ url_for('main.delete_dividend_route', dividend_id=d['id']) }}"
+                          onsubmit="return confirm('Supprimer ce dividende ?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PortfolioTrack{% endblock %}</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #F4F4FB;
+        color: #0D0D0D;
+        min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+        background: #5B5FED;
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 56px;
+        box-shadow: 0 2px 12px rgba(91,95,237,0.3);
+    }
+    .nav-brand {
+        color: white;
+        font-weight: 800;
+        font-size: 1.05rem;
+        text-decoration: none;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .nav-links { display: flex; gap: 0.15rem; align-items: center; }
+    .nav-links a {
+        color: rgba(255,255,255,0.82);
+        text-decoration: none;
+        padding: 0.38rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.15s;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.65);
+    }
+    .nav-right a {
+        color: rgba(255,255,255,0.65);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+    .nav-right a:hover { color: white; }
+
+    /* ── Dropdown nav ── */
+    .nav-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    .nav-dropdown-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.82);
+        padding: 0.38rem 0.8rem;
+        border-radius: 6px;
+        transition: all 0.15s;
+    }
+    .nav-dropdown-btn:hover {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    .nav-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.5rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        min-width: 200px;
+        z-index: 1000;
+        padding: 0.4rem 0;
+    }
+    .nav-dropdown-menu a {
+        display: block;
+        padding: 0.5rem 1rem;
+        font-size: 0.88rem;
+        color: #374151;
+        text-decoration: none;
+        transition: background 0.1s;
+    }
+    .nav-dropdown-menu a:hover {
+        background: #F9FAFB;
+        color: #374151;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu {
+        display: block;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 1140px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* ── Cards ── */
+    .card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
+    }
+
+    /* ── KPI ── */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    .kpi-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
+    }
+    .kpi-label {
+        font-size: 0.75rem;
+        color: #6B7280;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .kpi-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+    .kpi-sub   { font-size: 0.82rem; color: #6B7280; margin-top: 0.25rem; }
+
+    /* ── Couleurs ── */
+    .positive { color: #00C9A7; }
+    .negative { color: #FF6B6B; }
+    .neutral  { color: #6B7280; }
+
+    /* ── Asset cards ── */
+    .asset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    .asset-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.4rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
+        border-top: 4px solid #5B5FED;
+    }
+    .asset-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .asset-table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
+    .asset-table td { padding: 0.32rem 0; color: #374151; }
+    .asset-table td:last-child { text-align: right; font-weight: 600; }
+
+    /* ── Boutons ── */
+    .btn {
+        display: inline-block;
+        padding: 0.58rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all 0.15s;
+        line-height: 1;
+    }
+    .btn-primary { background: #5B5FED; color: white; }
+    .btn-primary:hover { background: #4B4FCD; }
+    .btn-success { background: #00C9A7; color: white; }
+    .btn-success:hover { background: #00A88D; }
+    .btn-danger  { background: #FF6B6B; color: white; }
+    .btn-danger:hover  { background: #E05555; }
+    .btn-ghost   { background: #F3F4F6; color: #374151; }
+    .btn-ghost:hover   { background: #E5E7EB; }
+    .btn-warning { background: #F6C90E; color: #374151; }
+    .btn-sm { padding: 0.32rem 0.7rem; font-size: 0.78rem; }
+
+    /* ── Formulaires ── */
+    .form-card { max-width: 560px; }
+    .form-group { margin-bottom: 1.1rem; }
+    label {
+        display: block;
+        font-size: 0.845rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+        color: #374151;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 0.62rem 0.875rem;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 8px;
+        font-size: 0.925rem;
+        color: #0D0D0D;
+        background: white;
+        transition: border-color 0.15s;
+        font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #5B5FED;
+        box-shadow: 0 0 0 3px rgba(91,95,237,0.1);
+    }
+    .form-hint { font-size: 0.78rem; color: #9CA3AF; margin-top: 0.25rem; }
+    .form-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+
+    /* ── Saisie multiple ── */
+    .purchase-row {
+        background: #FAFAFA;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        position: relative;
+    }
+    .purchase-row .row-num {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #5B5FED;
+        margin-bottom: 0.6rem;
+    }
+    .remove-row {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        color: #FF6B6B;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+        background: #5B5FED;
+        color: white;
+        padding: 0.7rem 1rem;
+        text-align: left;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    tbody td {
+        padding: 0.7rem 1rem;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #F3F4F6;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #FAFAFA; }
+
+    /* ── Flash ── */
+    .alerts { margin-bottom: 1rem; }
+    .alert {
+        padding: 0.72rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    .alert-success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .alert-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+
+    /* ── Page header ── */
+    .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .page-header h1 { font-size: 1.45rem; font-weight: 700; }
+    .page-header p  { color: #6B7280; font-size: 0.875rem; margin-top: 0.2rem; }
+    .page-header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    /* ── Auth ── */
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #5B5FED 0%, #7C3AED 100%);
+    }
+    .auth-card {
+        background: white;
+        border-radius: 18px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .auth-card h1 { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .auth-card p  { color: #6B7280; font-size: 0.875rem; margin-bottom: 1.75rem; }
+    .auth-link    { text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: #6B7280; }
+    .auth-link a  { color: #5B5FED; font-weight: 600; text-decoration: none; }
+
+    /* ── Badges ── */
+    .badge {
+        display: inline-block;
+        padding: 0.18rem 0.55rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .badge-etf    { background: #EEF2FF; color: #5B5FED; }
+    .badge-action { background: #ECFDF5; color: #059669; }
+    .badge-crypto { background: #FEF3C7; color: #D97706; }
+    .badge-other  { background: #F3F4F6; color: #6B7280; }
+
+    /* ── DCA Progress ── */
+    .progress-bar-wrap {
+        background: #E5E7EB;
+        border-radius: 99px;
+        height: 8px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #5B5FED, #00C9A7);
+        transition: width 0.4s ease;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6B7280;
+    }
+    .empty-state h3 { font-size: 1.05rem; margin-bottom: 0.5rem; color: #374151; }
+    .empty-state p  { font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+    /* ── Section title ── */
+    .section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9CA3AF;
+        margin: 1.75rem 0 0.75rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+        text-align: center;
+        padding: 2rem 1rem 1.5rem;
+        font-size: 0.78rem;
+        color: #9CA3AF;
+    }
+    footer a { color: #5B5FED; text-decoration: none; }
+</style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4GYZ9CCJVF"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4GYZ9CCJVF');
+</script>
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<nav>
+    <a href="{{ url_for('main.dashboard') }}" class="nav-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.2)"/>
+        <polyline points="4,20 10,8 16,13 22,4"
+                  fill="none" stroke="white" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="4" r="3" fill="#F6C90E"/>
+    </svg>
+    PortfolioTrack
+</a>
+    <div class="nav-links">
+        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.charts') }}">Graphiques</a>
+        <a href="{{ url_for('main.simulateur') }}">Simulateur</a>
+
+        <!-- Menu Actions -->
+        <div class="nav-dropdown">
+            <button class="nav-dropdown-btn">Actions ▾</button>
+            <div class="nav-dropdown-menu">
+                <a href="{{ url_for('main.add_purchase_route') }}">+ Achat</a>
+                <a href="{{ url_for('main.add_sale_route') }}">+ Vente</a>
+                <a href="{{ url_for('main.add_dividend_route') }}">+ Dividende</a>
+                <a href="{{ url_for('main.add_asset_route') }}">+ Actif</a>
+                <hr style="margin:0.25rem 0; border-color:#F3F4F6;">
+                <a href="{{ url_for('main.purchases') }}">Historique achats</a>
+                <a href="{{ url_for('main.dividends') }}">Historique dividendes</a>
+                <a href="{{ url_for('main.import_csv') }}">↑ Import Excel</a>
+                <a href="{{ url_for('main.export_csv') }}">↓ Export CSV</a>
+            </div>
+        </div>
+
+        <a href="{{ url_for('main.contact') }}">Contact</a>
+    </div>
+
+    <div class="nav-right">
+        <!-- Menu compte -->
+        <div class="nav-dropdown">
+            <button class="nav-dropdown-btn">
+                👤 {{ current_user.email.split('@')[0] }} ▾
+            </button>
+            <div class="nav-dropdown-menu" style="right:0; left:auto;">
+                <a href="{{ url_for('main.profile') }}">👤 Mon profil</a>
+                <a href="{{ url_for('main.settings') }}">⚙️ Objectif DCA</a>
+                <hr style="margin:0.25rem 0; border-color:#F3F4F6;">
+                <a href="{{ url_for('auth.logout') }}"
+                   style="color:#EF4444;">Déconnexion</a>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endif %}
+
+<div class="{% if not current_user.is_authenticated %}{% else %}container{% endif %}">
+    <div class="alerts">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+    </div>
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    PortfolioTrack — Suivez votre portefeuille boursier en temps réel.
+    Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
+    <br><br>
+    <span style="font-size:0.72rem; color:#C4C4C4; max-width:700px; display:inline-block; line-height:1.6;">
+        ⚠️ Les informations affichées sur PortfolioTrack sont fournies à titre indicatif uniquement
+        et ne constituent pas un conseil en investissement. Les performances passées ne préjugent pas
+        des performances futures. Prix fournis par Yahoo Finance avec un possible décalage.
+        PortfolioTrack ne peut être tenu responsable des décisions d'investissement prises sur la
+        base des données affichées.
+    </span>
+</footer>
+
+</body>
+</html>

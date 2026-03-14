@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un dividende{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Enregistrer un dividende</h1>
+        <p>Montant net reçu après prélèvements fiscaux.</p>
+    </div>
+    <a href="{{ url_for('main.dividends') }}" class="btn btn-ghost">Voir les dividendes</a>
+</div>
+
+<div class="card form-card">
+    <form method="POST">
+
+        <div class="form-group">
+            <label for="asset_id">Actif</label>
+            <select id="asset_id" name="asset_id" required>
+                {% for a in assets %}
+                <option value="{{ a['id'] }}">{{ a['ticker'] }} — {{ a['name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="date">Date de réception</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Montant reçu (€)</label>
+            <input type="number" id="amount" name="amount"
+                   step="0.01" min="0.01" required
+                   placeholder="ex: 12.50">
+            <div class="form-hint">
+                Saisir le montant net effectivement reçu sur ton compte.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Note <span style="font-weight:400;color:#9CA3AF;">(optionnel)</span></label>
+            <input type="text" id="notes" name="notes"
+                   placeholder="ex: Dividende Q1 2025">
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-success">
+                Enregistrer le dividende
+            </button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    document.getElementById('date').valueAsDate = new Date();
+</script>
+
+{% endblock %}
