@@ -9,18 +9,19 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: #0D0D0D;
-            background: white;
+            background: #0A0A0F;
+            overflow-x: hidden;
         }
 
         /* ── Nav ── */
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #E5E7EB;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             padding: 0 2rem;
-            height: 60px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -29,11 +30,11 @@
         .nav-brand {
             font-weight: 800;
             font-size: 1.1rem;
-            color: #5B5FED;
+            color: white;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
         }
         .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
         .btn {
@@ -45,59 +46,105 @@
             cursor: pointer;
             border: none;
             text-decoration: none;
-            transition: all 0.15s;
+            transition: all 0.2s;
         }
-        .btn-primary { background: #5B5FED; color: white; }
-        .btn-primary:hover { background: #4B4FCD; }
-        .btn-ghost { background: #F3F4F6; color: #374151; }
-        .btn-ghost:hover { background: #E5E7EB; }
-        .btn-lg { padding: 0.85rem 2rem; font-size: 1rem; border-radius: 10px; }
-        .btn-white { background: white; color: #5B5FED; font-weight: 700; }
-        .btn-white:hover { background: #F0F0FF; }
-        .btn-outline {
-            background: transparent;
+        .btn-primary {
+            background: linear-gradient(135deg, #5B5FED, #7C3AED);
             color: white;
-            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 0 20px rgba(91,95,237,0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 30px rgba(91,95,237,0.6);
+        }
+        .btn-ghost {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.75);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,0.14); color: white; }
+        .btn-lg { padding: 0.9rem 2.2rem; font-size: 1rem; border-radius: 12px; }
+        .btn-outline-white {
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.25);
             font-weight: 600;
         }
-        .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+        .btn-outline-white:hover { border-color: white; color: white; background: rgba(255,255,255,0.06); }
 
         /* ── Hero ── */
         .hero {
             min-height: 100vh;
-            background: linear-gradient(135deg, #5B5FED 0%, #7C3AED 60%, #0EA5E9 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 6rem 1.5rem 4rem;
+            padding: 7rem 1.5rem 5rem;
+            position: relative;
+            overflow: hidden;
         }
-        .hero-inner { max-width: 720px; }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(91,95,237,0.25) 0%, transparent 70%),
+                        radial-gradient(ellipse 50% 40% at 80% 20%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(14,165,233,0.12) 0%, transparent 60%);
+        }
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+        }
+        .hero-inner {
+            max-width: 800px;
+            position: relative;
+            z-index: 1;
+        }
         .hero-badge {
-            display: inline-block;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 0.35rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(91,95,237,0.15);
+            color: #A5B4FC;
+            border: 1px solid rgba(91,95,237,0.35);
+            padding: 0.4rem 1rem;
             border-radius: 99px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            margin-bottom: 1.75rem;
+            margin-bottom: 2rem;
             letter-spacing: 0.04em;
         }
+        .badge-dot {
+            width: 6px; height: 6px;
+            background: #5B5FED;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
         .hero h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-size: clamp(2.4rem, 6vw, 4.2rem);
             font-weight: 800;
             color: white;
-            line-height: 1.15;
-            margin-bottom: 1.25rem;
-            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
         }
-        .hero h1 span { color: #F6C90E; }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #818CF8, #C084FC, #38BDF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
         .hero p {
-            font-size: clamp(0.95rem, 2vw, 1.15rem);
-            color: rgba(255,255,255,0.85);
-            line-height: 1.7;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: rgba(255,255,255,0.6);
+            line-height: 1.75;
             margin-bottom: 2.5rem;
             max-width: 560px;
             margin-left: auto;
@@ -107,7 +154,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
         }
         .hero-btns {
             display: flex;
@@ -115,12 +162,18 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+        .hero-note {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.35);
+        }
+        .hero-note span { color: rgba(255,255,255,0.55); }
 
         /* ── Stats ── */
         .stats {
-            background: white;
-            padding: 3rem 1.5rem;
-            border-bottom: 1px solid #F3F4F6;
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 2.5rem 1.5rem;
         }
         .stats-inner {
             max-width: 900px;
@@ -131,44 +184,49 @@
             text-align: center;
         }
         .stat-num {
-            font-size: 2rem;
+            font-size: 1.9rem;
             font-weight: 800;
-            color: #5B5FED;
+            background: linear-gradient(135deg, #818CF8, #C084FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             line-height: 1;
         }
         .stat-label {
-            font-size: 0.875rem;
-            color: #6B7280;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.45);
             margin-top: 0.4rem;
         }
 
         /* ── Features ── */
         .features {
-            padding: 5rem 1.5rem;
-            background: #F9FAFB;
+            padding: 6rem 1.5rem;
+            background: #0A0A0F;
         }
-        .section-label {
+        .section-eyebrow {
             text-align: center;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #5B5FED;
-            margin-bottom: 0.75rem;
+            letter-spacing: 0.12em;
+            color: #818CF8;
+            margin-bottom: 1rem;
         }
         .section-title {
             text-align: center;
-            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
             font-weight: 800;
-            margin-bottom: 0.75rem;
+            color: white;
+            margin-bottom: 1rem;
             letter-spacing: -0.02em;
+            line-height: 1.2;
         }
         .section-sub {
             text-align: center;
-            color: #6B7280;
+            color: rgba(255,255,255,0.45);
             font-size: 1rem;
-            max-width: 520px;
-            margin: 0 auto 3.5rem;
+            max-width: 500px;
+            margin: 0 auto 4rem;
             line-height: 1.7;
         }
         .features-grid {
@@ -176,37 +234,83 @@
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            gap: 1.25rem;
         }
         .feature-card {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
             padding: 1.75rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(91,95,237,0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
         }
         .feature-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(91,95,237,0.3);
+            transform: translateY(-2px);
         }
-        .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
-        .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .feature-card p { font-size: 0.9rem; color: #6B7280; line-height: 1.6; }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .feature-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        .feature-card p {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.65;
+        }
 
         /* ── How it works ── */
-        .how { padding: 5rem 1.5rem; background: white; }
+        .how {
+            padding: 6rem 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
         .steps {
-            max-width: 700px;
+            max-width: 680px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 0;
         }
-        .step { display: flex; gap: 1.25rem; align-items: flex-start; }
+        .step {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            position: relative;
+            padding-bottom: 2rem;
+        }
+        .step:last-child { padding-bottom: 0; }
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 1.15rem;
+            top: 2.8rem;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom, rgba(91,95,237,0.4), transparent);
+        }
         .step-num {
             flex-shrink: 0;
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 2.4rem;
+            height: 2.4rem;
             background: linear-gradient(135deg, #5B5FED, #7C3AED);
             color: white;
             border-radius: 50%;
@@ -214,54 +318,77 @@
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            box-shadow: 0 0 16px rgba(91,95,237,0.4);
         }
-        .step-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .step-content p  { font-size: 0.9rem; color: #6B7280; line-height: 1.6; }
+        .step-content h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.3rem;
+            padding-top: 0.35rem;
+        }
+        .step-content p {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.45);
+            line-height: 1.65;
+        }
 
         /* ── CTA ── */
         .cta {
-            background: linear-gradient(135deg, #5B5FED 0%, #7C3AED 100%);
-            padding: 5rem 1.5rem;
+            padding: 7rem 1.5rem;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            background: #0A0A0F;
         }
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 80% at 50% 100%, rgba(91,95,237,0.2) 0%, transparent 70%);
+        }
+        .cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
         .cta h2 {
-            font-size: clamp(1.6rem, 3vw, 2.5rem);
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
             font-weight: 800;
             color: white;
             margin-bottom: 1rem;
             letter-spacing: -0.02em;
+            line-height: 1.2;
         }
-        .cta p { color: rgba(255,255,255,0.8); font-size: 1rem; margin-bottom: 2rem; }
+        .cta p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
 
         /* ── Footer ── */
         footer {
-            background: #0D0D0D;
-            color: #9CA3AF;
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.3);
             text-align: center;
             padding: 2rem 1rem;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
         }
-        footer a { color: #5B5FED; text-decoration: none; }
+        footer a { color: #818CF8; text-decoration: none; }
 
         /* ── Mobile ── */
         @media (max-width: 768px) {
             nav { padding: 0 1rem; }
             .nav-actions .btn-ghost { display: none; }
-            .hero { padding: 5rem 1.25rem 3rem; }
-            .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .stat-num { font-size: 1.6rem; }
-            .features { padding: 3rem 1.25rem; }
+            .hero { padding: 5.5rem 1.25rem 3.5rem; }
+            .features { padding: 4rem 1.25rem; }
             .features-grid { grid-template-columns: 1fr; }
-            .how { padding: 3rem 1.25rem; }
-            .cta { padding: 3rem 1.25rem; }
-            .btn-lg { padding: 0.75rem 1.5rem; font-size: 0.95rem; }
+            .how { padding: 4rem 1.25rem; }
+            .cta { padding: 4rem 1.25rem; }
+            .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         }
-
         @media (max-width: 480px) {
-            .stats-inner { grid-template-columns: 1fr 1fr; }
             .hero-btns { flex-direction: column; width: 100%; }
             .hero-btns .btn { width: 100%; text-align: center; }
+            .stats-inner { grid-template-columns: 1fr 1fr; }
         }
     </style>
 <!-- Google Analytics -->
@@ -295,26 +422,32 @@
 
 <!-- Hero -->
 <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
     <div class="hero-inner">
-        <div class="hero-badge">✦ Suivi de portefeuille boursier en temps réel</div>
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Suivi de portefeuille en temps réel
+        </div>
         <h1>
-            Vos ETF, actions et crypto.<br>
-            <span>Un seul tableau de bord.</span>
+            Votre portefeuille.<br>
+            <span class="gradient-text">Enfin sous contrôle.</span>
         </h1>
         <p>
-            Centralisez tous vos investissements, visualisez vos performances
-            et suivez votre stratégie DCA en temps réel via Yahoo Finance.
+            ETF, actions, crypto — centralisez tous vos investissements,
+            visualisez vos performances et pilotez votre stratégie DCA
+            depuis un seul tableau de bord.
         </p>
         <div class="hero-actions">
             <div class="hero-btns">
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Créer un compte gratuit</a>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">Se connecter</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    Commencer gratuitement →
+                </a>
+                <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
+                    Simulateur DCA
+                </a>
             </div>
-            <a href="{{ url_for('main.simulateur') }}"
-               style="font-size:0.9rem; color:rgba(255,255,255,0.85); text-decoration:none;
-                      border-bottom:1px solid rgba(255,255,255,0.4); padding-bottom:2px;">
-                ✦ Essayer le simulateur DCA gratuitement →
-            </a>
+            <p class="hero-note">100% gratuit · Pas de carte bancaire · <span>Données privées</span></p>
         </div>
     </div>
 </section>
@@ -328,7 +461,7 @@
         </div>
         <div>
             <div class="stat-num">Live</div>
-            <div class="stat-label">Prix en temps réel</div>
+            <div class="stat-label">Prix Yahoo Finance</div>
         </div>
         <div>
             <div class="stat-num">ETF · Actions · Crypto</div>
@@ -343,78 +476,78 @@
 
 <!-- Features -->
 <section class="features">
-    <div class="section-label">Fonctionnalités</div>
-    <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+    <div class="section-eyebrow">Fonctionnalités</div>
+    <h2 class="section-title">Tout ce qu'il vous faut.<br>Rien de superflu.</h2>
     <p class="section-sub">
-        Un outil pensé pour les investisseurs particuliers qui veulent
-        suivre leur portefeuille sans complexité inutile.
+        Conçu pour les investisseurs particuliers qui veulent de la clarté,
+        pas de la complexité.
     </p>
     <div class="features-grid">
         <div class="feature-card">
-            <div class="feature-icon">📈</div>
+            <span class="feature-icon">📈</span>
             <h3>Prix en temps réel</h3>
             <p>Connecté à Yahoo Finance — vos prix se mettent à jour automatiquement à chaque visite.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">🎯</div>
+            <span class="feature-icon">🎯</span>
             <h3>Suivi DCA</h3>
-            <p>Définissez un objectif mensuel et suivez votre avancement. Idéal pour les investisseurs en Dollar Cost Averaging.</p>
+            <p>Définissez un objectif mensuel et suivez votre progression. Idéal pour les stratégies d'investissement régulier.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">💼</div>
+            <span class="feature-icon">💼</span>
             <h3>Multi-actifs</h3>
-            <p>ETF, actions, crypto, obligations — suivez tous vos investissements dans un seul tableau de bord.</p>
+            <p>ETF, actions, crypto, obligations — tout centralisé dans un seul tableau de bord.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">📊</div>
+            <span class="feature-icon">📊</span>
             <h3>Graphiques interactifs</h3>
-            <p>Visualisez l'évolution de votre portefeuille avec des courbes claires : valeur investie vs valeur marché.</p>
+            <p>Courbes d'évolution, comparaison MSCI World, allocation par actif — visualisez tout d'un coup d'œil.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">⚡</div>
+            <span class="feature-icon">⚡</span>
             <h3>Saisie rapide</h3>
-            <p>Entrez plusieurs achats d'un coup. Idéal pour rattraper un historique complet en quelques minutes.</p>
+            <p>Entrez plusieurs achats d'un coup pour reconstituer votre historique complet en quelques minutes.</p>
         </div>
         <div class="feature-card">
-            <div class="feature-icon">📥</div>
+            <span class="feature-icon">📥</span>
             <h3>Export CSV</h3>
-            <p>Exportez tout votre historique en un clic pour vos déclarations fiscales ou vos analyses personnelles.</p>
+            <p>Exportez tout votre historique en un clic pour vos déclarations fiscales ou analyses.</p>
         </div>
     </div>
 </section>
 
 <!-- How it works -->
 <section class="how">
-    <div class="section-label">Comment ça marche</div>
-    <h2 class="section-title" style="margin-bottom:0.75rem;">Opérationnel en 3 minutes</h2>
-    <p class="section-sub">Pas de configuration complexe. Pas d'API key. Juste votre portefeuille.</p>
+    <div class="section-eyebrow">Comment ça marche</div>
+    <h2 class="section-title">Opérationnel en 3 minutes.</h2>
+    <p class="section-sub">Pas d'API key. Pas de configuration. Juste votre portefeuille.</p>
     <div class="steps">
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-content">
                 <h3>Créez votre compte</h3>
-                <p>Une adresse email et un mot de passe — c'est tout. Vos données sont privées et isolées.</p>
+                <p>Un email et un mot de passe. Vos données sont privées et isolées.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-content">
                 <h3>Ajoutez vos actifs</h3>
-                <p>Recherchez votre ETF ou action sur Yahoo Finance, entrez le ticker et c'est ajouté en 10 secondes.</p>
+                <p>Entrez le ticker de votre ETF ou action — le prix est récupéré automatiquement.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-content">
                 <h3>Saisissez vos achats</h3>
-                <p>Entrez vos achats passés en saisie multiple — date, parts, prix. Votre historique est reconstitué instantanément.</p>
+                <p>Date, parts, prix — votre historique est reconstitué instantanément.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">4</div>
             <div class="step-content">
                 <h3>Suivez en temps réel</h3>
-                <p>Votre dashboard affiche vos performances, plus-values et graphiques mis à jour automatiquement.</p>
+                <p>Performances, plus-values, graphiques — tout se met à jour automatiquement.</p>
             </div>
         </div>
     </div>
@@ -422,22 +555,31 @@
 
 <!-- CTA -->
 <section class="cta">
-    <h2>Prêt à suivre votre portefeuille ?</h2>
-    <p>Rejoignez PortfolioTrack et prenez le contrôle de vos investissements.</p>
-    <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-white">
-        Commencer gratuitement →
-    </a>
+    <div class="cta-bg"></div>
+    <div class="cta-inner">
+        <h2>Prêt à reprendre<br>le contrôle ?</h2>
+        <p>
+            Rejoignez PortfolioTrack et sachez exactement
+            où en est votre portefeuille, à tout moment.
+        </p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+            Créer un compte gratuit →
+        </a>
+        <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">
+            Gratuit · Sans engagement · Sans carte bancaire
+        </p>
+    </div>
 </section>
 
 <!-- Footer -->
 <footer>
     PortfolioTrack — Suivi de portefeuille boursier en temps réel.<br>
-    Créé par <strong>Maxence Robert</strong>. — <a href="{{ url_for('main.contact') }}" style="color:#9CA3AF;">Contact</a>
+    Créé par <strong style="color:rgba(255,255,255,0.5);">Maxence Robert</strong> —
+    <a href="{{ url_for('main.contact') }}">Contact</a>
     <br><br>
-    <span style="font-size:0.72rem; color:#555; max-width:700px; display:inline-block; line-height:1.6;">
-        ⚠️ Les informations affichées sont fournies à titre indicatif uniquement et ne constituent
-        pas un conseil en investissement. Les performances passées ne préjugent pas des performances
-        futures. Prix fournis par Yahoo Finance avec un possible décalage.
+    <span style="font-size:0.72rem; max-width:680px; display:inline-block; line-height:1.6;">
+        ⚠️ Les informations affichées sont fournies à titre indicatif et ne constituent pas un conseil
+        en investissement. Prix fournis par Yahoo Finance avec un possible décalage.
     </span>
 </footer>
 
