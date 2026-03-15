@@ -9,21 +9,22 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: #F4F4FB;
-        color: #0D0D0D;
+        background: #0A0A0F;
+        color: #E5E7EB;
         min-height: 100vh;
     }
 
     /* ── Nav ── */
     nav {
-        background: #5B5FED;
+        background: rgba(255,255,255,0.04);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
         padding: 0 1.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
         height: 56px;
-        box-shadow: 0 2px 12px rgba(91,95,237,0.3);
         position: relative;
+        backdrop-filter: blur(12px);
     }
     .nav-brand {
         color: white;
@@ -38,7 +39,7 @@
     }
     .nav-links { display: flex; gap: 0.15rem; align-items: center; }
     .nav-links a {
-        color: rgba(255,255,255,0.82);
+        color: rgba(255,255,255,0.55);
         text-decoration: none;
         padding: 0.38rem 0.8rem;
         border-radius: 6px;
@@ -46,20 +47,13 @@
         font-weight: 500;
         transition: all 0.15s;
     }
-    .nav-links a:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-links a:hover { background: rgba(255,255,255,0.08); color: white; }
     .nav-right {
         display: flex;
         align-items: center;
         gap: 1rem;
         font-size: 0.82rem;
-        color: rgba(255,255,255,0.65);
     }
-    .nav-right a {
-        color: rgba(255,255,255,0.65);
-        text-decoration: none;
-        transition: color 0.15s;
-    }
-    .nav-right a:hover { color: white; }
 
     /* ── Dropdown nav ── */
     .nav-dropdown { position: relative; display: inline-block; }
@@ -69,21 +63,21 @@
         cursor: pointer;
         font-size: 0.875rem;
         font-weight: 500;
-        color: rgba(255,255,255,0.82);
+        color: rgba(255,255,255,0.55);
         padding: 0.38rem 0.8rem;
         border-radius: 6px;
         transition: all 0.15s;
     }
-    .nav-dropdown-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-dropdown-btn:hover { background: rgba(255,255,255,0.08); color: white; }
     .nav-dropdown-menu {
         display: none;
         position: absolute;
         top: calc(100% + 0.5rem);
         left: 0;
-        background: white;
-        border: 1px solid #E5E7EB;
-        border-radius: 0.5rem;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        background: #16161F;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.4);
         min-width: 200px;
         z-index: 1000;
         padding: 0.4rem 0;
@@ -91,12 +85,12 @@
     .nav-dropdown-menu a {
         display: block;
         padding: 0.5rem 1rem;
-        font-size: 0.88rem;
-        color: #374151;
+        font-size: 0.875rem;
+        color: rgba(255,255,255,0.65);
         text-decoration: none;
         transition: background 0.1s;
     }
-    .nav-dropdown-menu a:hover { background: #F9FAFB; color: #374151; }
+    .nav-dropdown-menu a:hover { background: rgba(255,255,255,0.06); color: white; }
     .nav-dropdown:hover .nav-dropdown-menu { display: block; }
 
     /* ── Hamburger ── */
@@ -126,47 +120,45 @@
         top: 56px;
         left: 0;
         right: 0;
-        background: #4B4FCD;
+        background: #13131A;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
         z-index: 100;
         padding: 1rem 0;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         max-height: calc(100vh - 56px);
         overflow-y: auto;
     }
     .nav-mobile.open { display: block; }
     .nav-mobile a {
         display: block;
-        color: rgba(255,255,255,0.9);
+        color: rgba(255,255,255,0.7);
         text-decoration: none;
         padding: 0.75rem 1.5rem;
         font-size: 0.95rem;
         font-weight: 500;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
         transition: background 0.15s;
     }
-    .nav-mobile a:hover { background: rgba(255,255,255,0.1); }
+    .nav-mobile a:hover { background: rgba(255,255,255,0.05); color: white; }
     .nav-mobile .mobile-section {
         padding: 0.5rem 1.5rem 0.25rem;
         font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: rgba(255,255,255,0.45);
+        color: rgba(255,255,255,0.25);
         margin-top: 0.5rem;
     }
-    .nav-mobile .mobile-logout {
-        color: #FCA5A5 !important;
-    }
+    .nav-mobile .mobile-logout { color: #F87171 !important; }
 
     /* ── Layout ── */
     .container { max-width: 1140px; margin: 0 auto; padding: 2rem 1.5rem; }
 
     /* ── Cards ── */
     .card {
-        background: white;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 14px;
         padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
     }
 
     /* ── KPI ── */
@@ -177,26 +169,26 @@
         margin: 1.5rem 0;
     }
     .kpi-card {
-        background: white;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 14px;
         padding: 1.25rem 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
     }
     .kpi-label {
         font-size: 0.75rem;
-        color: #6B7280;
+        color: rgba(255,255,255,0.35);
         font-weight: 600;
         margin-bottom: 0.4rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
     }
-    .kpi-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
-    .kpi-sub   { font-size: 0.82rem; color: #6B7280; margin-top: 0.25rem; }
+    .kpi-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; color: white; }
+    .kpi-sub   { font-size: 0.82rem; color: rgba(255,255,255,0.35); margin-top: 0.25rem; }
 
     /* ── Couleurs ── */
-    .positive { color: #00C9A7; }
-    .negative { color: #FF6B6B; }
-    .neutral  { color: #6B7280; }
+    .positive { color: #34D399; }
+    .negative { color: #F87171; }
+    .neutral  { color: rgba(255,255,255,0.45); }
 
     /* ── Asset cards ── */
     .asset-grid {
@@ -206,11 +198,11 @@
         margin: 1.5rem 0;
     }
     .asset-card {
-        background: white;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 14px;
         padding: 1.4rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.055);
-        border-top: 4px solid #5B5FED;
+        border-top: 2px solid #5B5FED;
     }
     .asset-card h3 {
         font-size: 0.95rem;
@@ -219,10 +211,11 @@
         align-items: center;
         gap: 0.5rem;
         flex-wrap: wrap;
+        color: white;
     }
     .asset-table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
-    .asset-table td { padding: 0.32rem 0; color: #374151; }
-    .asset-table td:last-child { text-align: right; font-weight: 600; }
+    .asset-table td { padding: 0.32rem 0; color: rgba(255,255,255,0.45); border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .asset-table td:last-child { text-align: right; font-weight: 600; color: rgba(255,255,255,0.85); }
 
     /* ── Boutons ── */
     .btn {
@@ -237,15 +230,16 @@
         transition: all 0.15s;
         line-height: 1;
     }
-    .btn-primary { background: #5B5FED; color: white; }
-    .btn-primary:hover { background: #4B4FCD; }
-    .btn-success { background: #00C9A7; color: white; }
-    .btn-success:hover { background: #00A88D; }
-    .btn-danger  { background: #FF6B6B; color: white; }
-    .btn-danger:hover  { background: #E05555; }
-    .btn-ghost   { background: #F3F4F6; color: #374151; }
-    .btn-ghost:hover   { background: #E5E7EB; }
-    .btn-warning { background: #F6C90E; color: #374151; }
+    .btn-primary { background: linear-gradient(135deg, #5B5FED, #7C3AED); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-success { background: rgba(52,211,153,0.15); color: #34D399; border: 1px solid rgba(52,211,153,0.25); }
+    .btn-success:hover { background: rgba(52,211,153,0.25); }
+    .btn-danger  { background: rgba(248,113,113,0.12); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
+    .btn-danger:hover  { background: rgba(248,113,113,0.2); }
+    .btn-ghost   { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-ghost:hover   { background: rgba(255,255,255,0.1); color: white; }
+    .btn-warning { background: rgba(246,201,14,0.12); color: #F6C90E; border: 1px solid rgba(246,201,14,0.2); }
+    .btn-warning:hover { background: rgba(246,201,14,0.2); }
     .btn-sm { padding: 0.32rem 0.7rem; font-size: 0.78rem; }
 
     /* ── Formulaires ── */
@@ -256,32 +250,34 @@
         font-size: 0.845rem;
         font-weight: 600;
         margin-bottom: 0.35rem;
-        color: #374151;
+        color: rgba(255,255,255,0.65);
     }
     input, select, textarea {
         width: 100%;
         padding: 0.62rem 0.875rem;
-        border: 1.5px solid #E5E7EB;
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 8px;
         font-size: 0.925rem;
-        color: #0D0D0D;
-        background: white;
+        color: white;
+        background: rgba(255,255,255,0.06);
         transition: border-color 0.15s;
         font-family: inherit;
     }
     input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: #5B5FED;
-        box-shadow: 0 0 0 3px rgba(91,95,237,0.1);
+        box-shadow: 0 0 0 3px rgba(91,95,237,0.15);
+        background: rgba(91,95,237,0.06);
     }
-    .form-hint { font-size: 0.78rem; color: #9CA3AF; margin-top: 0.25rem; }
+    select option { background: #16161F; color: white; }
+    .form-hint { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-top: 0.25rem; }
     .form-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
 
     /* ── Saisie multiple ── */
     .purchase-row {
-        background: #FAFAFA;
-        border: 1px solid #E5E7EB;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 10px;
         padding: 1rem;
         margin-bottom: 0.75rem;
@@ -290,7 +286,7 @@
     .purchase-row .row-num {
         font-size: 0.75rem;
         font-weight: 700;
-        color: #5B5FED;
+        color: #818CF8;
         margin-bottom: 0.6rem;
     }
     .remove-row {
@@ -299,7 +295,7 @@
         right: 0.75rem;
         background: none;
         border: none;
-        color: #FF6B6B;
+        color: #F87171;
         cursor: pointer;
         font-size: 1.1rem;
         line-height: 1;
@@ -309,21 +305,23 @@
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
-        background: #5B5FED;
-        color: white;
+        background: rgba(91,95,237,0.2);
+        color: #818CF8;
         padding: 0.7rem 1rem;
         text-align: left;
         font-size: 0.82rem;
         font-weight: 600;
         white-space: nowrap;
+        border-bottom: 1px solid rgba(91,95,237,0.3);
     }
     tbody td {
         padding: 0.7rem 1rem;
         font-size: 0.875rem;
-        border-bottom: 1px solid #F3F4F6;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.7);
     }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: #FAFAFA; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
 
     /* ── Flash ── */
     .alerts { margin-bottom: 1rem; }
@@ -334,8 +332,8 @@
         margin-bottom: 0.5rem;
         font-weight: 500;
     }
-    .alert-success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-    .alert-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+    .alert-success { background: rgba(52,211,153,0.1); color: #34D399; border: 1px solid rgba(52,211,153,0.2); }
+    .alert-error   { background: rgba(248,113,113,0.1); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
 
     /* ── Page header ── */
     .page-header {
@@ -346,8 +344,8 @@
         gap: 1rem;
         flex-wrap: wrap;
     }
-    .page-header h1 { font-size: 1.45rem; font-weight: 700; }
-    .page-header p  { color: #6B7280; font-size: 0.875rem; margin-top: 0.2rem; }
+    .page-header h1 { font-size: 1.45rem; font-weight: 700; color: white; }
+    .page-header p  { color: rgba(255,255,255,0.35); font-size: 0.875rem; margin-top: 0.2rem; }
     .page-header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
     /* ── Auth ── */
@@ -356,20 +354,20 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #5B5FED 0%, #7C3AED 100%);
+        background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(91,95,237,0.2) 0%, transparent 70%), #0A0A0F;
     }
     .auth-card {
-        background: white;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 18px;
         padding: 2.5rem;
         width: 100%;
         max-width: 420px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     }
-    .auth-card h1 { font-size: 1.5rem; margin-bottom: 0.4rem; }
-    .auth-card p  { color: #6B7280; font-size: 0.875rem; margin-bottom: 1.75rem; }
-    .auth-link    { text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: #6B7280; }
-    .auth-link a  { color: #5B5FED; font-weight: 600; text-decoration: none; }
+    .auth-card h1 { font-size: 1.5rem; margin-bottom: 0.4rem; color: white; }
+    .auth-card p  { color: rgba(255,255,255,0.45); font-size: 0.875rem; margin-bottom: 1.75rem; }
+    .auth-link    { text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+    .auth-link a  { color: #818CF8; font-weight: 600; text-decoration: none; }
 
     /* ── Badges ── */
     .badge {
@@ -379,14 +377,14 @@
         font-size: 0.75rem;
         font-weight: 700;
     }
-    .badge-etf    { background: #EEF2FF; color: #5B5FED; }
-    .badge-action { background: #ECFDF5; color: #059669; }
-    .badge-crypto { background: #FEF3C7; color: #D97706; }
-    .badge-other  { background: #F3F4F6; color: #6B7280; }
+    .badge-etf    { background: rgba(91,95,237,0.2); color: #818CF8; }
+    .badge-action { background: rgba(52,211,153,0.15); color: #34D399; }
+    .badge-crypto { background: rgba(246,201,14,0.12); color: #F6C90E; }
+    .badge-other  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
 
     /* ── DCA Progress ── */
     .progress-bar-wrap {
-        background: #E5E7EB;
+        background: rgba(255,255,255,0.08);
         border-radius: 99px;
         height: 8px;
         margin-top: 0.5rem;
@@ -395,7 +393,7 @@
     .progress-bar {
         height: 100%;
         border-radius: 99px;
-        background: linear-gradient(90deg, #5B5FED, #00C9A7);
+        background: linear-gradient(90deg, #5B5FED, #34D399);
         transition: width 0.4s ease;
     }
 
@@ -403,18 +401,18 @@
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6B7280;
+        color: rgba(255,255,255,0.35);
     }
-    .empty-state h3 { font-size: 1.05rem; margin-bottom: 0.5rem; color: #374151; }
+    .empty-state h3 { font-size: 1.05rem; margin-bottom: 0.5rem; color: rgba(255,255,255,0.7); }
     .empty-state p  { font-size: 0.875rem; margin-bottom: 1.5rem; }
 
     /* ── Section title ── */
     .section-title {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #9CA3AF;
+        letter-spacing: 0.1em;
+        color: rgba(255,255,255,0.25);
         margin: 1.75rem 0 0.75rem;
     }
 
@@ -423,9 +421,11 @@
         text-align: center;
         padding: 2rem 1rem 1.5rem;
         font-size: 0.78rem;
-        color: #9CA3AF;
+        color: rgba(255,255,255,0.2);
+        border-top: 1px solid rgba(255,255,255,0.05);
+        margin-top: 2rem;
     }
-    footer a { color: #5B5FED; text-decoration: none; }
+    footer a { color: #818CF8; text-decoration: none; }
 
     /* ── Mobile responsive ── */
     @media (max-width: 768px) {
@@ -443,7 +443,6 @@
         thead th { padding: 0.5rem 0.6rem; font-size: 0.75rem; }
         tbody td { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
     }
-
     @media (max-width: 480px) {
         .kpi-grid { grid-template-columns: 1fr; }
         .kpi-value { font-size: 1.4rem; }
@@ -464,7 +463,7 @@
 <nav>
     <a href="{{ url_for('main.dashboard') }}" class="nav-brand">
         <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-            <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.2)"/>
+            <rect width="28" height="28" rx="7" fill="#5B5FED"/>
             <polyline points="4,20 10,8 16,13 22,4"
                       fill="none" stroke="white" stroke-width="2.5"
                       stroke-linecap="round" stroke-linejoin="round"/>
@@ -484,7 +483,7 @@
                 <a href="{{ url_for('main.add_sale_route') }}">+ Vente</a>
                 <a href="{{ url_for('main.add_dividend_route') }}">+ Dividende</a>
                 <a href="{{ url_for('main.add_asset_route') }}">+ Actif</a>
-                <hr style="margin:0.25rem 0; border-color:#F3F4F6;">
+                <hr style="margin:0.25rem 0; border-color:rgba(255,255,255,0.08);">
                 <a href="{{ url_for('main.purchases') }}">Historique achats</a>
                 <a href="{{ url_for('main.dividends') }}">Historique dividendes</a>
                 <a href="{{ url_for('main.import_csv') }}">↑ Import Excel</a>
@@ -502,40 +501,33 @@
             <div class="nav-dropdown-menu" style="right:0; left:auto;">
                 <a href="{{ url_for('main.profile') }}">👤 Mon profil</a>
                 <a href="{{ url_for('main.settings') }}">⚙️ Objectif DCA</a>
-                <hr style="margin:0.25rem 0; border-color:#F3F4F6;">
-                <a href="{{ url_for('auth.logout') }}" style="color:#EF4444;">Déconnexion</a>
+                <hr style="margin:0.25rem 0; border-color:rgba(255,255,255,0.08);">
+                <a href="{{ url_for('auth.logout') }}" style="color:#F87171;">Déconnexion</a>
             </div>
         </div>
     </div>
 
-    <!-- Hamburger mobile -->
     <button class="nav-hamburger" onclick="toggleMobileMenu()" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
     </button>
 </nav>
 
-<!-- Menu mobile -->
 <div class="nav-mobile" id="mobileMenu">
     <div class="mobile-section">Navigation</div>
     <a href="{{ url_for('main.dashboard') }}" onclick="closeMobileMenu()">📊 Dashboard</a>
     <a href="{{ url_for('main.charts') }}" onclick="closeMobileMenu()">📈 Graphiques</a>
     <a href="{{ url_for('main.simulateur') }}" onclick="closeMobileMenu()">🧮 Simulateur</a>
     <a href="{{ url_for('main.contact') }}" onclick="closeMobileMenu()">✉️ Contact</a>
-
     <div class="mobile-section">Actions</div>
     <a href="{{ url_for('main.add_purchase_route') }}" onclick="closeMobileMenu()">+ Achat</a>
     <a href="{{ url_for('main.add_sale_route') }}" onclick="closeMobileMenu()">+ Vente</a>
     <a href="{{ url_for('main.add_dividend_route') }}" onclick="closeMobileMenu()">+ Dividende</a>
     <a href="{{ url_for('main.add_asset_route') }}" onclick="closeMobileMenu()">+ Actif</a>
-
     <div class="mobile-section">Historique</div>
     <a href="{{ url_for('main.purchases') }}" onclick="closeMobileMenu()">Historique achats</a>
     <a href="{{ url_for('main.dividends') }}" onclick="closeMobileMenu()">Historique dividendes</a>
     <a href="{{ url_for('main.import_csv') }}" onclick="closeMobileMenu()">↑ Import Excel</a>
     <a href="{{ url_for('main.export_csv') }}" onclick="closeMobileMenu()">↓ Export CSV</a>
-
     <div class="mobile-section">Compte</div>
     <a href="{{ url_for('main.profile') }}" onclick="closeMobileMenu()">👤 Mon profil</a>
     <a href="{{ url_for('main.settings') }}" onclick="closeMobileMenu()">⚙️ Objectif DCA</a>
@@ -558,7 +550,7 @@
     PortfolioTrack — Suivez votre portefeuille boursier en temps réel.
     Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
     <br><br>
-    <span style="font-size:0.72rem; color:#C4C4C4; max-width:700px; display:inline-block; line-height:1.6;">
+    <span style="font-size:0.72rem; color:rgba(255,255,255,0.15); max-width:700px; display:inline-block; line-height:1.6;">
         ⚠️ Les informations affichées sur PortfolioTrack sont fournies à titre indicatif uniquement
         et ne constituent pas un conseil en investissement. Les performances passées ne préjugent pas
         des performances futures. Prix fournis par Yahoo Finance avec un possible décalage.
