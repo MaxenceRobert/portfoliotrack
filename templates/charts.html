@@ -17,51 +17,36 @@
 </div>
 
 {% else %}
-<!-- Graphique global -->
+
 {% if portfolio_chart %}
-<div class="card" style="margin-bottom:1.5rem; border-top:4px solid #5B5FED;">
+<div class="card" style="margin-bottom:1.5rem; border-top:2px solid #5B5FED;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
-            <strong style="font-size:1.05rem;">📊 Portefeuille total</strong>
-            <span style="font-size:0.82rem; color:#9CA3AF; margin-left:0.5rem;">
-                Tous actifs confondus
-            </span>
+            <strong style="font-size:1.05rem; color:white;">📊 Portefeuille total</strong>
+            <span style="font-size:0.82rem; color:rgba(255,255,255,0.35); margin-left:0.5rem;">Tous actifs confondus</span>
         </div>
         <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-sm btn-primary"
-                    onclick="setMode('portfolio', 'eur', this)">
-                Valeur (€)
-            </button>
-            <button class="btn btn-sm btn-ghost"
-                    onclick="setMode('portfolio', 'pct', this)">
-                Performance (%)
-            </button>
+            <button class="btn btn-sm btn-primary" onclick="setMode('portfolio', 'eur', this)">Valeur (€)</button>
+            <button class="btn btn-sm btn-ghost" onclick="setMode('portfolio', 'pct', this)">Performance (%)</button>
         </div>
     </div>
     <div id="chart-portfolio"></div>
 </div>
 {% endif %}
+
 {% for etf_id, data in charts.items() %}
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
-            <span class="badge badge-blue">{{ data.asset.ticker }}</span>
-            <strong style="margin-left:0.5rem;">{{ data.asset.name }}</strong>
+            <span class="badge badge-etf">{{ data.asset.ticker }}</span>
+            <strong style="margin-left:0.5rem; color:white;">{{ data.asset.name }}</strong>
             {% if data.asset.isin %}
-            <span style="font-size:0.8rem; color:#9CA3AF; margin-left:0.5rem;">
-                {{ data.asset.isin }}
-            </span>
+            <span style="font-size:0.8rem; color:rgba(255,255,255,0.3); margin-left:0.5rem;">{{ data.asset.isin }}</span>
             {% endif %}
         </div>
         <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-sm btn-primary"
-                    onclick="setMode('{{ etf_id }}', 'eur', this)">
-                Valeur (€)
-            </button>
-            <button class="btn btn-sm btn-ghost"
-                    onclick="setMode('{{ etf_id }}', 'pct', this)">
-                Performance (%)
-            </button>
+            <button class="btn btn-sm btn-primary" onclick="setMode('{{ etf_id }}', 'eur', this)">Valeur (€)</button>
+            <button class="btn btn-sm btn-ghost" onclick="setMode('{{ etf_id }}', 'pct', this)">Performance (%)</button>
         </div>
     </div>
     <div id="chart-{{ etf_id }}"></div>
@@ -71,6 +56,7 @@
 <script>
 const chartsData = {};
 const originalY  = {};
+
 {% if portfolio_chart %}
 chartsData["portfolio"] = {{ portfolio_chart | safe }};
 {% endif %}
@@ -78,14 +64,34 @@ chartsData["portfolio"] = {{ portfolio_chart | safe }};
 chartsData["{{ etf_id }}"] = {{ data.plot | safe }};
 {% endfor %}
 
-// Sauvegarde les données originales AVANT tout rendu
+const darkLayout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: 'rgba(255,255,255,0.5)' },
+    xaxis: {
+        gridcolor: 'rgba(255,255,255,0.06)',
+        linecolor: 'rgba(255,255,255,0.08)',
+        tickfont: { color: 'rgba(255,255,255,0.4)' }
+    },
+    yaxis: {
+        gridcolor: 'rgba(255,255,255,0.06)',
+        linecolor: 'rgba(255,255,255,0.08)',
+        tickfont: { color: 'rgba(255,255,255,0.4)' }
+    },
+    legend: {
+        font: { color: 'rgba(255,255,255,0.5)' },
+        bgcolor: 'rgba(0,0,0,0)'
+    }
+};
+
 Object.keys(chartsData).forEach(id => {
     const fig = chartsData[id];
     originalY[id] = {
         inv: [...fig.data[0].y],
         mkt: [...fig.data[1].y]
     };
-    Plotly.newPlot('chart-' + id, fig.data, fig.layout,
+    const layout = Object.assign({}, fig.layout, darkLayout);
+    Plotly.newPlot('chart-' + id, fig.data, layout,
         { responsive: true, displayModeBar: false });
 });
 
@@ -93,7 +99,6 @@ function setMode(id, mode, btn) {
     const orig  = originalY[id];
     const baseY = orig.inv[0];
 
-    // Boutons
     btn.parentElement.querySelectorAll('.btn').forEach(b => {
         b.classList.remove('btn-primary');
         b.classList.add('btn-ghost');

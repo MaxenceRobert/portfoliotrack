@@ -23,7 +23,6 @@
 
 {% else %}
 
-<!-- ── KPI Globaux ── -->
 <div class="kpi-grid">
     <div class="kpi-card">
         <div class="kpi-label">Valeur actuelle</div>
@@ -57,18 +56,17 @@
     </div>
 </div>
 
-<!-- ── Objectif DCA ── -->
 {% if summary.dca_target > 0 %}
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
         <div>
-            <span style="font-weight:700;">Objectif DCA ce mois</span>
+            <span style="font-weight:700; color:white;">Objectif DCA ce mois</span>
             <span class="neutral" style="font-size:0.85rem; margin-left:0.75rem;">
                 {{ summary.invested_month }} € / {{ summary.dca_target }} €
             </span>
         </div>
         <span style="font-weight:700; font-size:1.1rem;
-              color: {{ '#00C9A7' if summary.dca_progress >= 100 else '#5B5FED' }};">
+              color: {{ '#34D399' if summary.dca_progress >= 100 else '#818CF8' }};">
             {{ summary.dca_progress }}%
         </span>
     </div>
@@ -76,11 +74,11 @@
         <div class="progress-bar" style="width: {{ [summary.dca_progress, 100]|min }}%;"></div>
     </div>
     {% if summary.dca_progress >= 100 %}
-    <div style="font-size:0.82rem; color:#00C9A7; margin-top:0.4rem; font-weight:600;">
+    <div style="font-size:0.82rem; color:#34D399; margin-top:0.4rem; font-weight:600;">
         ✓ Objectif atteint ce mois !
     </div>
     {% else %}
-    <div style="font-size:0.82rem; color:#9CA3AF; margin-top:0.4rem;">
+    <div style="font-size:0.82rem; color:rgba(255,255,255,0.3); margin-top:0.4rem;">
         Il reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
         à investir pour atteindre ton objectif.
     </div>
@@ -89,13 +87,12 @@
 {% else %}
 <div style="margin-bottom:1.5rem;">
     <a href="{{ url_for('main.settings') }}"
-       style="font-size:0.82rem; color:#9CA3AF; text-decoration:none;">
+       style="font-size:0.82rem; color:rgba(255,255,255,0.3); text-decoration:none;">
         ＋ Définir un objectif DCA mensuel →
     </a>
 </div>
 {% endif %}
 
-<!-- ── Actifs par type ── -->
 {% for asset_type, assets in summary.by_type.items() %}
 <div class="section-title">{{ asset_type }}s</div>
 <div class="asset-grid">
@@ -111,7 +108,7 @@
         </span>
         <span>{{ a.name }}</span>
         {% if a.isin %}
-        <span style="font-size:0.72rem; color:#9CA3AF; font-weight:400;">{{ a.isin }}</span>
+        <span style="font-size:0.72rem; color:rgba(255,255,255,0.25); font-weight:400;">{{ a.isin }}</span>
         {% endif %}
     </h3>
     <table class="asset-table">
@@ -122,7 +119,7 @@
             <td>
                 <strong>{{ a.current_price }} {{ a.currency }}</strong>
                 {% if a.price_timestamp %}
-                <div style="font-size:0.72rem; color:#9CA3AF; font-weight:400;">
+                <div style="font-size:0.72rem; color:rgba(255,255,255,0.25); font-weight:400;">
                     {{ a.price_timestamp }}
                 </div>
                 {% endif %}
@@ -181,7 +178,6 @@
 </div>
 {% endfor %}
 
-<!-- ── Allocation ── -->
 {% if summary.allocation %}
 <div class="section-title">Allocation du portefeuille</div>
 <div class="card" style="margin-bottom:1.5rem;">
@@ -191,33 +187,37 @@
 const alloc = {{ summary.allocation | tojson }};
 const labels = alloc.map(a => a.ticker);
 const values = alloc.map(a => a.value);
-const colors = ['#5B5FED','#00C9A7','#F6C90E','#FF6B6B','#7C3AED',
-                '#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+const colors = ['#5B5FED','#34D399','#F6C90E','#F87171','#7C3AED',
+                '#38BDF8','#10B981','#F59E0B','#EF4444','#8B5CF6'];
 Plotly.newPlot('pie-chart', [{
     type: 'pie', labels: labels, values: values, hole: 0.45,
-    marker: { colors: colors }, textinfo: 'label+percent',
+    marker: { colors: colors },
+    textinfo: 'label+percent',
+    textfont: { color: 'rgba(255,255,255,0.85)' },
     hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
 }], {
-    template: 'plotly_white', height: 320,
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    height: 320,
     margin: { l: 20, r: 20, t: 20, b: 20 },
-    showlegend: true, legend: { orientation: 'h', y: -0.15 }
+    showlegend: true,
+    legend: {
+        orientation: 'h', y: -0.15,
+        font: { color: 'rgba(255,255,255,0.6)' }
+    }
 }, { responsive: true, displayModeBar: false });
 </script>
 {% endif %}
 
-<!-- ── Diversification ── -->
 {% if summary.by_type %}
 <div class="section-title">Diversification par type</div>
 <div class="card" style="margin-bottom:1.5rem;">
     <table style="width:100%; border-collapse:collapse;">
         <thead>
             <tr>
-                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
-                            text-align:left; font-size:0.82rem;">Type</th>
-                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
-                            text-align:right; font-size:0.82rem;">Valeur</th>
-                <th style="background:#5B5FED; color:white; padding:0.6rem 1rem;
-                            text-align:right; font-size:0.82rem;">Poids</th>
+                <th>Type</th>
+                <th style="text-align:right;">Valeur</th>
+                <th style="text-align:right;">Poids</th>
             </tr>
         </thead>
         <tbody>
@@ -226,16 +226,14 @@ Plotly.newPlot('pie-chart', [{
                                    | sum(attribute='current_value') %}
         {% if type_value > 0 %}
         <tr>
-            <td style="padding:0.6rem 1rem;">
+            <td>
                 <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
                                   else 'badge-action' if asset_type == 'Action'
                                   else 'badge-crypto' if asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ asset_type }}</span>
             </td>
-            <td style="padding:0.6rem 1rem; text-align:right; font-weight:600;">
-                {{ type_value|round(2) }} €
-            </td>
-            <td style="padding:0.6rem 1rem; text-align:right;">
+            <td style="text-align:right; font-weight:600;">{{ type_value|round(2) }} €</td>
+            <td style="text-align:right;">
                 {% if summary.total_value > 0 %}
                 {{ ((type_value / summary.total_value) * 100)|round(1) }}%
                 {% else %}—{% endif %}
