@@ -67,6 +67,11 @@ chartsData["{{ etf_id }}"] = {{ data.plot | safe }};
 const darkLayout = {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
+    hoverlabel: {
+        bgcolor: '#16161F',
+        bordercolor: 'rgba(255,255,255,0.1)',
+        font: { color: 'rgba(255,255,255,0.8)' }
+    },
     font: { color: 'rgba(255,255,255,0.5)' },
     xaxis: {
         gridcolor: 'rgba(255,255,255,0.06)',
