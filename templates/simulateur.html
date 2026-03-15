@@ -152,7 +152,11 @@ function simulate() {
         margin: { l: 20, r: 20, t: 20, b: 40 },
         legend: { orientation: 'h', y: -0.15 },
         hovermode: 'x unified',
-        yaxis: { ticksuffix: ' €' }
+        yaxis: {
+            tickformat: ',.0f',
+            ticksuffix: ' €',
+            separatethousands: true
+        }
     }, { responsive: true, displayModeBar: false });
 }
 

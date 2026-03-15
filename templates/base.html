@@ -17,12 +17,13 @@
     /* ── Nav ── */
     nav {
         background: #5B5FED;
-        padding: 0 2rem;
+        padding: 0 1.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
         height: 56px;
         box-shadow: 0 2px 12px rgba(91,95,237,0.3);
+        position: relative;
     }
     .nav-brand {
         color: white;
@@ -33,6 +34,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        z-index: 101;
     }
     .nav-links { display: flex; gap: 0.15rem; align-items: center; }
     .nav-links a {
@@ -60,10 +62,7 @@
     .nav-right a:hover { color: white; }
 
     /* ── Dropdown nav ── */
-    .nav-dropdown {
-        position: relative;
-        display: inline-block;
-    }
+    .nav-dropdown { position: relative; display: inline-block; }
     .nav-dropdown-btn {
         background: none;
         border: none;
@@ -75,10 +74,7 @@
         border-radius: 6px;
         transition: all 0.15s;
     }
-    .nav-dropdown-btn:hover {
-        background: rgba(255,255,255,0.15);
-        color: white;
-    }
+    .nav-dropdown-btn:hover { background: rgba(255,255,255,0.15); color: white; }
     .nav-dropdown-menu {
         display: none;
         position: absolute;
@@ -100,12 +96,66 @@
         text-decoration: none;
         transition: background 0.1s;
     }
-    .nav-dropdown-menu a:hover {
-        background: #F9FAFB;
-        color: #374151;
+    .nav-dropdown-menu a:hover { background: #F9FAFB; color: #374151; }
+    .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+
+    /* ── Hamburger ── */
+    .nav-hamburger {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 4px;
+        z-index: 101;
     }
-    .nav-dropdown:hover .nav-dropdown-menu {
+    .nav-hamburger span {
         display: block;
+        width: 24px;
+        height: 2px;
+        background: white;
+        border-radius: 2px;
+        transition: all 0.3s;
+    }
+
+    /* ── Mobile menu ── */
+    .nav-mobile {
+        display: none;
+        position: fixed;
+        top: 56px;
+        left: 0;
+        right: 0;
+        background: #4B4FCD;
+        z-index: 100;
+        padding: 1rem 0;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        max-height: calc(100vh - 56px);
+        overflow-y: auto;
+    }
+    .nav-mobile.open { display: block; }
+    .nav-mobile a {
+        display: block;
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        transition: background 0.15s;
+    }
+    .nav-mobile a:hover { background: rgba(255,255,255,0.1); }
+    .nav-mobile .mobile-section {
+        padding: 0.5rem 1.5rem 0.25rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.45);
+        margin-top: 0.5rem;
+    }
+    .nav-mobile .mobile-logout {
+        color: #FCA5A5 !important;
     }
 
     /* ── Layout ── */
@@ -376,7 +426,29 @@
         color: #9CA3AF;
     }
     footer a { color: #5B5FED; text-decoration: none; }
-</style>
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 768px) {
+        .nav-links { display: none; }
+        .nav-right { display: none; }
+        .nav-hamburger { display: flex; }
+        .container { padding: 1.25rem 1rem; }
+        .kpi-grid { grid-template-columns: 1fr 1fr; }
+        .asset-grid { grid-template-columns: 1fr; }
+        .form-row { grid-template-columns: 1fr; }
+        .form-row-3 { grid-template-columns: 1fr; }
+        .page-header { flex-direction: column; }
+        .page-header-actions { width: 100%; }
+        .table-wrap { font-size: 0.8rem; }
+        thead th { padding: 0.5rem 0.6rem; font-size: 0.75rem; }
+        tbody td { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
+    }
+
+    @media (max-width: 480px) {
+        .kpi-grid { grid-template-columns: 1fr; }
+        .kpi-value { font-size: 1.4rem; }
+    }
+    </style>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4GYZ9CCJVF"></script>
 <script>
@@ -391,21 +463,20 @@
 {% if current_user.is_authenticated %}
 <nav>
     <a href="{{ url_for('main.dashboard') }}" class="nav-brand">
-    <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-        <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.2)"/>
-        <polyline points="4,20 10,8 16,13 22,4"
-                  fill="none" stroke="white" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="22" cy="4" r="3" fill="#F6C90E"/>
-    </svg>
-    PortfolioTrack
-</a>
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.2)"/>
+            <polyline points="4,20 10,8 16,13 22,4"
+                      fill="none" stroke="white" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="22" cy="4" r="3" fill="#F6C90E"/>
+        </svg>
+        PortfolioTrack
+    </a>
+
     <div class="nav-links">
         <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
         <a href="{{ url_for('main.charts') }}">Graphiques</a>
         <a href="{{ url_for('main.simulateur') }}">Simulateur</a>
-
-        <!-- Menu Actions -->
         <div class="nav-dropdown">
             <button class="nav-dropdown-btn">Actions ▾</button>
             <div class="nav-dropdown-menu">
@@ -420,12 +491,10 @@
                 <a href="{{ url_for('main.export_csv') }}">↓ Export CSV</a>
             </div>
         </div>
-
         <a href="{{ url_for('main.contact') }}">Contact</a>
     </div>
 
     <div class="nav-right">
-        <!-- Menu compte -->
         <div class="nav-dropdown">
             <button class="nav-dropdown-btn">
                 👤 {{ current_user.email.split('@')[0] }} ▾
@@ -434,12 +503,44 @@
                 <a href="{{ url_for('main.profile') }}">👤 Mon profil</a>
                 <a href="{{ url_for('main.settings') }}">⚙️ Objectif DCA</a>
                 <hr style="margin:0.25rem 0; border-color:#F3F4F6;">
-                <a href="{{ url_for('auth.logout') }}"
-                   style="color:#EF4444;">Déconnexion</a>
+                <a href="{{ url_for('auth.logout') }}" style="color:#EF4444;">Déconnexion</a>
             </div>
         </div>
     </div>
+
+    <!-- Hamburger mobile -->
+    <button class="nav-hamburger" onclick="toggleMobileMenu()" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 </nav>
+
+<!-- Menu mobile -->
+<div class="nav-mobile" id="mobileMenu">
+    <div class="mobile-section">Navigation</div>
+    <a href="{{ url_for('main.dashboard') }}" onclick="closeMobileMenu()">📊 Dashboard</a>
+    <a href="{{ url_for('main.charts') }}" onclick="closeMobileMenu()">📈 Graphiques</a>
+    <a href="{{ url_for('main.simulateur') }}" onclick="closeMobileMenu()">🧮 Simulateur</a>
+    <a href="{{ url_for('main.contact') }}" onclick="closeMobileMenu()">✉️ Contact</a>
+
+    <div class="mobile-section">Actions</div>
+    <a href="{{ url_for('main.add_purchase_route') }}" onclick="closeMobileMenu()">+ Achat</a>
+    <a href="{{ url_for('main.add_sale_route') }}" onclick="closeMobileMenu()">+ Vente</a>
+    <a href="{{ url_for('main.add_dividend_route') }}" onclick="closeMobileMenu()">+ Dividende</a>
+    <a href="{{ url_for('main.add_asset_route') }}" onclick="closeMobileMenu()">+ Actif</a>
+
+    <div class="mobile-section">Historique</div>
+    <a href="{{ url_for('main.purchases') }}" onclick="closeMobileMenu()">Historique achats</a>
+    <a href="{{ url_for('main.dividends') }}" onclick="closeMobileMenu()">Historique dividendes</a>
+    <a href="{{ url_for('main.import_csv') }}" onclick="closeMobileMenu()">↑ Import Excel</a>
+    <a href="{{ url_for('main.export_csv') }}" onclick="closeMobileMenu()">↓ Export CSV</a>
+
+    <div class="mobile-section">Compte</div>
+    <a href="{{ url_for('main.profile') }}" onclick="closeMobileMenu()">👤 Mon profil</a>
+    <a href="{{ url_for('main.settings') }}" onclick="closeMobileMenu()">⚙️ Objectif DCA</a>
+    <a href="{{ url_for('auth.logout') }}" class="mobile-logout">Déconnexion</a>
+</div>
 {% endif %}
 
 <div class="{% if not current_user.is_authenticated %}{% else %}container{% endif %}">
@@ -465,6 +566,23 @@
         base des données affichées.
     </span>
 </footer>
+
+<script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('open');
+}
+function closeMobileMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('mobileMenu');
+    const hamburger = document.getElementById('hamburger');
+    if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+        menu.classList.remove('open');
+    }
+});
+</script>
 
 </body>
 </html>
