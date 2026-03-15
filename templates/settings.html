@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Objectif DCA{% endblock %}
 {% block content %}
-
 <div class="page-header">
     <div>
         <h1>Objectif DCA mensuel</h1>
@@ -23,11 +22,8 @@
                 chaque mois sur le dashboard.
             </div>
         </div>
-
         <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-            <button type="submit" class="btn btn-primary">
-                Enregistrer l'objectif
-            </button>
+            <button type="submit" class="btn btn-primary">Enregistrer l'objectif</button>
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Retour</a>
         </div>
     </form>
@@ -36,12 +32,14 @@
 {% if goal %}
 <div class="card" style="margin-top:1.5rem; max-width:560px;">
     <div class="kpi-label">Objectif actuel</div>
-    <div class="kpi-value" style="margin-top:0.4rem;">
+    <div class="kpi-value" style="margin-top:0.4rem; color:white;">
         {{ goal['monthly_target'] }} € / mois
     </div>
+    {% if goal['updated_at'] %}
     <div class="kpi-sub" style="margin-top:0.4rem;">
-        Mis à jour le {{ goal['updated_at'][:10] }}
+        Mis à jour le {{ goal['updated_at']|string|truncate(10, True, '') }}
     </div>
+    {% endif %}
 </div>
 {% endif %}
 

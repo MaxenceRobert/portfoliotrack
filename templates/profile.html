@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Mon profil — PortfolioTrack{% endblock %}
 {% block content %}
-
 <div class="page-header">
     <div>
         <h1>Mon profil</h1>
@@ -11,17 +10,14 @@
 
 <div style="display:flex; flex-direction:column; gap:1.5rem; max-width:520px;">
 
-    <!-- Email -->
     <div class="card">
-        <h3 style="font-size:1rem; margin-bottom:1.25rem;">
-            Changer l'adresse email
-        </h3>
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer l'adresse email</h3>
         <form method="POST">
             <input type="hidden" name="action" value="email">
             <div class="form-group">
                 <label>Email actuel</label>
                 <input type="text" value="{{ current_user.email }}" disabled
-                       style="background:#F9FAFB; color:#9CA3AF;">
+                       style="background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.3); cursor:not-allowed;">
             </div>
             <div class="form-group">
                 <label for="new_email">Nouvel email</label>
@@ -37,11 +33,8 @@
         </form>
     </div>
 
-    <!-- Mot de passe -->
     <div class="card">
-        <h3 style="font-size:1rem; margin-bottom:1.25rem;">
-            Changer le mot de passe
-        </h3>
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer le mot de passe</h3>
         <form method="POST">
             <input type="hidden" name="action" value="password">
             <div class="form-group">
@@ -63,24 +56,18 @@
         </form>
     </div>
 
-    <!-- Danger zone -->
-    <div class="card" style="border-top:3px solid #FF6B6B;">
-        <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#FF6B6B;">
-            Zone de danger
-        </h3>
-        <p style="font-size:0.875rem; color:#6B7280; margin-bottom:1rem;">
-            La suppression de votre compte est définitive et efface
-            toutes vos données.
+    <div class="card" style="border-top:2px solid rgba(248,113,113,0.4);">
+        <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#F87171;">Zone de danger</h3>
+        <p style="font-size:0.875rem; color:rgba(255,255,255,0.35); margin-bottom:1rem;">
+            La suppression de votre compte est définitive et efface toutes vos données.
         </p>
-        <button class="btn btn-danger btn-sm" disabled
-                title="Fonctionnalité à venir">
+        <button class="btn btn-danger btn-sm" disabled title="Fonctionnalité à venir">
             Supprimer mon compte
         </button>
-        <div style="font-size:0.75rem; color:#9CA3AF; margin-top:0.5rem;">
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.25); margin-top:0.5rem;">
             Contactez-nous pour supprimer votre compte manuellement.
         </div>
     </div>
 
 </div>
-
 {% endblock %}
