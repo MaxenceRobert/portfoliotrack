@@ -39,6 +39,9 @@ def init_db():
             )
         ''')
         c.execute('''
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE
+        ''')
+        c.execute('''
             CREATE TABLE IF NOT EXISTS assets (
                 id          SERIAL PRIMARY KEY,
                 user_id     INTEGER NOT NULL,
@@ -103,6 +106,15 @@ def init_db():
                 created_at  TIMESTAMP DEFAULT NOW(),
                 FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
                 FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS email_tokens (
+                id         SERIAL PRIMARY KEY,
+                user_id    INTEGER NOT NULL,
+                token      TEXT    NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
     else:
@@ -179,6 +191,15 @@ def init_db():
                 created_at  TEXT    DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
                 FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS email_tokens (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL,
+                token      TEXT    NOT NULL UNIQUE,
+                created_at TEXT    DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
 
@@ -553,6 +574,33 @@ def update_user_password(user_id, new_password_hash):
     conn = get_db()
     c = conn.cursor()
     c.execute(f'UPDATE users SET password_hash = {p} WHERE id = {p}', (new_password_hash, user_id))
+    conn.commit()
+    conn.close()
+
+def create_email_token(user_id, token):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'DELETE FROM email_tokens WHERE user_id = {p}', (user_id,))
+    c.execute(f'INSERT INTO email_tokens (user_id, token) VALUES ({p}, {p})', (user_id, token))
+    conn.commit()
+    conn.close()
+
+def get_email_token(token):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM email_tokens WHERE token = {p}', (token,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    return row
+
+def verify_user_email(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'UPDATE users SET email_verified = TRUE WHERE id = {p}', (user_id,))
+    c.execute(f'DELETE FROM email_tokens WHERE user_id = {p}', (user_id,))
     conn.commit()
     conn.close()
 
