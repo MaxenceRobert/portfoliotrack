@@ -102,7 +102,8 @@ Object.keys(chartsData).forEach(id => {
     const fig = chartsData[id];
     originalY[id] = {
         inv: [...fig.data[0].y],
-        mkt: [...fig.data[1].y]
+        mkt: [...fig.data[1].y],
+        msci: fig.data[2] ? [...fig.data[2].y] : null
     };
     const layout = Object.assign({}, fig.layout, darkLayout);
     Plotly.newPlot('chart-' + id, fig.data, layout,
@@ -110,8 +111,7 @@ Object.keys(chartsData).forEach(id => {
 });
 
 function setMode(id, mode, btn) {
-    const orig  = originalY[id];
-    const baseY = orig.inv.find(v => v > 0) || orig.inv[0];
+    const orig = originalY[id];
 
     btn.parentElement.querySelectorAll('.btn').forEach(b => {
         b.classList.remove('btn-primary');
@@ -121,15 +121,27 @@ function setMode(id, mode, btn) {
     btn.classList.add('btn-primary');
 
     if (mode === 'pct') {
-        const yInv = orig.inv.map(v => baseY > 0 ? +((v - baseY) / baseY * 100).toFixed(2) : 0);
-        const yMkt = orig.mkt.map(v => baseY > 0 ? +((v - baseY) / baseY * 100).toFixed(2) : 0);
-        Plotly.update('chart-' + id,
-            { y: [yInv, yMkt] },
-            { 'yaxis.ticksuffix': '%', 'yaxis.tickprefix': '' }
-        );
+        const baseInv  = orig.inv.find(v => v > 0)  || 1;
+        const baseMkt  = orig.mkt.find(v => v > 0)  || 1;
+
+        const yInv  = orig.inv.map(v  => +((v  - baseInv)  / baseInv  * 100).toFixed(2));
+        const yMkt  = orig.mkt.map(v  => +((v  - baseMkt)  / baseMkt  * 100).toFixed(2));
+
+        const newY = [yInv, yMkt];
+        const newLayout = { 'yaxis.ticksuffix': '%', 'yaxis.tickprefix': '' };
+
+        if (orig.msci) {
+            const baseMsci = orig.msci.find(v => v > 0) || 1;
+            const yMsci = orig.msci.map(v => +((v - baseMsci) / baseMsci * 100).toFixed(2));
+            newY.push(yMsci);
+        }
+
+        Plotly.update('chart-' + id, { y: newY }, newLayout);
     } else {
+        const newY = [orig.inv, orig.mkt];
+        if (orig.msci) newY.push(orig.msci);
         Plotly.update('chart-' + id,
-            { y: [orig.inv, orig.mkt] },
+            { y: newY },
             { 'yaxis.ticksuffix': ' €', 'yaxis.tickprefix': '' }
         );
     }
