@@ -111,7 +111,7 @@ Object.keys(chartsData).forEach(id => {
 
 function setMode(id, mode, btn) {
     const orig  = originalY[id];
-    const baseY = orig.inv[0];
+    const baseY = orig.inv.find(v => v > 0) || orig.inv[0];
 
     btn.parentElement.querySelectorAll('.btn').forEach(b => {
         b.classList.remove('btn-primary');
