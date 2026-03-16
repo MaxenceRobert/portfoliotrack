@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}Explorer un actif — PortfolioTrack{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Explorer un actif</h1>
+        <p>Recherchez n'importe quel ETF, action ou crypto disponible sur Yahoo Finance.</p>
+    </div>
+</div>
+
+<!-- Barre de recherche -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('main.explorer') }}" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <input type="text" name="ticker"
+               value="{{ ticker }}"
+               placeholder="Ex: IWDA.AS, AAPL, BTC-USD, ESE.PA"
+               style="flex:1; min-width:200px;"
+               autocomplete="off">
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+    </form>
+    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(255,255,255,0.3);">
+        Utilise le ticker Yahoo Finance — ex: <span style="color:#818CF8;">AAPL</span> pour Apple,
+        <span style="color:#818CF8;">IWDA.AS</span> pour MSCI World,
+        <span style="color:#818CF8;">ESE.PA</span> pour S&P500 Euronext
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if info %}
+
+<!-- Infos principales -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                <h2 style="color:white; font-size:1.4rem; font-weight:700;">{{ info.name }}</h2>
+                <span class="badge badge-etf">{{ info.ticker }}</span>
+                {% if info.exchange %}
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">{{ info.exchange }}</span>
+                {% endif %}
+            </div>
+            {% if info.sector and info.sector != '—' %}
+            <div style="font-size:0.85rem; color:rgba(255,255,255,0.4); margin-bottom:0.25rem;">
+                {{ info.sector }}
+            </div>
+            {% endif %}
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:2rem; font-weight:700; color:white;">
+                {{ info.current_price }} {{ info.currency }}
+            </div>
+            {% if info.previous_close %}
+            {% set change = ((info.current_price - info.previous_close) / info.previous_close * 100)|round(2) %}
+            <div style="font-size:0.9rem; font-weight:600;
+                        color: {{ '#34D399' if change >= 0 else '#F87171' }};">
+                {{ '+' if change >= 0 else '' }}{{ change }}% aujourd'hui
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid" style="margin-bottom:1.5rem;">
+    {% if info.market_cap %}
+    <div class="kpi-card">
+        <div class="kpi-label">Market Cap</div>
+        <div class="kpi-value" style="font-size:1.2rem;">
+            {% if info.market_cap >= 1000000000000 %}
+                {{ (info.market_cap / 1000000000000)|round(2) }} T
+            {% elif info.market_cap >= 1000000000 %}
+                {{ (info.market_cap / 1000000000)|round(2) }} Md
+            {% else %}
+                {{ (info.market_cap / 1000000)|round(2) }} M
+            {% endif %}
+            {{ info.currency }}
+        </div>
+    </div>
+    {% endif %}
+    {% if info.pe_ratio %}
+    <div class="kpi-card">
+        <div class="kpi-label">P/E Ratio</div>
+        <div class="kpi-value" style="font-size:1.2rem;">{{ info.pe_ratio|round(2) }}</div>
+    </div>
+    {% endif %}
+    {% if info.dividend_yield %}
+    <div class="kpi-card">
+        <div class="kpi-label">Rendement dividende</div>
+        <div class="kpi-value positive" style="font-size:1.2rem;">
+            {{ (info.dividend_yield * 100)|round(2) }}%
+        </div>
+    </div>
+    {% endif %}
+    {% if info.fifty_two_week_high and info.fifty_two_week_low %}
+    <div class="kpi-card">
+        <div class="kpi-label">52 semaines</div>
+        <div class="kpi-value" style="font-size:1rem;">
+            <span class="negative">{{ info.fifty_two_week_low }}</span>
+            <span style="color:rgba(255,255,255,0.3);"> — </span>
+            <span class="positive">{{ info.fifty_two_week_high }}</span>
+        </div>
+        <div class="kpi-sub">{{ info.currency }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Graphique -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <strong style="color:white;">Cours historique</strong>
+        <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            {% for p, label in [('1mo','1M'), ('3mo','3M'), ('6mo','6M'), ('1y','1A'), ('2y','2A'), ('5y','5A')] %}
+            <a href="{{ url_for('main.explorer') }}?ticker={{ info.ticker }}&period={{ p }}"
+               class="btn btn-sm {{ 'btn-primary' if period == p else 'btn-ghost' }}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="price-chart"></div>
+</div>
+
+<!-- Bouton ajout portefeuille -->
+{% if current_user.is_authenticated %}
+<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+        <div style="font-weight:600; color:white; margin-bottom:0.25rem;">Ajouter à mon portefeuille</div>
+        <div style="font-size:0.82rem; color:rgba(255,255,255,0.4);">
+            Ajoute {{ info.ticker }} à ton portefeuille pour suivre tes achats et performances.
+        </div>
+    </div>
+    <a href="{{ url_for('main.add_asset_route') }}?ticker={{ info.ticker }}&name={{ info.name }}&currency={{ info.currency }}"
+       class="btn btn-primary">+ Ajouter à mon portefeuille</a>
+</div>
+{% else %}
+<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:1.5rem;">
+    <p style="color:rgba(255,255,255,0.4); margin-bottom:1rem;">
+        Crée un compte gratuit pour suivre cet actif dans ton portefeuille.
+    </p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit →</a>
+</div>
+{% endif %}
+
+<script>
+const dates  = {{ info.dates | tojson }};
+const closes = {{ info.closes | tojson }};
+const isMobile = window.innerWidth < 768;
+
+Plotly.newPlot('price-chart', [{
+    x: dates, y: closes,
+    type: 'scatter', mode: 'lines',
+    name: '{{ info.ticker }}',
+    line: { color: '#818CF8', width: 2 },
+    fill: 'tozeroy',
+    fillcolor: 'rgba(129,140,248,0.08)'
+}], {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    height: isMobile ? 260 : 380,
+    margin: isMobile ? { l: 45, r: 10, t: 10, b: 40 } : { l: 20, r: 20, t: 10, b: 40 },
+    hoverlabel: {
+        bgcolor: '#16161F',
+        bordercolor: 'rgba(255,255,255,0.1)',
+        font: { color: 'rgba(255,255,255,0.8)' }
+    },
+    hovermode: 'x unified',
+    xaxis: {
+        gridcolor: 'rgba(255,255,255,0.06)',
+        tickfont: { color: 'rgba(255,255,255,0.4)' },
+        linecolor: 'rgba(255,255,255,0.08)'
+    },
+    yaxis: {
+        gridcolor: 'rgba(255,255,255,0.06)',
+        tickfont: { color: 'rgba(255,255,255,0.4)' },
+        linecolor: 'rgba(255,255,255,0.08)',
+        ticksuffix: ' {{ info.currency }}'
+    },
+    legend: { font: { color: 'rgba(255,255,255,0.5)' }, bgcolor: 'rgba(0,0,0,0)' }
+}, { responsive: true, displayModeBar: false });
+</script>
+
+{% endif %}
+{% endblock %}

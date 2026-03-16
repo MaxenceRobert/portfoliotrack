@@ -17,13 +17,15 @@ def get_current_price(ticker):
 
 def get_current_price_with_timestamp(ticker):
     try:
-        data      = yf.Ticker(ticker)
-        price     = data.fast_info['last_price']
-        now       = datetime.now().strftime('%d/%m/%Y à %H:%M')
+        data  = yf.Ticker(ticker)
+        price = data.fast_info['last_price']
+        now   = datetime.now().strftime('%d/%m/%Y à %H:%M')
         return round(float(price), 4), now
     except Exception as e:
         print(f"Erreur prix {ticker}: {e}")
         return None, None
+
+
 def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
     """Simule un investissement DCA équivalent dans le benchmark."""
     try:
@@ -33,8 +35,8 @@ def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
         if hasattr(end_date, 'strftime'):
             end_date = end_date.strftime('%Y-%m-%d')
 
-        end_dt   = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        end_str  = end_dt.strftime('%Y-%m-%d')
+        end_dt  = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+        end_str = end_dt.strftime('%Y-%m-%d')
 
         data = yf.download(ticker, start=start_date, end=end_str,
                            progress=False, auto_adjust=True)
@@ -46,13 +48,11 @@ def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
                         for d, v in zip(closes.index, closes)}
 
         if not purchases:
-            # Pas de DCA fourni — normalisation simple
             base   = float(closes.iloc[0])
             dates  = [d.strftime('%Y-%m-%d') for d in closes.index]
             values = [round(float(v) / base * 100, 4) for v in closes]
             return dates, values
 
-        # Simulation DCA : pour chaque achat, on achète des parts du benchmark
         benchmark_shares = 0.0
         purchase_index   = 0
         sorted_purchases = sorted(purchases, key=lambda p: p['date'])
@@ -62,15 +62,12 @@ def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
 
         all_dates = sorted(price_series.keys())
         for d in all_dates:
-            # On traite tous les achats dont la date <= d
             while purchase_index < len(sorted_purchases):
                 p = sorted_purchases[purchase_index]
                 p_date = p['date'] if isinstance(p['date'], str) else p['date'].strftime('%Y-%m-%d')
                 if p_date <= d:
-                    # Trouve le prix du benchmark à la date d'achat
                     buy_price = price_series.get(p_date)
                     if buy_price is None:
-                        # Prend le prix le plus proche
                         close_dates = [x for x in all_dates if x <= p_date]
                         if close_dates:
                             buy_price = price_series[close_dates[-1]]
@@ -89,64 +86,55 @@ def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
     except Exception as e:
         print(f"Erreur benchmark {ticker}: {e}")
         return [], []
+
+
 def calc_asset_stats(asset, purchases, sales):
-    """
-    Calcule les stats complètes d'un actif en tenant compte
-    des achats ET des ventes (parts restantes, plus-value réalisée).
-    """
     if not purchases:
         return None
 
-    # ── Parts et coût moyen pondéré ─────────────────────────────────────────
     total_shares_bought = sum(p['shares'] for p in purchases)
     total_invested      = sum(p['total_cost'] for p in purchases)
     total_fees          = sum(p['fees'] or 0 for p in purchases)
     avg_price           = total_invested / total_shares_bought if total_shares_bought else 0
 
-    # ── Parts vendues et plus-value réalisée ────────────────────────────────
-    total_shares_sold   = sum(s['shares'] for s in sales)
-    total_proceeds      = sum(s['total_proceeds'] for s in sales)
-    total_fees_sales    = sum(s['fees'] or 0 for s in sales)
+    total_shares_sold  = sum(s['shares'] for s in sales)
+    total_proceeds     = sum(s['total_proceeds'] for s in sales)
+    total_fees_sales   = sum(s['fees'] or 0 for s in sales)
 
-    # Coût d'acquisition des parts vendues (au prix moyen d'achat)
-    cost_of_sold        = round(total_shares_sold * avg_price, 4)
-    realized_gain       = round(total_proceeds - cost_of_sold - total_fees_sales, 2)
+    cost_of_sold  = round(total_shares_sold * avg_price, 4)
+    realized_gain = round(total_proceeds - cost_of_sold - total_fees_sales, 2)
 
-    # ── Parts restantes en portefeuille ─────────────────────────────────────
-    shares_held         = round(total_shares_bought - total_shares_sold, 6)
-    invested_held       = round(shares_held * avg_price, 2)
+    shares_held   = round(total_shares_bought - total_shares_sold, 6)
+    invested_held = round(shares_held * avg_price, 2)
 
     if shares_held <= 0:
-        # Actif entièrement vendu
         return {
-            'asset_id':       asset['id'],
-            'isin':           asset['isin'],
-            'ticker':         asset['ticker'],
-            'name':           asset['name'],
-            'currency':       asset['currency'],
-            'asset_type':     asset['asset_type'],
-            'shares_held':    0,
-            'total_invested': round(total_invested, 2),
-            'total_fees':     round(total_fees + total_fees_sales, 2),
-            'avg_price':      round(avg_price, 4),
-            'current_price':  None,
-            'current_value':  0,
+            'asset_id':        asset['id'],
+            'isin':            asset['isin'],
+            'ticker':          asset['ticker'],
+            'name':            asset['name'],
+            'currency':        asset['currency'],
+            'asset_type':      asset['asset_type'],
+            'shares_held':     0,
+            'total_invested':  round(total_invested, 2),
+            'total_fees':      round(total_fees + total_fees_sales, 2),
+            'avg_price':       round(avg_price, 4),
+            'current_price':   None,
+            'current_value':   0,
             'unrealized_gain': 0,
-            'unrealized_pct': 0,
-            'realized_gain':  realized_gain,
-            'fully_sold':     True,
+            'unrealized_pct':  0,
+            'realized_gain':   realized_gain,
+            'fully_sold':      True,
         }
 
-    # ── Prix actuel et plus-value latente ───────────────────────────────────
     current_price, price_timestamp = get_current_price_with_timestamp(asset['ticker'])
     if current_price is None:
         return None
 
-    current_value      = round(shares_held * current_price, 2)
-    unrealized_gain    = round(current_value - invested_held, 2)
-    unrealized_pct     = round((unrealized_gain / invested_held) * 100, 2) if invested_held else 0
+    current_value   = round(shares_held * current_price, 2)
+    unrealized_gain = round(current_value - invested_held, 2)
+    unrealized_pct  = round((unrealized_gain / invested_held) * 100, 2) if invested_held else 0
 
-    # Dividendes
     from database import get_dividends_by_asset
     divs               = get_dividends_by_asset(asset['id'], asset['user_id'])
     dividends_received = round(sum(d['amount'] for d in divs), 2)
@@ -154,38 +142,37 @@ def calc_asset_stats(asset, purchases, sales):
     total_return_pct   = round((total_return / total_invested) * 100, 2) if total_invested else 0
 
     return {
-        'asset_id':        asset['id'],
-        'isin':            asset['isin'],
-        'ticker':          asset['ticker'],
-        'name':            asset['name'],
-        'currency':        asset['currency'],
-        'asset_type':      asset['asset_type'],
-        'shares_held':     shares_held,
-        'total_invested':  round(total_invested, 2),
-        'total_fees':      round(total_fees + total_fees_sales, 2),
-        'avg_price':       round(avg_price, 4),
-        'current_price':   current_price,
-        'price_timestamp': price_timestamp,
-        'current_value':   current_value,
-        'unrealized_gain': unrealized_gain,
-        'unrealized_pct':  unrealized_pct,
-        'realized_gain':   realized_gain,
+        'asset_id':           asset['id'],
+        'isin':               asset['isin'],
+        'ticker':             asset['ticker'],
+        'name':               asset['name'],
+        'currency':           asset['currency'],
+        'asset_type':         asset['asset_type'],
+        'shares_held':        shares_held,
+        'total_invested':     round(total_invested, 2),
+        'total_fees':         round(total_fees + total_fees_sales, 2),
+        'avg_price':          round(avg_price, 4),
+        'current_price':      current_price,
+        'price_timestamp':    price_timestamp,
+        'current_value':      current_value,
+        'unrealized_gain':    unrealized_gain,
+        'unrealized_pct':     unrealized_pct,
+        'realized_gain':      realized_gain,
         'dividends_received': dividends_received,
         'total_return':       total_return,
         'total_return_pct':   total_return_pct,
-        'fully_sold':      False,
+        'fully_sold':         False,
     }
 
+
 def get_portfolio_summary(user_id):
-    """Résumé complet du portefeuille avec stats par actif et totaux globaux."""
     assets     = get_user_assets(user_id)
     stats_list = []
     total_inv  = 0
     total_val  = 0
     total_real = 0
+    by_type    = {}
 
-    # Grouper par type pour l'affichage
-    by_type = {}
     for asset in assets:
         purchases = get_purchases_by_asset(asset['id'], user_id)
         sales     = get_sales_by_asset(asset['id'], user_id)
@@ -199,55 +186,47 @@ def get_portfolio_summary(user_id):
         t = stats['asset_type']
         by_type.setdefault(t, []).append(stats)
 
-    total_unrealized     = round(total_val - sum(
+    total_unrealized = round(total_val - sum(
         s['shares_held'] * s['avg_price'] for s in stats_list if not s['fully_sold']
     ), 2)
     total_unrealized_pct = round(
         (total_unrealized / total_inv * 100) if total_inv else 0, 2
     )
 
-    # Allocation par actif (pour camembert)
     allocation = [
         {'ticker': s['ticker'], 'value': s['current_value'], 'type': s['asset_type']}
         for s in stats_list if not s['fully_sold'] and s['current_value'] > 0
     ]
 
-    # Objectif DCA
     dca_goal   = get_dca_goal(user_id)
     dca_target = dca_goal['monthly_target'] if dca_goal else 0
 
-    # Investi ce mois-ci
     this_month     = date.today().strftime('%Y-%m')
     all_purchases  = get_all_purchases(user_id)
     invested_month = sum(
         p['total_cost'] for p in all_purchases
         if p['date'].startswith(this_month)
     )
-    dca_progress = round((invested_month / dca_target * 100), 1) if dca_target else 0
-
+    dca_progress    = round((invested_month / dca_target * 100), 1) if dca_target else 0
     total_dividends = get_total_dividends(user_id)
 
     return {
-        'assets':            stats_list,
-        'by_type':           by_type,
-        'allocation':        allocation,
-        'total_invested':    round(total_inv, 2),
-        'total_value':       round(total_val, 2),
-        'total_unrealized':  total_unrealized,
-        'unrealized_pct':    total_unrealized_pct,
-        'total_realized':    round(total_real, 2),
-        'total_dividends':   total_dividends,
-        'dca_target':        dca_target,
-        'invested_month':    round(invested_month, 2),
-        'dca_progress':      dca_progress,
+        'assets':           stats_list,
+        'by_type':          by_type,
+        'allocation':       allocation,
+        'total_invested':   round(total_inv, 2),
+        'total_value':      round(total_val, 2),
+        'total_unrealized': total_unrealized,
+        'unrealized_pct':   total_unrealized_pct,
+        'total_realized':   round(total_real, 2),
+        'total_dividends':  total_dividends,
+        'dca_target':       dca_target,
+        'invested_month':   round(invested_month, 2),
+        'dca_progress':     dca_progress,
     }
 
+
 def get_chart_data(asset, purchases, sales):
-    """
-    Courbes historiques pour un actif :
-    - valeur investie cumulée nette (achats - ventes)
-    - valeur marché au prix actuel
-    """
     if not purchases:
         return [], [], []
 
@@ -255,7 +234,6 @@ def get_chart_data(asset, purchases, sales):
     if current_price is None:
         return [], [], []
 
-    # Fusionner achats et ventes sur une timeline
     events = []
     for p in purchases:
         events.append({'date': p['date'], 'type': 'buy',
@@ -283,11 +261,12 @@ def get_chart_data(asset, purchases, sales):
         market_curve.append(round(max(cum_shares, 0) * current_price, 2))
 
     return dates, invested_curve, market_curve
+
+
 def get_portfolio_chart_data(user_id):
-    """Courbe globale du portefeuille — somme de tous les actifs."""
     from database import get_user_assets, get_purchases_by_asset, get_sales_by_asset
 
-    assets   = get_user_assets(user_id)
+    assets     = get_user_assets(user_id)
     all_events = []
 
     for asset in assets:
@@ -320,7 +299,6 @@ def get_portfolio_chart_data(user_id):
 
     all_events.sort(key=lambda x: x['date'])
 
-    # Cumul investi et valeur marché par date
     dates          = []
     invested_curve = []
     market_curve   = []
@@ -349,3 +327,53 @@ def get_portfolio_chart_data(user_id):
         market_curve.append(round(market_total, 2))
 
     return dates, invested_curve, market_curve
+
+
+def get_ticker_info(ticker):
+    """Récupère les infos et l'historique d'un ticker Yahoo Finance."""
+    try:
+        t    = yf.Ticker(ticker)
+        info = t.info
+
+        hist = t.history(period='1y', auto_adjust=True)
+        if hist.empty:
+            return None
+
+        dates  = [d.strftime('%Y-%m-%d') for d in hist.index]
+        closes = [round(float(v), 4) for v in hist['Close']]
+
+        return {
+            'ticker':             ticker.upper(),
+            'name':               info.get('longName') or info.get('shortName') or ticker,
+            'currency':           info.get('currency', ''),
+            'sector':             info.get('sector') or info.get('category', '—'),
+            'market_cap':         info.get('marketCap'),
+            'pe_ratio':           info.get('trailingPE'),
+            'dividend_yield':     info.get('dividendYield'),
+            'current_price':      round(float(info.get('regularMarketPrice') or closes[-1]), 4),
+            'previous_close':     info.get('previousClose'),
+            'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+            'fifty_two_week_low':  info.get('fiftyTwoWeekLow'),
+            'exchange':           info.get('exchange', ''),
+            'asset_type':         info.get('quoteType', ''),
+            'dates':              dates,
+            'closes':             closes,
+        }
+    except Exception as e:
+        print(f"Erreur get_ticker_info {ticker}: {e}")
+        return None
+
+
+def get_ticker_history(ticker, period='1y'):
+    """Récupère uniquement l'historique pour un ticker et une période donnée."""
+    try:
+        t    = yf.Ticker(ticker)
+        hist = t.history(period=period, auto_adjust=True)
+        if hist.empty:
+            return [], []
+        dates  = [d.strftime('%Y-%m-%d') for d in hist.index]
+        closes = [round(float(v), 4) for v in hist['Close']]
+        return dates, closes
+    except Exception as e:
+        print(f"Erreur historique {ticker}: {e}")
+        return [], []

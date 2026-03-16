@@ -14,7 +14,8 @@ from database import (
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
-    get_portfolio_chart_data, get_benchmark_curve
+    get_portfolio_chart_data, get_benchmark_curve,
+    get_ticker_info, get_ticker_history
 )
 from auth import auth_bp, get_user_object
 import plotly.graph_objects as go
@@ -165,7 +166,14 @@ def add_asset_route():
         flash(f'{name} ajouté ✓ (prix actuel : {price} {currency})', 'success')
         return redirect(url_for('main.dashboard'))
 
-    return render_template('add_asset.html', asset_types=ASSET_TYPES)
+    ticker_prefill   = request.args.get('ticker', '')
+    name_prefill     = request.args.get('name', '')
+    currency_prefill = request.args.get('currency', '')
+
+    return render_template('add_asset.html', asset_types=ASSET_TYPES,
+                           ticker_prefill=ticker_prefill,
+                           name_prefill=name_prefill,
+                           currency_prefill=currency_prefill)
 
 # ── Supprimer un actif ────────────────────────────────────────────────────────
 @main_bp.route('/assets/delete/<int:asset_id>', methods=['POST'])
@@ -416,6 +424,30 @@ def download_template():
 @main_bp.route('/simulateur')
 def simulateur():
     return render_template('simulateur.html')
+
+# ── Explorer ──────────────────────────────────────────────────────────────────
+@main_bp.route('/explorer')
+def explorer():
+    ticker = request.args.get('ticker', '').strip().upper()
+    period = request.args.get('period', '1y')
+    info   = None
+    error  = None
+
+    if ticker:
+        if period != '1y':
+            info = get_ticker_info(ticker)
+            if info:
+                dates, closes = get_ticker_history(ticker, period)
+                info['dates']  = dates
+                info['closes'] = closes
+        else:
+            info = get_ticker_info(ticker)
+
+        if not info:
+            error = f'Ticker "{ticker}" introuvable sur Yahoo Finance.'
+
+    return render_template('explorer.html', ticker=ticker, info=info,
+                           error=error, period=period)
 
 # ── Contact ───────────────────────────────────────────────────────────────────
 @main_bp.route('/contact')
