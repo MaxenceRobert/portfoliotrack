@@ -49,7 +49,6 @@ def search_ticker():
     if len(q) < 2:
         return jsonify({'results': []})
     try:
-        import yfinance as yf
         import requests as req
         url = f'https://query1.finance.yahoo.com/v1/finance/search?q={q}&quotesCount=8&newsCount=0&listsCount=0'
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -206,10 +205,10 @@ def add_asset_route():
         flash(f'{name} ajouté ✓ (prix actuel : {price} {currency})', 'success')
         return redirect(url_for('main.dashboard'))
 
-    ticker_prefill      = request.args.get('ticker', '')
-    name_prefill        = request.args.get('name', '')
-    currency_prefill    = request.args.get('currency', '')
-    asset_type_prefill  = request.args.get('asset_type', '')
+    ticker_prefill     = request.args.get('ticker', '')
+    name_prefill       = request.args.get('name', '')
+    currency_prefill   = request.args.get('currency', '')
+    asset_type_prefill = request.args.get('asset_type', '')
 
     return render_template('add_asset.html', asset_types=ASSET_TYPES,
                            ticker_prefill=ticker_prefill,
@@ -263,7 +262,6 @@ def add_purchase_route():
                     i += 1
                     continue
 
-                # Si asset_id vide → créer l'actif automatiquement
                 if not asset_id:
                     price = get_current_price(ticker)
                     if price is None:
@@ -276,10 +274,10 @@ def add_purchase_route():
                                 'Crypto': 'Crypto', 'Autre': 'Autre'}
                     mapped_type = type_map.get(asset_type, 'Autre')
 
-                    success = add_asset(current_user.id, ticker,
-                                        asset_name or ticker, mapped_type,
-                                        currency or 'EUR', '')
-                    # Récupère l'asset_id même si déjà existant
+                    add_asset(current_user.id, ticker,
+                              asset_name or ticker, mapped_type,
+                              currency or 'EUR', '')
+
                     from database import get_user_assets as _get_assets
                     all_assets = _get_assets(current_user.id)
                     found = next((a for a in all_assets if a['ticker'] == ticker), None)
@@ -328,7 +326,19 @@ def add_purchase_route():
 def purchases():
     all_p  = get_all_purchases(current_user.id)
     assets = get_user_assets(current_user.id)
-    return render_template('purchases.html', purchases=all_p, assets=assets)
+
+    # Enrichir avec le prix actuel par ticker (cache pour éviter les appels multiples)
+    price_cache = {}
+    enriched = []
+    for p in all_p:
+        p = dict(p)
+        ticker = p.get('ticker')
+        if ticker not in price_cache:
+            price_cache[ticker] = get_current_price(ticker)
+        p['current_price'] = price_cache[ticker]
+        enriched.append(p)
+
+    return render_template('purchases.html', purchases=enriched, assets=assets)
 
 # ── Éditer un achat ───────────────────────────────────────────────────────────
 @main_bp.route('/purchases/edit/<int:purchase_id>', methods=['GET', 'POST'])

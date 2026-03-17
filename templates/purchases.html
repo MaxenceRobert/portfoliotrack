@@ -15,6 +15,7 @@
 
 {% if not purchases %}
 <div class="card empty-state">
+    <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
     <h3>Aucun achat enregistré</h3>
     <p>Commence par saisir ton premier achat DCA.</p>
     <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter des achats</a>
@@ -23,18 +24,17 @@
 {% else %}
 
 <!-- Filtre par actif -->
-<div style="margin-bottom:1rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:0.82rem; color:#6B7280; font-weight:600;">Filtrer :</span>
+<div style="margin-bottom:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+    <span style="font-size:0.78rem; color:rgba(255,255,255,0.25); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Filtrer :</span>
     <button class="btn btn-sm btn-primary filter-btn" onclick="filterAsset('all', this)">Tous</button>
     {% for a in assets %}
-    <button class="btn btn-sm btn-ghost filter-btn"
-            onclick="filterAsset('{{ a['ticker'] }}', this)">
+    <button class="btn btn-sm btn-ghost filter-btn" onclick="filterAsset('{{ a['ticker'] }}', this)">
         {{ a['ticker'] }}
     </button>
     {% endfor %}
 </div>
 
-<div class="card table-card">
+<div class="card" style="padding:0; overflow:hidden;">
     <div class="table-wrap">
         <table id="purchases-table">
             <thead>
@@ -46,39 +46,61 @@
                     <th>Prix / part</th>
                     <th>Frais</th>
                     <th>Total investi</th>
+                    <th>Valeur actuelle</th>
+                    <th>+/- value</th>
                     <th>Note</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             {% for p in purchases %}
+            {% set current_price = p.get('current_price') %}
+            {% set current_value = (p['shares'] * current_price)|round(2) if current_price else None %}
+            {% set gain = (current_value - p['total_cost'])|round(2) if current_value is not none else None %}
+            {% set gain_pct = ((gain / p['total_cost']) * 100)|round(2) if (gain is not none and p['total_cost'] > 0) else None %}
             <tr data-ticker="{{ p['ticker'] }}"
                 data-cost="{{ p['total_cost'] }}"
-                data-fees="{{ p['fees'] or 0 }}">
-                <td>{{ p['date'] }}</td>
+                data-fees="{{ p['fees'] or 0 }}"
+                data-gain="{{ gain or 0 }}">
+                <td style="white-space:nowrap;">{{ p['date'] }}</td>
                 <td>
-                    <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">
-                        {{ p['name'] }}
-                    </span>
+                    <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                        <span class="badge badge-etf">{{ p['ticker'] }}</span>
+                        <span style="font-size:0.82rem; color:rgba(255,255,255,0.4);">{{ p['name'] }}</span>
+                    </div>
                 </td>
                 <td>
                     <span class="badge {{ 'badge-etf' if p['asset_type'] == 'ETF'
                                       else 'badge-action' if p['asset_type'] == 'Action'
                                       else 'badge-crypto' if p['asset_type'] == 'Crypto'
-                                      else 'badge-other' }}">
-                        {{ p['asset_type'] }}
-                    </span>
+                                      else 'badge-other' }}">{{ p['asset_type'] }}</span>
                 </td>
                 <td>{{ p['shares'] }}</td>
-                <td>{{ p['price_per_share'] }} {{ p['currency'] }}</td>
+                <td style="white-space:nowrap;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
                 <td class="neutral">
-                    {% if p['fees'] and p['fees'] > 0 %}
-                        {{ p['fees'] }} €
-                    {% else %}—{% endif %}
+                    {% if p['fees'] and p['fees'] > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
                 </td>
                 <td><strong>{{ p['total_cost'] }} €</strong></td>
-                <td style="color:#9CA3AF; font-size:0.82rem;">
+                <td>
+                    {% if current_value is not none %}
+                    <strong>{{ current_value }} €</strong>
+                    {% else %}
+                    <span style="color:rgba(255,255,255,0.2);">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if gain is not none %}
+                    <span style="font-weight:700; color:{{ '#34D399' if gain >= 0 else '#F87171' }};">
+                        {{ '+' if gain >= 0 else '' }}{{ gain }} €
+                    </span>
+                    <div style="font-size:0.72rem; color:{{ '#34D399' if gain >= 0 else '#F87171' }}; opacity:0.7;">
+                        {{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%
+                    </div>
+                    {% else %}
+                    <span style="color:rgba(255,255,255,0.2);">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:0.82rem; color:rgba(255,255,255,0.4); max-width:120px;">
                     {{ p['notes'] or '—' }}
                 </td>
                 <td>
@@ -99,7 +121,7 @@
     </div>
 </div>
 
-<!-- Totaux dynamiques -->
+<!-- KPIs dynamiques -->
 <div class="kpi-grid" style="margin-top:1rem;">
     <div class="kpi-card">
         <div class="kpi-label">Achats affichés</div>
@@ -107,15 +129,15 @@
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Total investi</div>
-        <div class="kpi-value neutral" id="kpi-total">
-            {{ purchases|sum(attribute='total_cost')|round(2) }} €
-        </div>
+        <div class="kpi-value neutral" id="kpi-total">{{ purchases|sum(attribute='total_cost')|round(2) }} €</div>
     </div>
     <div class="kpi-card">
         <div class="kpi-label">Total frais</div>
-        <div class="kpi-value neutral" id="kpi-fees">
-            {{ purchases|sum(attribute='fees')|round(2) }} €
-        </div>
+        <div class="kpi-value neutral" id="kpi-fees">{{ purchases|sum(attribute='fees')|round(2) }} €</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">+/- value totale</div>
+        <div class="kpi-value" id="kpi-gain">—</div>
     </div>
 </div>
 
@@ -123,24 +145,33 @@
 
 <script>
 function filterAsset(ticker, btn) {
-    const rows    = document.querySelectorAll('#purchases-table tbody tr');
-    let count     = 0;
-    let total     = 0;
-    let fees      = 0;
+    const rows = document.querySelectorAll('#purchases-table tbody tr');
+    let count = 0, total = 0, fees = 0, gain = 0, hasGain = false;
 
     rows.forEach(row => {
         const visible = ticker === 'all' || row.dataset.ticker === ticker;
         row.style.display = visible ? '' : 'none';
         if (visible) {
             count++;
-            total += parseFloat(row.dataset.cost  || 0);
-            fees  += parseFloat(row.dataset.fees  || 0);
+            total += parseFloat(row.dataset.cost || 0);
+            fees  += parseFloat(row.dataset.fees || 0);
+            const g = parseFloat(row.dataset.gain || 0);
+            if (g !== 0) { gain += g; hasGain = true; }
         }
     });
 
     document.getElementById('kpi-count').textContent = count;
-    document.getElementById('kpi-total').textContent = total.toFixed(2) + ' €';
-    document.getElementById('kpi-fees').textContent  = fees.toFixed(2)  + ' €';
+    document.getElementById('kpi-total').textContent  = total.toFixed(2) + ' €';
+    document.getElementById('kpi-fees').textContent   = fees.toFixed(2) + ' €';
+
+    const gainEl = document.getElementById('kpi-gain');
+    if (hasGain) {
+        gainEl.textContent = (gain >= 0 ? '+' : '') + gain.toFixed(2) + ' €';
+        gainEl.style.color = gain >= 0 ? '#34D399' : '#F87171';
+    } else {
+        gainEl.textContent = '—';
+        gainEl.style.color = '';
+    }
 
     document.querySelectorAll('.filter-btn').forEach(b => {
         b.classList.remove('btn-primary');
@@ -149,6 +180,11 @@ function filterAsset(ticker, btn) {
     btn.classList.remove('btn-ghost');
     btn.classList.add('btn-primary');
 }
+
+// Init gain KPI
+window.addEventListener('load', () => {
+    filterAsset('all', document.querySelector('.filter-btn.btn-primary'));
+});
 </script>
 
 {% endblock %}
