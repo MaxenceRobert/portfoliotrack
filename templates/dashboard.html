@@ -2,6 +2,78 @@
 {% block title %}Dashboard — PortfolioTrack{% endblock %}
 {% block content %}
 
+<style>
+/* ── KPI colorées ── */
+.kpi-card-violet {
+    background: linear-gradient(135deg, rgba(91,95,237,0.15), rgba(124,58,237,0.08));
+    border-color: rgba(91,95,237,0.25) !important;
+}
+.kpi-card-violet::before { background: linear-gradient(90deg, #5B5FED, #7C3AED) !important; opacity: 1 !important; }
+
+.kpi-card-green {
+    background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.05));
+    border-color: rgba(52,211,153,0.2) !important;
+}
+.kpi-card-green::before { background: linear-gradient(90deg, #34D399, #10B981) !important; opacity: 1 !important; }
+
+.kpi-card-amber {
+    background: linear-gradient(135deg, rgba(246,201,14,0.08), rgba(245,158,11,0.04));
+    border-color: rgba(246,201,14,0.15) !important;
+}
+.kpi-card-amber::before { background: linear-gradient(90deg, #F6C90E, #F59E0B) !important; opacity: 1 !important; }
+
+.kpi-card-blue {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(14,165,233,0.04));
+    border-color: rgba(56,189,248,0.15) !important;
+}
+.kpi-card-blue::before { background: linear-gradient(90deg, #38BDF8, #0EA5E9) !important; opacity: 1 !important; }
+
+/* ── Asset header accordéon ── */
+.asset-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 8px;
+    padding: 0.25rem;
+    margin: -0.25rem;
+    transition: background 0.15s;
+}
+.asset-header:hover { background: rgba(255,255,255,0.03); }
+.asset-header:hover .chevron { color: white; }
+.chevron {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.85rem;
+    transition: transform 0.25s, color 0.15s;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+.chevron.open { transform: rotate(180deg); color: #818CF8; }
+.asset-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s ease, opacity 0.3s;
+    opacity: 0;
+}
+.asset-body.open { max-height: 700px; opacity: 1; }
+.asset-summary-line {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.4rem;
+}
+
+/* ── Glow sur asset cards positives ── */
+.asset-card-positive {
+    box-shadow: 0 0 20px rgba(52,211,153,0.06);
+}
+.asset-card-negative {
+    box-shadow: 0 0 20px rgba(248,113,113,0.06);
+}
+</style>
+
 <div class="page-header">
     <div>
         <h1>Mon Portefeuille</h1>
@@ -10,35 +82,40 @@
     <div class="page-header-actions">
         <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Achat</a>
         <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Vente</a>
-        <a href="{{ url_for('main.add_asset_route') }}" class="btn btn-ghost">+ Actif</a>
     </div>
 </div>
 
 {% if not summary.assets %}
 <div class="card empty-state">
+    <div style="font-size:2.5rem; margin-bottom:1rem;">📈</div>
     <h3>Ton portefeuille est vide</h3>
-    <p>Commence par ajouter un actif (ETF, action, crypto), puis enregistre tes achats.</p>
-    <a href="{{ url_for('main.add_asset_route') }}" class="btn btn-primary">+ Ajouter un actif</a>
+    <p>Commence par enregistrer ton premier achat — l'actif sera créé automatiquement.</p>
+    <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Enregistrer un achat</a>
 </div>
 
 {% else %}
 
+<!-- KPI Grid -->
 <div class="kpi-grid">
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card-violet">
         <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value">{{ summary.total_value }} €</div>
+        <div class="kpi-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
         <div class="kpi-sub">{{ summary.assets|length }} actif(s) en portefeuille</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card-green">
         <div class="kpi-label">Dividendes reçus</div>
         <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
         <div class="kpi-sub">Rendement encaissé</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">Total investi</div>
-        <div class="kpi-value neutral">{{ summary.total_invested }} €</div>
+        <div class="kpi-value" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card {% if summary.total_unrealized >= 0 %}kpi-card-green{% else %}kpi-card-red{% endif %}"
+         style="{% if summary.total_unrealized < 0 %}background:linear-gradient(135deg,rgba(248,113,113,0.1),rgba(239,68,68,0.05));border-color:rgba(248,113,113,0.2)!important;{% endif %}">
+        {% if summary.total_unrealized < 0 %}
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#F87171,#EF4444);border-radius:99px 99px 0 0;"></div>
+        {% endif %}
         <div class="kpi-label">Plus-value latente</div>
         <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
             {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
@@ -47,7 +124,7 @@
             {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
         </div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card-blue">
         <div class="kpi-label">Plus-value réalisée</div>
         <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
             {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
@@ -56,16 +133,17 @@
     </div>
 </div>
 
+<!-- DCA -->
 {% if summary.dca_target > 0 %}
-<div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+<div class="card" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
         <div>
             <span style="font-weight:700; color:white;">Objectif DCA ce mois</span>
-            <span class="neutral" style="font-size:0.85rem; margin-left:0.75rem;">
+            <span style="font-size:0.85rem; color:rgba(255,255,255,0.35); margin-left:0.75rem;">
                 {{ summary.invested_month }} € / {{ summary.dca_target }} €
             </span>
         </div>
-        <span style="font-weight:700; font-size:1.1rem;
+        <span style="font-weight:800; font-size:1.15rem;
               color: {{ '#34D399' if summary.dca_progress >= 100 else '#818CF8' }};">
             {{ summary.dca_progress }}%
         </span>
@@ -74,104 +152,124 @@
         <div class="progress-bar" style="width: {{ [summary.dca_progress, 100]|min }}%;"></div>
     </div>
     {% if summary.dca_progress >= 100 %}
-    <div style="font-size:0.82rem; color:#34D399; margin-top:0.4rem; font-weight:600;">
+    <div style="font-size:0.82rem; color:#34D399; margin-top:0.5rem; font-weight:600;">
         ✓ Objectif atteint ce mois !
     </div>
     {% else %}
-    <div style="font-size:0.82rem; color:rgba(255,255,255,0.3); margin-top:0.4rem;">
-        Il reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
-        à investir pour atteindre ton objectif.
+    <div style="font-size:0.82rem; color:rgba(255,255,255,0.3); margin-top:0.5rem;">
+        Il reste {{ (summary.dca_target - summary.invested_month)|round(2) }} € à investir.
     </div>
     {% endif %}
 </div>
 {% else %}
 <div style="margin-bottom:1.5rem;">
     <a href="{{ url_for('main.settings') }}"
-       style="font-size:0.82rem; color:rgba(255,255,255,0.3); text-decoration:none;">
+       style="font-size:0.82rem; color:rgba(255,255,255,0.25); text-decoration:none; transition:color 0.15s;"
+       onmouseover="this.style.color='rgba(255,255,255,0.5)'"
+       onmouseout="this.style.color='rgba(255,255,255,0.25)'">
         ＋ Définir un objectif DCA mensuel →
     </a>
 </div>
 {% endif %}
 
+<!-- Actifs -->
 {% for asset_type, assets in summary.by_type.items() %}
 <div class="section-title">{{ asset_type }}s</div>
 <div class="asset-grid">
 {% for a in assets %}
 {% if not a.fully_sold %}
-<div class="asset-card">
-    <h3>
-        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF'
-                          else 'badge-action' if a.asset_type == 'Action'
-                          else 'badge-crypto' if a.asset_type == 'Crypto'
-                          else 'badge-other' }}">
-            {{ a.ticker }}
-        </span>
-        <span>{{ a.name }}</span>
-        {% if a.isin %}
-        <span style="font-size:0.72rem; color:rgba(255,255,255,0.25); font-weight:400;">{{ a.isin }}</span>
-        {% endif %}
-    </h3>
-    <table class="asset-table">
-        <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
-        <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
-        <tr>
-            <td>Prix actuel</td>
-            <td>
-                <strong>{{ a.current_price }} {{ a.currency }}</strong>
-                {% if a.price_timestamp %}
-                <div style="font-size:0.72rem; color:rgba(255,255,255,0.25); font-weight:400;">
-                    {{ a.price_timestamp }}
-                </div>
+<div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}">
+
+    <div class="asset-header" onclick="toggleAsset('asset-{{ a.asset_id }}')">
+        <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF'
+                                  else 'badge-action' if a.asset_type == 'Action'
+                                  else 'badge-crypto' if a.asset_type == 'Crypto'
+                                  else 'badge-other' }}">{{ a.ticker }}</span>
+                <span style="color:white; font-weight:600; font-size:0.95rem;">{{ a.name }}</span>
+                {% if a.isin %}
+                <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">{{ a.isin }}</span>
                 {% endif %}
-            </td>
-        </tr>
-        <tr><td>Investi</td><td>{{ a.total_invested }} €</td></tr>
-        <tr><td>Frais cumulés</td><td class="neutral">{{ a.total_fees }} €</td></tr>
-        <tr><td>Valeur actuelle</td><td><strong>{{ a.current_value }} €</strong></td></tr>
-        <tr>
-            <td>Performance</td>
-            <td class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}">
-                <strong>
+            </div>
+            <div class="asset-summary-line">
+                <span style="font-size:0.875rem; color:rgba(255,255,255,0.5); font-weight:500;">
+                    {{ a.current_value }} €
+                </span>
+                <span style="font-size:0.875rem; font-weight:700;
+                      color: {{ '#34D399' if a.unrealized_gain >= 0 else '#F87171' }};">
                     {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
-                    ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
-                </strong>
-            </td>
-        </tr>
-        {% if a.realized_gain != 0 %}
-        <tr>
-            <td>P&L réalisé</td>
-            <td class="{{ 'positive' if a.realized_gain >= 0 else 'negative' }}">
-                {{ '+' if a.realized_gain >= 0 else '' }}{{ a.realized_gain }} €
-            </td>
-        </tr>
-        {% endif %}
-        {% if a.dividends_received > 0 %}
-        <tr>
-            <td>Dividendes reçus</td>
-            <td class="positive">+{{ a.dividends_received }} €</td>
-        </tr>
-        <tr>
-            <td>Rendement total</td>
-            <td class="{{ 'positive' if a.total_return >= 0 else 'negative' }}">
-                <strong>
-                    {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
-                    ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
-                </strong>
-            </td>
-        </tr>
-        {% endif %}
-    </table>
-    <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
-        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
-        <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
-        <a href="{{ url_for('main.charts') }}" class="btn btn-ghost btn-sm">Graphique</a>
-        <form method="POST"
-              action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
-              style="display:inline;"
-              onsubmit="return confirm('Supprimer {{ a.name }} et tous ses achats/ventes ?')">
-            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-        </form>
+                    <span style="font-weight:500; opacity:0.8;">({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)</span>
+                </span>
+            </div>
+        </div>
+        <span class="chevron" id="chevron-asset-{{ a.asset_id }}">▼</span>
     </div>
+
+    <div class="asset-body" id="asset-{{ a.asset_id }}">
+        <div style="border-top:1px solid rgba(255,255,255,0.06); margin-top:0.85rem; padding-top:0.85rem;">
+            <table class="asset-table">
+                <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
+                <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
+                <tr>
+                    <td>Prix actuel</td>
+                    <td>
+                        <strong>{{ a.current_price }} {{ a.currency }}</strong>
+                        {% if a.price_timestamp %}
+                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.2); font-weight:400;">{{ a.price_timestamp }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr><td>Investi</td><td>{{ a.total_invested }} €</td></tr>
+                <tr><td>Frais cumulés</td><td class="neutral">{{ a.total_fees }} €</td></tr>
+                <tr><td>Valeur actuelle</td><td><strong>{{ a.current_value }} €</strong></td></tr>
+                <tr>
+                    <td>Performance</td>
+                    <td class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}">
+                        <strong>
+                            {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
+                            ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
+                        </strong>
+                    </td>
+                </tr>
+                {% if a.realized_gain != 0 %}
+                <tr>
+                    <td>P&L réalisé</td>
+                    <td class="{{ 'positive' if a.realized_gain >= 0 else 'negative' }}">
+                        {{ '+' if a.realized_gain >= 0 else '' }}{{ a.realized_gain }} €
+                    </td>
+                </tr>
+                {% endif %}
+                {% if a.dividends_received > 0 %}
+                <tr>
+                    <td>Dividendes reçus</td>
+                    <td class="positive">+{{ a.dividends_received }} €</td>
+                </tr>
+                <tr>
+                    <td>Rendement total</td>
+                    <td class="{{ 'positive' if a.total_return >= 0 else 'negative' }}">
+                        <strong>
+                            {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
+                            ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
+                        </strong>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+            <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+                <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
+                <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
+                <a href="{{ url_for('main.charts') }}" class="btn btn-ghost btn-sm">Graphique</a>
+                <form method="POST"
+                      action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Supprimer {{ a.name }} et tous ses achats/ventes ?')">
+                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endif %}
 {% endfor %}
@@ -187,13 +285,13 @@
 const alloc = {{ summary.allocation | tojson }};
 const labels = alloc.map(a => a.ticker);
 const values = alloc.map(a => a.value);
-const colors = ['#5B5FED','#34D399','#F6C90E','#F87171','#7C3AED',
-                '#38BDF8','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+const colors = ['#818CF8','#34D399','#F6C90E','#F87171','#C084FC',
+                '#38BDF8','#6EE7B7','#FCD34D','#FCA5A5','#A5B4FC'];
 Plotly.newPlot('pie-chart', [{
-    type: 'pie', labels: labels, values: values, hole: 0.45,
+    type: 'pie', labels: labels, values: values, hole: 0.5,
     marker: { colors: colors },
     textinfo: 'label+percent',
-    textfont: { color: 'rgba(255,255,255,0.85)' },
+    textfont: { color: 'rgba(255,255,255,0.85)', size: 12 },
     hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
 }], {
     paper_bgcolor: 'rgba(0,0,0,0)',
@@ -202,13 +300,13 @@ Plotly.newPlot('pie-chart', [{
     margin: { l: 20, r: 20, t: 20, b: 20 },
     showlegend: true,
     hoverlabel: {
-        bgcolor: '#16161F',
-        bordercolor: 'rgba(255,255,255,0.1)',
-        font: { color: 'rgba(255,255,255,0.8)' }
+        bgcolor: '#12121E',
+        bordercolor: 'rgba(129,140,248,0.3)',
+        font: { color: 'white' }
     },
     legend: {
         orientation: 'h', y: -0.15,
-        font: { color: 'rgba(255,255,255,0.6)' }
+        font: { color: 'rgba(255,255,255,0.55)' }
     }
 }, { responsive: true, displayModeBar: false });
 </script>
@@ -237,10 +335,10 @@ Plotly.newPlot('pie-chart', [{
                                   else 'badge-crypto' if asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ asset_type }}</span>
             </td>
-            <td style="text-align:right; font-weight:600;">{{ type_value|round(2) }} €</td>
+            <td style="text-align:right; font-weight:600; color:white;">{{ type_value|round(2) }} €</td>
             <td style="text-align:right;">
                 {% if summary.total_value > 0 %}
-                {{ ((type_value / summary.total_value) * 100)|round(1) }}%
+                <span style="color:#A5B4FC; font-weight:600;">{{ ((type_value / summary.total_value) * 100)|round(1) }}%</span>
                 {% else %}—{% endif %}
             </td>
         </tr>
@@ -252,4 +350,14 @@ Plotly.newPlot('pie-chart', [{
 {% endif %}
 
 {% endif %}
+
+<script>
+function toggleAsset(id) {
+    const body    = document.getElementById(id);
+    const chevron = document.getElementById('chevron-' + id);
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+}
+</script>
+
 {% endblock %}
