@@ -3,32 +3,56 @@
 {% block content %}
 
 <style>
-/* ── KPI colorées ── */
+/* ── KPI colorées subtiles ── */
 .kpi-card-violet {
-    background: linear-gradient(135deg, rgba(91,95,237,0.15), rgba(124,58,237,0.08));
-    border-color: rgba(91,95,237,0.25) !important;
+    border-color: rgba(91,95,237,0.2) !important;
+    background: rgba(91,95,237,0.06) !important;
 }
 .kpi-card-violet::before { background: linear-gradient(90deg, #5B5FED, #7C3AED) !important; opacity: 1 !important; }
 
 .kpi-card-green {
-    background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.05));
-    border-color: rgba(52,211,153,0.2) !important;
+    border-color: rgba(52,211,153,0.18) !important;
+    background: rgba(52,211,153,0.05) !important;
 }
 .kpi-card-green::before { background: linear-gradient(90deg, #34D399, #10B981) !important; opacity: 1 !important; }
 
 .kpi-card-amber {
-    background: linear-gradient(135deg, rgba(246,201,14,0.08), rgba(245,158,11,0.04));
     border-color: rgba(246,201,14,0.15) !important;
+    background: rgba(246,201,14,0.04) !important;
 }
 .kpi-card-amber::before { background: linear-gradient(90deg, #F6C90E, #F59E0B) !important; opacity: 1 !important; }
 
 .kpi-card-blue {
-    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(14,165,233,0.04));
     border-color: rgba(56,189,248,0.15) !important;
+    background: rgba(56,189,248,0.04) !important;
 }
 .kpi-card-blue::before { background: linear-gradient(90deg, #38BDF8, #0EA5E9) !important; opacity: 1 !important; }
 
-/* ── Asset header accordéon ── */
+.kpi-card-red {
+    border-color: rgba(248,113,113,0.18) !important;
+    background: rgba(248,113,113,0.05) !important;
+}
+.kpi-card-red::before { background: linear-gradient(90deg, #F87171, #EF4444) !important; opacity: 1 !important; }
+
+/* ── Asset cards ── */
+.asset-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 1.4rem;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+.asset-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+}
+.asset-card-positive { border-top: 2px solid rgba(52,211,153,0.45) !important; }
+.asset-card-negative { border-top: 2px solid rgba(248,113,113,0.35) !important; }
+
+/* ── Accordéon ── */
 .asset-header {
     display: flex;
     align-items: center;
@@ -43,8 +67,8 @@
 .asset-header:hover { background: rgba(255,255,255,0.03); }
 .asset-header:hover .chevron { color: white; }
 .chevron {
-    color: rgba(255,255,255,0.3);
-    font-size: 0.85rem;
+    color: rgba(255,255,255,0.25);
+    font-size: 0.8rem;
     transition: transform 0.25s, color 0.15s;
     flex-shrink: 0;
     margin-left: 0.5rem;
@@ -65,12 +89,13 @@
     margin-top: 0.4rem;
 }
 
-/* ── Glow sur asset cards positives ── */
-.asset-card-positive {
-    box-shadow: 0 0 20px rgba(52,211,153,0.06);
-}
-.asset-card-negative {
-    box-shadow: 0 0 20px rgba(248,113,113,0.06);
+/* ── Mini sparkline placeholder ── */
+.asset-sparkline {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 80px; height: 40px;
+    opacity: 0.12;
+    pointer-events: none;
 }
 </style>
 
@@ -87,9 +112,9 @@
 
 {% if not summary.assets %}
 <div class="card empty-state">
-    <div style="font-size:2.5rem; margin-bottom:1rem;">📈</div>
+    <div style="font-size:3rem; margin-bottom:1rem;">📈</div>
     <h3>Ton portefeuille est vide</h3>
-    <p>Commence par enregistrer ton premier achat — l'actif sera créé automatiquement.</p>
+    <p>Enregistre ton premier achat — l'actif est créé automatiquement.</p>
     <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Enregistrer un achat</a>
 </div>
 
@@ -100,22 +125,14 @@
     <div class="kpi-card kpi-card-violet">
         <div class="kpi-label">Valeur actuelle</div>
         <div class="kpi-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
-        <div class="kpi-sub">{{ summary.assets|length }} actif(s) en portefeuille</div>
-    </div>
-    <div class="kpi-card kpi-card-green">
-        <div class="kpi-label">Dividendes reçus</div>
-        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
-        <div class="kpi-sub">Rendement encaissé</div>
+        <div class="kpi-sub">{{ summary.assets|length }} actif(s) suivi(s)</div>
     </div>
     <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">Total investi</div>
         <div class="kpi-value" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
+        <div class="kpi-sub">Capital déployé</div>
     </div>
-    <div class="kpi-card {% if summary.total_unrealized >= 0 %}kpi-card-green{% else %}kpi-card-red{% endif %}"
-         style="{% if summary.total_unrealized < 0 %}background:linear-gradient(135deg,rgba(248,113,113,0.1),rgba(239,68,68,0.05));border-color:rgba(248,113,113,0.2)!important;{% endif %}">
-        {% if summary.total_unrealized < 0 %}
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#F87171,#EF4444);border-radius:99px 99px 0 0;"></div>
-        {% endif %}
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}">
         <div class="kpi-label">Plus-value latente</div>
         <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
             {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
@@ -124,26 +141,53 @@
             {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
         </div>
     </div>
-    <div class="kpi-card kpi-card-blue">
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}">
         <div class="kpi-label">Plus-value réalisée</div>
         <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
             {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
         </div>
         <div class="kpi-sub">Sur ventes clôturées</div>
     </div>
+    {% if summary.total_dividends > 0 %}
+    <div class="kpi-card kpi-card-blue">
+        <div class="kpi-label">Dividendes reçus</div>
+        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
+        <div class="kpi-sub">Rendement encaissé</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Barre de gain total -->
+{% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
+{% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
+<div class="card" style="margin-bottom:1.5rem; border-color:rgba(255,255,255,0.08); padding:1.25rem 1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+        <div>
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
+            <div style="font-size:1.4rem; font-weight:800;
+                        color: {{ '#34D399' if total_gain >= 0 else '#F87171' }};">
+                {{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }} €
+                <span style="font-size:0.9rem; font-weight:600; opacity:0.7;">
+                    ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
+                </span>
+            </div>
+        </div>
+        <a href="{{ url_for('main.charts') }}"
+           style="font-size:0.82rem; color:#818CF8; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
+           onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+            Voir les graphiques →
+        </a>
+    </div>
 </div>
 
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
-<div class="card" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.2);">
+<div class="card" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.18);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
         <div>
-            <span style="font-weight:700; color:white;">Objectif DCA ce mois</span>
-            <span style="font-size:0.85rem; color:rgba(255,255,255,0.35); margin-left:0.75rem;">
-                {{ summary.invested_month }} € / {{ summary.dca_target }} €
-            </span>
+            <span style="font-weight:700; color:white; font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
         </div>
-        <span style="font-weight:800; font-size:1.15rem;
+        <span style="font-weight:800; font-size:1.1rem;
               color: {{ '#34D399' if summary.dca_progress >= 100 else '#818CF8' }};">
             {{ summary.dca_progress }}%
         </span>
@@ -151,22 +195,25 @@
     <div class="progress-bar-wrap">
         <div class="progress-bar" style="width: {{ [summary.dca_progress, 100]|min }}%;"></div>
     </div>
-    {% if summary.dca_progress >= 100 %}
-    <div style="font-size:0.82rem; color:#34D399; margin-top:0.5rem; font-weight:600;">
-        ✓ Objectif atteint ce mois !
+    <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
+        <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+            {{ summary.invested_month }} € investis ce mois
+        </span>
+        {% if summary.dca_progress >= 100 %}
+        <span style="font-size:0.78rem; color:#34D399; font-weight:600;">✓ Objectif atteint !</span>
+        {% else %}
+        <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+            Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
+        </span>
+        {% endif %}
     </div>
-    {% else %}
-    <div style="font-size:0.82rem; color:rgba(255,255,255,0.3); margin-top:0.5rem;">
-        Il reste {{ (summary.dca_target - summary.invested_month)|round(2) }} € à investir.
-    </div>
-    {% endif %}
 </div>
 {% else %}
 <div style="margin-bottom:1.5rem;">
     <a href="{{ url_for('main.settings') }}"
-       style="font-size:0.82rem; color:rgba(255,255,255,0.25); text-decoration:none; transition:color 0.15s;"
-       onmouseover="this.style.color='rgba(255,255,255,0.5)'"
-       onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+       style="font-size:0.82rem; color:rgba(255,255,255,0.2); text-decoration:none; transition:color 0.15s;"
+       onmouseover="this.style.color='rgba(255,255,255,0.45)'"
+       onmouseout="this.style.color='rgba(255,255,255,0.2)'">
         ＋ Définir un objectif DCA mensuel →
     </a>
 </div>
@@ -180,6 +227,17 @@
 {% if not a.fully_sold %}
 <div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}">
 
+    <!-- Icone décorative bg -->
+    <svg class="asset-sparkline" viewBox="0 0 80 40" fill="none">
+        {% if a.unrealized_gain >= 0 %}
+        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5"
+                  stroke="#34D399" stroke-width="2" fill="none"/>
+        {% else %}
+        <polyline points="0,8 15,12 30,10 45,22 60,28 80,35"
+                  stroke="#F87171" stroke-width="2" fill="none"/>
+        {% endif %}
+    </svg>
+
     <div class="asset-header" onclick="toggleAsset('asset-{{ a.asset_id }}')">
         <div style="flex:1; min-width:0;">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
@@ -187,10 +245,7 @@
                                   else 'badge-action' if a.asset_type == 'Action'
                                   else 'badge-crypto' if a.asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ a.ticker }}</span>
-                <span style="color:white; font-weight:600; font-size:0.95rem;">{{ a.name }}</span>
-                {% if a.isin %}
-                <span style="font-size:0.7rem; color:rgba(255,255,255,0.2);">{{ a.isin }}</span>
-                {% endif %}
+                <span style="color:white; font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
             </div>
             <div class="asset-summary-line">
                 <span style="font-size:0.875rem; color:rgba(255,255,255,0.5); font-weight:500;">
@@ -199,7 +254,9 @@
                 <span style="font-size:0.875rem; font-weight:700;
                       color: {{ '#34D399' if a.unrealized_gain >= 0 else '#F87171' }};">
                     {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
-                    <span style="font-weight:500; opacity:0.8;">({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)</span>
+                    <span style="font-weight:500; font-size:0.82rem; opacity:0.75;">
+                        ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
+                    </span>
                 </span>
             </div>
         </div>
@@ -276,13 +333,66 @@
 </div>
 {% endfor %}
 
+<!-- Allocation + Diversification côte à côte -->
 {% if summary.allocation %}
-<div class="section-title">Allocation du portefeuille</div>
-<div class="card" style="margin-bottom:1.5rem;">
-    <div id="pie-chart"></div>
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
+
+    <div>
+        <div class="section-title">Allocation</div>
+        <div class="card">
+            <div id="pie-chart"></div>
+        </div>
+    </div>
+
+    {% if summary.by_type %}
+    <div>
+        <div class="section-title">Diversification par type</div>
+        <div class="card" style="height:100%;">
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th style="text-align:right;">Valeur</th>
+                        <th style="text-align:right;">Poids</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for asset_type, assets in summary.by_type.items() %}
+                {% set type_value = assets | selectattr('fully_sold', 'equalto', false)
+                                           | sum(attribute='current_value') %}
+                {% if type_value > 0 %}
+                <tr>
+                    <td>
+                        <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
+                                          else 'badge-action' if asset_type == 'Action'
+                                          else 'badge-crypto' if asset_type == 'Crypto'
+                                          else 'badge-other' }}">{{ asset_type }}</span>
+                    </td>
+                    <td style="text-align:right; font-weight:600; color:white;">{{ type_value|round(2) }} €</td>
+                    <td style="text-align:right;">
+                        {% if summary.total_value > 0 %}
+                        {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
+                        <div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">
+                            <div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">
+                                <div style="width:{{ pct }}%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>
+                            </div>
+                            <span style="color:#A5B4FC; font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
+                        </div>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
+
 <script>
-const alloc = {{ summary.allocation | tojson }};
+const alloc  = {{ summary.allocation | tojson }};
 const labels = alloc.map(a => a.ticker);
 const values = alloc.map(a => a.value);
 const colors = ['#818CF8','#34D399','#F6C90E','#F87171','#C084FC',
@@ -291,62 +401,21 @@ Plotly.newPlot('pie-chart', [{
     type: 'pie', labels: labels, values: values, hole: 0.5,
     marker: { colors: colors },
     textinfo: 'label+percent',
-    textfont: { color: 'rgba(255,255,255,0.85)', size: 12 },
+    textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
     hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
 }], {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
-    height: 320,
-    margin: { l: 20, r: 20, t: 20, b: 20 },
-    showlegend: true,
+    height: 280,
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    showlegend: false,
     hoverlabel: {
         bgcolor: '#12121E',
         bordercolor: 'rgba(129,140,248,0.3)',
         font: { color: 'white' }
-    },
-    legend: {
-        orientation: 'h', y: -0.15,
-        font: { color: 'rgba(255,255,255,0.55)' }
     }
 }, { responsive: true, displayModeBar: false });
 </script>
-{% endif %}
-
-{% if summary.by_type %}
-<div class="section-title">Diversification par type</div>
-<div class="card" style="margin-bottom:1.5rem;">
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr>
-                <th>Type</th>
-                <th style="text-align:right;">Valeur</th>
-                <th style="text-align:right;">Poids</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for asset_type, assets in summary.by_type.items() %}
-        {% set type_value = assets | selectattr('fully_sold', 'equalto', false)
-                                   | sum(attribute='current_value') %}
-        {% if type_value > 0 %}
-        <tr>
-            <td>
-                <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
-                                  else 'badge-action' if asset_type == 'Action'
-                                  else 'badge-crypto' if asset_type == 'Crypto'
-                                  else 'badge-other' }}">{{ asset_type }}</span>
-            </td>
-            <td style="text-align:right; font-weight:600; color:white;">{{ type_value|round(2) }} €</td>
-            <td style="text-align:right;">
-                {% if summary.total_value > 0 %}
-                <span style="color:#A5B4FC; font-weight:600;">{{ ((type_value / summary.total_value) * 100)|round(1) }}%</span>
-                {% else %}—{% endif %}
-            </td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
 {% endif %}
 
 {% endif %}
