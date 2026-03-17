@@ -2,6 +2,35 @@
 {% block title %}Historique des achats{% endblock %}
 {% block content %}
 
+<style>
+@media (max-width: 768px) {
+    .purchases-desktop { display: none; }
+    .purchases-mobile  { display: block; }
+}
+@media (min-width: 769px) {
+    .purchases-desktop { display: block; }
+    .purchases-mobile  { display: none; }
+}
+.purchase-mobile-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.2s;
+}
+.purchase-mobile-card:hover { border-color: rgba(255,255,255,0.12); }
+.pm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem 0;
+    font-size: 0.82rem;
+}
+.pm-label { color: rgba(255,255,255,0.3); }
+.pm-value { color: rgba(255,255,255,0.75); font-weight: 500; }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Historique des achats</h1>
@@ -23,9 +52,10 @@
 
 {% else %}
 
-<!-- Filtre par actif -->
+<!-- Filtre -->
 <div style="margin-bottom:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:0.78rem; color:rgba(255,255,255,0.25); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Filtrer :</span>
+    <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); font-weight:700;
+                 text-transform:uppercase; letter-spacing:0.08em;">Filtrer :</span>
     <button class="btn btn-sm btn-primary filter-btn" onclick="filterAsset('all', this)">Tous</button>
     {% for a in assets %}
     <button class="btn btn-sm btn-ghost filter-btn" onclick="filterAsset('{{ a['ticker'] }}', this)">
@@ -34,94 +64,158 @@
     {% endfor %}
 </div>
 
-<div class="card" style="padding:0; overflow:hidden;">
-    <div class="table-wrap">
-        <table id="purchases-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Actif</th>
-                    <th>Type</th>
-                    <th>Parts</th>
-                    <th>Prix / part</th>
-                    <th>Frais</th>
-                    <th>Total investi</th>
-                    <th>Valeur actuelle</th>
-                    <th>+/- value</th>
-                    <th>Note</th>
-                    <th>Actions</th>
+<!-- ── Desktop table ── -->
+<div class="purchases-desktop">
+    <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap">
+            <table id="purchases-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Actif</th>
+                        <th>Type</th>
+                        <th>Parts</th>
+                        <th>Prix / part</th>
+                        <th>Frais</th>
+                        <th>Total investi</th>
+                        <th>Valeur actuelle</th>
+                        <th>+/- value</th>
+                        <th>Note</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in purchases %}
+                {% set cp = p.get('current_price') | float(0) %}
+                {% set cv = (p['shares'] * cp) | round(2) if cp > 0 else none %}
+                {% set gain = (cv - p['total_cost']) | round(2) if cv is not none else none %}
+                {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
+                <tr data-ticker="{{ p['ticker'] }}"
+                    data-cost="{{ p['total_cost'] | float }}"
+                    data-fees="{{ p['fees'] | float if p['fees'] else 0 }}"
+                    data-gain="{{ gain | float if gain is not none else 0 }}">
+                    <td style="white-space:nowrap; color:rgba(255,255,255,0.5); font-size:0.82rem;">{{ p['date'] }}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                            <span class="badge badge-etf">{{ p['ticker'] }}</span>
+                            <span style="font-size:0.82rem; color:rgba(255,255,255,0.4);">{{ p['name'] }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-etf' if p['asset_type'] == 'ETF'
+                                          else 'badge-action' if p['asset_type'] == 'Action'
+                                          else 'badge-crypto' if p['asset_type'] == 'Crypto'
+                                          else 'badge-other' }}">{{ p['asset_type'] }}</span>
+                    </td>
+                    <td>{{ p['shares'] }}</td>
+                    <td style="white-space:nowrap;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
+                    <td class="neutral">
+                        {% if p['fees'] and p['fees'] | float > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
+                    </td>
+                    <td><strong style="color:white;">{{ p['total_cost'] }} €</strong></td>
+                    <td>
+                        {% if cv is not none %}
+                        <strong style="color:white;">{{ cv }} €</strong>
+                        {% else %}
+                        <span style="color:rgba(255,255,255,0.2);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if gain is not none %}
+                        <span style="font-weight:700; color:{{ '#34D399' if gain >= 0 else '#F87171' }};">
+                            {{ '+' if gain >= 0 else '' }}{{ gain }} €
+                        </span>
+                        <div style="font-size:0.72rem; color:{{ '#34D399' if gain >= 0 else '#F87171' }}; opacity:0.7;">
+                            {{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%
+                        </div>
+                        {% else %}
+                        <span style="color:rgba(255,255,255,0.2);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.82rem; color:rgba(255,255,255,0.38); max-width:120px;">
+                        {{ p['notes'] or '—' }}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:0.4rem;">
+                            <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
+                               class="btn btn-ghost btn-sm">Éditer</a>
+                            <form method="POST"
+                                  action="{{ url_for('main.delete_purchase_route', purchase_id=p['id']) }}"
+                                  onsubmit="return confirm('Supprimer cet achat ?')">
+                                <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-            {% for p in purchases %}
-            {% set current_price = p.get('current_price') %}
-            {% set current_value = (p['shares'] * current_price)|round(2) if current_price else None %}
-            {% set gain = (current_value - p['total_cost'])|round(2) if current_value is not none else None %}
-            {% set gain_pct = ((gain / p['total_cost']) * 100)|round(2) if (gain is not none and p['total_cost'] > 0) else None %}
-            <tr data-ticker="{{ p['ticker'] }}"
-                data-cost="{{ p['total_cost'] }}"
-                data-fees="{{ p['fees'] or 0 }}"
-                data-gain="{{ gain or 0 }}">
-                <td style="white-space:nowrap;">{{ p['date'] }}</td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-                        <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                        <span style="font-size:0.82rem; color:rgba(255,255,255,0.4);">{{ p['name'] }}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge {{ 'badge-etf' if p['asset_type'] == 'ETF'
-                                      else 'badge-action' if p['asset_type'] == 'Action'
-                                      else 'badge-crypto' if p['asset_type'] == 'Crypto'
-                                      else 'badge-other' }}">{{ p['asset_type'] }}</span>
-                </td>
-                <td>{{ p['shares'] }}</td>
-                <td style="white-space:nowrap;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
-                <td class="neutral">
-                    {% if p['fees'] and p['fees'] > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
-                </td>
-                <td><strong>{{ p['total_cost'] }} €</strong></td>
-                <td>
-                    {% if current_value is not none %}
-                    <strong>{{ current_value }} €</strong>
-                    {% else %}
-                    <span style="color:rgba(255,255,255,0.2);">—</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if gain is not none %}
-                    <span style="font-weight:700; color:{{ '#34D399' if gain >= 0 else '#F87171' }};">
-                        {{ '+' if gain >= 0 else '' }}{{ gain }} €
-                    </span>
-                    <div style="font-size:0.72rem; color:{{ '#34D399' if gain >= 0 else '#F87171' }}; opacity:0.7;">
-                        {{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%
-                    </div>
-                    {% else %}
-                    <span style="color:rgba(255,255,255,0.2);">—</span>
-                    {% endif %}
-                </td>
-                <td style="font-size:0.82rem; color:rgba(255,255,255,0.4); max-width:120px;">
-                    {{ p['notes'] or '—' }}
-                </td>
-                <td>
-                    <div style="display:flex; gap:0.4rem;">
-                        <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
-                           class="btn btn-ghost btn-sm">Éditer</a>
-                        <form method="POST"
-                              action="{{ url_for('main.delete_purchase_route', purchase_id=p['id']) }}"
-                              onsubmit="return confirm('Supprimer cet achat ?')">
-                            <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- KPIs dynamiques -->
+<!-- ── Mobile cards ── -->
+<div class="purchases-mobile" id="purchases-mobile">
+    {% for p in purchases %}
+    {% set cp = p.get('current_price') | float(0) %}
+    {% set cv = (p['shares'] * cp) | round(2) if cp > 0 else none %}
+    {% set gain = (cv - p['total_cost']) | round(2) if cv is not none else none %}
+    {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
+    <div class="purchase-mobile-card" data-ticker="{{ p['ticker'] }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="badge badge-etf">{{ p['ticker'] }}</span>
+                <span style="font-size:0.85rem; color:white; font-weight:600;">{{ p['name'] }}</span>
+            </div>
+            <span style="font-size:0.75rem; color:rgba(255,255,255,0.3);">{{ p['date'] }}</span>
+        </div>
+
+        <div class="pm-row">
+            <span class="pm-label">Parts</span>
+            <span class="pm-value">{{ p['shares'] }} × {{ p['price_per_share'] }} {{ p['currency'] }}</span>
+        </div>
+        <div class="pm-row">
+            <span class="pm-label">Total investi</span>
+            <span class="pm-value" style="color:white; font-weight:700;">{{ p['total_cost'] }} €</span>
+        </div>
+        {% if cv is not none %}
+        <div class="pm-row">
+            <span class="pm-label">Valeur actuelle</span>
+            <span class="pm-value" style="color:white; font-weight:700;">{{ cv }} €</span>
+        </div>
+        {% endif %}
+        {% if gain is not none %}
+        <div class="pm-row">
+            <span class="pm-label">+/- value</span>
+            <span style="font-weight:700; font-size:0.85rem;
+                         color:{{ '#34D399' if gain >= 0 else '#F87171' }};">
+                {{ '+' if gain >= 0 else '' }}{{ gain }} €
+                ({{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%)
+            </span>
+        </div>
+        {% endif %}
+        {% if p['notes'] %}
+        <div class="pm-row">
+            <span class="pm-label">Note</span>
+            <span class="pm-value">{{ p['notes'] }}</span>
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:0.4rem; margin-top:0.75rem; padding-top:0.75rem;
+                    border-top:1px solid rgba(255,255,255,0.05);">
+            <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
+               class="btn btn-ghost btn-sm">Éditer</a>
+            <form method="POST"
+                  action="{{ url_for('main.delete_purchase_route', purchase_id=p['id']) }}"
+                  onsubmit="return confirm('Supprimer cet achat ?')">
+                <button type="submit" class="btn btn-danger btn-sm">Suppr.</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- KPIs -->
 <div class="kpi-grid" style="margin-top:1rem;">
     <div class="kpi-card">
         <div class="kpi-label">Achats affichés</div>
@@ -145,7 +239,11 @@
 
 <script>
 function filterAsset(ticker, btn) {
+    // Desktop
     const rows = document.querySelectorAll('#purchases-table tbody tr');
+    // Mobile
+    const cards = document.querySelectorAll('.purchase-mobile-card');
+
     let count = 0, total = 0, fees = 0, gain = 0, hasGain = false;
 
     rows.forEach(row => {
@@ -158,6 +256,11 @@ function filterAsset(ticker, btn) {
             const g = parseFloat(row.dataset.gain || 0);
             if (g !== 0) { gain += g; hasGain = true; }
         }
+    });
+
+    cards.forEach(card => {
+        const visible = ticker === 'all' || card.dataset.ticker === ticker;
+        card.style.display = visible ? '' : 'none';
     });
 
     document.getElementById('kpi-count').textContent = count;
@@ -181,7 +284,6 @@ function filterAsset(ticker, btn) {
     btn.classList.add('btn-primary');
 }
 
-// Init gain KPI
 window.addEventListener('load', () => {
     filterAsset('all', document.querySelector('.filter-btn.btn-primary'));
 });
