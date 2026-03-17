@@ -2,6 +2,32 @@
 {% block title %}Explorer un actif — PortfolioTrack{% endblock %}
 {% block content %}
 
+<style>
+.explorer-search-wrap { position: relative; flex: 1; min-width: 200px; }
+.explorer-suggestions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: rgba(12,12,20,0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    z-index: 1000;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.explorer-suggestion-item {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.12s;
+}
+.explorer-suggestion-item:last-child { border-bottom: none; }
+.explorer-suggestion-item:hover { background: rgba(91,95,237,0.1); }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Explorer un actif</h1>
@@ -9,20 +35,24 @@
     </div>
 </div>
 
-<!-- Barre de recherche -->
+<!-- Barre de recherche avec autocomplete -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <form method="GET" action="{{ url_for('main.explorer') }}" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-        <input type="text" name="ticker"
-               value="{{ ticker }}"
-               placeholder="Ex: IWDA.AS, AAPL, BTC-USD, ESE.PA"
-               style="flex:1; min-width:200px;"
-               autocomplete="off">
-        <button type="submit" class="btn btn-primary">Rechercher</button>
-    </form>
-    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(255,255,255,0.3);">
-        Utilise le ticker Yahoo Finance — ex: <span style="color:#818CF8;">AAPL</span> pour Apple,
-        <span style="color:#818CF8;">IWDA.AS</span> pour MSCI World,
-        <span style="color:#818CF8;">ESE.PA</span> pour S&P500 Euronext
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <div class="explorer-search-wrap">
+            <input type="text" id="explorer-input"
+                   value="{{ ticker }}"
+                   placeholder="Ex: Apple, MSCI World, S&P500, Bitcoin..."
+                   autocomplete="off">
+            <div class="explorer-suggestions" id="explorer-suggestions"></div>
+        </div>
+        <button class="btn btn-primary" onclick="goToTicker()">Rechercher</button>
+    </div>
+    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(255,255,255,0.25);">
+        Tape le nom ou le ticker — ex:
+        <span style="color:#818CF8; cursor:pointer;" onclick="setTicker('AAPL')">AAPL</span>,
+        <span style="color:#818CF8; cursor:pointer;" onclick="setTicker('IWDA.AS')">IWDA.AS</span>,
+        <span style="color:#818CF8; cursor:pointer;" onclick="setTicker('BTC-USD')">BTC-USD</span>,
+        <span style="color:#818CF8; cursor:pointer;" onclick="setTicker('ESE.PA')">ESE.PA</span>
     </div>
 </div>
 
@@ -32,32 +62,34 @@
 
 {% if info %}
 
-<!-- Infos principales -->
+<!-- Header actif -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-                <h2 style="color:white; font-size:1.4rem; font-weight:700;">{{ info.name }}</h2>
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                <h2 style="color:white; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
                 <span class="badge badge-etf">{{ info.ticker }}</span>
                 {% if info.exchange %}
-                <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">{{ info.exchange }}</span>
+                <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.1); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
+                {% endif %}
+                {% if info.asset_type %}
+                <span style="font-size:0.75rem; color:rgba(255,255,255,0.25);">{{ info.asset_type }}</span>
                 {% endif %}
             </div>
             {% if info.sector and info.sector != '—' %}
-            <div style="font-size:0.85rem; color:rgba(255,255,255,0.4); margin-bottom:0.25rem;">
-                {{ info.sector }}
-            </div>
+            <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">{{ info.sector }}</div>
             {% endif %}
         </div>
         <div style="text-align:right;">
-            <div style="font-size:2rem; font-weight:700; color:white;">
-                {{ info.current_price }} {{ info.currency }}
+            <div style="font-size:2.2rem; font-weight:800; color:white; letter-spacing:-0.02em;">
+                {{ info.current_price }} <span style="font-size:1rem; font-weight:500; color:rgba(255,255,255,0.4);">{{ info.currency }}</span>
             </div>
             {% if info.previous_close %}
             {% set change = ((info.current_price - info.previous_close) / info.previous_close * 100)|round(2) %}
-            <div style="font-size:0.9rem; font-weight:600;
-                        color: {{ '#34D399' if change >= 0 else '#F87171' }};">
-                {{ '+' if change >= 0 else '' }}{{ change }}% aujourd'hui
+            {% set change_abs = (info.current_price - info.previous_close)|round(4) %}
+            <div style="font-size:0.9rem; font-weight:600; color: {{ '#34D399' if change >= 0 else '#F87171' }};">
+                {{ '+' if change >= 0 else '' }}{{ change_abs }} {{ info.currency }}
+                ({{ '+' if change >= 0 else '' }}{{ change }}%) aujourd'hui
             </div>
             {% endif %}
         </div>
@@ -69,13 +101,10 @@
     {% if info.market_cap %}
     <div class="kpi-card">
         <div class="kpi-label">Market Cap</div>
-        <div class="kpi-value" style="font-size:1.2rem;">
-            {% if info.market_cap >= 1000000000000 %}
-                {{ (info.market_cap / 1000000000000)|round(2) }} T
-            {% elif info.market_cap >= 1000000000 %}
-                {{ (info.market_cap / 1000000000)|round(2) }} Md
-            {% else %}
-                {{ (info.market_cap / 1000000)|round(2) }} M
+        <div class="kpi-value" style="font-size:1.3rem; color:#A5B4FC;">
+            {% if info.market_cap >= 1000000000000 %}{{ (info.market_cap / 1000000000000)|round(2) }} T
+            {% elif info.market_cap >= 1000000000 %}{{ (info.market_cap / 1000000000)|round(2) }} Md
+            {% else %}{{ (info.market_cap / 1000000)|round(2) }} M
             {% endif %}
             {{ info.currency }}
         </div>
@@ -84,26 +113,33 @@
     {% if info.pe_ratio %}
     <div class="kpi-card">
         <div class="kpi-label">P/E Ratio</div>
-        <div class="kpi-value" style="font-size:1.2rem;">{{ info.pe_ratio|round(2) }}</div>
+        <div class="kpi-value" style="font-size:1.3rem;">{{ info.pe_ratio|round(2) }}</div>
+        <div class="kpi-sub">Price / Earnings</div>
     </div>
     {% endif %}
     {% if info.dividend_yield %}
     <div class="kpi-card">
         <div class="kpi-label">Rendement dividende</div>
-        <div class="kpi-value positive" style="font-size:1.2rem;">
-            {{ (info.dividend_yield * 100)|round(2) }}%
-        </div>
+        <div class="kpi-value positive" style="font-size:1.3rem;">{{ (info.dividend_yield * 100)|round(2) }}%</div>
+        <div class="kpi-sub">Annualisé</div>
     </div>
     {% endif %}
     {% if info.fifty_two_week_high and info.fifty_two_week_low %}
     <div class="kpi-card">
-        <div class="kpi-label">52 semaines</div>
-        <div class="kpi-value" style="font-size:1rem;">
-            <span class="negative">{{ info.fifty_two_week_low }}</span>
-            <span style="color:rgba(255,255,255,0.3);"> — </span>
-            <span class="positive">{{ info.fifty_two_week_high }}</span>
+        <div class="kpi-label">Range 52 semaines</div>
+        <div style="margin-top:0.4rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:rgba(255,255,255,0.35); margin-bottom:0.3rem;">
+                <span class="negative">{{ info.fifty_two_week_low }}</span>
+                <span class="positive">{{ info.fifty_two_week_high }}</span>
+            </div>
+            {% set range_pct = ((info.current_price - info.fifty_two_week_low) / (info.fifty_two_week_high - info.fifty_two_week_low) * 100)|round(1) if (info.fifty_two_week_high - info.fifty_two_week_low) > 0 else 50 %}
+            <div style="background:rgba(255,255,255,0.07); border-radius:99px; height:5px; overflow:hidden;">
+                <div style="width:{{ range_pct }}%; height:100%; background:linear-gradient(90deg,#F87171,#34D399); border-radius:99px;"></div>
+            </div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:0.25rem; text-align:center;">
+                Position actuelle : {{ range_pct }}% du range
+            </div>
         </div>
-        <div class="kpi-sub">{{ info.currency }}</div>
     </div>
     {% endif %}
 </div>
@@ -115,31 +151,31 @@
         <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
             {% for p, label in [('1mo','1M'), ('3mo','3M'), ('6mo','6M'), ('1y','1A'), ('2y','2A'), ('5y','5A')] %}
             <a href="{{ url_for('main.explorer') }}?ticker={{ info.ticker }}&period={{ p }}"
-               class="btn btn-sm {{ 'btn-primary' if period == p else 'btn-ghost' }}">
-                {{ label }}
-            </a>
+               class="btn btn-sm {{ 'btn-primary' if period == p else 'btn-ghost' }}">{{ label }}</a>
             {% endfor %}
         </div>
     </div>
     <div id="price-chart"></div>
 </div>
 
-<!-- Bouton ajout portefeuille -->
+<!-- CTA achat -->
 {% if current_user.is_authenticated %}
-<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-color:rgba(91,95,237,0.2);">
     <div>
-        <div style="font-weight:600; color:white; margin-bottom:0.25rem;">Ajouter à mon portefeuille</div>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.4);">
-            Ajoute {{ info.ticker }} à ton portefeuille pour suivre tes achats et performances.
+        <div style="font-weight:700; color:white; margin-bottom:0.25rem;">Investir dans {{ info.ticker }}</div>
+        <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">
+            Enregistre un achat — l'actif sera ajouté automatiquement à ton portefeuille.
         </div>
     </div>
-    <a href="{{ url_for('main.add_asset_route') }}?ticker={{ info.ticker }}&name={{ info.name }}&currency={{ info.currency }}"
-       class="btn btn-primary">+ Ajouter à mon portefeuille</a>
+    <a href="{{ url_for('main.add_purchase_route') }}?ticker={{ info.ticker }}&name={{ info.name | urlencode }}&currency={{ info.currency }}"
+       class="btn btn-primary">+ Enregistrer un achat</a>
 </div>
 {% else %}
-<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:1.5rem;">
-    <p style="color:rgba(255,255,255,0.4); margin-bottom:1rem;">
-        Crée un compte gratuit pour suivre cet actif dans ton portefeuille.
+<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:2rem; border-color:rgba(91,95,237,0.15);">
+    <div style="font-size:1.5rem; margin-bottom:0.75rem;">📈</div>
+    <div style="font-weight:700; color:white; margin-bottom:0.5rem;">Suivre cet actif</div>
+    <p style="color:rgba(255,255,255,0.35); margin-bottom:1.25rem; font-size:0.875rem;">
+        Crée un compte gratuit pour enregistrer tes achats et suivre ta performance.
     </p>
     <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit →</a>
 </div>
@@ -150,38 +186,108 @@ const dates  = {{ info.dates | tojson }};
 const closes = {{ info.closes | tojson }};
 const isMobile = window.innerWidth < 768;
 
+// Couleur selon perf
+const firstClose = closes[0] || 0;
+const lastClose  = closes[closes.length - 1] || 0;
+const isPositive = lastClose >= firstClose;
+const lineColor  = isPositive ? '#34D399' : '#F87171';
+const fillColor  = isPositive ? 'rgba(52,211,153,0.07)' : 'rgba(248,113,113,0.07)';
+
 Plotly.newPlot('price-chart', [{
     x: dates, y: closes,
     type: 'scatter', mode: 'lines',
     name: '{{ info.ticker }}',
-    line: { color: '#818CF8', width: 2 },
+    line: { color: lineColor, width: 2 },
     fill: 'tozeroy',
-    fillcolor: 'rgba(129,140,248,0.08)'
+    fillcolor: fillColor
 }], {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
-    height: isMobile ? 260 : 380,
+    height: isMobile ? 240 : 360,
     margin: isMobile ? { l: 45, r: 10, t: 10, b: 40 } : { l: 20, r: 20, t: 10, b: 40 },
     hoverlabel: {
-        bgcolor: '#16161F',
+        bgcolor: '#0C0C14',
         bordercolor: 'rgba(255,255,255,0.1)',
-        font: { color: 'rgba(255,255,255,0.8)' }
+        font: { color: 'white' }
     },
     hovermode: 'x unified',
     xaxis: {
-        gridcolor: 'rgba(255,255,255,0.06)',
-        tickfont: { color: 'rgba(255,255,255,0.4)' },
-        linecolor: 'rgba(255,255,255,0.08)'
+        gridcolor: 'rgba(255,255,255,0.05)',
+        tickfont: { color: 'rgba(255,255,255,0.35)' },
+        linecolor: 'rgba(255,255,255,0.07)'
     },
     yaxis: {
-        gridcolor: 'rgba(255,255,255,0.06)',
-        tickfont: { color: 'rgba(255,255,255,0.4)' },
-        linecolor: 'rgba(255,255,255,0.08)',
+        gridcolor: 'rgba(255,255,255,0.05)',
+        tickfont: { color: 'rgba(255,255,255,0.35)' },
+        linecolor: 'rgba(255,255,255,0.07)',
         ticksuffix: ' {{ info.currency }}'
-    },
-    legend: { font: { color: 'rgba(255,255,255,0.5)' }, bgcolor: 'rgba(0,0,0,0)' }
+    }
 }, { responsive: true, displayModeBar: false });
 </script>
 
 {% endif %}
+
+<script>
+let searchTimer = null;
+
+const input = document.getElementById('explorer-input');
+const suggestionsBox = document.getElementById('explorer-suggestions');
+
+input.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const q = this.value.trim();
+    if (q.length < 2) { suggestionsBox.style.display = 'none'; return; }
+    searchTimer = setTimeout(() => fetchSuggestions(q), 300);
+});
+
+input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') goToTicker();
+});
+
+input.addEventListener('blur', function() {
+    setTimeout(() => suggestionsBox.style.display = 'none', 200);
+});
+
+async function fetchSuggestions(q) {
+    try {
+        const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        showSuggestions(data.results || []);
+    } catch(e) { suggestionsBox.style.display = 'none'; }
+}
+
+function showSuggestions(results) {
+    if (!results.length) { suggestionsBox.style.display = 'none'; return; }
+    suggestionsBox.innerHTML = results.map(r => `
+        <div class="explorer-suggestion-item" onclick="pickSuggestion('${r.ticker}')">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span style="background:rgba(91,95,237,0.18); color:#A5B4FC; font-size:0.72rem;
+                             font-weight:700; padding:2px 7px; border-radius:5px;">${r.ticker}</span>
+                <span style="color:white; font-size:0.875rem; font-weight:500;">${r.name}</span>
+            </div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:2px;">
+                ${r.exchange} · ${r.type} · ${r.currency}
+            </div>
+        </div>
+    `).join('');
+    suggestionsBox.style.display = 'block';
+}
+
+function pickSuggestion(ticker) {
+    input.value = ticker;
+    suggestionsBox.style.display = 'none';
+    window.location.href = `{{ url_for('main.explorer') }}?ticker=${ticker}&period={{ period }}`;
+}
+
+function setTicker(ticker) {
+    input.value = ticker;
+    window.location.href = `{{ url_for('main.explorer') }}?ticker=${ticker}&period=1y`;
+}
+
+function goToTicker() {
+    const val = input.value.trim().toUpperCase();
+    if (val) window.location.href = `{{ url_for('main.explorer') }}?ticker=${val}&period={{ period }}`;
+}
+</script>
+
 {% endblock %}
