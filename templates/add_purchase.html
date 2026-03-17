@@ -12,28 +12,17 @@
 
 <form method="POST" id="bulk-form">
     <div id="rows-container"></div>
-
     <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap;">
-        <button type="button" class="btn btn-ghost" onclick="addRow()">
-            + Ajouter une ligne
-        </button>
-        <button type="submit" class="btn btn-primary" id="submit-btn">
-            Enregistrer tous les achats
-        </button>
+        <button type="button" class="btn btn-ghost" onclick="addRow()">+ Ajouter une ligne</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Enregistrer l'achat</button>
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
     </div>
 </form>
 
 <script>
-const assets = {{ assets | tojson }};
+const existingAssets = {{ assets | tojson }};
 let rowCount = 0;
 const today  = new Date().toISOString().split('T')[0];
-
-function getBadgeClass(type) {
-    const map = { 'ETF': 'badge-etf', 'Action': 'badge-action',
-                  'Crypto': 'badge-crypto' };
-    return map[type] || 'badge-other';
-}
 
 function addRow() {
     const i   = rowCount++;
@@ -41,36 +30,46 @@ function addRow() {
     div.className = 'purchase-row';
     div.id        = `row-${i}`;
 
-    const options = assets.map(a =>
-        `<option value="${a.id}">${a.ticker} — ${a.name}</option>`
-    ).join('');
-
     div.innerHTML = `
         <div class="row-num">Achat #${i + 1}</div>
-        <button type="button" class="remove-row"
-                onclick="removeRow(${i})" title="Supprimer cette ligne">✕</button>
+        <button type="button" class="remove-row" onclick="removeRow(${i})" title="Supprimer">✕</button>
 
-        <div class="form-row-3">
-            <div class="form-group">
-                <label>Actif</label>
-                <select name="asset_id_${i}" required>
-                    ${options}
-                </select>
+        <div class="form-group">
+            <label>Actif</label>
+            <div style="position:relative;">
+                <input type="text" id="search-${i}"
+                       placeholder="Rechercher par nom ou ticker..."
+                       autocomplete="off"
+                       oninput="onSearchInput(${i}, this.value)">
+                <div id="suggestions-${i}" style="
+                    display:none;
+                    position:absolute;
+                    top:100%; left:0; right:0;
+                    background:#16161F;
+                    border:1px solid rgba(255,255,255,0.1);
+                    border-radius:10px;
+                    z-index:1000;
+                    max-height:240px;
+                    overflow-y:auto;
+                    margin-top:4px;
+                "></div>
             </div>
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" name="date_${i}"
-                       value="${today}" required>
-            </div>
-            <div class="form-group">
-                <label>Frais (€)</label>
-                <input type="number" name="fees_${i}"
-                       step="0.01" min="0" value="0"
-                       placeholder="0.00">
+            <input type="hidden" id="ticker-${i}" name="ticker_${i}">
+            <input type="hidden" id="asset_name-${i}" name="asset_name_${i}">
+            <input type="hidden" id="asset_currency-${i}" name="asset_currency_${i}">
+            <input type="hidden" id="asset_type-${i}" name="asset_type_${i}">
+            <input type="hidden" id="asset_id-${i}" name="asset_id_${i}">
+            <div id="selected-asset-${i}" style="display:none; margin-top:0.5rem;
+                 background:rgba(91,95,237,0.1); border:1px solid rgba(91,95,237,0.2);
+                 border-radius:8px; padding:0.5rem 0.75rem; font-size:0.82rem;">
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row-3">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date_${i}" value="${today}" required>
+            </div>
             <div class="form-group">
                 <label>Nombre de parts</label>
                 <input type="number" name="shares_${i}"
@@ -87,20 +86,140 @@ function addRow() {
             </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:1rem;">
-            <div style="font-size:0.82rem; color:#6B7280;">Total :</div>
-            <div id="total-${i}" style="font-weight:700; color:#5B5FED; font-size:1rem;">—</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Frais (€)</label>
+                <input type="number" name="fees_${i}"
+                       step="0.01" min="0" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Note <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
+                <input type="text" name="notes_${i}" placeholder="ex: Achat mensuel DCA">
+            </div>
         </div>
 
-        <div class="form-group" style="margin-top:0.75rem; margin-bottom:0;">
-            <label>Note <span style="font-weight:400; color:#9CA3AF;">(optionnel)</span></label>
-            <input type="text" name="notes_${i}"
-                   placeholder="ex: Achat mensuel DCA">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <div style="font-size:0.82rem; color:rgba(255,255,255,0.4);">Total :</div>
+            <div id="total-${i}" style="font-weight:700; color:#818CF8; font-size:1rem;">—</div>
         </div>
     `;
 
     document.getElementById('rows-container').appendChild(div);
+
+    document.getElementById(`search-${i}`).addEventListener('blur', function() {
+        setTimeout(() => {
+            const s = document.getElementById(`suggestions-${i}`);
+            if (s) s.style.display = 'none';
+        }, 200);
+    });
+
     updateSubmitBtn();
+}
+
+const searchTimers = {};
+
+function onSearchInput(i, val) {
+    clearTimeout(searchTimers[i]);
+    const q = val.trim();
+    if (q.length < 2) {
+        document.getElementById(`suggestions-${i}`).style.display = 'none';
+        return;
+    }
+
+    // Cherche d'abord dans les actifs existants
+    const existing = existingAssets.filter(a =>
+        a.ticker.toLowerCase().includes(q.toLowerCase()) ||
+        a.name.toLowerCase().includes(q.toLowerCase())
+    );
+
+    searchTimers[i] = setTimeout(async () => {
+        try {
+            const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            showSuggestions(i, existing, data.results || []);
+        } catch(e) {
+            showSuggestions(i, existing, []);
+        }
+    }, 300);
+}
+
+function showSuggestions(i, existing, yahooResults) {
+    const box = document.getElementById(`suggestions-${i}`);
+    let html = '';
+
+    if (existing.length) {
+        html += `<div style="padding:0.4rem 1rem; font-size:0.7rem; font-weight:700;
+                             text-transform:uppercase; letter-spacing:0.08em;
+                             color:rgba(255,255,255,0.25);">Déjà dans ton portefeuille</div>`;
+        html += existing.map(a => `
+            <div onclick="selectExisting(${i}, ${JSON.stringify(a).replace(/"/g, '&quot;')})"
+                 style="padding:0.6rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);"
+                 onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                 onmouseout="this.style.background='transparent'">
+                <span style="background:rgba(52,211,153,0.15); color:#34D399; font-size:0.72rem;
+                             font-weight:700; padding:2px 6px; border-radius:4px;">${a.ticker}</span>
+                <span style="color:white; font-size:0.875rem; margin-left:0.5rem;">${a.name}</span>
+            </div>
+        `).join('');
+    }
+
+    if (yahooResults.length) {
+        html += `<div style="padding:0.4rem 1rem; font-size:0.7rem; font-weight:700;
+                             text-transform:uppercase; letter-spacing:0.08em;
+                             color:rgba(255,255,255,0.25);">Yahoo Finance</div>`;
+        html += yahooResults.map(r => `
+            <div onclick="selectYahoo(${i}, ${JSON.stringify(r).replace(/"/g, '&quot;')})"
+                 style="padding:0.6rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);"
+                 onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+                 onmouseout="this.style.background='transparent'">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="background:rgba(91,95,237,0.2); color:#818CF8; font-size:0.72rem;
+                                 font-weight:700; padding:2px 6px; border-radius:4px;">${r.ticker}</span>
+                    <span style="color:white; font-size:0.875rem;">${r.name}</span>
+                </div>
+                <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:2px;">
+                    ${r.exchange} · ${r.type} · ${r.currency}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (!html) {
+        box.style.display = 'none';
+        return;
+    }
+    box.innerHTML = html;
+    box.style.display = 'block';
+}
+
+function selectExisting(i, asset) {
+    document.getElementById(`search-${i}`).value       = `${asset.ticker} — ${asset.name}`;
+    document.getElementById(`ticker-${i}`).value        = asset.ticker;
+    document.getElementById(`asset_name-${i}`).value    = asset.name;
+    document.getElementById(`asset_currency-${i}`).value = asset.currency;
+    document.getElementById(`asset_type-${i}`).value    = asset.asset_type;
+    document.getElementById(`asset_id-${i}`).value      = asset.id;
+    document.getElementById(`suggestions-${i}`).style.display = 'none';
+
+    const sel = document.getElementById(`selected-asset-${i}`);
+    sel.innerHTML = `✓ <strong style="color:#34D399;">${asset.ticker}</strong> — ${asset.name} <span style="color:rgba(255,255,255,0.3);">(déjà dans ton portefeuille)</span>`;
+    sel.style.display = 'block';
+}
+
+function selectYahoo(i, r) {
+    document.getElementById(`search-${i}`).value        = `${r.ticker} — ${r.name}`;
+    document.getElementById(`ticker-${i}`).value         = r.ticker;
+    document.getElementById(`asset_name-${i}`).value     = r.name;
+    document.getElementById(`asset_currency-${i}`).value = r.currency;
+    document.getElementById(`asset_type-${i}`).value     = r.type === 'ETF' ? 'ETF' :
+                                                             r.type === 'EQUITY' ? 'Action' :
+                                                             r.type === 'CRYPTOCURRENCY' ? 'Crypto' : 'Autre';
+    document.getElementById(`asset_id-${i}`).value       = '';
+    document.getElementById(`suggestions-${i}`).style.display = 'none';
+
+    const sel = document.getElementById(`selected-asset-${i}`);
+    sel.innerHTML = `✓ <strong style="color:#818CF8;">${r.ticker}</strong> — ${r.name} <span style="color:rgba(255,255,255,0.3);">(sera ajouté automatiquement)</span>`;
+    sel.style.display = 'block';
 }
 
 function removeRow(i) {
@@ -123,12 +242,9 @@ function calcTotal(i) {
 function updateSubmitBtn() {
     const count = document.querySelectorAll('.purchase-row').length;
     const btn   = document.getElementById('submit-btn');
-    btn.textContent = count > 1
-        ? `Enregistrer ${count} achats`
-        : 'Enregistrer l\'achat';
+    btn.textContent = count > 1 ? `Enregistrer ${count} achats` : "Enregistrer l'achat";
 }
 
-// Démarre avec 1 ligne par défaut
 addRow();
 </script>
 

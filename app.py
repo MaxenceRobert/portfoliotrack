@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify
 from flask_login import LoginManager, login_required, current_user
 from config import Config
 from database import (
@@ -41,6 +41,46 @@ from flask import Blueprint
 main_bp = Blueprint('main', __name__)
 
 ASSET_TYPES = ['ETF', 'Action', 'Crypto', 'Obligation', 'Autre']
+
+# ── API Search Ticker ─────────────────────────────────────────────────────────
+@app.route('/api/search-ticker')
+def search_ticker():
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return jsonify({'results': []})
+    try:
+        import yfinance as yf
+        import requests as req
+        url = f'https://query1.finance.yahoo.com/v1/finance/search?q={q}&quotesCount=8&newsCount=0&listsCount=0'
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        r = req.get(url, headers=headers, timeout=5)
+        data = r.json()
+        quotes = data.get('quotes', [])
+        results = []
+        for q_item in quotes:
+            symbol = q_item.get('symbol', '')
+            name   = q_item.get('longname') or q_item.get('shortname') or symbol
+            qtype  = q_item.get('quoteType', '')
+            exch   = q_item.get('exchDisp') or q_item.get('exchange', '')
+            curr   = q_item.get('currency', '')
+            if not curr:
+                if '.PA' in symbol or '.AS' in symbol or '.DE' in symbol:
+                    curr = 'EUR'
+                elif '-USD' in symbol:
+                    curr = 'USD'
+                else:
+                    curr = 'USD'
+            results.append({
+                'ticker':   symbol,
+                'name':     name,
+                'type':     qtype,
+                'exchange': exch,
+                'currency': curr,
+            })
+        return jsonify({'results': results})
+    except Exception as e:
+        print(f"Search error: {e}")
+        return jsonify({'results': []})
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @main_bp.route('/')
@@ -166,14 +206,16 @@ def add_asset_route():
         flash(f'{name} ajouté ✓ (prix actuel : {price} {currency})', 'success')
         return redirect(url_for('main.dashboard'))
 
-    ticker_prefill   = request.args.get('ticker', '')
-    name_prefill     = request.args.get('name', '')
-    currency_prefill = request.args.get('currency', '')
+    ticker_prefill      = request.args.get('ticker', '')
+    name_prefill        = request.args.get('name', '')
+    currency_prefill    = request.args.get('currency', '')
+    asset_type_prefill  = request.args.get('asset_type', '')
 
     return render_template('add_asset.html', asset_types=ASSET_TYPES,
                            ticker_prefill=ticker_prefill,
                            name_prefill=name_prefill,
-                           currency_prefill=currency_prefill)
+                           currency_prefill=currency_prefill,
+                           asset_type_prefill=asset_type_prefill)
 
 # ── Supprimer un actif ────────────────────────────────────────────────────────
 @main_bp.route('/assets/delete/<int:asset_id>', methods=['POST'])
@@ -192,40 +234,79 @@ def delete_asset_route(asset_id):
 @login_required
 def add_purchase_route():
     assets = get_user_assets(current_user.id)
-    if not assets:
-        flash('Ajoute d\'abord un actif à ton portefeuille.', 'error')
-        return redirect(url_for('main.add_asset_route'))
 
     if request.method == 'POST':
         rows   = []
         errors = []
         i      = 0
-        while f'asset_id_{i}' in request.form:
+
+        while f'ticker_{i}' in request.form or f'asset_id_{i}' in request.form:
             try:
-                asset_id        = int(request.form[f'asset_id_{i}'])
-                date            = request.form[f'date_{i}']
-                shares          = float(request.form[f'shares_{i}'])
-                price_per_share = float(request.form[f'price_per_share_{i}'])
+                ticker     = request.form.get(f'ticker_{i}', '').strip().upper()
+                asset_name = request.form.get(f'asset_name_{i}', '').strip()
+                currency   = request.form.get(f'asset_currency_{i}', 'EUR').strip().upper()
+                asset_type = request.form.get(f'asset_type_{i}', 'Autre').strip()
+                asset_id   = request.form.get(f'asset_id_{i}', '').strip()
+                date            = request.form.get(f'date_{i}', '')
+                shares          = float(request.form.get(f'shares_{i}', 0))
+                price_per_share = float(request.form.get(f'price_per_share_{i}', 0))
                 fees            = float(request.form.get(f'fees_{i}', 0) or 0)
                 notes           = request.form.get(f'notes_{i}', '')
 
+                if not ticker:
+                    errors.append(f'Ligne {i+1} : aucun actif sélectionné.')
+                    i += 1
+                    continue
+
                 if not date or shares <= 0 or price_per_share <= 0:
                     errors.append(f'Ligne {i+1} : données invalides.')
+                    i += 1
+                    continue
+
+                # Si asset_id vide → créer l'actif automatiquement
+                if not asset_id:
+                    price = get_current_price(ticker)
+                    if price is None:
+                        errors.append(f'Ligne {i+1} : ticker "{ticker}" introuvable sur Yahoo Finance.')
+                        i += 1
+                        continue
+
+                    type_map = {'ETF': 'ETF', 'EQUITY': 'Action',
+                                'CRYPTOCURRENCY': 'Crypto', 'Action': 'Action',
+                                'Crypto': 'Crypto', 'Autre': 'Autre'}
+                    mapped_type = type_map.get(asset_type, 'Autre')
+
+                    success = add_asset(current_user.id, ticker,
+                                        asset_name or ticker, mapped_type,
+                                        currency or 'EUR', '')
+                    # Récupère l'asset_id même si déjà existant
+                    from database import get_user_assets as _get_assets
+                    all_assets = _get_assets(current_user.id)
+                    found = next((a for a in all_assets if a['ticker'] == ticker), None)
+                    if not found:
+                        errors.append(f'Ligne {i+1} : impossible de créer l\'actif "{ticker}".')
+                        i += 1
+                        continue
+                    asset_id = found['id']
                 else:
+                    asset_id = int(asset_id)
                     asset = get_asset_by_id(asset_id, current_user.id)
                     if not asset:
                         errors.append(f'Ligne {i+1} : actif invalide.')
-                    else:
-                        rows.append({
-                            'asset_id':        asset_id,
-                            'date':            date,
-                            'shares':          shares,
-                            'price_per_share': price_per_share,
-                            'fees':            fees,
-                            'notes':           notes,
-                        })
-            except (ValueError, KeyError):
-                errors.append(f'Ligne {i+1} : format incorrect.')
+                        i += 1
+                        continue
+
+                rows.append({
+                    'asset_id':        asset_id,
+                    'date':            date,
+                    'shares':          shares,
+                    'price_per_share': price_per_share,
+                    'fees':            fees,
+                    'notes':           notes,
+                })
+
+            except (ValueError, KeyError) as e:
+                errors.append(f'Ligne {i+1} : format incorrect ({e}).')
             i += 1
 
         if errors:

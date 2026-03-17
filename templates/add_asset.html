@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Ajouter un actif{% endblock %}
 {% block content %}
-
 <div class="page-header">
     <div>
         <h1>Ajouter un actif</h1>
@@ -13,11 +12,40 @@
 <div class="card form-card">
     <form method="POST">
 
+        <!-- Recherche autocomplete -->
+        <div class="form-group">
+            <label>Rechercher un actif</label>
+            <div style="position:relative;">
+                <input type="text" id="search-input"
+                       placeholder="Ex: Apple, MSCI World, Bitcoin, S&P500..."
+                       autocomplete="off">
+                <div id="suggestions" style="
+                    display:none;
+                    position:absolute;
+                    top:100%;
+                    left:0; right:0;
+                    background:#16161F;
+                    border:1px solid rgba(255,255,255,0.1);
+                    border-radius:10px;
+                    z-index:1000;
+                    max-height:280px;
+                    overflow-y:auto;
+                    margin-top:4px;
+                "></div>
+            </div>
+            <div class="form-hint">Tape le nom ou le ticker — les résultats Yahoo Finance apparaissent automatiquement.</div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.07); margin:1.25rem 0;">
+        <div style="font-size:0.78rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">
+            Ou remplis manuellement :
+        </div>
+
         <div class="form-group">
             <label for="asset_type">Type d'actif</label>
             <select id="asset_type" name="asset_type" required>
                 {% for t in asset_types %}
-                <option value="{{ t }}">{{ t }}</option>
+                <option value="{{ t }}" {{ 'selected' if t == asset_type_prefill }}>{{ t }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -25,53 +53,119 @@
         <div class="form-group">
             <label for="name">Nom</label>
             <input type="text" id="name" name="name" required
-                   placeholder="ex: Apple Inc. / iShares Core MSCI World / Bitcoin">
+                   value="{{ name_prefill }}"
+                   placeholder="ex: Apple Inc. / iShares Core MSCI World">
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="ticker">Ticker Yahoo Finance</label>
                 <input type="text" id="ticker" name="ticker" required
+                       value="{{ ticker_prefill }}"
                        placeholder="ex: AAPL / IWDA.AS / BTC-USD"
                        style="text-transform:uppercase;">
-                <div class="form-hint">
-                    Cherche sur
-                    <a href="https://finance.yahoo.com" target="_blank"
-                       style="color:#5B5FED;">finance.yahoo.com</a>
-                </div>
             </div>
             <div class="form-group">
                 <label for="currency">Devise</label>
                 <select id="currency" name="currency">
-                    <option value="EUR">EUR — Euro</option>
-                    <option value="USD">USD — Dollar</option>
-                    <option value="GBP">GBP — Livre</option>
-                    <option value="CHF">CHF — Franc suisse</option>
+                    <option value="EUR" {{ 'selected' if currency_prefill == 'EUR' }}>EUR — Euro</option>
+                    <option value="USD" {{ 'selected' if currency_prefill == 'USD' }}>USD — Dollar</option>
+                    <option value="GBP" {{ 'selected' if currency_prefill == 'GBP' }}>GBP — Livre</option>
+                    <option value="CHF" {{ 'selected' if currency_prefill == 'CHF' }}>CHF — Franc suisse</option>
                 </select>
             </div>
         </div>
 
         <div class="form-group">
-            <label for="isin">ISIN <span style="font-weight:400; color:#9CA3AF;">(optionnel)</span></label>
+            <label for="isin">ISIN <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
             <input type="text" id="isin" name="isin"
                    placeholder="ex: IE00B4L5Y983"
                    maxlength="12"
                    style="text-transform:uppercase;">
-            <div class="form-hint">Uniquement pour les ETF et obligations.</div>
         </div>
 
         <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-            <button type="submit" class="btn btn-primary">
-                Vérifier et ajouter
-            </button>
+            <button type="submit" class="btn btn-primary">Vérifier et ajouter</button>
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
         </div>
-
-        <p style="margin-top:1rem; font-size:0.8rem; color:#9CA3AF;">
-            Le ticker est vérifié en temps réel sur Yahoo Finance avant l'ajout.
-        </p>
-
     </form>
 </div>
 
+<script>
+let searchTimeout = null;
+
+document.getElementById('search-input').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const q = this.value.trim();
+    if (q.length < 2) {
+        document.getElementById('suggestions').style.display = 'none';
+        return;
+    }
+    searchTimeout = setTimeout(() => searchYahoo(q), 300);
+});
+
+document.getElementById('search-input').addEventListener('blur', function() {
+    setTimeout(() => {
+        document.getElementById('suggestions').style.display = 'none';
+    }, 200);
+});
+
+async function searchYahoo(q) {
+    try {
+        const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        showSuggestions(data.results || []);
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+function showSuggestions(results) {
+    const box = document.getElementById('suggestions');
+    if (!results.length) {
+        box.style.display = 'none';
+        return;
+    }
+    box.innerHTML = results.map(r => `
+        <div onclick="selectAsset(${JSON.stringify(r).replace(/"/g, '&quot;')})"
+             style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);
+                    transition:background 0.1s;"
+             onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+             onmouseout="this.style.background='transparent'">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span style="background:rgba(91,95,237,0.2); color:#818CF8; font-size:0.72rem;
+                             font-weight:700; padding:2px 6px; border-radius:4px;">
+                    ${r.ticker}
+                </span>
+                <span style="color:white; font-size:0.875rem; font-weight:500;">${r.name}</span>
+            </div>
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.35); margin-top:2px;">
+                ${r.exchange} · ${r.type} · ${r.currency}
+            </div>
+        </div>
+    `).join('');
+    box.style.display = 'block';
+}
+
+function selectAsset(r) {
+    document.getElementById('ticker').value   = r.ticker;
+    document.getElementById('name').value     = r.name;
+    document.getElementById('search-input').value = r.name + ' (' + r.ticker + ')';
+
+    const currencyMap = {'EUR': 0, 'USD': 1, 'GBP': 2, 'CHF': 3};
+    const sel = document.getElementById('currency');
+    if (r.currency && currencyMap[r.currency] !== undefined) {
+        sel.selectedIndex = currencyMap[r.currency];
+    }
+
+    const typeMap = {'ETF': 'ETF', 'EQUITY': 'Action', 'CRYPTOCURRENCY': 'Crypto'};
+    const assetTypeSel = document.getElementById('asset_type');
+    const mappedType = typeMap[r.type] || 'Autre';
+    for (let opt of assetTypeSel.options) {
+        if (opt.value === mappedType) { opt.selected = true; break; }
+    }
+
+    document.getElementById('suggestions').style.display = 'none';
+}
+</script>
 {% endblock %}
