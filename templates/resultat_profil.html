@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block title %}Profil {{ profil }} — Test investisseur — PortfolioTrack{% endblock %}
+{% block content %}
+
+<style>
+.result-wrap { max-width: 820px; margin: 0 auto; }
+
+/* ── Score hero ── */
+.score-hero {
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+.score-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 200%;
+    background: radial-gradient(ellipse, {{ profil_color }}18 0%, transparent 65%);
+    pointer-events: none;
+}
+.score-emoji { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+.score-profil-name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+}
+.score-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: {{ profil_color }};
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+.score-suffix { font-size: 1.2rem; color: rgba(255,255,255,0.3); font-weight: 600; }
+.score-alloc {
+    margin-top: 0.75rem;
+    display: inline-block;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+}
+
+/* ── Score gauge ── */
+.gauge-wrap { margin-bottom: 1.25rem; }
+.gauge-bar-outer {
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 12px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.gauge-segments {
+    position: absolute; inset: 0;
+    display: flex;
+    border-radius: 99px;
+    overflow: hidden;
+}
+.gauge-seg { flex: 1; }
+.gauge-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 99px;
+    background: {{ profil_color }};
+    opacity: 0.85;
+    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 0 12px {{ profil_color }}66;
+}
+.gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.2);
+    font-weight: 600;
+    padding: 0 2px;
+}
+
+/* ── Axes ── */
+.axes-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.5rem; }
+.axis-row { display: flex; align-items: center; gap: 1rem; }
+.axis-name {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.45);
+    font-weight: 600;
+    min-width: 175px;
+    flex-shrink: 0;
+}
+.axis-bar-outer {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    height: 7px;
+    overflow: hidden;
+}
+.axis-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #5B5FED, #818CF8);
+    transition: width 1s ease;
+}
+.axis-score-val {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    font-weight: 700;
+    min-width: 34px;
+    text-align: right;
+}
+
+/* ── Recommendation ── */
+.rec-card { padding: 2rem; }
+.rec-card h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.rec-body { color: rgba(255,255,255,0.68); font-size: 0.9rem; line-height: 1.75; }
+.rec-body p { margin-bottom: 1rem; }
+.rec-body p:last-child { margin-bottom: 0; }
+.rec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(129,140,248,0.1);
+    color: #818CF8;
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 20px;
+    padding: 0.22rem 0.7rem;
+    margin-bottom: 1rem;
+}
+
+/* ── DCA simulator ── */
+.dca-card { padding: 2rem; }
+.dca-card h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.dca-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.dca-inputs .form-group { margin: 0; }
+.dca-hint {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.25);
+    margin-top: 0.25rem;
+}
+.dca-rate-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    background: rgba(91,95,237,0.12);
+    color: #818CF8;
+    border-radius: 20px;
+    padding: 0.15rem 0.55rem;
+    margin-left: 0.4rem;
+    font-weight: 700;
+}
+
+/* ── Actions ── */
+.result-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .axis-name { min-width: 130px; font-size: 0.72rem; }
+    .score-number { font-size: 2.8rem; }
+    .score-profil-name { font-size: 1.6rem; }
+    .rec-card, .dca-card { padding: 1.25rem; }
+    .result-actions { flex-direction: column; }
+    .result-actions .btn { text-align: center; }
+}
+</style>
+
+<div class="result-wrap">
+
+    <!-- Score hero -->
+    <div class="score-hero">
+        <span class="score-emoji">{{ profil_emoji }}</span>
+        <div class="score-profil-name">Profil {{ profil }}</div>
+        <div>
+            <span class="score-number">{{ global_score }}</span>
+            <span class="score-suffix"> / 100</span>
+        </div>
+        <div class="score-alloc">{{ allocation }}</div>
+    </div>
+
+    <!-- Gauge -->
+    <div class="card gauge-wrap" style="padding:1.5rem;">
+        <div class="section-title" style="margin-top:0;">Score global</div>
+        <div class="gauge-bar-outer">
+            <div class="gauge-segments">
+                <div class="gauge-seg" style="background:rgba(52,211,153,0.12);"></div>
+                <div class="gauge-seg" style="background:rgba(110,231,183,0.10);"></div>
+                <div class="gauge-seg" style="background:rgba(246,201,14,0.10);"></div>
+                <div class="gauge-seg" style="background:rgba(91,95,237,0.12);"></div>
+                <div class="gauge-seg" style="background:rgba(248,113,113,0.12);"></div>
+            </div>
+            <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
+        </div>
+        <div class="gauge-labels">
+            <span>0 — Prudent</span>
+            <span>20</span>
+            <span>40 — Équilibré</span>
+            <span>60</span>
+            <span>80</span>
+            <span>100 — Agressif</span>
+        </div>
+    </div>
+
+    <!-- Axis scores -->
+    <div class="card" style="padding:1.5rem; margin-bottom:1.25rem;">
+        <div class="section-title" style="margin-top:0;">Scores par axe</div>
+        <div class="axes-grid">
+            {% for ax_num in range(1, 9) %}
+            <div class="axis-row">
+                <span class="axis-name">{{ axis_names[ax_num] }}</span>
+                <div class="axis-bar-outer">
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores[ax_num] }}"></div>
+                </div>
+                <span class="axis-score-val">{{ axis_scores[ax_num] }}/100</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Claude recommendation -->
+    <div class="card rec-card" style="margin-bottom:1.25rem;">
+        <h3>
+            <span style="color:#818CF8;">✦</span>
+            Recommandation personnalisée
+        </h3>
+        <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
+        <div class="rec-body">
+            {{ recommendation_html | safe }}
+        </div>
+    </div>
+
+    <!-- DCA Simulator -->
+    <div class="card dca-card" style="margin-bottom:1.25rem;">
+        <h3>
+            🧮 Simulateur DCA
+            <span class="dca-rate-badge">Taux pré-rempli : {{ dca_rate }}%/an</span>
+        </h3>
+        <div class="dca-inputs">
+            <div class="form-group">
+                <label for="dca-monthly">Versement mensuel (€)</label>
+                <input type="number" id="dca-monthly" value="300" min="10" max="100000" step="10">
+            </div>
+            <div class="form-group">
+                <label for="dca-years">Durée (années)</label>
+                <input type="number" id="dca-years" value="15" min="1" max="40" step="1">
+            </div>
+            <div class="form-group">
+                <label for="dca-rate">Rendement annuel (%)</label>
+                <input type="number" id="dca-rate" value="{{ dca_rate }}" min="0" max="30" step="0.5">
+                <div class="dca-hint">Estimé pour un profil {{ profil }}</div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="runDCA()">Simuler</button>
+
+        <div id="dca-kpis" class="kpi-grid" style="display:none; margin-top:1.5rem;">
+            <div class="kpi-card">
+                <div class="kpi-label">Total investi</div>
+                <div class="kpi-value neutral" id="dca-invested">—</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Valeur finale estimée</div>
+                <div class="kpi-value positive" id="dca-final">—</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Intérêts composés</div>
+                <div class="kpi-value positive" id="dca-gains">—</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Multiplicateur</div>
+                <div class="kpi-value positive" id="dca-mult">—</div>
+            </div>
+        </div>
+
+        <div class="card" id="dca-chart-wrap" style="display:none; margin-top:1.25rem; padding:0; border:none; background:none;">
+            <div id="dca-chart"></div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">
+            ↺ Refaire le test
+        </a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+            Suivre mon portefeuille →
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+            Créer mon compte gratuit →
+        </a>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+// Animate gauge fill
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        document.getElementById('gauge-fill').style.width = '{{ global_score }}%';
+    }, 200);
+    // Animate axis bars
+    document.querySelectorAll('.axis-bar-anim').forEach(function(el) {
+        setTimeout(function() {
+            el.style.width = el.dataset.target + '%';
+        }, 350);
+    });
+});
+
+function fmtEur(n) {
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function runDCA() {
+    const monthly = parseFloat(document.getElementById('dca-monthly').value) || 300;
+    const years   = parseInt(document.getElementById('dca-years').value) || 15;
+    const rate    = parseFloat(document.getElementById('dca-rate').value) || {{ dca_rate }};
+    const months  = years * 12;
+    const mRate   = rate / 100 / 12;
+
+    const labels = [], invested = [], value = [];
+    let cumInv = 0, cumVal = 0;
+
+    for (let m = 1; m <= months; m++) {
+        cumInv += monthly;
+        cumVal  = cumVal * (1 + mRate) + monthly;
+        if (m % 12 === 0) {
+            labels.push('An ' + (m / 12));
+            invested.push(parseFloat(cumInv.toFixed(2)));
+            value.push(parseFloat(cumVal.toFixed(2)));
+        }
+    }
+
+    document.getElementById('dca-invested').textContent = fmtEur(cumInv);
+    document.getElementById('dca-final').textContent    = fmtEur(cumVal);
+    document.getElementById('dca-gains').textContent    = '+' + fmtEur(cumVal - cumInv);
+    document.getElementById('dca-mult').textContent     = 'x' + (cumVal / cumInv).toFixed(2);
+    document.getElementById('dca-kpis').style.display      = '';
+    document.getElementById('dca-chart-wrap').style.display = '';
+
+    Plotly.newPlot('dca-chart', [
+        {
+            x: labels, y: invested, name: 'Total investi (€)',
+            type: 'scatter', mode: 'lines',
+            line: { color: 'rgba(255,255,255,0.25)', dash: 'dot', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.03)'
+        },
+        {
+            x: labels, y: value, name: 'Valeur estimée (€)',
+            type: 'scatter', mode: 'lines',
+            line: { color: '{{ profil_color }}', width: 2.5 },
+            fill: 'tozeroy', fillcolor: '{{ profil_color }}20'
+        }
+    ], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor:  'rgba(0,0,0,0)',
+        height: 320,
+        margin: { l: 60, r: 20, t: 20, b: 40 },
+        legend: { orientation: 'h', y: -0.18, font: { color: 'rgba(255,255,255,0.45)' }, bgcolor: 'rgba(0,0,0,0)' },
+        hovermode: 'x unified',
+        hoverlabel: { bgcolor: '#16161F', bordercolor: 'rgba(255,255,255,0.1)', font: { color: 'rgba(255,255,255,0.8)' } },
+        xaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: 'rgba(255,255,255,0.35)' }, linecolor: 'rgba(255,255,255,0.07)' },
+        yaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: 'rgba(255,255,255,0.35)' }, linecolor: 'rgba(255,255,255,0.07)', tickformat: ',.0f', ticksuffix: ' €' }
+    }, { responsive: true, displayModeBar: false });
+}
+
+// Auto-run DCA on load
+window.addEventListener('load', function() { setTimeout(runDCA, 400); });
+</script>
+
+{% endblock %}

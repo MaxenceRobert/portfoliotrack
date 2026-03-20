@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify
+from dotenv import load_dotenv
+load_dotenv()
+
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify, session
 from flask_login import LoginManager, login_required, current_user
 from config import Config
 from database import (
@@ -598,6 +601,182 @@ def profile():
                 flash('Mot de passe mis à jour ✓', 'success')
 
     return render_template('profile.html')
+
+# ── Test profil investisseur ──────────────────────────────────────────────────
+@main_bp.route('/test-profil')
+def test_profil():
+    return render_template('test_profil.html')
+
+@main_bp.route('/resultat-profil', methods=['POST'])
+def resultat_profil():
+    import os
+    import requests as req
+
+    # Collect answers (integer keys 1-40)
+    answers = {}
+    for i in range(1, 41):
+        answers[i] = request.form.get(f'q{i}', '')
+    answers_text = {}
+    for i in range(1, 41):
+        answers_text[i] = request.form.get(f'q{i}_text', '')
+
+    DEFAULT = {'A': 0, 'B': 33, 'C': 66, 'D': 100}
+    EXCEPTIONS = {
+        5:  {'A': 0, 'B': 25, 'C': 50, 'D': 100},
+        8:  {'A': 25, 'B': 50, 'C': 75, 'D': 100},
+        13: {'A': 100, 'B': 80, 'C': 50, 'D': 25},
+        19: {'A': 25, 'B': 25, 'C': 75, 'D': 100},
+        26: {'A': 0, 'B': 50, 'C': 100, 'D': 75},
+        27: {'A': 25, 'B': 75, 'C': 75, 'D': 100},
+        33: {'A': 25, 'B': 0, 'C': 50, 'D': 100},
+        34: {'A': 25, 'B': 0, 'C': 50, 'D': 100},
+        36: {'A': 100, 'B': 25, 'C': 50, 'D': 0},
+        38: {'A': 100, 'B': 75, 'C': 25, 'D': 0},
+    }
+    OPEN_QS = {22, 23, 28, 37}
+    AXES = {
+        1: [1, 2, 3, 4, 5],
+        2: [6, 7, 8, 9, 10],
+        3: [11, 12, 13, 14, 15],
+        4: [16, 17, 18, 19, 20],
+        5: [21, 22, 23, 24, 25],
+        6: [26, 27, 28, 29, 30],
+        7: [31, 32, 33, 34, 35],
+        8: [36, 37, 38, 39, 40],
+    }
+    AXIS_WEIGHTS = {1: 0.20, 2: 0.20, 3: 0.15, 4: 0.10, 5: 0.05, 6: 0.15, 7: 0.10, 8: 0.05}
+    AXIS_NAMES = {
+        1: 'Tolérance émotionnelle',
+        2: 'Capacité financière',
+        3: 'Horizon temporel',
+        4: 'Connaissances financières',
+        5: 'Valeurs et contraintes',
+        6: 'Objectif financier',
+        7: 'Comportement passé',
+        8: 'Projets futurs',
+    }
+
+    def get_score(qn, ans):
+        if not ans or ans == 'E':
+            return 50
+        return EXCEPTIONS.get(qn, DEFAULT).get(ans, 50)
+
+    axis_scores = {}
+    for ax, qs in AXES.items():
+        scored = [q for q in qs if q not in OPEN_QS]
+        axis_scores[ax] = (sum(get_score(q, answers.get(q, '')) for q in scored) / len(scored)) if scored else 50
+
+    global_score = round(sum(axis_scores[ax] * AXIS_WEIGHTS[ax] for ax in AXES))
+
+    if global_score <= 20:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Prudent', '80% fonds euros / 20% actions', 3.0, '#34D399', '🛡️'
+    elif global_score <= 40:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Modéré Prudent', '60% fonds euros / 40% actions', 4.0, '#6EE7B7', '⚖️'
+    elif global_score <= 60:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Équilibré', '50% obligations / 50% actions', 5.0, '#F6C90E', '🎯'
+    elif global_score <= 80:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Dynamique', '20% obligations / 80% actions', 7.0, '#5B5FED', '🚀'
+    else:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Agressif', '95% actions / 5% liquidités', 9.0, '#F87171', '⚡'
+
+    axis_scores_r = {k: round(v) for k, v in axis_scores.items()}
+
+    def ans_display(qn):
+        val = answers.get(qn, '')
+        if not val:
+            return 'Non renseigné'
+        if val == 'E':
+            return f"Autre: {answers_text.get(qn, '').strip()}"
+        return val
+
+    contraintes_text = (
+        f"Contraintes éthiques/religieuses: {ans_display(21)}. "
+        f"Importance de l'impact: {ans_display(24)}. "
+        f"Contraintes fiscales: {ans_display(25)}."
+    )
+
+    system_prompt = (
+        "Tu es un outil pédagogique d'orientation financière. Tu génères des recommandations "
+        "éducatives personnalisées basées sur un profil utilisateur. Tu n'es pas un conseiller "
+        "en investissement agréé. Chaque recommandation doit inclure un disclaimer clair précisant "
+        "qu'il s'agit d'une orientation pédagogique et non d'un conseil en investissement "
+        "personnalisé. Tu rédiges en français, avec un ton accessible, direct et bienveillant."
+    )
+
+    user_prompt = (
+        f"Voici le profil complet d'un utilisateur ayant complété le test de profil investisseur.\n\n"
+        f"Score global : {global_score}/100. Profil : {profil}.\n\n"
+        f"Scores par axe — Tolérance émotionnelle : {axis_scores_r[1]}/100, "
+        f"Capacité financière : {axis_scores_r[2]}/100, "
+        f"Horizon temporel : {axis_scores_r[3]}/100, "
+        f"Connaissances financières : {axis_scores_r[4]}/100, "
+        f"Objectif financier : {axis_scores_r[6]}/100, "
+        f"Comportement passé : {axis_scores_r[7]}/100, "
+        f"Projets futurs : {axis_scores_r[8]}/100.\n\n"
+        f"Contraintes et valeurs : {contraintes_text}\n"
+        f"Convictions sectorielles : {answers.get(22, '') or 'Aucune préférence particulière'}.\n"
+        f"Convictions géographiques : {answers.get(23, '') or 'Aucune préférence particulière'}.\n"
+        f"Objectif de vie : {answers.get(28, '') or 'Non renseigné'}.\n"
+        f"Projets futurs détaillés : {answers.get(37, '') or 'Aucun projet précis'}.\n\n"
+        f"Génère une recommandation complète structurée ainsi : "
+        f"1) Analyse du profil en 3-4 phrases, "
+        f"2) Enveloppes fiscales adaptées à explorer (PEA, CTO, assurance vie) avec explication pédagogique, "
+        f"3) Types d'actifs cohérents avec ce profil dont des exemples d'ETF illustratifs avec disclaimer, "
+        f"4) Allocation indicative en pourcentages, "
+        f"5) 3 points de vigilance personnalisés, "
+        f"6) Disclaimer légal final. "
+        f"Sois précis, personnalisé, et va le plus loin possible dans les détails tout en restant dans le cadre éducatif."
+    )
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    recommendation = ''
+    if api_key:
+        try:
+            resp = req.post(
+                'https://api.anthropic.com/v1/messages',
+                headers={
+                    'x-api-key': api_key,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                },
+                json={
+                    'model': 'claude-haiku-4-5-20251001',
+                    'max_tokens': 1000,
+                    'system': system_prompt,
+                    'messages': [{'role': 'user', 'content': user_prompt}]
+                },
+                timeout=30
+            )
+            if resp.status_code == 200:
+                recommendation = resp.json()['content'][0]['text']
+            else:
+                print(f"Anthropic API error: {resp.status_code} {resp.text}")
+        except Exception as e:
+            print(f"Anthropic API error: {e}")
+
+    if not recommendation:
+        recommendation = (
+            f"Profil {profil} identifié avec un score global de {global_score}/100.\n\n"
+            "La génération de recommandation personnalisée n'est pas disponible pour le moment. "
+            "Consultez un conseiller financier agréé pour obtenir des conseils adaptés à votre situation.\n\n"
+            "⚠️ Les informations affichées sont fournies à titre indicatif uniquement et ne constituent "
+            "pas un conseil en investissement personnalisé."
+        )
+
+    rec_html = '<p>' + recommendation.strip().replace('\n\n', '</p><p>').replace('\n', '<br>') + '</p>'
+
+    return render_template(
+        'resultat_profil.html',
+        profil=profil,
+        profil_emoji=profil_emoji,
+        global_score=global_score,
+        allocation=allocation,
+        dca_rate=dca_rate,
+        profil_color=profil_color,
+        axis_scores=axis_scores_r,
+        axis_names=AXIS_NAMES,
+        recommendation_html=rec_html,
+    )
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)
