@@ -254,6 +254,27 @@ def init_db():
         ''')
 
     conn.commit()
+
+    # ── Migration : ajout des colonnes sharpe + var_95, vidage cache si nouveau ──
+    # S'exécute une seule fois (échoue silencieusement si colonnes déjà présentes)
+    new_cols_added = False
+    for col in ('sharpe', 'var_95'):
+        try:
+            if is_postgres():
+                c.execute(f'ALTER TABLE asset_risk_scores ADD COLUMN IF NOT EXISTS {col} REAL')
+            else:
+                c.execute(f'ALTER TABLE asset_risk_scores ADD COLUMN {col} REAL')
+            conn.commit()
+            new_cols_added = True
+            print(f"[migration] asset_risk_scores: colonne '{col}' ajoutée")
+        except Exception:
+            conn.rollback()  # colonne déjà présente — OK
+
+    if new_cols_added:
+        c.execute('DELETE FROM asset_risk_scores')
+        conn.commit()
+        print("[migration] asset_risk_scores: cache vidé (nouvel algorithme de scoring)")
+
     conn.close()
     print("Base de données initialisée.")
 
@@ -715,6 +736,8 @@ def get_cached_risk_score(ticker):
         'volatilite': row.get('volatilite'),
         'drawdown':   row.get('drawdown'),
         'beta':       row.get('beta'),
+        'sharpe':     row.get('sharpe'),
+        'var_95':     row.get('var_95'),
         'source':     row.get('source', 'default'),
     }
 
@@ -723,28 +746,34 @@ def save_risk_score(ticker, data):
     p = placeholder()
     conn = get_db()
     c = conn.cursor()
-    score = data.get('score', 40)
-    vol   = data.get('volatilite')
-    dd    = data.get('drawdown')
-    beta  = data.get('beta')
-    src   = data.get('source', 'default')
+    score  = data.get('score', 40)
+    vol    = data.get('volatilite')
+    dd     = data.get('drawdown')
+    beta   = data.get('beta')
+    sharpe = data.get('sharpe')
+    var_95 = data.get('var_95')
+    src    = data.get('source', 'default')
     if is_postgres():
         c.execute(f'''
-            INSERT INTO asset_risk_scores (ticker, score, volatilite, drawdown, beta, date_calcul, source)
-            VALUES ({p}, {p}, {p}, {p}, {p}, NOW(), {p})
+            INSERT INTO asset_risk_scores
+                (ticker, score, volatilite, drawdown, beta, sharpe, var_95, date_calcul, source)
+            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, NOW(), {p})
             ON CONFLICT(ticker) DO UPDATE SET
                 score={p}, volatilite={p}, drawdown={p}, beta={p},
-                date_calcul=NOW(), source={p}
-        ''', (ticker, score, vol, dd, beta, src, score, vol, dd, beta, src))
+                sharpe={p}, var_95={p}, date_calcul=NOW(), source={p}
+        ''', (ticker, score, vol, dd, beta, sharpe, var_95, src,
+              score, vol, dd, beta, sharpe, var_95, src))
     else:
         c.execute(f'''
-            INSERT INTO asset_risk_scores (ticker, score, volatilite, drawdown, beta, date_calcul, source)
-            VALUES ({p}, {p}, {p}, {p}, {p}, datetime('now'), {p})
+            INSERT INTO asset_risk_scores
+                (ticker, score, volatilite, drawdown, beta, sharpe, var_95, date_calcul, source)
+            VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, datetime('now'), {p})
             ON CONFLICT(ticker) DO UPDATE SET
                 score=excluded.score, volatilite=excluded.volatilite,
                 drawdown=excluded.drawdown, beta=excluded.beta,
+                sharpe=excluded.sharpe, var_95=excluded.var_95,
                 date_calcul=datetime('now'), source=excluded.source
-        ''', (ticker, score, vol, dd, beta, src))
+        ''', (ticker, score, vol, dd, beta, sharpe, var_95, src))
     conn.commit()
     conn.close()
 

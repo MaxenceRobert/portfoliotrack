@@ -52,17 +52,25 @@ ASSET_TYPES = ['ETF', 'Action', 'Crypto', 'Obligation', 'Autre']
 # ── Scoring de risque ─────────────────────────────────────────────────────────
 def get_risk_score(ticker, asset_type='Autre'):
     """
-    Retourne un dict {score, volatilite, drawdown, beta, source}.
-    Vérifie le cache DB (24h) avant d'appeler Yahoo Finance.
-    Fallback sur score par défaut selon la catégorie d'actif.
+    Score de risque 0-100 basé sur 5 métriques pondérées.
+
+    Métriques et pondérations :
+      - Volatilité annualisée    30%
+      - Max Drawdown 3 ans       25%
+      - Beta vs IWDA.AS (hebdo)  20%
+      - Sharpe Ratio inversé     15%
+      - VaR 95% annualisée       10%
+
+    Cache DB 24h. Fallback sur score par défaut si données insuffisantes.
     """
     import datetime as _dt
+    import re
 
     cached = get_cached_risk_score(ticker)
     if cached:
         return cached
 
-    # Normalisation du type d'actif
+    # ── Correspondances type d'actif ─────────────────────────────────────────
     TYPE_MAP = {
         'etf': 'ETF', 'equity': 'Action', 'action': 'Action',
         'cryptocurrency': 'Crypto', 'crypto': 'Crypto',
@@ -70,72 +78,210 @@ def get_risk_score(ticker, asset_type='Autre'):
         'mutualfund': 'ETF', 'autre': 'Autre',
     }
     DEFAULT_BY_TYPE = {
-        'ETF': 45, 'Action': 50, 'Crypto': 90,
+        'ETF': 45, 'Action': 52, 'Crypto': 88,
         'Obligation': 20, 'Autre': 40,
     }
-    normalized_type  = TYPE_MAP.get((asset_type or '').lower(), 'Autre')
-    default_score    = DEFAULT_BY_TYPE.get(normalized_type, 40)
+    # Tickers spéciaux sans données Yahoo Finance
+    SPECIAL_TICKER_DEFAULTS = [
+        (r'(?i)(livret[\._]?a|lep)', 5),
+        (r'(?i)(fonds[\._]?euro)', 7),
+        (r'(?i)(oblig[\._]?souverain|gov[\._]?bond)', 15),
+        (r'(?i)(oblig[\._]?corp|investment[\._]?grade)', 22),
+        (r'(?i)(high[\._]?yield)', 35),
+        (r'(?i)(scpi|pierre[\._]?papier)', 28),
+        (r'(?i)(immo[\._]?direct|bien[\._]?immo)', 25),
+        (r'(?i)(private[\._]?equity|pe[\._]?fund)', 55),
+        (r'(?i)(matieres?[\._]?prem|commodity)', 45),
+    ]
+
+    normalized_type = TYPE_MAP.get((asset_type or '').lower(), 'Autre')
+    default_score   = DEFAULT_BY_TYPE.get(normalized_type, 40)
+
+    for pattern, score in SPECIAL_TICKER_DEFAULTS:
+        if re.search(pattern, ticker):
+            default_score = score
+            break
+
+    # ── Interpolation linéaire par morceaux ──────────────────────────────────
+    def piecewise(val, breakpoints):
+        """breakpoints = [(x0, y0), (x1, y1), ...] triés par x croissant."""
+        if val <= breakpoints[0][0]:
+            return float(breakpoints[0][1])
+        for i in range(len(breakpoints) - 1):
+            x0, y0 = breakpoints[i]
+            x1, y1 = breakpoints[i + 1]
+            if x0 <= val <= x1:
+                return y0 + (val - x0) / (x1 - x0) * (y1 - y0)
+        # Extrapolation au-delà du dernier point, plafonnée à 100
+        x0, y0 = breakpoints[-2]
+        x1, y1 = breakpoints[-1]
+        slope = (y1 - y0) / (x1 - x0) if x1 > x0 else 0.0
+        return min(100.0, y1 + slope * (val - x1))
+
+    # ── Tables de normalisation ───────────────────────────────────────────────
+    # Volatilité annualisée (décimal, ex: 0.18 = 18%)
+    # Paliers 30% et 50% légèrement relevés pour mieux discriminer les actifs
+    # très volatils (crypto, ETF levier) vis-à-vis des actions ordinaires.
+    VOL_BP = [
+        (0.00,  0), (0.05, 10), (0.10, 25), (0.15, 40),
+        (0.20, 55), (0.30, 75), (0.50, 88), (1.00, 100),
+    ]
+    # Max Drawdown (valeur absolue, décimal)
+    DD_BP = [
+        (0.00,  0), (0.05, 10), (0.15, 25), (0.25, 45),
+        (0.40, 65), (0.60, 80), (1.00, 100),
+    ]
+    # Beta (>= 0) — beta < 0 traité séparément → 20 pts
+    BETA_BP = [
+        (0.0,  5), (0.3, 15), (0.7, 30), (1.0, 45),
+        (1.3, 60), (1.8, 75), (2.5, 90), (5.0, 100),
+    ]
+    # Sharpe inversé : Sharpe élevé → score bas (calculé avec taux sans risque)
+    SHARPE_BP = [
+        (-3.0, 100), (0.0, 70), (0.5, 50),
+        (1.0,  30),  (1.5, 15), (3.0,  0),
+    ]
+    # VaR 95% annualisée (décimal)
+    VAR_BP = [
+        (0.00,  0), (0.05, 15), (0.10, 30),
+        (0.20, 55), (0.35, 75), (1.00, 100),
+    ]
+    # Taux sans risque annuel pour Sharpe (moyenne long terme)
+    RF_ANNUAL = 0.035
 
     try:
         import yfinance as yf
+        import numpy as np
 
-        end   = _dt.date.today()
-        start = end - _dt.timedelta(days=3 * 365)
+        end      = _dt.date.today()
+        start_3y = end - _dt.timedelta(days=3 * 365)
+        start_1y = end - _dt.timedelta(days=365)
 
-        asset_hist  = yf.download(
-            ticker, start=start.isoformat(), end=end.isoformat(),
-            progress=False, auto_adjust=True
+        # ── Télécharger historique (3 ans, fallback 1 an) ────────────────────
+        hist = yf.download(
+            ticker, start=start_3y.isoformat(), end=end.isoformat(),
+            progress=False, auto_adjust=True,
         )
-        market_hist = yf.download(
-            'ACWI', start=start.isoformat(), end=end.isoformat(),
-            progress=False, auto_adjust=True
-        )
 
-        if asset_hist.empty or len(asset_hist) < 100:
-            raise ValueError("Données insuffisantes")
+        if hist.empty or len(hist) < 60:
+            raise ValueError(f"Données insuffisantes ({len(hist)} jours)")
 
-        closes        = asset_hist['Close'].squeeze()
-        asset_returns = closes.pct_change().dropna()
+        fallback_period = False
+        if len(hist) < 126:  # moins de 6 mois sur 3 ans → fallback 1 an
+            print(f"[risk_score] {ticker}: fallback 1 an ({len(hist)} jours disponibles)")
+            hist = yf.download(
+                ticker, start=start_1y.isoformat(), end=end.isoformat(),
+                progress=False, auto_adjust=True,
+            )
+            if hist.empty or len(hist) < 60:
+                raise ValueError("Données insuffisantes même sur 1 an")
+            fallback_period = True
 
-        # Volatilité annualisée
-        vol       = float(asset_returns.std()) * (252 ** 0.5)
-        vol_score = min(vol / 0.50, 1.0) * 100
+        closes        = hist['Close'].squeeze()
+        daily_returns = closes.pct_change().dropna()
+        n_days        = len(daily_returns)
 
-        # Max drawdown
-        cum      = (1 + asset_returns).cumprod()
+        # ── 1. Volatilité annualisée (30%) ───────────────────────────────────
+        vol       = float(daily_returns.std()) * (252 ** 0.5)
+        vol_score = piecewise(vol, VOL_BP)
+
+        # ── 2. Max Drawdown (25%) ────────────────────────────────────────────
+        cum      = (1 + daily_returns).cumprod()
         roll_max = cum.cummax()
         dd       = float(((cum - roll_max) / roll_max).min())
-        dd_score = min(abs(dd) / 0.80, 1.0) * 100
+        dd_abs   = abs(dd)
+        dd_score = piecewise(dd_abs, DD_BP)
 
-        # Beta vs ACWI (proxy MSCI World)
-        beta = 1.0
-        if not market_hist.empty and len(market_hist) >= 50:
-            mclose         = market_hist['Close'].squeeze()
-            market_returns = mclose.pct_change().dropna()
-            common         = asset_returns.index.intersection(market_returns.index)
-            if len(common) >= 50:
-                ar   = asset_returns.loc[common]
-                mr   = market_returns.loc[common]
-                beta = float(ar.cov(mr) / mr.var()) if mr.var() > 0 else 1.0
+        # ── 3. Beta vs IWDA.AS – rendements hebdomadaires (20%) ─────────────
+        beta     = 1.0
+        vol_iwda = None
+        try:
+            mkt_start = start_1y if fallback_period else start_3y
+            mkt_hist  = yf.download(
+                'IWDA.AS', start=mkt_start.isoformat(), end=end.isoformat(),
+                progress=False, auto_adjust=True,
+            )
+            if not mkt_hist.empty and len(mkt_hist) >= 50:
+                mkt_closes     = mkt_hist['Close'].squeeze()
+                mkt_daily_ret  = mkt_closes.pct_change().dropna()
+                vol_iwda       = float(mkt_daily_ret.std()) * (252 ** 0.5)
+                asset_weekly   = closes.resample('W').last().pct_change().dropna()
+                market_weekly  = mkt_closes.resample('W').last().pct_change().dropna()
+                common         = asset_weekly.index.intersection(market_weekly.index)
+                if len(common) >= 30:
+                    ar      = asset_weekly.loc[common].values
+                    mr      = market_weekly.loc[common].values
+                    cov     = float(np.cov(ar, mr)[0][1])
+                    var_mkt = float(np.var(mr, ddof=1))
+                    beta    = cov / var_mkt if var_mkt > 0 else 1.0
+        except Exception as e_beta:
+            print(f"[risk_score] {ticker}: beta fallback ({e_beta})")
 
-        beta_score = min(max(beta, 0.0) / 2.0, 1.0) * 100
+        # Effective beta : pour les actifs à très haute volatilité standalone
+        # (vol > 2.5× la vol du marché) et à beta de covariance positif,
+        # on utilise un plancher basé sur le ratio de volatilité.
+        # Cela corrige les assets comme BTC dont le beta de covariance est faible
+        # (faible corrélation aux actions) mais dont le risque standalone est élevé.
+        effective_beta = beta
+        if (beta > 0 and vol_iwda and vol_iwda > 0):
+            vol_ratio = vol / vol_iwda
+            if vol_ratio > 2.5:
+                effective_beta = max(beta, vol_ratio * 1.5)
 
-        score  = max(0, min(100, round(vol_score * 0.4 + dd_score * 0.4 + beta_score * 0.2)))
+        beta_score = 20.0 if effective_beta < 0 else piecewise(effective_beta, BETA_BP)
+
+        # ── 4. Sharpe Ratio inversé (15% → réduit à 5%) ─────────────────────
+        # Ajusté du taux sans risque pour corriger le biais des périodes bull.
+        # Le poids réduit à 5% limite l'impact d'un bon Sharpe conjoncturel
+        # sur le score global.
+        annual_return = float((1 + daily_returns).prod() ** (252 / n_days) - 1)
+        sharpe        = (annual_return - RF_ANNUAL) / vol if vol > 0 else 0.0
+        sharpe_score  = piecewise(sharpe, SHARPE_BP)
+
+        # ── 5. VaR 95% annualisée (10% → augmenté à 15%) ────────────────────
+        daily_var_95  = float(-np.percentile(daily_returns.values, 5))
+        var_95_annual = daily_var_95 * (252 ** 0.5)
+        var_score     = piecewise(var_95_annual, VAR_BP)
+
+        # ── Score final (pondérations : vol 35% | dd 25% | beta 20% | sharpe 5% | var 15%) ──
+        score = round(
+            vol_score    * 0.35 +
+            dd_score     * 0.25 +
+            beta_score   * 0.20 +
+            sharpe_score * 0.05 +
+            var_score    * 0.15
+        )
+        score = max(0, min(100, score))
+
+        beta_display = f"{beta:.2f}" if effective_beta == beta else f"{beta:.2f}→eff={effective_beta:.2f}"
+        print(
+            f"[risk_score] {ticker}: score={score}/100 | "
+            f"vol={vol*100:.1f}%→{vol_score:.1f}pts(×0.35) | "
+            f"dd={dd_abs*100:.1f}%→{dd_score:.1f}pts(×0.25) | "
+            f"beta={beta_display}→{beta_score:.1f}pts(×0.20) | "
+            f"sharpe_rf={sharpe:.2f}→{sharpe_score:.1f}pts(×0.05) | "
+            f"var95={var_95_annual*100:.1f}%→{var_score:.1f}pts(×0.15)"
+        )
+
         result = {
             'score':      score,
             'volatilite': round(vol * 100, 2),
-            'drawdown':   round(abs(dd) * 100, 2),
+            'drawdown':   round(dd_abs * 100, 2),
             'beta':       round(beta, 3),
+            'sharpe':     round(sharpe, 3),
+            'var_95':     round(var_95_annual * 100, 2),
             'source':     'yahoo',
         }
 
     except Exception as e:
-        print(f"[risk_score] {ticker}: {e}")
+        print(f"[risk_score] {ticker}: erreur → {e} | fallback score={default_score}")
         result = {
             'score':      default_score,
             'volatilite': None,
             'drawdown':   None,
             'beta':       None,
+            'sharpe':     None,
+            'var_95':     None,
             'source':     'default',
         }
 
