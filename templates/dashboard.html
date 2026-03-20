@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'components/risk_badge.html' import risk_badge %}
 {% block title %}Dashboard — PortfolioTrack{% endblock %}
 {% block content %}
 
@@ -97,6 +98,67 @@
     opacity: 0.12;
     pointer-events: none;
 }
+
+/* ── Cohérence ── */
+.coh-card {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border-color: rgba(255,255,255,0.08);
+}
+.coh-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.3);
+    font-weight: 700;
+}
+.coh-score-block { text-align: center; }
+.coh-score-num {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.35rem;
+}
+.coh-score-sub {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
+.coh-sep { color: rgba(255,255,255,0.18); font-size: 1.5rem; font-weight: 300; }
+.coh-gauge-outer {
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+    margin: 1rem 0 0.6rem;
+}
+.coh-gauge-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+}
+.coh-gauge-high  { background: linear-gradient(90deg, #34D399, #10B981); }
+.coh-gauge-med   { background: linear-gradient(90deg, #F6C90E, #F59E0B); }
+.coh-gauge-low   { background: linear-gradient(90deg, #F87171, #EF4444); }
+.coh-msg-high { font-size: 0.82rem; font-weight: 600; color: #34D399; }
+.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: #F6C90E; }
+.coh-msg-low  { font-size: 0.82rem; font-weight: 600; color: #F87171; }
+.coh-pct-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+}
+.coh-pct-high { background: rgba(52,211,153,0.1);  color: #34D399; border: 1px solid rgba(52,211,153,0.25); }
+.coh-pct-med  { background: rgba(246,201,14,0.1);  color: #F6C90E; border: 1px solid rgba(246,201,14,0.2);  }
+.coh-pct-low  { background: rgba(248,113,113,0.1); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
+
+/* ── DCA progress ── */
+.dca-pct-done   { color: #34D399; }
+.dca-pct-active { color: #818CF8; }
 </style>
 
 <div class="page-header">
@@ -164,8 +226,7 @@
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
         <div>
             <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
-            <div style="font-size:1.4rem; font-weight:800;
-                        color: {{ '#34D399' if total_gain >= 0 else '#F87171' }};">
+            <div class="{{ 'positive' if total_gain >= 0 else 'negative' }}" style="font-size:1.4rem; font-weight:800;">
                 {{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }} €
                 <span style="font-size:0.9rem; font-weight:600; opacity:0.7;">
                     ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
@@ -180,6 +241,82 @@
     </div>
 </div>
 
+<!-- ── Cohérence portefeuille / profil ── -->
+{% if portfolio_risk_score is not none %}
+<div class="card coh-card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+        <div class="coh-label">Cohérence portefeuille / profil</div>
+        {% if coherence is not none %}
+        <span class="coh-pct-badge {{ 'coh-pct-high' if coherence >= 70 else 'coh-pct-med' if coherence >= 40 else 'coh-pct-low' }}">
+            {{ coherence }}% cohérent
+        </span>
+        {% endif %}
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap;">
+
+        <!-- Score portefeuille -->
+        <div class="coh-score-block">
+            <div class="coh-score-sub">Score portefeuille</div>
+            <div class="coh-score-num">{{ portfolio_risk_score }}</div>
+            {{ risk_badge(portfolio_risk_score) }}
+        </div>
+
+        <div class="coh-sep">↔</div>
+
+        <!-- Score profil -->
+        {% if last_profil %}
+        <div class="coh-score-block">
+            <div class="coh-score-sub">Score profil investisseur</div>
+            <div class="coh-score-num">{{ profil_risk_score }}</div>
+            {{ risk_badge(profil_risk_score) }}
+        </div>
+        {% else %}
+        <div class="coh-score-block">
+            <div class="coh-score-sub">Score profil investisseur</div>
+            <div style="margin-top:0.5rem;">
+                <a href="{{ url_for('main.test_profil') }}"
+                   style="font-size:0.82rem; color:#818CF8; text-decoration:none; font-weight:600;">
+                    🧠 Faire le test →
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if coherence is not none %}
+    <!-- Jauge -->
+    <div class="coh-gauge-outer">
+        <div id="coh-gauge-fill"
+             class="coh-gauge-fill {{ 'coh-gauge-high' if coherence >= 70 else 'coh-gauge-med' if coherence >= 40 else 'coh-gauge-low' }}"
+             style="width:0%;"></div>
+    </div>
+    <!-- Message -->
+    <div class="{{ 'coh-msg-high' if coherence >= 70 else 'coh-msg-med' if coherence >= 40 else 'coh-msg-low' }}">
+        {% if coherence >= 70 %}
+        ✓ Ton portefeuille est aligné avec ton profil de risque
+        {% elif coherence >= 40 %}
+        ⚡ Ton portefeuille est légèrement décalé par rapport à ton profil
+        {% else %}
+        ⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque
+        {% endif %}
+    </div>
+    {% if coherence < 40 %}
+    <div style="margin-top:0.85rem;">
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost btn-sm">↺ Refaire le test de profil</a>
+    </div>
+    {% endif %}
+    {% else %}
+    <div style="margin-top:1rem; text-align:center;">
+        <a href="{{ url_for('main.test_profil') }}"
+           style="font-size:0.875rem; color:#818CF8; text-decoration:none; font-weight:600;">
+            🧠 Fais ton test de profil pour voir ta cohérence →
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
 <div class="card" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.18);">
@@ -187,13 +324,13 @@
         <div>
             <span style="font-weight:700; color:white; font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
         </div>
-        <span style="font-weight:800; font-size:1.1rem;
-              color: {{ '#34D399' if summary.dca_progress >= 100 else '#818CF8' }};">
+        <span class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
+              style="font-weight:800; font-size:1.1rem;">
             {{ summary.dca_progress }}%
         </span>
     </div>
     <div class="progress-bar-wrap">
-        <div class="progress-bar" style="width: {{ [summary.dca_progress, 100]|min }}%;"></div>
+        <div class="progress-bar" id="dca-progress-bar" data-width="{{ [summary.dca_progress, 100]|min }}" style="width:0%;"></div>
     </div>
     <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
         <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
@@ -225,6 +362,7 @@
 <div class="asset-grid">
 {% for a in assets %}
 {% if not a.fully_sold %}
+{% set ri = risk_data.get(a.ticker) %}
 <div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}">
 
     <!-- Icone décorative bg -->
@@ -246,13 +384,14 @@
                                   else 'badge-crypto' if a.asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ a.ticker }}</span>
                 <span style="color:white; font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
+                {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
             </div>
             <div class="asset-summary-line">
                 <span style="font-size:0.875rem; color:rgba(255,255,255,0.5); font-weight:500;">
                     {{ a.current_value }} €
                 </span>
-                <span style="font-size:0.875rem; font-weight:700;
-                      color: {{ '#34D399' if a.unrealized_gain >= 0 else '#F87171' }};">
+                <span class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}"
+                      style="font-size:0.875rem; font-weight:700;">
                     {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
                     <span style="font-weight:500; font-size:0.82rem; opacity:0.75;">
                         ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
@@ -309,6 +448,21 @@
                             {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
                             ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
                         </strong>
+                    </td>
+                </tr>
+                {% endif %}
+                {% if ri %}
+                <tr>
+                    <td>Score de risque</td>
+                    <td>
+                        {{ risk_badge(ri.score) }}
+                        {% if ri.source == 'yahoo' %}
+                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.22); margin-top:0.2rem;">
+                            Vol. {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · Beta {{ ri.beta }}
+                        </div>
+                        {% else %}
+                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.18); margin-top:0.2rem;">Score par défaut</div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endif %}
@@ -374,7 +528,7 @@
                         {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
                         <div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">
                             <div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">
-                                <div style="width:{{ pct }}%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>
+                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>
                             </div>
                             <span style="color:#A5B4FC; font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
                         </div>
@@ -427,6 +581,27 @@ function toggleAsset(id) {
     body.classList.toggle('open');
     chevron.classList.toggle('open');
 }
+
+// Anime la jauge de cohérence + barres dynamiques
+window.addEventListener('load', function() {
+    const fill = document.getElementById('coh-gauge-fill');
+    if (fill) {
+        setTimeout(function() {
+            fill.style.width = '{{ coherence if coherence is not none else 0 }}%';
+        }, 300);
+    }
+    const dcaBar = document.getElementById('dca-progress-bar');
+    if (dcaBar) {
+        setTimeout(function() {
+            dcaBar.style.width = dcaBar.dataset.width + '%';
+        }, 200);
+    }
+    document.querySelectorAll('.alloc-bar-fill').forEach(function(el) {
+        setTimeout(function() {
+            el.style.width = el.dataset.width + '%';
+        }, 250);
+    });
+});
 </script>
 
 {% endblock %}

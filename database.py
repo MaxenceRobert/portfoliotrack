@@ -2,6 +2,7 @@ import os
 import csv
 import io
 import json
+import datetime
 from config import Config
 
 def get_db():
@@ -130,6 +131,18 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS asset_risk_scores (
+                id          SERIAL PRIMARY KEY,
+                ticker      TEXT NOT NULL UNIQUE,
+                score       INTEGER NOT NULL,
+                volatilite  REAL,
+                drawdown    REAL,
+                beta        REAL,
+                date_calcul TIMESTAMP DEFAULT NOW(),
+                source      TEXT NOT NULL DEFAULT 'default'
+            )
+        ''')
     else:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -225,6 +238,18 @@ def init_db():
                 recommandation TEXT    NOT NULL DEFAULT '',
                 date_test      TEXT    DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS asset_risk_scores (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker      TEXT NOT NULL UNIQUE,
+                score       INTEGER NOT NULL,
+                volatilite  REAL,
+                drawdown    REAL,
+                beta        REAL,
+                date_calcul TEXT DEFAULT (datetime('now')),
+                source      TEXT NOT NULL DEFAULT 'default'
             )
         ''')
 
@@ -658,6 +683,70 @@ def get_last_profil_investisseur(user_id):
         except Exception:
             row['scores_axes'] = {}
     return row
+
+def get_cached_risk_score(ticker):
+    """Returns cached risk score dict if exists and < 24h, else None."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM asset_risk_scores WHERE ticker = {p}', (ticker,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    if not row:
+        return None
+    row = dict(row)
+    date_calc = row.get('date_calcul')
+    if date_calc:
+        try:
+            if isinstance(date_calc, str):
+                dt = datetime.datetime.fromisoformat(
+                    date_calc.replace('Z', '').split('.')[0].replace('T', ' ')
+                )
+            else:
+                dt = date_calc
+                if hasattr(dt, 'tzinfo') and dt.tzinfo:
+                    dt = dt.replace(tzinfo=None)
+            if (datetime.datetime.utcnow() - dt).total_seconds() >= 86400:
+                return None
+        except Exception:
+            pass
+    return {
+        'score':      int(row.get('score', 40)),
+        'volatilite': row.get('volatilite'),
+        'drawdown':   row.get('drawdown'),
+        'beta':       row.get('beta'),
+        'source':     row.get('source', 'default'),
+    }
+
+def save_risk_score(ticker, data):
+    """Upsert risk score for a ticker."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    score = data.get('score', 40)
+    vol   = data.get('volatilite')
+    dd    = data.get('drawdown')
+    beta  = data.get('beta')
+    src   = data.get('source', 'default')
+    if is_postgres():
+        c.execute(f'''
+            INSERT INTO asset_risk_scores (ticker, score, volatilite, drawdown, beta, date_calcul, source)
+            VALUES ({p}, {p}, {p}, {p}, {p}, NOW(), {p})
+            ON CONFLICT(ticker) DO UPDATE SET
+                score={p}, volatilite={p}, drawdown={p}, beta={p},
+                date_calcul=NOW(), source={p}
+        ''', (ticker, score, vol, dd, beta, src, score, vol, dd, beta, src))
+    else:
+        c.execute(f'''
+            INSERT INTO asset_risk_scores (ticker, score, volatilite, drawdown, beta, date_calcul, source)
+            VALUES ({p}, {p}, {p}, {p}, {p}, datetime('now'), {p})
+            ON CONFLICT(ticker) DO UPDATE SET
+                score=excluded.score, volatilite=excluded.volatilite,
+                drawdown=excluded.drawdown, beta=excluded.beta,
+                date_calcul=datetime('now'), source=excluded.source
+        ''', (ticker, score, vol, dd, beta, src))
+    conn.commit()
+    conn.close()
 
 def export_purchases_csv(user_id):
     purchases = get_all_purchases(user_id)

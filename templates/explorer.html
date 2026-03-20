@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'components/risk_badge.html' import risk_badge %}
 {% block title %}Explorer un actif — PortfolioTrack{% endblock %}
 {% block content %}
 
@@ -69,6 +70,7 @@
             <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
                 <h2 style="color:white; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
                 <span class="badge badge-etf">{{ info.ticker }}</span>
+                {% if risk_info %}{{ risk_badge(risk_info.score) }}{% endif %}
                 {% if info.exchange %}
                 <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.1); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
                 {% endif %}
@@ -87,7 +89,8 @@
             {% if info.previous_close %}
             {% set change = ((info.current_price - info.previous_close) / info.previous_close * 100)|round(2) %}
             {% set change_abs = (info.current_price - info.previous_close)|round(4) %}
-            <div style="font-size:0.9rem; font-weight:600; color: {{ '#34D399' if change >= 0 else '#F87171' }};">
+            <div class="{{ 'positive' if change >= 0 else 'negative' }}"
+                 style="font-size:0.9rem; font-weight:600;">
                 {{ '+' if change >= 0 else '' }}{{ change_abs }} {{ info.currency }}
                 ({{ '+' if change >= 0 else '' }}{{ change }}%) aujourd'hui
             </div>
@@ -134,7 +137,7 @@
             </div>
             {% set range_pct = ((info.current_price - info.fifty_two_week_low) / (info.fifty_two_week_high - info.fifty_two_week_low) * 100)|round(1) if (info.fifty_two_week_high - info.fifty_two_week_low) > 0 else 50 %}
             <div style="background:rgba(255,255,255,0.07); border-radius:99px; height:5px; overflow:hidden;">
-                <div style="width:{{ range_pct }}%; height:100%; background:linear-gradient(90deg,#F87171,#34D399); border-radius:99px;"></div>
+                <div class="range-bar-fill" data-width="{{ range_pct }}" style="width:0%; height:100%; background:linear-gradient(90deg,#F87171,#34D399); border-radius:99px;"></div>
             </div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:0.25rem; text-align:center;">
                 Position actuelle : {{ range_pct }}% du range
@@ -228,6 +231,12 @@ Plotly.newPlot('price-chart', [{
 {% endif %}
 
 <script>
+window.addEventListener('load', function() {
+    document.querySelectorAll('.range-bar-fill').forEach(function(el) {
+        setTimeout(function() { el.style.width = el.dataset.width + '%'; }, 200);
+    });
+});
+
 let searchTimer = null;
 
 const input = document.getElementById('explorer-input');

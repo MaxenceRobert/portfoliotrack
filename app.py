@@ -17,6 +17,7 @@ from database import (
     add_dividend, get_all_dividends, delete_dividend,
     update_user_email, update_user_password,
     save_profil_investisseur, get_last_profil_investisseur,
+    get_cached_risk_score, save_risk_score,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -47,6 +48,99 @@ from flask import Blueprint
 main_bp = Blueprint('main', __name__)
 
 ASSET_TYPES = ['ETF', 'Action', 'Crypto', 'Obligation', 'Autre']
+
+# ── Scoring de risque ─────────────────────────────────────────────────────────
+def get_risk_score(ticker, asset_type='Autre'):
+    """
+    Retourne un dict {score, volatilite, drawdown, beta, source}.
+    Vérifie le cache DB (24h) avant d'appeler Yahoo Finance.
+    Fallback sur score par défaut selon la catégorie d'actif.
+    """
+    import datetime as _dt
+
+    cached = get_cached_risk_score(ticker)
+    if cached:
+        return cached
+
+    # Normalisation du type d'actif
+    TYPE_MAP = {
+        'etf': 'ETF', 'equity': 'Action', 'action': 'Action',
+        'cryptocurrency': 'Crypto', 'crypto': 'Crypto',
+        'bond': 'Obligation', 'obligation': 'Obligation',
+        'mutualfund': 'ETF', 'autre': 'Autre',
+    }
+    DEFAULT_BY_TYPE = {
+        'ETF': 45, 'Action': 50, 'Crypto': 90,
+        'Obligation': 20, 'Autre': 40,
+    }
+    normalized_type  = TYPE_MAP.get((asset_type or '').lower(), 'Autre')
+    default_score    = DEFAULT_BY_TYPE.get(normalized_type, 40)
+
+    try:
+        import yfinance as yf
+
+        end   = _dt.date.today()
+        start = end - _dt.timedelta(days=3 * 365)
+
+        asset_hist  = yf.download(
+            ticker, start=start.isoformat(), end=end.isoformat(),
+            progress=False, auto_adjust=True
+        )
+        market_hist = yf.download(
+            'ACWI', start=start.isoformat(), end=end.isoformat(),
+            progress=False, auto_adjust=True
+        )
+
+        if asset_hist.empty or len(asset_hist) < 100:
+            raise ValueError("Données insuffisantes")
+
+        closes        = asset_hist['Close'].squeeze()
+        asset_returns = closes.pct_change().dropna()
+
+        # Volatilité annualisée
+        vol       = float(asset_returns.std()) * (252 ** 0.5)
+        vol_score = min(vol / 0.50, 1.0) * 100
+
+        # Max drawdown
+        cum      = (1 + asset_returns).cumprod()
+        roll_max = cum.cummax()
+        dd       = float(((cum - roll_max) / roll_max).min())
+        dd_score = min(abs(dd) / 0.80, 1.0) * 100
+
+        # Beta vs ACWI (proxy MSCI World)
+        beta = 1.0
+        if not market_hist.empty and len(market_hist) >= 50:
+            mclose         = market_hist['Close'].squeeze()
+            market_returns = mclose.pct_change().dropna()
+            common         = asset_returns.index.intersection(market_returns.index)
+            if len(common) >= 50:
+                ar   = asset_returns.loc[common]
+                mr   = market_returns.loc[common]
+                beta = float(ar.cov(mr) / mr.var()) if mr.var() > 0 else 1.0
+
+        beta_score = min(max(beta, 0.0) / 2.0, 1.0) * 100
+
+        score  = max(0, min(100, round(vol_score * 0.4 + dd_score * 0.4 + beta_score * 0.2)))
+        result = {
+            'score':      score,
+            'volatilite': round(vol * 100, 2),
+            'drawdown':   round(abs(dd) * 100, 2),
+            'beta':       round(beta, 3),
+            'source':     'yahoo',
+        }
+
+    except Exception as e:
+        print(f"[risk_score] {ticker}: {e}")
+        result = {
+            'score':      default_score,
+            'volatilite': None,
+            'drawdown':   None,
+            'beta':       None,
+            'source':     'default',
+        }
+
+    save_risk_score(ticker, result)
+    return result
 
 # ── API Search Ticker ─────────────────────────────────────────────────────────
 @app.route('/api/search-ticker')
@@ -92,8 +186,46 @@ def search_ticker():
 def dashboard():
     if not current_user.is_authenticated:
         return render_template('landing.html')
+
     summary = get_portfolio_summary(current_user.id)
-    return render_template('dashboard.html', summary=summary)
+
+    # Score de risque par actif + score pondéré du portefeuille
+    risk_data            = {}
+    weighted_risk_sum    = 0.0
+    total_risk_weight    = 0.0
+
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            if not a.get('fully_sold', False):
+                ticker = a.get('ticker', '')
+                if ticker and ticker not in risk_data:
+                    risk_data[ticker] = get_risk_score(ticker, a.get('asset_type', 'Autre'))
+                val = float(a.get('current_value') or 0)
+                if val > 0 and ticker in risk_data:
+                    weighted_risk_sum += risk_data[ticker]['score'] * val
+                    total_risk_weight += val
+
+    portfolio_risk_score = (
+        round(weighted_risk_sum / total_risk_weight) if total_risk_weight > 0 else None
+    )
+
+    # Cohérence avec profil investisseur
+    last_profil      = get_last_profil_investisseur(current_user.id)
+    profil_risk_score = last_profil.get('score_global') if last_profil else None
+
+    coherence = None
+    if portfolio_risk_score is not None and profil_risk_score is not None:
+        coherence = max(0, 100 - abs(portfolio_risk_score - profil_risk_score))
+
+    return render_template(
+        'dashboard.html',
+        summary=summary,
+        risk_data=risk_data,
+        portfolio_risk_score=portfolio_risk_score,
+        profil_risk_score=profil_risk_score,
+        coherence=coherence,
+        last_profil=last_profil,
+    )
 
 # ── Landing ───────────────────────────────────────────────────────────────────
 @main_bp.route('/landing')
@@ -333,7 +465,6 @@ def purchases():
     all_p  = get_all_purchases(current_user.id)
     assets = get_user_assets(current_user.id)
 
-    # Enrichir avec le prix actuel par ticker (cache pour éviter les appels multiples)
     price_cache = {}
     enriched = []
     for p in all_p:
@@ -527,8 +658,9 @@ def simulateur():
 def explorer():
     ticker = request.args.get('ticker', '').strip().upper()
     period = request.args.get('period', '1y')
-    info   = None
-    error  = None
+    info      = None
+    error     = None
+    risk_info = None
 
     if ticker:
         if period != '1y':
@@ -542,9 +674,11 @@ def explorer():
 
         if not info:
             error = f'Ticker "{ticker}" introuvable sur Yahoo Finance.'
+        else:
+            risk_info = get_risk_score(ticker, info.get('asset_type', 'Autre'))
 
     return render_template('explorer.html', ticker=ticker, info=info,
-                           error=error, period=period)
+                           error=error, period=period, risk_info=risk_info)
 
 # ── Contact ───────────────────────────────────────────────────────────────────
 @main_bp.route('/contact')
@@ -616,7 +750,6 @@ def resultat_profil():
     import os
     import requests as req
 
-    # Collect answers (integer keys 1-40)
     answers = {}
     for i in range(1, 41):
         answers[i] = request.form.get(f'q{i}', '')
@@ -722,14 +855,14 @@ def resultat_profil():
         f"Convictions géographiques : {answers.get(23, '') or 'Aucune préférence particulière'}.\n"
         f"Objectif de vie : {answers.get(28, '') or 'Non renseigné'}.\n"
         f"Projets futurs détaillés : {answers.get(37, '') or 'Aucun projet précis'}.\n\n"
-        f"Génère une recommandation complète structurée ainsi : "
-        f"1) Analyse du profil en 3-4 phrases, "
-        f"2) Enveloppes fiscales adaptées à explorer (PEA, CTO, assurance vie) avec explication pédagogique, "
-        f"3) Types d'actifs cohérents avec ce profil dont des exemples d'ETF illustratifs avec disclaimer, "
-        f"4) Allocation indicative en pourcentages, "
-        f"5) 3 points de vigilance personnalisés, "
-        f"6) Disclaimer légal final. "
-        f"Sois précis, personnalisé, et va le plus loin possible dans les détails tout en restant dans le cadre éducatif."
+        f"Génère une recommandation concise et accessible structurée ainsi : "
+        f"1) Analyse du profil en 3 phrases maximum, "
+        f"2) 2-3 enveloppes fiscales adaptées avec 3 bullet points chacune, "
+        f"3) Maximum 3 exemples d'ETF illustratifs avec disclaimer, "
+        f"4) Allocation indicative en pourcentages par grande catégorie uniquement, "
+        f"5) 3 points de vigilance de 2 lignes chacun, "
+        f"6) Disclaimer légal en une phrase. "
+        f"Sois direct, accessible, et va à l'essentiel. Pas de tableaux complexes, pas de listes exhaustives."
     )
 
     api_key = os.environ.get('ANTHROPIC_API_KEY', '')
@@ -745,7 +878,7 @@ def resultat_profil():
                 },
                 json={
                     'model': 'claude-haiku-4-5-20251001',
-                    'max_tokens': 2000,
+                    'max_tokens': 1500,
                     'system': system_prompt,
                     'messages': [{'role': 'user', 'content': user_prompt}]
                 },
@@ -767,10 +900,8 @@ def resultat_profil():
             "pas un conseil en investissement personnalisé."
         )
 
-    # Convertir la recommandation Markdown en HTML
     rec_html = md_lib.markdown(recommendation, extensions=['nl2br'])
 
-    # Sauvegarder en base si l'utilisateur est connecté
     if current_user.is_authenticated:
         try:
             save_profil_investisseur(
