@@ -290,6 +290,27 @@
         </div>
     </div>
 
+    <!-- CTA non-auth -->
+    {% if not current_user.is_authenticated %}
+    <div class="card" style="border-top:2px solid rgba(91,95,237,0.5); padding:2rem; margin-bottom:1.25rem; text-align:center;">
+        <div style="font-size:2rem; margin-bottom:0.75rem;">🔒</div>
+        <h3 style="font-size:1.1rem; font-weight:800; color:white; margin-bottom:0.5rem;">
+            Sauvegarde ton profil et suis tes investissements
+        </h3>
+        <p style="color:rgba(255,255,255,0.45); font-size:0.875rem; line-height:1.6; margin-bottom:1.5rem; max-width:380px; margin-left:auto; margin-right:auto;">
+            Crée un compte gratuit pour sauvegarder ce résultat, suivre ton portefeuille et accéder à toutes les analyses.
+        </p>
+        <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:0.95rem; padding:0.7rem 1.75rem;">
+                Créer un compte gratuit →
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">
+                J'ai déjà un compte
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Actions -->
     <div class="result-actions">
         <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">
@@ -298,10 +319,6 @@
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
             Suivre mon portefeuille →
-        </a>
-        {% else %}
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
-            Créer mon compte gratuit →
         </a>
         {% endif %}
     </div>

@@ -1,6 +1,42 @@
 {% extends 'base.html' %}
 {% block title %}Mon profil — PortfolioTrack{% endblock %}
 {% block content %}
+
+<style>
+.profil-inv-card { border-top: 2px solid rgba(91,95,237,0.4); }
+.profil-inv-score { display: inline-flex; align-items: baseline; gap: 0.25rem; }
+.score-big { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
+.score-total { font-size: 0.9rem; color: rgba(255,255,255,0.3); font-weight: 600; }
+.profil-name-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+/* couleurs par profil */
+.pc-prudent    { color: #34D399; }
+.pc-modere     { color: #6EE7B7; }
+.pc-equilibre  { color: #F6C90E; }
+.pc-dynamique  { color: #818CF8; }
+.pc-agressif   { color: #F87171; }
+.badge-prudent   { background: rgba(52,211,153,0.1);  color: #34D399; border: 1px solid rgba(52,211,153,0.22); }
+.badge-modere    { background: rgba(110,231,183,0.1); color: #6EE7B7; border: 1px solid rgba(110,231,183,0.2); }
+.badge-equilibre { background: rgba(246,201,14,0.1);  color: #F6C90E; border: 1px solid rgba(246,201,14,0.2); }
+.badge-dynamique { background: rgba(91,95,237,0.12);  color: #818CF8; border: 1px solid rgba(91,95,237,0.25); }
+.badge-agressif  { background: rgba(248,113,113,0.1); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
+
+.axes-mini { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.axis-mini-row { display: flex; align-items: center; gap: 0.75rem; }
+.axis-mini-name { font-size: 0.72rem; color: rgba(255,255,255,0.38); font-weight: 600; min-width: 155px; flex-shrink: 0; }
+.axis-mini-bar-outer { flex: 1; background: rgba(255,255,255,0.05); border-radius: 99px; height: 5px; overflow: hidden; }
+.axis-mini-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #5B5FED, #818CF8); }
+.axis-mini-val { font-size: 0.72rem; color: rgba(255,255,255,0.4); font-weight: 700; min-width: 30px; text-align: right; }
+.profil-date { font-size: 0.75rem; color: rgba(255,255,255,0.2); margin-top: 0.25rem; }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Mon profil</h1>
@@ -10,6 +46,81 @@
 
 <div style="display:flex; flex-direction:column; gap:1.5rem; max-width:520px;">
 
+    <!-- ── Profil investisseur ── -->
+    <div class="card profil-inv-card">
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">
+            🧠 Mon profil investisseur
+        </h3>
+
+        {% if last_profil %}
+
+        {% set sc = last_profil.score_global %}
+        {% if sc <= 20 %}{% set pc = 'prudent' %}
+        {% elif sc <= 40 %}{% set pc = 'modere' %}
+        {% elif sc <= 60 %}{% set pc = 'equilibre' %}
+        {% elif sc <= 80 %}{% set pc = 'dynamique' %}
+        {% else %}{% set pc = 'agressif' %}{% endif %}
+
+        <div style="margin-bottom:1.25rem;">
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+                <div class="profil-inv-score">
+                    <span class="score-big pc-{{ pc }}">{{ sc }}</span>
+                    <span class="score-total">/100</span>
+                </div>
+                <span class="profil-name-badge badge-{{ pc }}">{{ last_profil.nom_profil }}</span>
+            </div>
+            <div class="profil-date">
+                Dernier test :
+                {% if last_profil.date_test %}
+                    {{ last_profil.date_test | string | truncate(10, True, '') }}
+                {% else %}
+                    date inconnue
+                {% endif %}
+            </div>
+        </div>
+
+        {% if last_profil.scores_axes %}
+        {% set axis_names = [
+            ('1', 'Tolérance émotionnelle'),
+            ('2', 'Capacité financière'),
+            ('3', 'Horizon temporel'),
+            ('4', 'Connaissances financières'),
+            ('5', 'Valeurs et contraintes'),
+            ('6', 'Objectif financier'),
+            ('7', 'Comportement passé'),
+            ('8', 'Projets futurs'),
+        ] %}
+        <div class="axes-mini">
+            {% for k, name in axis_names %}
+            {% set score = last_profil.scores_axes.get(k, last_profil.scores_axes.get(k | int, 0)) %}
+            <div class="axis-mini-row">
+                <span class="axis-mini-name">{{ name }}</span>
+                <div class="axis-mini-bar-outer">
+                    <div class="axis-mini-bar-fill" style="width:{{ score }}%;"></div>
+                </div>
+                <span class="axis-mini-val">{{ score }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="margin-top:1.25rem;">
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost btn-sm">↺ Refaire le test</a>
+        </div>
+
+        {% else %}
+        <div style="text-align:center; padding:1.5rem 0;">
+            <div style="font-size:2rem; margin-bottom:0.75rem;">🧠</div>
+            <p style="color:rgba(255,255,255,0.38); font-size:0.875rem; margin-bottom:1.25rem; line-height:1.6;">
+                Tu n'as pas encore fait le test de profil investisseur.<br>
+                40 questions pour découvrir ta stratégie idéale.
+            </p>
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary">Faire le test →</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Email ── -->
     <div class="card">
         <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer l'adresse email</h3>
         <form method="POST">
@@ -21,41 +132,38 @@
             </div>
             <div class="form-group">
                 <label for="new_email">Nouvel email</label>
-                <input type="email" id="new_email" name="new_email"
-                       placeholder="nouveau@email.com" required>
+                <input type="email" id="new_email" name="new_email" placeholder="nouveau@email.com" required>
             </div>
             <div class="form-group">
                 <label for="confirm_password">Confirmez avec votre mot de passe</label>
-                <input type="password" id="confirm_password" name="confirm_password"
-                       placeholder="••••••••" required>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn btn-primary">Mettre à jour l'email</button>
         </form>
     </div>
 
+    <!-- ── Mot de passe ── -->
     <div class="card">
         <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer le mot de passe</h3>
         <form method="POST">
             <input type="hidden" name="action" value="password">
             <div class="form-group">
                 <label for="current_password">Mot de passe actuel</label>
-                <input type="password" id="current_password" name="current_password"
-                       placeholder="••••••••" required>
+                <input type="password" id="current_password" name="current_password" placeholder="••••••••" required>
             </div>
             <div class="form-group">
                 <label for="new_password">Nouveau mot de passe</label>
-                <input type="password" id="new_password" name="new_password"
-                       placeholder="6 caractères minimum" required>
+                <input type="password" id="new_password" name="new_password" placeholder="6 caractères minimum" required>
             </div>
             <div class="form-group">
                 <label for="confirm_new_password">Confirmer le nouveau mot de passe</label>
-                <input type="password" id="confirm_new_password" name="confirm_new_password"
-                       placeholder="••••••••" required>
+                <input type="password" id="confirm_new_password" name="confirm_new_password" placeholder="••••••••" required>
             </div>
             <button type="submit" class="btn btn-primary">Changer le mot de passe</button>
         </form>
     </div>
 
+    <!-- ── Zone de danger ── -->
     <div class="card" style="border-top:2px solid rgba(248,113,113,0.4);">
         <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#F87171;">Zone de danger</h3>
         <p style="font-size:0.875rem; color:rgba(255,255,255,0.35); margin-bottom:1rem;">

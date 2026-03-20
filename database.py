@@ -1,6 +1,7 @@
 import os
 import csv
 import io
+import json
 from config import Config
 
 def get_db():
@@ -117,6 +118,18 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS profil_investisseur (
+                id             SERIAL PRIMARY KEY,
+                user_id        INTEGER NOT NULL,
+                score_global   INTEGER NOT NULL,
+                nom_profil     TEXT    NOT NULL,
+                scores_axes    TEXT    NOT NULL DEFAULT '{}',
+                recommandation TEXT    NOT NULL DEFAULT '',
+                date_test      TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
     else:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -199,6 +212,18 @@ def init_db():
                 user_id    INTEGER NOT NULL,
                 token      TEXT    NOT NULL UNIQUE,
                 created_at TEXT    DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS profil_investisseur (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id        INTEGER NOT NULL,
+                score_global   INTEGER NOT NULL,
+                nom_profil     TEXT    NOT NULL,
+                scores_axes    TEXT    NOT NULL DEFAULT '{}',
+                recommandation TEXT    NOT NULL DEFAULT '',
+                date_test      TEXT    DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
@@ -603,6 +628,36 @@ def verify_user_email(user_id):
     c.execute(f'DELETE FROM email_tokens WHERE user_id = {p}', (user_id,))
     conn.commit()
     conn.close()
+
+def save_profil_investisseur(user_id, score_global, nom_profil, scores_axes, recommandation):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f'''INSERT INTO profil_investisseur (user_id, score_global, nom_profil, scores_axes, recommandation)
+           VALUES ({p}, {p}, {p}, {p}, {p})''',
+        (user_id, score_global, nom_profil, json.dumps(scores_axes), recommandation)
+    )
+    conn.commit()
+    conn.close()
+
+def get_last_profil_investisseur(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f'SELECT * FROM profil_investisseur WHERE user_id = {p} ORDER BY id DESC LIMIT 1',
+        (user_id,)
+    )
+    row = fetchone_as_dict(c)
+    conn.close()
+    if row:
+        row = dict(row)
+        try:
+            row['scores_axes'] = json.loads(row['scores_axes'])
+        except Exception:
+            row['scores_axes'] = {}
+    return row
 
 def export_purchases_csv(user_id):
     purchases = get_all_purchases(user_id)

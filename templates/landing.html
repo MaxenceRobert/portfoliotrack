@@ -71,6 +71,13 @@
             font-weight: 600;
         }
         .btn-outline-white:hover { border-color: white; color: white; background: rgba(255,255,255,0.06); }
+        .btn-violet-outline {
+            background: rgba(91,95,237,0.1);
+            color: #A5B4FC;
+            border: 1px solid rgba(91,95,237,0.35);
+            font-weight: 600;
+        }
+        .btn-violet-outline:hover { background: rgba(91,95,237,0.18); color: white; border-color: rgba(91,95,237,0.6); }
 
         /* ── Hero ── */
         .hero {
@@ -198,6 +205,50 @@
             margin-top: 0.4rem;
         }
 
+        /* ── Profil test banner ── */
+        .profil-banner {
+            padding: 3rem 1.5rem;
+            background: linear-gradient(135deg, rgba(91,95,237,0.12) 0%, rgba(124,58,237,0.08) 100%);
+            border-top: 1px solid rgba(91,95,237,0.2);
+            border-bottom: 1px solid rgba(91,95,237,0.2);
+        }
+        .profil-banner-inner {
+            max-width: 760px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .profil-banner-text h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 0.4rem;
+            letter-spacing: -0.02em;
+        }
+        .profil-banner-text p {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.6;
+        }
+        .profil-banner-pills {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.6rem;
+        }
+        .profil-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
         /* ── Features ── */
         .features {
             padding: 6rem 1.5rem;
@@ -260,6 +311,11 @@
             transform: translateY(-2px);
         }
         .feature-card:hover::before { opacity: 1; }
+        .feature-card.featured {
+            background: rgba(91,95,237,0.08);
+            border-color: rgba(91,95,237,0.3);
+        }
+        .feature-card.featured::before { opacity: 1; }
         .feature-icon {
             font-size: 1.75rem;
             margin-bottom: 1rem;
@@ -276,6 +332,15 @@
             color: rgba(255,255,255,0.5);
             line-height: 1.65;
         }
+        .feature-link {
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #818CF8;
+            text-decoration: none;
+        }
+        .feature-link:hover { color: #A5B4FC; }
 
         /* ── How it works ── */
         .how {
@@ -362,6 +427,7 @@
             margin-bottom: 2.5rem;
             line-height: 1.7;
         }
+        .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
         /* ── Footer ── */
         footer {
@@ -384,11 +450,14 @@
             .how { padding: 4rem 1.25rem; }
             .cta { padding: 4rem 1.25rem; }
             .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+            .profil-banner-inner { flex-direction: column; text-align: center; }
         }
         @media (max-width: 480px) {
             .hero-btns { flex-direction: column; width: 100%; }
             .hero-btns .btn { width: 100%; text-align: center; }
             .stats-inner { grid-template-columns: 1fr 1fr; }
+            .cta-btns { flex-direction: column; align-items: center; }
+            .cta-btns .btn { width: 100%; text-align: center; }
         }
     </style>
 <!-- Google Analytics -->
@@ -415,6 +484,7 @@
         PortfolioTrack
     </a>
     <div class="nav-actions">
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">🧠 Test Profil</a>
         <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Se connecter</a>
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer gratuitement</a>
     </div>
@@ -442,6 +512,9 @@
             <div class="hero-btns">
                 <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
                     Commencer gratuitement →
+                </a>
+                <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
+                    🧠 Découvrir mon profil
                 </a>
                 <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
                     Simulateur DCA
@@ -474,6 +547,25 @@
     </div>
 </section>
 
+<!-- Test de profil banner -->
+<section class="profil-banner">
+    <div class="profil-banner-inner">
+        <div class="profil-banner-text">
+            <h2>🧠 Quel investisseur es-tu vraiment ?</h2>
+            <p>40 questions pour analyser ta tolérance au risque, tes objectifs et ton horizon — et obtenir une recommandation personnalisée générée par IA.</p>
+            <div class="profil-banner-pills">
+                <span class="profil-pill">5-10 minutes</span>
+                <span class="profil-pill">8 axes analysés</span>
+                <span class="profil-pill">Recommandation IA</span>
+                <span class="profil-pill">Sans inscription</span>
+            </div>
+        </div>
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg" style="white-space:nowrap; flex-shrink:0;">
+            Faire le test →
+        </a>
+    </div>
+</section>
+
 <!-- Features -->
 <section class="features">
     <div class="section-eyebrow">Fonctionnalités</div>
@@ -483,6 +575,12 @@
         pas de la complexité.
     </p>
     <div class="features-grid">
+        <div class="feature-card featured">
+            <span class="feature-icon">🧠</span>
+            <h3>Test de profil investisseur</h3>
+            <p>40 questions sur 8 axes — tolérance au risque, horizon, objectifs, comportement — pour découvrir ta stratégie idéale et une recommandation générée par IA.</p>
+            <a href="{{ url_for('main.test_profil') }}" class="feature-link">Faire le test gratuitement →</a>
+        </div>
         <div class="feature-card">
             <span class="feature-icon">📈</span>
             <h3>Prix en temps réel</h3>
@@ -562,9 +660,14 @@
             Rejoignez PortfolioTrack et sachez exactement
             où en est votre portefeuille, à tout moment.
         </p>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-            Créer un compte gratuit →
-        </a>
+        <div class="cta-btns">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                Créer un compte gratuit →
+            </a>
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
+                🧠 Faire le test de profil
+            </a>
+        </div>
         <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">
             Gratuit · Sans engagement
         </p>

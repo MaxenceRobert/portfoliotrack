@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import markdown as md_lib
+
 from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify, session
 from flask_login import LoginManager, login_required, current_user
 from config import Config
@@ -13,7 +15,8 @@ from database import (
     set_dca_goal, export_purchases_csv,
     generate_csv_template, import_purchases_csv,
     add_dividend, get_all_dividends, delete_dividend,
-    update_user_email, update_user_password
+    update_user_email, update_user_password,
+    save_profil_investisseur, get_last_profil_investisseur,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -600,7 +603,8 @@ def profile():
                 update_user_password(current_user.id, generate_password_hash(new_pass))
                 flash('Mot de passe mis à jour ✓', 'success')
 
-    return render_template('profile.html')
+    last_profil = get_last_profil_investisseur(current_user.id)
+    return render_template('profile.html', last_profil=last_profil)
 
 # ── Test profil investisseur ──────────────────────────────────────────────────
 @main_bp.route('/test-profil')
@@ -756,14 +760,28 @@ def resultat_profil():
 
     if not recommendation:
         recommendation = (
-            f"Profil {profil} identifié avec un score global de {global_score}/100.\n\n"
+            f"**Profil {profil}** — Score global : {global_score}/100\n\n"
             "La génération de recommandation personnalisée n'est pas disponible pour le moment. "
             "Consultez un conseiller financier agréé pour obtenir des conseils adaptés à votre situation.\n\n"
-            "⚠️ Les informations affichées sont fournies à titre indicatif uniquement et ne constituent "
+            "> ⚠️ Les informations affichées sont fournies à titre indicatif uniquement et ne constituent "
             "pas un conseil en investissement personnalisé."
         )
 
-    rec_html = '<p>' + recommendation.strip().replace('\n\n', '</p><p>').replace('\n', '<br>') + '</p>'
+    # Convertir la recommandation Markdown en HTML
+    rec_html = md_lib.markdown(recommendation, extensions=['nl2br'])
+
+    # Sauvegarder en base si l'utilisateur est connecté
+    if current_user.is_authenticated:
+        try:
+            save_profil_investisseur(
+                user_id=current_user.id,
+                score_global=global_score,
+                nom_profil=profil,
+                scores_axes=axis_scores_r,
+                recommandation=recommendation,
+            )
+        except Exception as e:
+            print(f"Erreur sauvegarde profil investisseur: {e}")
 
     return render_template(
         'resultat_profil.html',
