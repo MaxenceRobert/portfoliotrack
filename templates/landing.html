@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PortfolioTrack — Suivez votre portefeuille boursier</title>
+    <title>PortfolioTrack — Investis en accord avec ton profil de risque</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -106,7 +106,7 @@
             mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
         }
         .hero-inner {
-            max-width: 800px;
+            max-width: 820px;
             position: relative;
             z-index: 1;
         }
@@ -149,11 +149,11 @@
             background-clip: text;
         }
         .hero p {
-            font-size: clamp(1rem, 2vw, 1.2rem);
+            font-size: clamp(1rem, 2vw, 1.15rem);
             color: rgba(255,255,255,0.6);
             line-height: 1.75;
             margin-bottom: 2.5rem;
-            max-width: 560px;
+            max-width: 580px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -205,48 +205,63 @@
             margin-top: 0.4rem;
         }
 
-        /* ── Profil test banner ── */
-        .profil-banner {
-            padding: 3rem 1.5rem;
-            background: linear-gradient(135deg, rgba(91,95,237,0.12) 0%, rgba(124,58,237,0.08) 100%);
-            border-top: 1px solid rgba(91,95,237,0.2);
-            border-bottom: 1px solid rgba(91,95,237,0.2);
+        /* ── Section risque / cohérence — feature unique ── */
+        .risk-section {
+            padding: 6rem 1.5rem;
+            background: rgba(91,95,237,0.04);
+            border-top: 1px solid rgba(91,95,237,0.12);
+            border-bottom: 1px solid rgba(91,95,237,0.12);
         }
-        .profil-banner-inner {
-            max-width: 760px;
-            margin: 0 auto;
+        .risk-section-inner { max-width: 1000px; margin: 0 auto; }
+        .risk-steps-grid {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
+            align-items: flex-start;
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto 2.5rem;
             flex-wrap: wrap;
         }
-        .profil-banner-text h2 {
-            font-size: 1.35rem;
+        .risk-step {
+            flex: 1;
+            min-width: 220px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(91,95,237,0.2);
+            border-radius: 16px;
+            padding: 1.75rem 1.5rem;
+            position: relative;
+            text-align: center;
+            transition: border-color 0.25s, background 0.25s;
+        }
+        .risk-step:hover {
+            border-color: rgba(91,95,237,0.4);
+            background: rgba(91,95,237,0.07);
+        }
+        .risk-step-num {
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #5B5FED, #7C3AED);
+            border-radius: 50%;
+            font-size: 0.75rem;
             font-weight: 800;
             color: white;
-            margin-bottom: 0.4rem;
-            letter-spacing: -0.02em;
-        }
-        .profil-banner-text p {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.5);
-            line-height: 1.6;
-        }
-        .profil-banner-pills {
             display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin-top: 0.6rem;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 12px rgba(91,95,237,0.5);
         }
-        .profil-pill {
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
+        .risk-step-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; margin-top: 0.5rem; }
+        .risk-step h3 { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .risk-step p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
+        .risk-step-arrow {
+            font-size: 1.4rem;
+            color: rgba(91,95,237,0.35);
+            align-self: center;
+            flex-shrink: 0;
+            padding-top: 0.5rem;
         }
 
         /* ── Features ── */
@@ -316,6 +331,12 @@
             border-color: rgba(91,95,237,0.3);
         }
         .feature-card.featured::before { opacity: 1; }
+        .feature-card.featured-risk {
+            background: linear-gradient(135deg, rgba(91,95,237,0.1), rgba(124,58,237,0.06));
+            border-color: rgba(91,95,237,0.35);
+            grid-column: span 2;
+        }
+        .feature-card.featured-risk::before { opacity: 1; background: linear-gradient(90deg, transparent, rgba(91,95,237,0.7), rgba(192,132,252,0.4), transparent); }
         .feature-icon {
             font-size: 1.75rem;
             margin-bottom: 1rem;
@@ -341,6 +362,21 @@
             text-decoration: none;
         }
         .feature-link:hover { color: #A5B4FC; }
+        .feature-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .feature-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.18rem 0.55rem;
+            border-radius: 20px;
+            background: rgba(91,95,237,0.12);
+            color: #A5B4FC;
+            border: 1px solid rgba(91,95,237,0.2);
+        }
 
         /* ── How it works ── */
         .how {
@@ -412,7 +448,7 @@
             inset: 0;
             background: radial-gradient(ellipse 70% 80% at 50% 100%, rgba(91,95,237,0.2) 0%, transparent 70%);
         }
-        .cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+        .cta-inner { position: relative; z-index: 1; max-width: 620px; margin: 0 auto; }
         .cta h2 {
             font-size: clamp(1.8rem, 3.5vw, 2.8rem);
             font-weight: 800;
@@ -447,10 +483,13 @@
             .hero { padding: 5.5rem 1.25rem 3.5rem; }
             .features { padding: 4rem 1.25rem; }
             .features-grid { grid-template-columns: 1fr; }
+            .feature-card.featured-risk { grid-column: span 1; }
+            .risk-section { padding: 4rem 1.25rem; }
+            .risk-steps-grid { flex-direction: column; }
+            .risk-step-arrow { display: none; }
             .how { padding: 4rem 1.25rem; }
             .cta { padding: 4rem 1.25rem; }
             .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .profil-banner-inner { flex-direction: column; text-align: center; }
         }
         @media (max-width: 480px) {
             .hero-btns { flex-direction: column; width: 100%; }
@@ -484,8 +523,8 @@
         PortfolioTrack
     </a>
     <div class="nav-actions">
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">🧠 Test Profil</a>
         <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Se connecter</a>
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline">🧠 Test de profil</a>
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer gratuitement</a>
     </div>
 </nav>
@@ -497,30 +536,27 @@
     <div class="hero-inner">
         <div class="hero-badge">
             <span class="badge-dot"></span>
-            Suivi de portefeuille en temps réel
+            Score de risque par actif · Unique en France
         </div>
         <h1>
-            Votre portefeuille.<br>
-            <span class="gradient-text">Enfin sous contrôle.</span>
+            Investis en accord<br>
+            <span class="gradient-text">avec ton profil de risque.</span>
         </h1>
         <p>
-            ETF, actions, crypto — centralisez tous vos investissements,
-            visualisez vos performances et pilotez votre stratégie DCA
-            depuis un seul tableau de bord.
+            Découvre ton vrai profil d'investisseur, consulte le score de risque
+            de chaque actif (volatilité, drawdown, beta), et mesure si ton portefeuille
+            correspond à ta tolérance au risque — en temps réel.
         </p>
         <div class="hero-actions">
             <div class="hero-btns">
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                    Commencer gratuitement →
+                <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
+                    🧠 Découvrir mon profil de risque →
                 </a>
-                <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                    🧠 Découvrir mon profil
-                </a>
-                <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
-                    Simulateur DCA
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-white btn-lg">
+                    Commencer gratuitement
                 </a>
             </div>
-            <p class="hero-note">100% gratuit · <span>Données privées</span></p>
+            <p class="hero-note">Gratuit · <span>Sans inscription pour le test de profil</span></p>
         </div>
     </div>
 </section>
@@ -529,8 +565,8 @@
 <section class="stats">
     <div class="stats-inner">
         <div>
-            <div class="stat-num">100%</div>
-            <div class="stat-label">Gratuit et sans pub</div>
+            <div class="stat-num">0–100</div>
+            <div class="stat-label">Score de risque par actif</div>
         </div>
         <div>
             <div class="stat-num">Live</div>
@@ -541,28 +577,48 @@
             <div class="stat-label">Tous types d'actifs</div>
         </div>
         <div>
-            <div class="stat-num">∞</div>
-            <div class="stat-label">Actifs suivis</div>
+            <div class="stat-num">100%</div>
+            <div class="stat-label">Gratuit et sans pub</div>
         </div>
     </div>
 </section>
 
-<!-- Test de profil banner -->
-<section class="profil-banner">
-    <div class="profil-banner-inner">
-        <div class="profil-banner-text">
-            <h2>🧠 Quel investisseur es-tu vraiment ?</h2>
-            <p>40 questions pour analyser ta tolérance au risque, tes objectifs et ton horizon — et obtenir une recommandation personnalisée générée par IA.</p>
-            <div class="profil-banner-pills">
-                <span class="profil-pill">5-10 minutes</span>
-                <span class="profil-pill">8 axes analysés</span>
-                <span class="profil-pill">Recommandation IA</span>
-                <span class="profil-pill">Sans inscription</span>
+<!-- Feature unique : risque / cohérence — 3 étapes -->
+<section class="risk-section">
+    <div class="risk-section-inner">
+        <div class="section-eyebrow">Ce qui nous rend unique</div>
+        <h2 class="section-title">Investir intelligemment,<br>pas à l'aveugle.</h2>
+        <p class="section-sub">
+            La plupart des outils te disent combien tu as gagné. Nous, on te dit
+            si tu investis en cohérence avec ta vraie tolérance au risque.
+        </p>
+        <div class="risk-steps-grid">
+            <div class="risk-step">
+                <div class="risk-step-num">1</div>
+                <span class="risk-step-icon">🧠</span>
+                <h3>Fais ton test de profil</h3>
+                <p>40 questions sur 8 axes — tolérance au risque, horizon d'investissement, comportement face aux baisses — pour connaître ton vrai profil.</p>
+            </div>
+            <div class="risk-step-arrow">→</div>
+            <div class="risk-step">
+                <div class="risk-step-num">2</div>
+                <span class="risk-step-icon">📊</span>
+                <h3>Chaque actif affiche son risque</h3>
+                <p>Score 0–100 calculé via Yahoo Finance sur la volatilité historique, le drawdown maximum et le beta sur 3 ans.</p>
+            </div>
+            <div class="risk-step-arrow">→</div>
+            <div class="risk-step">
+                <div class="risk-step-num">3</div>
+                <span class="risk-step-icon">✅</span>
+                <h3>Ton Dashboard mesure la cohérence</h3>
+                <p>Un score compare le risque réel de ton portefeuille avec ton profil. Tu sais immédiatement si tu investis dans ta zone de confort.</p>
             </div>
         </div>
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg" style="white-space:nowrap; flex-shrink:0;">
-            Faire le test →
-        </a>
+        <div style="text-align:center;">
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
+                Découvre ton profil de risque — gratuit, sans inscription →
+            </a>
+        </div>
     </div>
 </section>
 
@@ -575,6 +631,21 @@
         pas de la complexité.
     </p>
     <div class="features-grid">
+        <div class="feature-card featured-risk">
+            <span class="feature-icon">🎯</span>
+            <h3>Score de risque & Cohérence portefeuille</h3>
+            <p>
+                Chaque actif reçoit un score de risque 0–100 calculé sur sa volatilité annualisée, son drawdown maximum et son beta vs MSCI World.
+                Ton Dashboard calcule ensuite le score de risque pondéré de ton portefeuille entier et le compare à ton profil investisseur
+                pour t'afficher un score de cohérence — immédiatement lisible.
+            </p>
+            <div class="feature-tags">
+                <span class="feature-tag">Volatilité sur 3 ans</span>
+                <span class="feature-tag">Drawdown max</span>
+                <span class="feature-tag">Beta vs MSCI World</span>
+                <span class="feature-tag">Score cohérence 0–100%</span>
+            </div>
+        </div>
         <div class="feature-card featured">
             <span class="feature-icon">🧠</span>
             <h3>Test de profil investisseur</h3>
@@ -623,29 +694,29 @@
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-content">
-                <h3>Créez votre compte</h3>
-                <p>Un email et un mot de passe. Vos données sont privées et isolées.</p>
+                <h3>Fais ton test de profil</h3>
+                <p>Commence par le test investisseur — sans inscription, en 5–10 minutes. Tu obtiens ton profil et une recommandation IA personnalisée.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-content">
-                <h3>Ajoutez vos actifs</h3>
-                <p>Entrez le ticker de votre ETF ou action — le prix est récupéré automatiquement.</p>
+                <h3>Crée ton compte et ajoute tes actifs</h3>
+                <p>Un email et un mot de passe. Recherche ton ETF ou action — le prix et le score de risque sont récupérés automatiquement.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-content">
-                <h3>Saisissez vos achats</h3>
-                <p>Date, parts, prix — votre historique est reconstitué instantanément.</p>
+                <h3>Saisis tes achats</h3>
+                <p>Date, parts, prix — ton historique est reconstitué instantanément avec toutes tes performances.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">4</div>
             <div class="step-content">
-                <h3>Suivez en temps réel</h3>
-                <p>Performances, plus-values, graphiques — tout se met à jour automatiquement.</p>
+                <h3>Mesure ta cohérence en temps réel</h3>
+                <p>Ton Dashboard compare le risque réel de ton portefeuille avec ton profil. Tu sais en un coup d'œil si tu investis dans ta zone de confort.</p>
             </div>
         </div>
     </div>
@@ -655,21 +726,21 @@
 <section class="cta">
     <div class="cta-bg"></div>
     <div class="cta-inner">
-        <h2>Prêt à reprendre<br>le contrôle ?</h2>
+        <h2>Investis en accord<br>avec ton profil.</h2>
         <p>
-            Rejoignez PortfolioTrack et sachez exactement
-            où en est votre portefeuille, à tout moment.
+            Commence par découvrir ton profil de risque — gratuit, sans inscription.
+            Puis suis ton portefeuille et mesure ta cohérence en temps réel.
         </p>
         <div class="cta-btns">
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                Créer un compte gratuit →
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
+                🧠 Découvrir mon profil de risque →
             </a>
-            <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                🧠 Faire le test de profil
+            <a href="{{ url_for('auth.register') }}" class="btn btn-violet-outline btn-lg">
+                Créer un compte gratuit
             </a>
         </div>
         <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">
-            Gratuit · Sans engagement
+            Gratuit · Sans engagement · Sans inscription pour le test
         </p>
     </div>
 </section>

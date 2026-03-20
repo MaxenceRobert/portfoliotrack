@@ -36,6 +36,16 @@
     </div>
 </div>
 
+<div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(91,95,237,0.07); border:1px solid rgba(91,95,237,0.18); border-radius:12px; font-size:0.875rem; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:0.6rem;">
+    <span style="color:#818CF8;">📊</span>
+    Chaque actif affiche son niveau de risque historique. Compare-les avant d'investir pour rester cohérent avec ton profil.
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main.dashboard') }}" style="color:#818CF8; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Voir ma cohérence →</a>
+    {% else %}
+    <a href="{{ url_for('main.test_profil') }}" style="color:#818CF8; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Découvrir mon profil →</a>
+    {% endif %}
+</div>
+
 <!-- Barre de recherche avec autocomplete -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">

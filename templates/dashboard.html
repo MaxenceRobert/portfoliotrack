@@ -103,7 +103,16 @@
 .coh-card {
     margin-bottom: 1.5rem;
     padding: 1.5rem;
-    border-color: rgba(255,255,255,0.08);
+    border-color: rgba(91,95,237,0.2);
+    background: rgba(91,95,237,0.04) !important;
+}
+.coh-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 .coh-label {
     font-size: 0.72rem;
@@ -111,6 +120,13 @@
     letter-spacing: 0.08em;
     color: rgba(255,255,255,0.3);
     font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+.coh-subtitle {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.01em;
 }
 .coh-score-block { text-align: center; }
 .coh-score-num {
@@ -182,70 +198,14 @@
 
 {% else %}
 
-<!-- KPI Grid -->
-<div class="kpi-grid">
-    <div class="kpi-card kpi-card-violet">
-        <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
-        <div class="kpi-sub">{{ summary.assets|length }} actif(s) suivi(s)</div>
-    </div>
-    <div class="kpi-card kpi-card-amber">
-        <div class="kpi-label">Total investi</div>
-        <div class="kpi-value" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
-        <div class="kpi-sub">Capital déployé</div>
-    </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}">
-        <div class="kpi-label">Plus-value latente</div>
-        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
-            {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
-        </div>
-        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}">
-            {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
-        </div>
-    </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}">
-        <div class="kpi-label">Plus-value réalisée</div>
-        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
-            {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
-        </div>
-        <div class="kpi-sub">Sur ventes clôturées</div>
-    </div>
-    {% if summary.total_dividends > 0 %}
-    <div class="kpi-card kpi-card-blue">
-        <div class="kpi-label">Dividendes reçus</div>
-        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
-        <div class="kpi-sub">Rendement encaissé</div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Barre de gain total -->
-{% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
-{% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
-<div class="card" style="margin-bottom:1.5rem; border-color:rgba(255,255,255,0.08); padding:1.25rem 1.5rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-        <div>
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
-            <div class="{{ 'positive' if total_gain >= 0 else 'negative' }}" style="font-size:1.4rem; font-weight:800;">
-                {{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }} €
-                <span style="font-size:0.9rem; font-weight:600; opacity:0.7;">
-                    ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
-                </span>
-            </div>
-        </div>
-        <a href="{{ url_for('main.charts') }}"
-           style="font-size:0.82rem; color:#818CF8; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
-           onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
-            Voir les graphiques →
-        </a>
-    </div>
-</div>
-
-<!-- ── Cohérence portefeuille / profil ── -->
+<!-- ── Cohérence portefeuille / profil — EN PREMIER ── -->
 {% if portfolio_risk_score is not none %}
 <div class="card coh-card">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
-        <div class="coh-label">Cohérence portefeuille / profil</div>
+    <div class="coh-header">
+        <div class="coh-header-text">
+            <div class="coh-label">Cohérence portefeuille / profil</div>
+            <div class="coh-subtitle">Ton portefeuille correspond-il à ta tolérance au risque ?</div>
+        </div>
         {% if coherence is not none %}
         <span class="coh-pct-badge {{ 'coh-pct-high' if coherence >= 70 else 'coh-pct-med' if coherence >= 40 else 'coh-pct-low' }}">
             {{ coherence }}% cohérent
@@ -316,6 +276,65 @@
     {% endif %}
 </div>
 {% endif %}
+
+<!-- KPI Grid -->
+<div class="kpi-grid">
+    <div class="kpi-card kpi-card-violet">
+        <div class="kpi-label">Valeur actuelle</div>
+        <div class="kpi-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
+        <div class="kpi-sub">{{ summary.assets|length }} actif(s) suivi(s)</div>
+    </div>
+    <div class="kpi-card kpi-card-amber">
+        <div class="kpi-label">Total investi</div>
+        <div class="kpi-value" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
+        <div class="kpi-sub">Capital déployé</div>
+    </div>
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}">
+        <div class="kpi-label">Plus-value latente</div>
+        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
+            {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
+        </div>
+        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}">
+            {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
+        </div>
+    </div>
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}">
+        <div class="kpi-label">Plus-value réalisée</div>
+        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
+            {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
+        </div>
+        <div class="kpi-sub">Sur ventes clôturées</div>
+    </div>
+    {% if summary.total_dividends > 0 %}
+    <div class="kpi-card kpi-card-blue">
+        <div class="kpi-label">Dividendes reçus</div>
+        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
+        <div class="kpi-sub">Rendement encaissé</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Barre de gain total -->
+{% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
+{% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
+<div class="card" style="margin-bottom:1.5rem; border-color:rgba(255,255,255,0.08); padding:1.25rem 1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+        <div>
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
+            <div class="{{ 'positive' if total_gain >= 0 else 'negative' }}" style="font-size:1.4rem; font-weight:800;">
+                {{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }} €
+                <span style="font-size:0.9rem; font-weight:600; opacity:0.7;">
+                    ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
+                </span>
+            </div>
+        </div>
+        <a href="{{ url_for('main.charts') }}"
+           style="font-size:0.82rem; color:#818CF8; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
+           onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+            Voir les graphiques →
+        </a>
+    </div>
+</div>
 
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
@@ -489,7 +508,7 @@
 
 <!-- Allocation + Diversification côte à côte -->
 {% if summary.allocation %}
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:0.5rem;">
 
     <div>
         <div class="section-title">Allocation</div>
