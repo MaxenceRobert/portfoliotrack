@@ -1,10 +1,11 @@
 import yfinance as yf
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from database import (
     get_user_assets, get_purchases_by_asset,
     get_sales_by_asset, get_dca_goal, get_all_purchases,
     get_dividends_by_asset, get_total_dividends
 )
+
 
 def get_current_price(ticker):
     try:
@@ -14,6 +15,7 @@ def get_current_price(ticker):
     except Exception as e:
         print(f"Erreur prix {ticker}: {e}")
         return None
+
 
 def get_current_price_with_timestamp(ticker):
     try:
@@ -29,7 +31,6 @@ def get_current_price_with_timestamp(ticker):
 def get_benchmark_curve(start_date, end_date, purchases=None, ticker='IWDA.AS'):
     """Simule un investissement DCA équivalent dans le benchmark."""
     try:
-        from datetime import datetime, timedelta
         if hasattr(start_date, 'strftime'):
             start_date = start_date.strftime('%Y-%m-%d')
         if hasattr(end_date, 'strftime'):
@@ -135,7 +136,6 @@ def calc_asset_stats(asset, purchases, sales):
     unrealized_gain = round(current_value - invested_held, 2)
     unrealized_pct  = round((unrealized_gain / invested_held) * 100, 2) if invested_held else 0
 
-    from database import get_dividends_by_asset
     divs               = get_dividends_by_asset(asset['id'], asset['user_id'])
     dividends_received = round(sum(d['amount'] for d in divs), 2)
     total_return       = round(unrealized_gain + realized_gain + dividends_received, 2)
@@ -227,106 +227,190 @@ def get_portfolio_summary(user_id):
 
 
 def get_chart_data(asset, purchases, sales):
+    """Génère une courbe investi vs. valeur marché avec historique journalier."""
     if not purchases:
         return [], [], []
 
-    current_price = get_current_price(asset['ticker'])
-    if current_price is None:
-        return [], [], []
-
+    # Collecte toutes les transactions
     events = []
+    earliest = None
     for p in purchases:
         events.append({'date': p['date'], 'type': 'buy',
                        'shares': p['shares'], 'cost': p['total_cost']})
+        if earliest is None or p['date'] < earliest:
+            earliest = p['date']
     for s in sales:
         events.append({'date': s['date'], 'type': 'sell',
                        'shares': s['shares'], 'cost': s['total_proceeds']})
     events.sort(key=lambda x: x['date'])
 
-    dates          = []
+    # Télécharge l'historique journalier
+    price_map = {}
+    try:
+        hist = yf.download(
+            asset['ticker'],
+            start=earliest,
+            end=(date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+            progress=False, auto_adjust=True
+        )
+        if not hist.empty:
+            closes = hist['Close'].squeeze().dropna()
+            price_map = {d.strftime('%Y-%m-%d'): float(v)
+                         for d, v in zip(closes.index, closes)}
+    except Exception as e:
+        print(f"Erreur historique chart {asset['ticker']}: {e}")
+
+    # Fallback : si pas d'historique, utilise les dates de transaction + prix actuel
+    if not price_map:
+        current_price = get_current_price(asset['ticker'])
+        if current_price is None:
+            return [], [], []
+        dates_out      = []
+        invested_curve = []
+        market_curve   = []
+        cum_shares     = 0
+        cum_invested   = 0
+        for e in events:
+            if e['type'] == 'buy':
+                cum_shares   += e['shares']
+                cum_invested += e['cost']
+            else:
+                cum_shares   -= e['shares']
+                cum_invested -= e['cost']
+            dates_out.append(e['date'])
+            invested_curve.append(round(max(cum_invested, 0), 2))
+            market_curve.append(round(max(cum_shares, 0) * current_price, 2))
+        return dates_out, invested_curve, market_curve
+
+    # Génère courbe journalière
+    all_dates      = sorted(price_map.keys())
+    dates_out      = []
     invested_curve = []
     market_curve   = []
-    cum_shares     = 0
-    cum_invested   = 0
 
-    for e in events:
-        if e['type'] == 'buy':
-            cum_shares   += e['shares']
-            cum_invested += e['cost']
-        else:
-            cum_shares   -= e['shares']
-            cum_invested -= e['cost']
-        dates.append(e['date'])
+    cum_shares   = 0.0
+    cum_invested = 0.0
+    evt_idx      = 0
+
+    for d in all_dates:
+        while evt_idx < len(events) and events[evt_idx]['date'] <= d:
+            e = events[evt_idx]
+            if e['type'] == 'buy':
+                cum_shares   += e['shares']
+                cum_invested += e['cost']
+            else:
+                cum_shares   -= e['shares']
+                cum_invested -= e['cost']
+            evt_idx += 1
+
+        if cum_invested <= 0:
+            continue
+
+        price = price_map[d]
+        dates_out.append(d)
         invested_curve.append(round(max(cum_invested, 0), 2))
-        market_curve.append(round(max(cum_shares, 0) * current_price, 2))
+        market_curve.append(round(max(cum_shares, 0) * price, 2))
 
-    return dates, invested_curve, market_curve
+    return dates_out, invested_curve, market_curve
 
 
 def get_portfolio_chart_data(user_id):
-    from database import get_user_assets, get_purchases_by_asset, get_sales_by_asset
+    """Génère la courbe portefeuille global avec historique journalier."""
+    assets = get_user_assets(user_id)
+    if not assets:
+        return [], [], []
 
-    assets     = get_user_assets(user_id)
-    all_events = []
-
+    # Collecte toutes les transactions
+    all_txns = []
     for asset in assets:
         purchases = get_purchases_by_asset(asset['id'], user_id)
         sales     = get_sales_by_asset(asset['id'], user_id)
-        price     = get_current_price(asset['ticker'])
-        if price is None:
-            continue
         for p in purchases:
-            all_events.append({
-                'date':   p['date'],
-                'type':   'buy',
-                'cost':   p['total_cost'],
-                'shares': p['shares'],
-                'price':  price,
-                'ticker': asset['ticker']
+            all_txns.append({
+                'date': p['date'], 'ticker': asset['ticker'],
+                'shares': p['shares'], 'cost': p['total_cost']
             })
         for s in sales:
-            all_events.append({
-                'date':   s['date'],
-                'type':   'sell',
-                'cost':   s['total_proceeds'],
-                'shares': s['shares'],
-                'price':  price,
-                'ticker': asset['ticker']
+            all_txns.append({
+                'date': s['date'], 'ticker': asset['ticker'],
+                'shares': -s['shares'], 'cost': -s['total_proceeds']
             })
 
-    if not all_events:
+    if not all_txns:
         return [], [], []
 
-    all_events.sort(key=lambda x: x['date'])
+    all_txns.sort(key=lambda x: x['date'])
+    earliest   = all_txns[0]['date']
+    today_str  = date.today().strftime('%Y-%m-%d')
+    tickers    = list(set(t['ticker'] for t in all_txns))
 
-    dates          = []
-    invested_curve = []
-    market_curve   = []
-    cum_invested   = 0
-    cum_shares_by_ticker = {}
+    # Télécharge l'historique journalier pour chaque ticker
+    price_history = {}
+    for ticker in tickers:
+        try:
+            hist = yf.download(
+                ticker,
+                start=earliest,
+                end=(date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                progress=False, auto_adjust=True
+            )
+            if not hist.empty:
+                closes = hist['Close'].squeeze().dropna()
+                price_history[ticker] = {
+                    d.strftime('%Y-%m-%d'): float(v)
+                    for d, v in zip(closes.index, closes)
+                }
+        except Exception as e:
+            print(f"Erreur historique portefeuille {ticker}: {e}")
+            # Fallback : prix actuel seulement
+            price = get_current_price(ticker)
+            if price:
+                price_history[ticker] = {today_str: price}
 
-    for e in all_events:
-        ticker = e['ticker']
-        if ticker not in cum_shares_by_ticker:
-            cum_shares_by_ticker[ticker] = {'shares': 0, 'price': e['price']}
+    if not price_history:
+        return [], [], []
 
-        if e['type'] == 'buy':
-            cum_invested += e['cost']
-            cum_shares_by_ticker[ticker]['shares'] += e['shares']
-        else:
-            cum_invested -= e['cost']
-            cum_shares_by_ticker[ticker]['shares'] -= e['shares']
+    # Toutes les dates de trading disponibles
+    all_dates = sorted(set().union(*[set(v.keys()) for v in price_history.values()]))
 
-        market_total = sum(
-            max(v['shares'], 0) * v['price']
-            for v in cum_shares_by_ticker.values()
+    dates_out      = []
+    invested_out   = []
+    market_out     = []
+
+    cum_shares   = {t: 0.0 for t in tickers}
+    cum_invested = 0.0
+    last_price   = {t: 0.0 for t in tickers}
+    txn_idx      = 0
+
+    for d in all_dates:
+        # Applique les transactions jusqu'à cette date
+        while txn_idx < len(all_txns) and all_txns[txn_idx]['date'] <= d:
+            txn = all_txns[txn_idx]
+            cum_shares[txn['ticker']] += txn['shares']
+            cum_invested += txn['cost']
+            txn_idx += 1
+
+        if cum_invested <= 0:
+            continue
+
+        # Met à jour les derniers prix connus
+        for ticker in tickers:
+            if ticker in price_history and d in price_history[ticker]:
+                last_price[ticker] = price_history[ticker][d]
+
+        # Calcule la valeur de marché
+        market_val = sum(
+            max(cum_shares.get(t, 0), 0) * last_price[t]
+            for t in tickers
+            if last_price[t] > 0
         )
 
-        dates.append(e['date'])
-        invested_curve.append(round(max(cum_invested, 0), 2))
-        market_curve.append(round(market_total, 2))
+        if market_val > 0:
+            dates_out.append(d)
+            invested_out.append(round(max(cum_invested, 0), 2))
+            market_out.append(round(market_val, 2))
 
-    return dates, invested_curve, market_curve
+    return dates_out, invested_out, market_out
 
 
 def get_ticker_info(ticker):
@@ -343,21 +427,21 @@ def get_ticker_info(ticker):
         closes = [round(float(v), 4) for v in hist['Close']]
 
         return {
-            'ticker':             ticker.upper(),
-            'name':               info.get('longName') or info.get('shortName') or ticker,
-            'currency':           info.get('currency', ''),
-            'sector':             info.get('sector') or info.get('category', '—'),
-            'market_cap':         info.get('marketCap'),
-            'pe_ratio':           info.get('trailingPE'),
-            'dividend_yield':     info.get('dividendYield'),
-            'current_price':      round(float(info.get('regularMarketPrice') or closes[-1]), 4),
-            'previous_close':     info.get('previousClose'),
+            'ticker':              ticker.upper(),
+            'name':                info.get('longName') or info.get('shortName') or ticker,
+            'currency':            info.get('currency', ''),
+            'sector':              info.get('sector') or info.get('category', '—'),
+            'market_cap':          info.get('marketCap'),
+            'pe_ratio':            info.get('trailingPE'),
+            'dividend_yield':      info.get('dividendYield'),
+            'current_price':       round(float(info.get('regularMarketPrice') or closes[-1]), 4),
+            'previous_close':      info.get('previousClose'),
             'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
             'fifty_two_week_low':  info.get('fiftyTwoWeekLow'),
-            'exchange':           info.get('exchange', ''),
-            'asset_type':         info.get('quoteType', ''),
-            'dates':              dates,
-            'closes':             closes,
+            'exchange':            info.get('exchange', ''),
+            'asset_type':          info.get('quoteType', ''),
+            'dates':               dates,
+            'closes':              closes,
         }
     except Exception as e:
         print(f"Erreur get_ticker_info {ticker}: {e}")

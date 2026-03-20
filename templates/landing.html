@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PortfolioTrack — Investis en accord avec ton profil de risque</title>
+    <title>PortfolioTrack — Suis ton portefeuille. Investis selon ton profil de risque.</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #0D0D0D;
             background: #0A0A0F;
             overflow-x: hidden;
         }
@@ -53,10 +52,7 @@
             color: white;
             box-shadow: 0 0 20px rgba(91,95,237,0.4);
         }
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 0 30px rgba(91,95,237,0.6);
-        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(91,95,237,0.6); }
         .btn-ghost {
             background: rgba(255,255,255,0.08);
             color: rgba(255,255,255,0.75);
@@ -93,9 +89,9 @@
         .hero-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(91,95,237,0.25) 0%, transparent 70%),
-                        radial-gradient(ellipse 50% 40% at 80% 20%, rgba(124,58,237,0.15) 0%, transparent 60%),
-                        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(14,165,233,0.12) 0%, transparent 60%);
+            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(91,95,237,0.22) 0%, transparent 70%),
+                        radial-gradient(ellipse 50% 40% at 80% 20%, rgba(124,58,237,0.14) 0%, transparent 60%),
+                        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(14,165,233,0.10) 0%, transparent 60%);
         }
         .hero-grid {
             position: absolute;
@@ -105,11 +101,7 @@
             background-size: 60px 60px;
             mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
         }
-        .hero-inner {
-            max-width: 820px;
-            position: relative;
-            z-index: 1;
-        }
+        .hero-inner { max-width: 840px; position: relative; z-index: 1; }
         .hero-badge {
             display: inline-flex;
             align-items: center;
@@ -135,10 +127,10 @@
             50% { opacity: 0.5; transform: scale(0.8); }
         }
         .hero h1 {
-            font-size: clamp(2.4rem, 6vw, 4.2rem);
+            font-size: clamp(2.2rem, 5.5vw, 4rem);
             font-weight: 800;
             color: white;
-            line-height: 1.1;
+            line-height: 1.12;
             margin-bottom: 1.5rem;
             letter-spacing: -0.03em;
         }
@@ -148,50 +140,86 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .hero-divider {
+            display: inline-block;
+            width: 3px;
+            height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            margin: 0 0.2em;
+            vertical-align: middle;
+        }
         .hero p {
             font-size: clamp(1rem, 2vw, 1.15rem);
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.58);
             line-height: 1.75;
             margin-bottom: 2.5rem;
-            max-width: 580px;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
         }
-        .hero-actions {
+        .hero-actions { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+        .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+        .hero-note { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
+        .hero-note span { color: rgba(255,255,255,0.55); }
+
+        /* ── Two pillars ── */
+        .pillars {
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 3rem 1.5rem;
+        }
+        .pillars-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+        .pillar {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.25rem;
+            text-align: center;
+            gap: 0.75rem;
         }
-        .hero-btns {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
+        .pillar-icon { font-size: 2.2rem; }
+        .pillar-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.02em;
         }
-        .hero-note {
+        .pillar-desc {
             font-size: 0.82rem;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255,255,255,0.42);
+            line-height: 1.6;
+            max-width: 280px;
         }
-        .hero-note span { color: rgba(255,255,255,0.55); }
+        .pillar-plus {
+            font-size: 1.8rem;
+            color: rgba(255,255,255,0.12);
+            font-weight: 300;
+            text-align: center;
+        }
 
         /* ── Stats ── */
         .stats {
-            background: rgba(255,255,255,0.03);
-            border-top: 1px solid rgba(255,255,255,0.06);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: #0A0A0F;
             padding: 2.5rem 1.5rem;
         }
         .stats-inner {
             max-width: 900px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 2rem;
             text-align: center;
         }
         .stat-num {
-            font-size: 1.9rem;
+            font-size: 1.75rem;
             font-weight: 800;
             background: linear-gradient(135deg, #818CF8, #C084FC);
             -webkit-background-clip: text;
@@ -199,13 +227,9 @@
             background-clip: text;
             line-height: 1;
         }
-        .stat-label {
-            font-size: 0.82rem;
-            color: rgba(255,255,255,0.45);
-            margin-top: 0.4rem;
-        }
+        .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
 
-        /* ── Section risque / cohérence — feature unique ── */
+        /* ── Comment ça fonctionne — 3 étapes ── */
         .risk-section {
             padding: 6rem 1.5rem;
             background: rgba(91,95,237,0.04);
@@ -232,10 +256,7 @@
             text-align: center;
             transition: border-color 0.25s, background 0.25s;
         }
-        .risk-step:hover {
-            border-color: rgba(91,95,237,0.4);
-            background: rgba(91,95,237,0.07);
-        }
+        .risk-step:hover { border-color: rgba(91,95,237,0.4); background: rgba(91,95,237,0.07); }
         .risk-step-num {
             position: absolute;
             top: -13px;
@@ -256,19 +277,10 @@
         .risk-step-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; margin-top: 0.5rem; }
         .risk-step h3 { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
         .risk-step p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
-        .risk-step-arrow {
-            font-size: 1.4rem;
-            color: rgba(91,95,237,0.35);
-            align-self: center;
-            flex-shrink: 0;
-            padding-top: 0.5rem;
-        }
+        .risk-step-arrow { font-size: 1.4rem; color: rgba(91,95,237,0.35); align-self: center; flex-shrink: 0; }
 
         /* ── Features ── */
-        .features {
-            padding: 6rem 1.5rem;
-            background: #0A0A0F;
-        }
+        .features { padding: 6rem 1.5rem; background: #0A0A0F; }
         .section-eyebrow {
             text-align: center;
             font-size: 0.75rem;
@@ -320,54 +332,25 @@
             opacity: 0;
             transition: opacity 0.25s;
         }
-        .feature-card:hover {
-            background: rgba(255,255,255,0.07);
-            border-color: rgba(91,95,237,0.3);
-            transform: translateY(-2px);
-        }
+        .feature-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(91,95,237,0.3); transform: translateY(-2px); }
         .feature-card:hover::before { opacity: 1; }
-        .feature-card.featured {
-            background: rgba(91,95,237,0.08);
-            border-color: rgba(91,95,237,0.3);
-        }
+        .feature-card.featured { background: rgba(91,95,237,0.08); border-color: rgba(91,95,237,0.3); }
         .feature-card.featured::before { opacity: 1; }
         .feature-card.featured-risk {
             background: linear-gradient(135deg, rgba(91,95,237,0.1), rgba(124,58,237,0.06));
             border-color: rgba(91,95,237,0.35);
             grid-column: span 2;
         }
-        .feature-card.featured-risk::before { opacity: 1; background: linear-gradient(90deg, transparent, rgba(91,95,237,0.7), rgba(192,132,252,0.4), transparent); }
-        .feature-icon {
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-            display: block;
+        .feature-card.featured-risk::before {
+            opacity: 1;
+            background: linear-gradient(90deg, transparent, rgba(91,95,237,0.7), rgba(192,132,252,0.4), transparent);
         }
-        .feature-card h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.5rem;
-        }
-        .feature-card p {
-            font-size: 0.875rem;
-            color: rgba(255,255,255,0.5);
-            line-height: 1.65;
-        }
-        .feature-link {
-            display: inline-block;
-            margin-top: 1rem;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #818CF8;
-            text-decoration: none;
-        }
+        .feature-icon { font-size: 1.75rem; margin-bottom: 1rem; display: block; }
+        .feature-card h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .feature-card p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
+        .feature-link { display: inline-block; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #818CF8; text-decoration: none; }
         .feature-link:hover { color: #A5B4FC; }
-        .feature-tags {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-top: 1rem;
-        }
+        .feature-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
         .feature-tag {
             font-size: 0.7rem;
             font-weight: 700;
@@ -384,13 +367,7 @@
             background: rgba(255,255,255,0.02);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
-        .steps {
-            max-width: 680px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
+        .steps { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
         .step {
             display: flex;
             gap: 1.5rem;
@@ -410,8 +387,7 @@
         }
         .step-num {
             flex-shrink: 0;
-            width: 2.4rem;
-            height: 2.4rem;
+            width: 2.4rem; height: 2.4rem;
             background: linear-gradient(135deg, #5B5FED, #7C3AED);
             color: white;
             border-radius: 50%;
@@ -422,18 +398,8 @@
             font-size: 0.9rem;
             box-shadow: 0 0 16px rgba(91,95,237,0.4);
         }
-        .step-content h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.3rem;
-            padding-top: 0.35rem;
-        }
-        .step-content p {
-            font-size: 0.875rem;
-            color: rgba(255,255,255,0.45);
-            line-height: 1.65;
-        }
+        .step-content h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.3rem; padding-top: 0.35rem; }
+        .step-content p { font-size: 0.875rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
 
         /* ── CTA ── */
         .cta {
@@ -443,26 +409,10 @@
             overflow: hidden;
             background: #0A0A0F;
         }
-        .cta-bg {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse 70% 80% at 50% 100%, rgba(91,95,237,0.2) 0%, transparent 70%);
-        }
-        .cta-inner { position: relative; z-index: 1; max-width: 620px; margin: 0 auto; }
-        .cta h2 {
-            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-            font-weight: 800;
-            color: white;
-            margin-bottom: 1rem;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-        .cta p {
-            color: rgba(255,255,255,0.5);
-            font-size: 1rem;
-            margin-bottom: 2.5rem;
-            line-height: 1.7;
-        }
+        .cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 50% 100%, rgba(91,95,237,0.2) 0%, transparent 70%); }
+        .cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+        .cta h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; color: white; margin-bottom: 1rem; letter-spacing: -0.02em; line-height: 1.2; }
+        .cta p { color: rgba(255,255,255,0.5); font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.7; }
         .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
         /* ── Footer ── */
@@ -481,6 +431,8 @@
             nav { padding: 0 1rem; }
             .nav-actions .btn-ghost { display: none; }
             .hero { padding: 5.5rem 1.25rem 3.5rem; }
+            .pillars-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+            .pillar-plus { display: none; }
             .features { padding: 4rem 1.25rem; }
             .features-grid { grid-template-columns: 1fr; }
             .feature-card.featured-risk { grid-column: span 1; }
@@ -494,7 +446,6 @@
         @media (max-width: 480px) {
             .hero-btns { flex-direction: column; width: 100%; }
             .hero-btns .btn { width: 100%; text-align: center; }
-            .stats-inner { grid-template-columns: 1fr 1fr; }
             .cta-btns { flex-direction: column; align-items: center; }
             .cta-btns .btn { width: 100%; text-align: center; }
         }
@@ -539,24 +490,50 @@
             Score de risque par actif · Unique en France
         </div>
         <h1>
-            Investis en accord<br>
-            <span class="gradient-text">avec ton profil de risque.</span>
+            Suis ton portefeuille.<br>
+            <span class="gradient-text">Investis selon ton profil de risque.</span>
         </h1>
         <p>
-            Découvre ton vrai profil d'investisseur, consulte le score de risque
-            de chaque actif (volatilité, drawdown, beta), et mesure si ton portefeuille
-            correspond à ta tolérance au risque — en temps réel.
+            Centralisez ETF, actions et crypto dans un seul tableau de bord.
+            Chaque actif affiche son score de risque — et votre Dashboard mesure
+            si votre portefeuille est cohérent avec votre tolérance au risque.
         </p>
         <div class="hero-actions">
             <div class="hero-btns">
-                <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
-                    🧠 Découvrir mon profil de risque →
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    Commencer gratuitement →
                 </a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-white btn-lg">
-                    Commencer gratuitement
+                <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
+                    🧠 Découvrir mon profil
+                </a>
+                <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
+                    Simulateur DCA
                 </a>
             </div>
-            <p class="hero-note">Gratuit · <span>Sans inscription pour le test de profil</span></p>
+            <p class="hero-note">100% gratuit · <span>Sans inscription pour le test de profil</span></p>
+        </div>
+    </div>
+</section>
+
+<!-- Les deux piliers -->
+<section class="pillars">
+    <div class="pillars-inner">
+        <div class="pillar">
+            <span class="pillar-icon">📊</span>
+            <div class="pillar-title">Suivi de portefeuille</div>
+            <p class="pillar-desc">
+                Prix en temps réel, performance, plus-values latentes et réalisées,
+                dividendes, DCA — tout au même endroit.
+            </p>
+        </div>
+        <div class="pillar-plus">+</div>
+        <div class="pillar">
+            <span class="pillar-icon">🎯</span>
+            <div class="pillar-title">Gestion du risque</div>
+            <p class="pillar-desc">
+                Score de risque 0–100 par actif, profil investisseur en 40 questions,
+                et score de cohérence portefeuille / profil en temps réel.
+            </p>
         </div>
     </div>
 </section>
@@ -565,12 +542,12 @@
 <section class="stats">
     <div class="stats-inner">
         <div>
-            <div class="stat-num">0–100</div>
-            <div class="stat-label">Score de risque par actif</div>
-        </div>
-        <div>
             <div class="stat-num">Live</div>
             <div class="stat-label">Prix Yahoo Finance</div>
+        </div>
+        <div>
+            <div class="stat-num">0–100</div>
+            <div class="stat-label">Score de risque par actif</div>
         </div>
         <div>
             <div class="stat-num">ETF · Actions · Crypto</div>
@@ -587,10 +564,10 @@
 <section class="risk-section">
     <div class="risk-section-inner">
         <div class="section-eyebrow">Ce qui nous rend unique</div>
-        <h2 class="section-title">Investir intelligemment,<br>pas à l'aveugle.</h2>
+        <h2 class="section-title">Investir en cohérence<br>avec son profil de risque.</h2>
         <p class="section-sub">
-            La plupart des outils te disent combien tu as gagné. Nous, on te dit
-            si tu investis en cohérence avec ta vraie tolérance au risque.
+            La plupart des outils te disent combien tu as gagné.
+            Nous, on te dit aussi si tu investis de façon cohérente avec ta vraie tolérance au risque.
         </p>
         <div class="risk-steps-grid">
             <div class="risk-step">
@@ -611,7 +588,7 @@
                 <div class="risk-step-num">3</div>
                 <span class="risk-step-icon">✅</span>
                 <h3>Ton Dashboard mesure la cohérence</h3>
-                <p>Un score compare le risque réel de ton portefeuille avec ton profil. Tu sais immédiatement si tu investis dans ta zone de confort.</p>
+                <p>Un score compare le risque réel de ton portefeuille avec ton profil. Tu sais si tu investis dans ta zone de confort.</p>
             </div>
         </div>
         <div style="text-align:center;">
@@ -627,20 +604,20 @@
     <div class="section-eyebrow">Fonctionnalités</div>
     <h2 class="section-title">Tout ce qu'il vous faut.<br>Rien de superflu.</h2>
     <p class="section-sub">
-        Conçu pour les investisseurs particuliers qui veulent de la clarté,
-        pas de la complexité.
+        Conçu pour les investisseurs particuliers qui veulent de la clarté, pas de la complexité.
     </p>
     <div class="features-grid">
         <div class="feature-card featured-risk">
             <span class="feature-icon">🎯</span>
             <h3>Score de risque & Cohérence portefeuille</h3>
             <p>
-                Chaque actif reçoit un score de risque 0–100 calculé sur sa volatilité annualisée, son drawdown maximum et son beta vs MSCI World.
-                Ton Dashboard calcule ensuite le score de risque pondéré de ton portefeuille entier et le compare à ton profil investisseur
-                pour t'afficher un score de cohérence — immédiatement lisible.
+                Chaque actif reçoit un score de risque 0–100 calculé sur sa volatilité annualisée,
+                son drawdown maximum et son beta vs MSCI World sur 3 ans.
+                Le Dashboard calcule le score de risque pondéré de ton portefeuille entier
+                et le compare à ton profil investisseur pour afficher un score de cohérence.
             </p>
             <div class="feature-tags">
-                <span class="feature-tag">Volatilité sur 3 ans</span>
+                <span class="feature-tag">Volatilité annualisée</span>
                 <span class="feature-tag">Drawdown max</span>
                 <span class="feature-tag">Beta vs MSCI World</span>
                 <span class="feature-tag">Score cohérence 0–100%</span>
@@ -655,7 +632,7 @@
         <div class="feature-card">
             <span class="feature-icon">📈</span>
             <h3>Prix en temps réel</h3>
-            <p>Connecté à Yahoo Finance — vos prix se mettent à jour automatiquement à chaque visite.</p>
+            <p>Connecté à Yahoo Finance — vos prix se mettent à jour automatiquement à chaque visite. ETF, actions, crypto, tout.</p>
         </div>
         <div class="feature-card">
             <span class="feature-icon">🎯</span>
@@ -670,7 +647,7 @@
         <div class="feature-card">
             <span class="feature-icon">📊</span>
             <h3>Graphiques interactifs</h3>
-            <p>Courbes d'évolution, comparaison MSCI World, allocation par actif — visualisez tout d'un coup d'œil.</p>
+            <p>Courbes d'évolution journalières, comparaison MSCI World, allocation — visualisez votre portefeuille dans le temps.</p>
         </div>
         <div class="feature-card">
             <span class="feature-icon">⚡</span>
@@ -694,29 +671,29 @@
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-content">
-                <h3>Fais ton test de profil</h3>
-                <p>Commence par le test investisseur — sans inscription, en 5–10 minutes. Tu obtiens ton profil et une recommandation IA personnalisée.</p>
+                <h3>Créez votre compte</h3>
+                <p>Un email et un mot de passe. Vos données sont privées et isolées. Ou commencez par le test de profil — sans inscription.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-content">
-                <h3>Crée ton compte et ajoute tes actifs</h3>
-                <p>Un email et un mot de passe. Recherche ton ETF ou action — le prix et le score de risque sont récupérés automatiquement.</p>
+                <h3>Ajoutez vos actifs</h3>
+                <p>Entrez le ticker de votre ETF ou action — le prix et le score de risque sont récupérés automatiquement via Yahoo Finance.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-content">
-                <h3>Saisis tes achats</h3>
-                <p>Date, parts, prix — ton historique est reconstitué instantanément avec toutes tes performances.</p>
+                <h3>Saisissez vos achats</h3>
+                <p>Date, parts, prix — votre historique est reconstitué instantanément avec la courbe d'évolution journalière.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">4</div>
             <div class="step-content">
-                <h3>Mesure ta cohérence en temps réel</h3>
-                <p>Ton Dashboard compare le risque réel de ton portefeuille avec ton profil. Tu sais en un coup d'œil si tu investis dans ta zone de confort.</p>
+                <h3>Mesurez votre cohérence</h3>
+                <p>Faites votre test de profil et votre Dashboard affiche immédiatement si votre portefeuille correspond à votre tolérance au risque.</p>
             </div>
         </div>
     </div>
@@ -726,17 +703,17 @@
 <section class="cta">
     <div class="cta-bg"></div>
     <div class="cta-inner">
-        <h2>Investis en accord<br>avec ton profil.</h2>
+        <h2>Suivez votre portefeuille.<br>Investissez avec cohérence.</h2>
         <p>
-            Commence par découvrir ton profil de risque — gratuit, sans inscription.
-            Puis suis ton portefeuille et mesure ta cohérence en temps réel.
+            Commencez gratuitement — ou découvrez votre profil de risque
+            en 5 minutes, sans inscription.
         </p>
         <div class="cta-btns">
-            <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
-                🧠 Découvrir mon profil de risque →
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                Créer un compte gratuit →
             </a>
-            <a href="{{ url_for('auth.register') }}" class="btn btn-violet-outline btn-lg">
-                Créer un compte gratuit
+            <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
+                🧠 Test de profil investisseur
             </a>
         </div>
         <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">

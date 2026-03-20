@@ -27,6 +27,93 @@
 }
 .explorer-suggestion-item:last-child { border-bottom: none; }
 .explorer-suggestion-item:hover { background: rgba(91,95,237,0.1); }
+
+/* Bloc risque prominent */
+.risk-block {
+    margin-bottom: 1.5rem;
+    border-radius: 16px;
+    border: 2px solid var(--risk-border);
+    background: var(--risk-bg);
+    padding: 1.5rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.risk-block-score-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+}
+.risk-block-score-num {
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--risk-color);
+}
+.risk-block-score-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 0.3rem;
+    color: var(--risk-color);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.risk-block-score-sub {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+    margin-top: 0.2rem;
+}
+.risk-block-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--risk-border);
+    min-height: 60px;
+}
+.risk-block-metrics {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1;
+    flex-wrap: wrap;
+}
+.risk-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 120px;
+}
+.risk-metric-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.risk-metric-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.02em;
+}
+.risk-metric-desc {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.28);
+    line-height: 1.4;
+}
+.risk-block-source {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.2);
+    margin-top: 0.75rem;
+    text-align: center;
+    width: 100%;
+}
+@media (max-width: 600px) {
+    .risk-block { flex-direction: column; gap: 1.2rem; }
+    .risk-block-divider { display: none; }
+    .risk-block-metrics { gap: 1rem; }
+}
 </style>
 
 <div class="page-header">
@@ -80,7 +167,6 @@
             <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
                 <h2 style="color:white; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
                 <span class="badge badge-etf">{{ info.ticker }}</span>
-                {% if risk_info %}{{ risk_badge(risk_info.score) }}{% endif %}
                 {% if info.exchange %}
                 <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.1); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
                 {% endif %}
@@ -156,6 +242,55 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Bloc risque prominent -->
+{% if risk_info %}
+{% if risk_info.score <= 20 %}
+  {% set r_col = '#34D399' %}{% set r_bg = 'rgba(52,211,153,0.06)' %}{% set r_brd = 'rgba(52,211,153,0.25)' %}{% set r_lbl = 'Très faible' %}
+{% elif risk_info.score <= 40 %}
+  {% set r_col = '#60A5FA' %}{% set r_bg = 'rgba(96,165,250,0.06)' %}{% set r_brd = 'rgba(96,165,250,0.25)' %}{% set r_lbl = 'Faible' %}
+{% elif risk_info.score <= 60 %}
+  {% set r_col = '#F6C90E' %}{% set r_bg = 'rgba(246,201,14,0.06)' %}{% set r_brd = 'rgba(246,201,14,0.22)' %}{% set r_lbl = 'Modéré' %}
+{% elif risk_info.score <= 80 %}
+  {% set r_col = '#F97316' %}{% set r_bg = 'rgba(249,115,22,0.06)' %}{% set r_brd = 'rgba(249,115,22,0.25)' %}{% set r_lbl = 'Élevé' %}
+{% else %}
+  {% set r_col = '#F87171' %}{% set r_bg = 'rgba(248,113,113,0.06)' %}{% set r_brd = 'rgba(248,113,113,0.25)' %}{% set r_lbl = 'Très élevé' %}
+{% endif %}
+<div class="risk-block" style="--risk-color:{{ r_col }}; --risk-bg:{{ r_bg }}; --risk-border:{{ r_brd }};">
+    <div class="risk-block-score-col">
+        <div class="risk-block-score-num">{{ risk_info.score }}</div>
+        <div class="risk-block-score-label">{{ r_lbl }}</div>
+        <div class="risk-block-score-sub">Risque / 100</div>
+    </div>
+    <div class="risk-block-divider"></div>
+    <div class="risk-block-metrics">
+        {% if risk_info.volatilite is defined and risk_info.volatilite is not none %}
+        <div class="risk-metric">
+            <div class="risk-metric-name">Volatilité annualisée</div>
+            <div class="risk-metric-value">{{ risk_info.volatilite }}%</div>
+            <div class="risk-metric-desc">Amplitude moyenne des variations de cours sur 1 an. Plus c'est élevé, plus le prix fluctue.</div>
+        </div>
+        {% endif %}
+        {% if risk_info.drawdown is defined and risk_info.drawdown is not none %}
+        <div class="risk-metric">
+            <div class="risk-metric-name">Drawdown max</div>
+            <div class="risk-metric-value">−{{ risk_info.drawdown }}%</div>
+            <div class="risk-metric-desc">La plus grosse chute subie depuis un sommet historique sur 3 ans. Simule le pire scénario de perte.</div>
+        </div>
+        {% endif %}
+        {% if risk_info.beta is defined and risk_info.beta is not none %}
+        <div class="risk-metric">
+            <div class="risk-metric-name">Beta (ACWI)</div>
+            <div class="risk-metric-value">{{ risk_info.beta }}</div>
+            <div class="risk-metric-desc">Sensibilité par rapport au marché mondial. Beta &gt; 1 = amplifie les mouvements du marché.</div>
+        </div>
+        {% endif %}
+    </div>
+    {% if risk_info.source == 'default' %}
+    <div class="risk-block-source">Score estimé par catégorie — données historiques insuffisantes pour ce ticker.</div>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- Graphique -->
 <div class="card" style="margin-bottom:1.5rem;">
