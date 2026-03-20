@@ -41,7 +41,7 @@
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 16px;
     padding: 1.4rem;
-    transition: all 0.25s;
+    transition: border-color 0.25s, background 0.25s, transform 0.25s;
     position: relative;
     overflow: hidden;
 }
@@ -682,7 +682,7 @@
 </div>
 {% endif %}
 
-<!-- Actifs — chaque section enveloppée dans .asset-section pour le filtre JS -->
+<!-- Actifs -->
 {% for asset_type, assets in summary.by_type.items() %}
 <div class="asset-section" data-asset-type="{{ asset_type }}">
 <div class="section-title">{{ asset_type }}s</div>
@@ -849,8 +849,9 @@
 {% endfor %}
 
 <!-- Allocation + Diversification côte à côte -->
+<!-- BUG2 FIX: align-items:start évite que les items s'étirent à la hauteur de la rangée -->
 {% if summary.allocation %}
-<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:0.5rem;">
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:0.5rem; align-items:start;">
 
     <div>
         <div class="section-title">Allocation</div>
@@ -862,7 +863,8 @@
     {% if summary.by_type %}
     <div>
         <div class="section-title">Diversification par type</div>
-        <div class="card" style="height:100%;">
+        <!-- height:100% supprimé : chaque colonne prend sa hauteur naturelle -->
+        <div class="card">
             <table style="width:100%; border-collapse:collapse;">
                 <thead>
                     <tr>
@@ -1012,12 +1014,12 @@ Plotly.newPlot('pie-chart', [{
 
 <script>
 // ── Données actifs pour le filtre client-side ──────────────────────────────
-const ALL_ASSETS     = {{ all_assets_json | tojson }};
-const PROFIL_RISK    = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
-const DCA_TARGET     = {{ summary.dca_target }};
-const PLAFONDS_MAP   = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
+const ALL_ASSETS   = {{ all_assets_json | tojson }};
+const PROFIL_RISK  = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
+const DCA_TARGET   = {{ summary.dca_target }};
+const PLAFONDS_MAP = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
 
-let currentEnvFilter = localStorage.getItem('dashEnvFilter') || 'all';
+let currentEnvFilter = 'all';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function fmt2(n) { return n.toFixed(2); }
@@ -1044,95 +1046,96 @@ function envBadgeHTML(env) {
 }
 
 // ── Filtre par enveloppe ───────────────────────────────────────────────────
+// BUG1 FIX: sélecteur .asset-card explicite + display:'block' explicite
 function applyEnvFilter(env) {
     currentEnvFilter = env;
     localStorage.setItem('dashEnvFilter', env);
 
     const sel = document.getElementById('env-filter-select');
-    if (sel) sel.value = env;
+    if (sel && sel.value !== env) sel.value = env;
 
-    // 1. Afficher/masquer cards + sections
-    document.querySelectorAll('.asset-section').forEach(section => {
-        let hasVisible = false;
-        section.querySelectorAll('[data-asset-id]').forEach(card => {
-            const cardEnv = card.dataset.envelope || '';
-            const show    = (env === 'all') || (cardEnv === env);
-            card.style.display = show ? '' : 'none';
+    // 1. Afficher/masquer les cartes et sections
+    document.querySelectorAll('.asset-section').forEach(function(section) {
+        var hasVisible = false;
+        section.querySelectorAll('.asset-card').forEach(function(card) {
+            var cardEnv = (card.getAttribute('data-envelope') || '').trim();
+            var show    = (env === 'all') || (cardEnv === env);
+            card.style.display = show ? 'block' : 'none';
             if (show) hasVisible = true;
         });
-        section.style.display = hasVisible ? '' : 'none';
+        section.style.display = hasVisible ? 'block' : 'none';
     });
 
-    // 2. Actifs visibles
-    const visible = (env === 'all')
+    // 2. Actifs visibles dans ALL_ASSETS
+    var visible = (env === 'all')
         ? ALL_ASSETS
-        : ALL_ASSETS.filter(a => a.envelope === env);
+        : ALL_ASSETS.filter(function(a) { return (a.envelope || '') === env; });
 
     // 3. Calcul KPIs
-    const totalValue    = visible.reduce((s,a) => s + a.current_value, 0);
-    const totalInvested = visible.reduce((s,a) => s + a.total_invested, 0);
-    const totalUnreal   = visible.reduce((s,a) => s + a.unrealized_gain, 0);
-    const totalReal     = visible.reduce((s,a) => s + a.realized_gain, 0);
-    const totalDivs     = visible.reduce((s,a) => s + a.dividends_received, 0);
-    const unrealPct     = totalInvested > 0 ? (totalUnreal / totalInvested * 100) : 0;
-    const totalGain     = totalUnreal + totalReal + totalDivs;
-    const totalGainPct  = totalInvested > 0 ? (totalGain / totalInvested * 100) : 0;
-    const count         = visible.length;
+    var totalValue    = visible.reduce(function(s,a){ return s + a.current_value; }, 0);
+    var totalInvested = visible.reduce(function(s,a){ return s + a.total_invested; }, 0);
+    var totalUnreal   = visible.reduce(function(s,a){ return s + a.unrealized_gain; }, 0);
+    var totalReal     = visible.reduce(function(s,a){ return s + a.realized_gain; }, 0);
+    var totalDivs     = visible.reduce(function(s,a){ return s + a.dividends_received; }, 0);
+    var unrealPct     = totalInvested > 0 ? (totalUnreal / totalInvested * 100) : 0;
+    var totalGain     = totalUnreal + totalReal + totalDivs;
+    var totalGainPct  = totalInvested > 0 ? (totalGain / totalInvested * 100) : 0;
+    var count         = visible.length;
 
     // 4. Mise à jour KPI DOM
-    const el = id => document.getElementById(id);
-    if (el('kpi-total-value'))    el('kpi-total-value').textContent   = fmt2(totalValue) + ' €';
-    if (el('kpi-assets-count'))   el('kpi-assets-count').textContent  = count + ' actif(s) suivi(s)';
+    function el(id) { return document.getElementById(id); }
+    if (el('kpi-total-value'))    el('kpi-total-value').textContent    = fmt2(totalValue) + ' €';
+    if (el('kpi-assets-count'))   el('kpi-assets-count').textContent   = count + ' actif(s) suivi(s)';
     if (el('kpi-total-invested')) el('kpi-total-invested').textContent = fmt2(totalInvested) + ' €';
 
-    const unrEl = el('kpi-unrealized');
+    var unrEl = el('kpi-unrealized');
     if (unrEl) {
         unrEl.textContent = sign(totalUnreal) + fmt2(totalUnreal) + ' €';
         unrEl.className   = 'kpi-value ' + (totalUnreal >= 0 ? 'positive' : 'negative');
     }
-    const unrPctEl = el('kpi-unrealized-pct');
+    var unrPctEl = el('kpi-unrealized-pct');
     if (unrPctEl) {
         unrPctEl.textContent = sign(unrealPct) + unrealPct.toFixed(2) + ' %';
         unrPctEl.className   = 'kpi-sub ' + (unrealPct >= 0 ? 'positive' : 'negative');
     }
-    const unrCard = el('kpi-unrealized-card');
+    var unrCard = el('kpi-unrealized-card');
     if (unrCard) unrCard.className = 'kpi-card ' + (totalUnreal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
 
-    const realEl = el('kpi-realized');
+    var realEl = el('kpi-realized');
     if (realEl) {
         realEl.textContent = sign(totalReal) + fmt2(totalReal) + ' €';
         realEl.className   = 'kpi-value ' + (totalReal >= 0 ? 'positive' : 'negative');
     }
-    const realCard = el('kpi-realized-card');
+    var realCard = el('kpi-realized-card');
     if (realCard) realCard.className = 'kpi-card ' + (totalReal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
 
-    const divCard = el('kpi-dividends-card');
+    var divCard = el('kpi-dividends-card');
     if (divCard) {
-        divCard.style.display = totalDivs > 0 ? '' : 'none';
-        const divEl = el('kpi-dividends');
+        divCard.style.display = totalDivs > 0 ? 'block' : 'none';
+        var divEl = el('kpi-dividends');
         if (divEl && totalDivs > 0) divEl.textContent = '+' + fmt2(totalDivs) + ' €';
     }
 
-    const gainEl    = el('kpi-total-gain');
-    const gainPctEl = el('kpi-total-gain-pct');
-    const gainLine  = el('kpi-total-gain-line');
+    var gainEl    = el('kpi-total-gain');
+    var gainPctEl = el('kpi-total-gain-pct');
+    var gainLine  = el('kpi-total-gain-line');
     if (gainEl)    gainEl.textContent    = sign(totalGain) + fmt2(Math.abs(totalGain));
     if (gainPctEl) gainPctEl.textContent = '(' + sign(totalGainPct) + totalGainPct.toFixed(2) + '%)';
     if (gainLine)  gainLine.className    = totalGain >= 0 ? 'positive' : 'negative';
 
     // 5. Score risque + cohérence
-    let wSum = 0, wTotal = 0;
-    visible.forEach(a => {
+    var wSum = 0, wTotal = 0;
+    visible.forEach(function(a) {
         if (a.current_value > 0 && a.risk_score !== null && a.risk_score !== undefined) {
             wSum   += a.risk_score * a.current_value;
             wTotal += a.current_value;
         }
     });
-    const portfolioRisk = wTotal > 0 ? Math.round(wSum / wTotal) : null;
+    var portfolioRisk = wTotal > 0 ? Math.round(wSum / wTotal) : null;
     updateCohBlock(portfolioRisk);
 
     // 6. DCA
-    const invMonth = visible.reduce((s,a) => s + (a.invested_this_month || 0), 0);
+    var invMonth = visible.reduce(function(s,a){ return s + (a.invested_this_month || 0); }, 0);
     updateDCABlock(invMonth);
 
     // 7. Plafond bar
@@ -1140,12 +1143,12 @@ function applyEnvFilter(env) {
 }
 
 function updateCohBlock(portfolioRisk) {
-    const scoreEl  = document.getElementById('coh-portfolio-score-num');
-    const badgeEl  = document.getElementById('coh-portfolio-badge-wrap');
-    const gaugeEl  = document.getElementById('coh-gauge-fill');
-    const pctEl    = document.getElementById('coh-pct-badge-el');
-    const msgEl    = document.getElementById('coh-msg-el');
-    const retestEl = document.getElementById('coh-retest-btn');
+    var scoreEl  = document.getElementById('coh-portfolio-score-num');
+    var badgeEl  = document.getElementById('coh-portfolio-badge-wrap');
+    var gaugeEl  = document.getElementById('coh-gauge-fill');
+    var pctEl    = document.getElementById('coh-pct-badge-el');
+    var msgEl    = document.getElementById('coh-msg-el');
+    var retestEl = document.getElementById('coh-retest-btn');
     if (!scoreEl) return;
 
     if (portfolioRisk === null) {
@@ -1162,19 +1165,19 @@ function updateCohBlock(portfolioRisk) {
 
     if (PROFIL_RISK !== null) {
         if (pctEl) pctEl.style.visibility = '';
-        const coherence = Math.max(0, 100 - Math.abs(portfolioRisk - PROFIL_RISK));
+        var coherence = Math.max(0, 100 - Math.abs(portfolioRisk - PROFIL_RISK));
         if (pctEl) {
-            const cls = coherence >= 70 ? 'coh-pct-high' : coherence >= 40 ? 'coh-pct-med' : 'coh-pct-low';
+            var cls = coherence >= 70 ? 'coh-pct-high' : coherence >= 40 ? 'coh-pct-med' : 'coh-pct-low';
             pctEl.className   = 'coh-pct-badge ' + cls;
             pctEl.textContent = coherence + '% cohérent';
         }
         if (gaugeEl) {
-            const gcls = coherence >= 70 ? 'coh-gauge-high' : coherence >= 40 ? 'coh-gauge-med' : 'coh-gauge-low';
-            gaugeEl.className  = 'coh-gauge-fill ' + gcls;
+            var gcls = coherence >= 70 ? 'coh-gauge-high' : coherence >= 40 ? 'coh-gauge-med' : 'coh-gauge-low';
+            gaugeEl.className   = 'coh-gauge-fill ' + gcls;
             gaugeEl.style.width = coherence + '%';
         }
         if (msgEl) {
-            const mcls = coherence >= 70 ? 'coh-msg-high' : coherence >= 40 ? 'coh-msg-med' : 'coh-msg-low';
+            var mcls = coherence >= 70 ? 'coh-msg-high' : coherence >= 40 ? 'coh-msg-med' : 'coh-msg-low';
             msgEl.className = mcls;
             if (coherence >= 70)      msgEl.textContent = '✓ Ton portefeuille est aligné avec ton profil de risque';
             else if (coherence >= 40) msgEl.textContent = '⚡ Ton portefeuille est légèrement décalé par rapport à ton profil';
@@ -1186,15 +1189,15 @@ function updateCohBlock(portfolioRisk) {
 
 function updateDCABlock(invMonth) {
     if (DCA_TARGET <= 0) return;
-    const pct    = Math.min(100, Math.round(invMonth / DCA_TARGET * 1000) / 10);
-    const bar    = document.getElementById('dca-progress-bar');
-    const pctEl  = document.getElementById('dca-pct-el');
-    const invEl  = document.getElementById('dca-invested-month');
-    const resteEl= document.getElementById('dca-reste');
-    if (bar)    bar.style.width        = Math.min(100, pct) + '%';
-    if (pctEl)  { pctEl.textContent    = pct + '%';
-                  pctEl.className      = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
-    if (invEl)  invEl.textContent      = fmt2(invMonth) + ' € investis ce mois';
+    var pct     = Math.min(100, Math.round(invMonth / DCA_TARGET * 1000) / 10);
+    var bar     = document.getElementById('dca-progress-bar');
+    var pctEl   = document.getElementById('dca-pct-el');
+    var invEl   = document.getElementById('dca-invested-month');
+    var resteEl = document.getElementById('dca-reste');
+    if (bar)    bar.style.width     = Math.min(100, pct) + '%';
+    if (pctEl)  { pctEl.textContent = pct + '%';
+                  pctEl.className   = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
+    if (invEl)  invEl.textContent   = fmt2(invMonth) + ' € investis ce mois';
     if (resteEl) {
         if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#34D399;font-weight:600;">✓ Objectif atteint !</span>';
         else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
@@ -1202,20 +1205,20 @@ function updateDCABlock(invMonth) {
 }
 
 function updatePlafondBar(env, totalInvested) {
-    const block = document.getElementById('plafond-bar-block');
+    var block = document.getElementById('plafond-bar-block');
     if (!block) return;
-    const plafond = PLAFONDS_MAP[env];
+    var plafond = PLAFONDS_MAP[env];
     if (!plafond) { block.style.display = 'none'; return; }
 
-    const restant = Math.max(0, plafond - totalInvested);
-    const pct     = Math.min(100, totalInvested / plafond * 100);
-    block.style.display = '';
+    var restant = Math.max(0, plafond - totalInvested);
+    var pct     = Math.min(100, totalInvested / plafond * 100);
+    block.style.display = 'block';
 
-    const nameEl    = document.getElementById('plafond-env-name');
-    const invEl     = document.getElementById('plafond-invested');
-    const totalEl   = document.getElementById('plafond-total');
-    const restantEl = document.getElementById('plafond-restant');
-    const fillEl    = document.getElementById('plafond-bar-fill');
+    var nameEl    = document.getElementById('plafond-env-name');
+    var invEl     = document.getElementById('plafond-invested');
+    var totalEl   = document.getElementById('plafond-total');
+    var restantEl = document.getElementById('plafond-restant');
+    var fillEl    = document.getElementById('plafond-bar-fill');
 
     if (nameEl)    nameEl.textContent    = env;
     if (invEl)     invEl.textContent     = fmtInt(totalInvested) + ' €';
@@ -1231,56 +1234,53 @@ function updatePlafondBar(env, totalInvested) {
 }
 
 // ── Modal enveloppe ────────────────────────────────────────────────────────
-let _modalAssetId = null;
+var _modalAssetId = null;
 
 function openEnvModal(assetId, currentEnv) {
     _modalAssetId = assetId;
-    const asset = ALL_ASSETS.find(a => a.asset_id === assetId);
-    const nameEl = document.getElementById('env-modal-asset-name');
+    var asset  = ALL_ASSETS.find(function(a){ return a.asset_id === assetId; });
+    var nameEl = document.getElementById('env-modal-asset-name');
     if (nameEl) nameEl.textContent = asset ? asset.ticker + ' — ' + asset.name : '';
-    const sel = document.getElementById('env-modal-select');
+    var sel = document.getElementById('env-modal-select');
     if (sel) sel.value = currentEnv || '';
-    const overlay = document.getElementById('env-modal');
+    var overlay = document.getElementById('env-modal');
     if (overlay) overlay.classList.add('open');
 }
 
 function closeEnvModal() {
-    const overlay = document.getElementById('env-modal');
+    var overlay = document.getElementById('env-modal');
     if (overlay) overlay.classList.remove('open');
     _modalAssetId = null;
 }
 
 async function submitEnvUpdate() {
     if (!_modalAssetId) return;
-    const newEnv = document.getElementById('env-modal-select').value;
-    const btn    = document.getElementById('env-modal-confirm');
+    var newEnv = document.getElementById('env-modal-select').value;
+    var btn    = document.getElementById('env-modal-confirm');
     btn.disabled = true; btn.textContent = '…';
     try {
-        const res  = await fetch('/asset/update-envelope', {
+        var res  = await fetch('/asset/update-envelope', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({asset_id: _modalAssetId, envelope: newEnv})
         });
-        const data = await res.json();
+        var data = await res.json();
         if (data.success) {
             // Mettre à jour les badges dans le DOM
-            const badgeEl      = document.getElementById('env-badge-' + _modalAssetId);
-            const tableBadgeEl = document.getElementById('env-table-badge-' + _modalAssetId);
+            var badgeEl      = document.getElementById('env-badge-' + _modalAssetId);
+            var tableBadgeEl = document.getElementById('env-table-badge-' + _modalAssetId);
             if (badgeEl)      badgeEl.innerHTML      = newEnv ? envBadgeHTML(newEnv) : '';
             if (tableBadgeEl) tableBadgeEl.innerHTML = envBadgeHTML(newEnv);
 
-            // Mettre à jour data-envelope sur la card
-            const card = document.querySelector('[data-asset-id="' + _modalAssetId + '"]');
-            if (card) card.dataset.envelope = newEnv;
+            // Mettre à jour data-envelope sur la card via setAttribute
+            var card = document.querySelector('.asset-card[data-asset-id="' + _modalAssetId + '"]');
+            if (card) card.setAttribute('data-envelope', newEnv);
 
-            // Mettre à jour ALL_ASSETS
-            const asset = ALL_ASSETS.find(a => a.asset_id === _modalAssetId);
+            // Mettre à jour ALL_ASSETS en mémoire
+            var asset = ALL_ASSETS.find(function(a){ return a.asset_id === _modalAssetId; });
             if (asset) asset.envelope = newEnv;
 
-            // Reconstruire le select du filtre
             rebuildFilterDropdown();
-
-            // Ré-appliquer le filtre courant
             applyEnvFilter(currentEnvFilter);
             closeEnvModal();
         } else {
@@ -1294,43 +1294,44 @@ async function submitEnvUpdate() {
 }
 
 function rebuildFilterDropdown() {
-    const sel = document.getElementById('env-filter-select');
+    var sel = document.getElementById('env-filter-select');
     if (!sel) return;
-    const envs    = [...new Set(ALL_ASSETS.map(a => a.envelope).filter(e => e))].sort();
-    const current = sel.value;
+    var envs    = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
+    var unique  = envs.filter(function(e, i, arr){ return arr.indexOf(e) === i; }).sort();
+    var current = sel.value;
     while (sel.options.length > 1) sel.remove(1);
-    envs.forEach(e => {
-        const opt   = document.createElement('option');
-        opt.value   = e; opt.textContent = e;
+    unique.forEach(function(e) {
+        var opt = document.createElement('option');
+        opt.value = e; opt.textContent = e;
         sel.appendChild(opt);
     });
-    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+    var stillExists = Array.from(sel.options).some(function(o){ return o.value === current; });
+    if (stillExists) sel.value = current;
 }
 
-// ── Toggles accordéon ────────────────────────────────────────────────────
+// ── Toggles accordéon ─────────────────────────────────────────────────────
 function toggleAsset(id) {
-    const body    = document.getElementById(id);
-    const chevron = document.getElementById('chevron-' + id);
+    var body    = document.getElementById(id);
+    var chevron = document.getElementById('chevron-' + id);
     body.classList.toggle('open');
     chevron.classList.toggle('open');
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
     // Jauge cohérence
-    const fill = document.getElementById('coh-gauge-fill');
-    if (fill) setTimeout(() => fill.style.width = '{{ coherence if coherence is not none else 0 }}%', 300);
+    var fill = document.getElementById('coh-gauge-fill');
+    if (fill) setTimeout(function(){ fill.style.width = '{{ coherence if coherence is not none else 0 }}%'; }, 300);
 
     // Barres allocation
-    document.querySelectorAll('.alloc-bar-fill').forEach(el => {
-        setTimeout(() => el.style.width = el.dataset.width + '%', 250);
+    document.querySelectorAll('.alloc-bar-fill').forEach(function(el) {
+        setTimeout(function(){ el.style.width = el.dataset.width + '%'; }, 250);
     });
 
-    // Appliquer le filtre mémorisé
-    const savedFilter = localStorage.getItem('dashEnvFilter') || 'all';
-    // Vérifier que l'enveloppe sauvegardée existe encore
-    const allEnvs = ALL_ASSETS.map(a => a.envelope).filter(e => e);
-    const validFilter = (savedFilter === 'all' || allEnvs.includes(savedFilter)) ? savedFilter : 'all';
+    // Appliquer le filtre mémorisé en localStorage
+    var savedFilter = localStorage.getItem('dashEnvFilter') || 'all';
+    var allEnvs     = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
+    var validFilter = (savedFilter === 'all' || allEnvs.indexOf(savedFilter) !== -1) ? savedFilter : 'all';
     applyEnvFilter(validFilter);
 });
 </script>
