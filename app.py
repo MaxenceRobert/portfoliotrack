@@ -745,7 +745,7 @@ def resultat_profil():
                 },
                 json={
                     'model': 'claude-haiku-4-5-20251001',
-                    'max_tokens': 1000,
+                    'max_tokens': 2000,
                     'system': system_prompt,
                     'messages': [{'role': 'user', 'content': user_prompt}]
                 },
@@ -793,6 +793,52 @@ def resultat_profil():
         profil_color=profil_color,
         axis_scores=axis_scores_r,
         axis_names=AXIS_NAMES,
+        recommendation_html=rec_html,
+    )
+
+# ── Mon profil investisseur (résultat sauvegardé) ────────────────────────────
+@main_bp.route('/mon-profil-investisseur')
+@login_required
+def mon_profil_investisseur():
+    last_profil = get_last_profil_investisseur(current_user.id)
+    if not last_profil:
+        flash('Tu n\'as pas encore fait le test de profil investisseur.', 'error')
+        return redirect(url_for('main.test_profil'))
+
+    sc = last_profil['score_global']
+    if sc <= 20:
+        profil_color, profil_emoji, allocation, dca_rate = '#34D399', '🛡️', '80% fonds euros / 20% actions', 3.0
+    elif sc <= 40:
+        profil_color, profil_emoji, allocation, dca_rate = '#6EE7B7', '⚖️', '60% fonds euros / 40% actions', 4.0
+    elif sc <= 60:
+        profil_color, profil_emoji, allocation, dca_rate = '#F6C90E', '🎯', '50% obligations / 50% actions', 5.0
+    elif sc <= 80:
+        profil_color, profil_emoji, allocation, dca_rate = '#5B5FED', '🚀', '20% obligations / 80% actions', 7.0
+    else:
+        profil_color, profil_emoji, allocation, dca_rate = '#F87171', '⚡', '95% actions / 5% liquidités', 9.0
+
+    rec_html = md_lib.markdown(last_profil.get('recommandation', ''), extensions=['nl2br'])
+
+    axis_names = {
+        '1': 'Tolérance émotionnelle',
+        '2': 'Capacité financière',
+        '3': 'Horizon temporel',
+        '4': 'Connaissances financières',
+        '5': 'Valeurs et contraintes',
+        '6': 'Objectif financier',
+        '7': 'Comportement passé',
+        '8': 'Projets futurs',
+    }
+
+    return render_template(
+        'mon_profil_investisseur.html',
+        last_profil=last_profil,
+        profil=last_profil['nom_profil'],
+        profil_emoji=profil_emoji,
+        profil_color=profil_color,
+        allocation=allocation,
+        dca_rate=dca_rate,
+        axis_names=axis_names,
         recommendation_html=rec_html,
     )
 
