@@ -175,6 +175,87 @@
 /* ── DCA progress ── */
 .dca-pct-done   { color: #34D399; }
 .dca-pct-active { color: #818CF8; }
+
+/* ── Onboarding banner ── */
+.onboarding-banner {
+    background: rgba(91,95,237,0.06);
+    border: 1px solid rgba(91,95,237,0.2);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+}
+.onboarding-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #818CF8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.85rem;
+}
+.onboarding-steps {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.onboarding-step {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    flex: 1;
+    min-width: 160px;
+}
+.onboarding-step.done { color: #34D399; }
+.onboarding-step.active { color: white; font-weight: 600; }
+.onboarding-step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 800;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.3);
+}
+.onboarding-step.done .onboarding-step-num {
+    background: rgba(52,211,153,0.15);
+    border-color: rgba(52,211,153,0.4);
+    color: #34D399;
+}
+.onboarding-step.active .onboarding-step-num {
+    background: rgba(91,95,237,0.2);
+    border-color: rgba(91,95,237,0.5);
+    color: #818CF8;
+}
+.onboarding-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.onboarding-link-active { color: #818CF8; }
+.onboarding-link-muted  { color: rgba(255,255,255,0.4); }
+
+/* ── Enveloppes fiscales ── */
+.env-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.64rem;
+    font-weight: 800;
+    padding: 0.1rem 0.4rem;
+    border-radius: 5px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+.env-pea      { background: rgba(96,165,250,0.15);  color: #60A5FA; border: 1px solid rgba(96,165,250,0.3);  }
+.env-peapme   { background: rgba(147,197,253,0.12); color: #93C5FD; border: 1px solid rgba(147,197,253,0.3); }
+.env-cto      { background: rgba(156,163,175,0.12); color: #9CA3AF; border: 1px solid rgba(156,163,175,0.25);}
+.env-av       { background: rgba(192,132,252,0.12); color: #C084FC; border: 1px solid rgba(192,132,252,0.3); }
+.env-per      { background: rgba(251,146,60,0.12);  color: #FB923C; border: 1px solid rgba(251,146,60,0.3);  }
+.env-livret   { background: rgba(52,211,153,0.12);  color: #34D399; border: 1px solid rgba(52,211,153,0.28); }
+.env-autre    { background: rgba(156,163,175,0.10); color: #9CA3AF; border: 1px solid rgba(156,163,175,0.2); }
 </style>
 
 <div class="page-header">
@@ -187,6 +268,71 @@
         <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Vente</a>
     </div>
 </div>
+
+<!-- ── Onboarding banner ── -->
+{% if onboarding_state and onboarding_state.show %}
+<div class="onboarding-banner">
+    <div class="onboarding-title">Bienvenue — 3 étapes pour démarrer</div>
+    <div class="onboarding-steps">
+
+        <!-- Étape 1 : Test de profil -->
+        <div class="onboarding-step {{ 'done' if onboarding_state.has_profil else 'active' }}">
+            <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_profil else '1' }}</div>
+            <div>
+                {% if onboarding_state.has_profil %}
+                Test de profil complété
+                {% else %}
+                <a href="{{ url_for('main.test_profil') }}"
+                   style="color:#818CF8; text-decoration:none; font-weight:600;">
+                    Faire le test de profil →
+                </a>
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Connaître ta tolérance au risque</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Étape 2 : Premier actif -->
+        <div class="onboarding-step {{ 'done' if onboarding_state.has_assets else ('active' if onboarding_state.has_profil else '') }}">
+            <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_assets else '2' }}</div>
+            <div>
+                {% if onboarding_state.has_assets %}
+                Premier actif enregistré
+                {% else %}
+                <a href="{{ url_for('main.add_purchase_route') }}"
+                   class="{{ 'onboarding-link-active' if onboarding_state.has_profil else 'onboarding-link-muted' }}"
+                   style="text-decoration:none; font-weight:600;">
+                    Enregistrer un achat →
+                </a>
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Ajouter ton premier investissement</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Étape 3 : Tout prêt -->
+        <div class="onboarding-step {{ 'done' if onboarding_state.all_done else '' }}">
+            <div class="onboarding-step-num">{{ '✓' if onboarding_state.all_done else '3' }}</div>
+            <div>
+                {% if onboarding_state.all_done %}
+                Dashboard prêt — bonne analyse !
+                {% else %}
+                Dashboard prêt
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Tes analyses seront visibles ici</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    <div class="onboarding-actions">
+        <form method="POST" action="{{ url_for('main.onboarding_dismiss') }}" style="display:inline;">
+            <button type="submit" class="btn btn-ghost btn-sm"
+                    style="font-size:0.78rem; opacity:0.55;"
+                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
+                Passer l'onboarding
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 {% if not summary.assets %}
 <div class="card empty-state">
@@ -382,6 +528,19 @@
 {% for a in assets %}
 {% if not a.fully_sold %}
 {% set ri = risk_data.get(a.ticker) %}
+
+{# Macro couleur enveloppe #}
+{% set env = a.envelope or '' %}
+{% if env == 'PEA' %}{% set env_cls = 'env-pea' %}
+{% elif env == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
+{% elif env == 'CTO' %}{% set env_cls = 'env-cto' %}
+{% elif env in ('Assurance Vie',) %}{% set env_cls = 'env-av' %}
+{% elif env == 'PER' %}{% set env_cls = 'env-per' %}
+{% elif env in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
+{% elif env == 'Autre' %}{% set env_cls = 'env-autre' %}
+{% else %}{% set env_cls = '' %}
+{% endif %}
+
 <div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}">
 
     <!-- Icone décorative bg -->
@@ -402,6 +561,9 @@
                                   else 'badge-action' if a.asset_type == 'Action'
                                   else 'badge-crypto' if a.asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ a.ticker }}</span>
+                {% if env and env_cls %}
+                <span class="env-badge {{ env_cls }}">{{ env }}</span>
+                {% endif %}
                 <span style="color:white; font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
                 {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
             </div>
@@ -468,6 +630,12 @@
                             ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
                         </strong>
                     </td>
+                </tr>
+                {% endif %}
+                {% if env %}
+                <tr>
+                    <td>Enveloppe fiscale</td>
+                    <td>{% if env_cls %}<span class="env-badge {{ env_cls }}">{{ env }}</span>{% else %}{{ env }}{% endif %}</td>
                 </tr>
                 {% endif %}
                 {% if ri %}
@@ -589,6 +757,67 @@ Plotly.newPlot('pie-chart', [{
     }
 }, { responsive: true, displayModeBar: false });
 </script>
+{% endif %}
+
+<!-- Enveloppes fiscales -->
+{% if envelope_summary %}
+<div class="section-title" style="margin-top:1.5rem;">Enveloppes fiscales</div>
+<div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left;">Enveloppe</th>
+                <th style="text-align:right;">Actifs</th>
+                <th style="text-align:right;">Investi</th>
+                <th style="text-align:right;">Valeur actuelle</th>
+                <th style="text-align:right;">Plafond restant</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for env_name, env_data in envelope_summary.items() %}
+        {% if env_name == 'PEA' %}{% set env_cls = 'env-pea' %}
+        {% elif env_name == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
+        {% elif env_name == 'CTO' %}{% set env_cls = 'env-cto' %}
+        {% elif env_name == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
+        {% elif env_name == 'PER' %}{% set env_cls = 'env-per' %}
+        {% elif env_name in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
+        {% else %}{% set env_cls = 'env-autre' %}
+        {% endif %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:0.65rem 0;">
+                <span class="env-badge {{ env_cls }}" style="font-size:0.72rem; padding:0.15rem 0.55rem;">{{ env_name }}</span>
+            </td>
+            <td style="text-align:right; color:rgba(255,255,255,0.4); font-size:0.85rem;">
+                {{ env_data.count }}
+            </td>
+            <td style="text-align:right; font-weight:600; color:rgba(255,255,255,0.7);">
+                {{ env_data.total_invested }} €
+            </td>
+            <td style="text-align:right; font-weight:700; color:white;">
+                {{ env_data.total_value }} €
+            </td>
+            <td style="text-align:right; font-size:0.82rem;">
+                {% if env_data.plafond_restant is not none %}
+                {% if env_data.plafond_restant == 0 %}
+                <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
+                {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
+                <span style="color:#F6C90E; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                {% else %}
+                <span style="color:rgba(255,255,255,0.35);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                {% endif %}
+                {% else %}
+                <span style="color:rgba(255,255,255,0.18);">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div style="margin-top:0.85rem; font-size:0.72rem; color:rgba(255,255,255,0.2); line-height:1.5;">
+        Les plafonds affichés (PEA : 150 000 €, PEA-PME : 225 000 €, Livret A : 22 950 €, LDDS : 12 000 €, LEP : 10 000 €)
+        sont calculés sur le montant investi et fournis à titre indicatif uniquement — vérifie auprès de ton établissement financier.
+    </div>
+</div>
 {% endif %}
 
 {% endif %}

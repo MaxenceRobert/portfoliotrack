@@ -18,6 +18,7 @@ from database import (
     update_user_email, update_user_password,
     save_profil_investisseur, get_last_profil_investisseur,
     get_cached_risk_score, save_risk_score,
+    get_user_by_id, set_onboarding_completed,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -327,6 +328,15 @@ def search_ticker():
         print(f"Search error: {e}")
         return jsonify({'results': []})
 
+# ── Enveloppes fiscales — plafonds légaux ─────────────────────────────────────
+ENVELOPE_PLAFONDS = {
+    'PEA':       150000,
+    'PEA-PME':   225000,
+    'Livret A':  22950,
+    'LDDS':      12000,
+    'LEP':       10000,
+}
+
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @main_bp.route('/')
 def dashboard():
@@ -356,12 +366,52 @@ def dashboard():
     )
 
     # Cohérence avec profil investisseur
-    last_profil      = get_last_profil_investisseur(current_user.id)
+    last_profil       = get_last_profil_investisseur(current_user.id)
     profil_risk_score = last_profil.get('score_global') if last_profil else None
 
     coherence = None
     if portfolio_risk_score is not None and profil_risk_score is not None:
         coherence = max(0, 100 - abs(portfolio_risk_score - profil_risk_score))
+
+    # Enveloppes fiscales — résumé par enveloppe
+    envelope_summary = {}
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            if not a.get('fully_sold', False):
+                env = a.get('envelope') or ''
+                if not env:
+                    continue
+                if env not in envelope_summary:
+                    envelope_summary[env] = {
+                        'count':           0,
+                        'total_invested':  0.0,
+                        'total_value':     0.0,
+                        'plafond':         ENVELOPE_PLAFONDS.get(env),
+                    }
+                envelope_summary[env]['count']          += 1
+                envelope_summary[env]['total_invested'] += float(a.get('total_invested') or 0)
+                envelope_summary[env]['total_value']    += float(a.get('current_value') or 0)
+
+    # Arrondir les totaux
+    for env_data in envelope_summary.values():
+        env_data['total_invested'] = round(env_data['total_invested'], 2)
+        env_data['total_value']    = round(env_data['total_value'], 2)
+        if env_data['plafond']:
+            env_data['plafond_restant'] = max(0, env_data['plafond'] - env_data['total_invested'])
+        else:
+            env_data['plafond_restant'] = None
+
+    # Onboarding
+    user_db              = get_user_by_id(current_user.id)
+    onboarding_completed = bool(user_db.get('onboarding_completed')) if user_db else False
+    has_assets           = bool(summary.get('assets'))
+    has_profil           = bool(last_profil)
+    onboarding_state     = {
+        'show':       not onboarding_completed,
+        'has_profil': has_profil,
+        'has_assets': has_assets,
+        'all_done':   has_profil and has_assets,
+    }
 
     return render_template(
         'dashboard.html',
@@ -371,7 +421,16 @@ def dashboard():
         profil_risk_score=profil_risk_score,
         coherence=coherence,
         last_profil=last_profil,
+        envelope_summary=envelope_summary,
+        onboarding_state=onboarding_state,
     )
+
+# ── Onboarding dismiss ────────────────────────────────────────────────────────
+@main_bp.route('/onboarding/dismiss', methods=['POST'])
+@login_required
+def onboarding_dismiss():
+    set_onboarding_completed(current_user.id)
+    return redirect(url_for('main.dashboard'))
 
 # ── Landing ───────────────────────────────────────────────────────────────────
 @main_bp.route('/landing')
@@ -475,13 +534,14 @@ def add_asset_route():
         asset_type = request.form['asset_type']
         currency   = request.form['currency'].strip().upper()
         isin       = request.form.get('isin', '').strip().upper()
+        envelope   = request.form.get('envelope', '').strip()
 
         price = get_current_price(ticker)
         if price is None:
             flash(f'Ticker "{ticker}" introuvable sur Yahoo Finance.', 'error')
             return redirect(url_for('main.add_asset_route'))
 
-        success = add_asset(current_user.id, ticker, name, asset_type, currency, isin)
+        success = add_asset(current_user.id, ticker, name, asset_type, currency, isin, envelope)
         if not success:
             flash('Ce ticker est déjà dans ton portefeuille.', 'error')
             return redirect(url_for('main.add_asset_route'))
@@ -530,6 +590,7 @@ def add_purchase_route():
                 currency   = request.form.get(f'asset_currency_{i}', 'EUR').strip().upper()
                 asset_type = request.form.get(f'asset_type_{i}', 'Autre').strip()
                 asset_id   = request.form.get(f'asset_id_{i}', '').strip()
+                envelope   = request.form.get(f'envelope_{i}', '').strip()
                 date            = request.form.get(f'date_{i}', '')
                 shares          = float(request.form.get(f'shares_{i}', 0))
                 price_per_share = float(request.form.get(f'price_per_share_{i}', 0))
@@ -560,7 +621,7 @@ def add_purchase_route():
 
                     add_asset(current_user.id, ticker,
                               asset_name or ticker, mapped_type,
-                              currency or 'EUR', '')
+                              currency or 'EUR', '', envelope)
 
                     from database import get_user_assets as _get_assets
                     all_assets = _get_assets(current_user.id)

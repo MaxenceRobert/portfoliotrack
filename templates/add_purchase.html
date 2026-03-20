@@ -100,6 +100,22 @@ function addRow() {
             </div>
         </div>
 
+        <div class="form-group" id="envelope-group-${i}">
+            <label style="font-size:0.82rem;">Enveloppe fiscale <span style="font-weight:400; color:rgba(255,255,255,0.3);">(si nouvel actif)</span></label>
+            <select name="envelope_${i}" style="font-size:0.85rem;">
+                <option value="">— Non spécifié —</option>
+                <option value="PEA">PEA</option>
+                <option value="PEA-PME">PEA-PME</option>
+                <option value="CTO">CTO</option>
+                <option value="Assurance Vie">Assurance Vie</option>
+                <option value="PER">PER</option>
+                <option value="Livret A">Livret A</option>
+                <option value="LDDS">LDDS</option>
+                <option value="LEP">LEP</option>
+                <option value="Autre">Autre</option>
+            </select>
+        </div>
+
         <div style="display:flex; align-items:center; gap:1rem; margin-top:0.25rem;">
             <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">Total :</div>
             <div id="total-${i}" style="font-weight:700; color:#818CF8; font-size:1rem;">—</div>

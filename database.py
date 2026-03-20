@@ -256,7 +256,6 @@ def init_db():
     conn.commit()
 
     # ── Migration : ajout des colonnes sharpe + var_95, vidage cache si nouveau ──
-    # S'exécute une seule fois (échoue silencieusement si colonnes déjà présentes)
     new_cols_added = False
     for col in ('sharpe', 'var_95'):
         try:
@@ -268,12 +267,34 @@ def init_db():
             new_cols_added = True
             print(f"[migration] asset_risk_scores: colonne '{col}' ajoutée")
         except Exception:
-            conn.rollback()  # colonne déjà présente — OK
+            conn.rollback()
 
     if new_cols_added:
         c.execute('DELETE FROM asset_risk_scores')
         conn.commit()
         print("[migration] asset_risk_scores: cache vidé (nouvel algorithme de scoring)")
+
+    # ── Migration : colonne envelope sur assets ───────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('ALTER TABLE assets ADD COLUMN IF NOT EXISTS envelope TEXT')
+        else:
+            c.execute('ALTER TABLE assets ADD COLUMN envelope TEXT')
+        conn.commit()
+        print("[migration] assets: colonne 'envelope' ajoutée")
+    except Exception:
+        conn.rollback()
+
+    # ── Migration : colonne onboarding_completed sur users ───────────────────
+    try:
+        if is_postgres():
+            c.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE')
+        else:
+            c.execute('ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0')
+        conn.commit()
+        print("[migration] users: colonne 'onboarding_completed' ajoutée")
+    except Exception:
+        conn.rollback()
 
     conn.close()
     print("Base de données initialisée.")
@@ -325,15 +346,25 @@ def get_user_by_id(user_id):
     conn.close()
     return row
 
-def add_asset(user_id, ticker, name, asset_type, currency, isin=''):
+def set_onboarding_completed(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    val = True if is_postgres() else 1
+    c.execute(f'UPDATE users SET onboarding_completed = {p} WHERE id = {p}', (val, user_id))
+    conn.commit()
+    conn.close()
+
+def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope=''):
     p = placeholder()
     conn = get_db()
     try:
         c = conn.cursor()
         c.execute(
-            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency)
-               VALUES ({p}, {p}, {p}, {p}, {p}, {p})''',
-            (user_id, isin.upper() if isin else '', ticker.upper(), name, asset_type, currency.upper())
+            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency, envelope)
+               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})''',
+            (user_id, isin.upper() if isin else '', ticker.upper(), name, asset_type,
+             currency.upper(), envelope or None)
         )
         conn.commit()
         return True
