@@ -29,6 +29,73 @@
 }
 .pm-label { color: rgba(255,255,255,0.3); }
 .pm-value { color: rgba(255,255,255,0.75); font-weight: 500; }
+
+/* ── Envelope badges ── */
+.env-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.env-pea    { background: rgba(52,211,153,0.12); color: #6EE7B7; border: 1px solid rgba(52,211,153,0.2); }
+.env-peapme { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.2); }
+.env-cto    { background: rgba(91,95,237,0.12);  color: #A5B4FC; border: 1px solid rgba(91,95,237,0.2); }
+.env-av     { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.2); }
+.env-per    { background: rgba(239,68,68,0.12);  color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); }
+.env-livret { background: rgba(20,184,166,0.12); color: #5EEAD4; border: 1px solid rgba(20,184,166,0.2); }
+.env-autre  { background: rgba(148,163,184,0.1); color: #94A3B8; border: 1px solid rgba(148,163,184,0.15); }
+
+/* ── Envelope edit button ── */
+.env-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.25);
+    font-size: 0.8rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+.env-edit-btn:hover { color: #A5B4FC; background: rgba(91,95,237,0.12); }
+
+/* ── Modal ── */
+.env-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+}
+.env-modal-overlay.active { display: flex; }
+.env-modal-box {
+    background: #13131f;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.75rem;
+    width: 340px;
+    max-width: 90vw;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+}
+.env-modal-box h3 {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+}
+.env-modal-box select {
+    width: 100%;
+    margin-bottom: 1.25rem;
+}
+.env-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
 </style>
 
 <div class="page-header">
@@ -74,6 +141,7 @@
                         <th>Date</th>
                         <th>Actif</th>
                         <th>Type</th>
+                        <th>Enveloppe</th>
                         <th>Parts</th>
                         <th>Prix / part</th>
                         <th>Frais</th>
@@ -90,7 +158,9 @@
                 {% set cv = (p['shares'] * cp) | round(2) if cp > 0 else none %}
                 {% set gain = (cv - p['total_cost']) | round(2) if cv is not none else none %}
                 {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
+                {% set env = p.get('envelope') or '' %}
                 <tr data-ticker="{{ p['ticker'] }}"
+                    data-asset-id="{{ p['asset_id'] }}"
                     data-cost="{{ p['total_cost'] | float }}"
                     data-fees="{{ p['fees'] | float if p['fees'] else 0 }}"
                     data-gain="{{ gain | float if gain is not none else 0 }}">
@@ -106,6 +176,14 @@
                                           else 'badge-action' if p['asset_type'] == 'Action'
                                           else 'badge-crypto' if p['asset_type'] == 'Crypto'
                                           else 'badge-other' }}">{{ p['asset_type'] }}</span>
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.25rem;">
+                            <span class="env-badge-row-{{ p['asset_id'] }} {% if env == 'PEA' %}env-badge env-pea{% elif env == 'PEA-PME' %}env-badge env-peapme{% elif env == 'CTO' %}env-badge env-cto{% elif env == 'Assurance Vie' %}env-badge env-av{% elif env == 'PER' %}env-badge env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-badge env-livret{% elif env %}env-badge env-autre{% else %}env-badge{% endif %}"
+                                  style="{% if not env %}color:rgba(255,255,255,0.15); font-size:0.72rem;{% endif %}">{{ env or '—' }}</span>
+                            <button class="env-edit-btn" title="Modifier l'enveloppe"
+                                    onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
+                        </div>
                     </td>
                     <td>{{ p['shares'] }}</td>
                     <td style="white-space:nowrap;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
@@ -161,11 +239,19 @@
     {% set cv = (p['shares'] * cp) | round(2) if cp > 0 else none %}
     {% set gain = (cv - p['total_cost']) | round(2) if cv is not none else none %}
     {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
-    <div class="purchase-mobile-card" data-ticker="{{ p['ticker'] }}">
+    {% set env = p.get('envelope') or '' %}
+    <div class="purchase-mobile-card" data-ticker="{{ p['ticker'] }}" data-asset-id="{{ p['asset_id'] }}">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                 <span class="badge badge-etf">{{ p['ticker'] }}</span>
                 <span style="font-size:0.85rem; color:white; font-weight:600;">{{ p['name'] }}</span>
+                {% if env %}
+                <span class="env-badge-row-{{ p['asset_id'] }} env-badge {% if env == 'PEA' %}env-pea{% elif env == 'PEA-PME' %}env-peapme{% elif env == 'CTO' %}env-cto{% elif env == 'Assurance Vie' %}env-av{% elif env == 'PER' %}env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-livret{% else %}env-autre{% endif %}">{{ env }}</span>
+                {% else %}
+                <span class="env-badge-row-{{ p['asset_id'] }}" style="font-size:0.68rem; color:rgba(255,255,255,0.15);">—</span>
+                {% endif %}
+                <button class="env-edit-btn" title="Modifier l'enveloppe"
+                        onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
             </div>
             <span style="font-size:0.75rem; color:rgba(255,255,255,0.3);">{{ p['date'] }}</span>
         </div>
@@ -235,6 +321,29 @@
     </div>
 </div>
 
+<!-- ── Envelope edit modal ── -->
+<div class="env-modal-overlay" id="env-modal" onclick="if(event.target===this)closeEnvModal()">
+    <div class="env-modal-box">
+        <h3>Modifier l'enveloppe fiscale</h3>
+        <select id="env-modal-select">
+            <option value="">— Non spécifié —</option>
+            <option value="PEA">PEA</option>
+            <option value="PEA-PME">PEA-PME</option>
+            <option value="CTO">CTO</option>
+            <option value="Assurance Vie">Assurance Vie</option>
+            <option value="PER">PER</option>
+            <option value="Livret A">Livret A</option>
+            <option value="LDDS">LDDS</option>
+            <option value="LEP">LEP</option>
+            <option value="Autre">Autre</option>
+        </select>
+        <div class="env-modal-actions">
+            <button class="btn btn-ghost btn-sm" onclick="closeEnvModal()">Annuler</button>
+            <button class="btn btn-primary btn-sm" id="env-modal-confirm" onclick="submitEnvUpdate()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
 {% endif %}
 
 <script>
@@ -282,6 +391,69 @@ function filterAsset(ticker, btn) {
     });
     btn.classList.remove('btn-ghost');
     btn.classList.add('btn-primary');
+}
+
+// ── Envelope modal ──
+let _envModalAssetId = null;
+
+function envBadgeClass(env) {
+    if (env === 'PEA')           return 'env-badge env-pea';
+    if (env === 'PEA-PME')       return 'env-badge env-peapme';
+    if (env === 'CTO')           return 'env-badge env-cto';
+    if (env === 'Assurance Vie') return 'env-badge env-av';
+    if (env === 'PER')           return 'env-badge env-per';
+    if (['Livret A','LDDS','LEP'].includes(env)) return 'env-badge env-livret';
+    if (env)                     return 'env-badge env-autre';
+    return 'env-badge';
+}
+
+function openEnvModal(assetId, currentEnv) {
+    _envModalAssetId = assetId;
+    document.getElementById('env-modal-select').value = currentEnv || '';
+    document.getElementById('env-modal').classList.add('active');
+}
+
+function closeEnvModal() {
+    document.getElementById('env-modal').classList.remove('active');
+    _envModalAssetId = null;
+}
+
+async function submitEnvUpdate() {
+    if (!_envModalAssetId) return;
+    const env     = document.getElementById('env-modal-select').value;
+    const btn     = document.getElementById('env-modal-confirm');
+    btn.disabled  = true;
+    btn.textContent = '…';
+
+    try {
+        const res  = await fetch('/asset/update-envelope', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ asset_id: _envModalAssetId, envelope: env })
+        });
+        const data = await res.json();
+        if (data.success) {
+            // Update all rows/cards sharing the same asset_id
+            document.querySelectorAll(`[data-asset-id="${_envModalAssetId}"] .env-badge-row-${_envModalAssetId}`)
+                .forEach(el => {
+                    el.className  = envBadgeClass(env);
+                    el.textContent = env || '—';
+                    if (!env) {
+                        el.style.cssText = 'font-size:0.68rem; color:rgba(255,255,255,0.15);';
+                    } else {
+                        el.style.cssText = '';
+                    }
+                });
+            closeEnvModal();
+        } else {
+            alert('Erreur lors de la mise à jour.');
+        }
+    } catch(e) {
+        alert('Erreur réseau.');
+    } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Enregistrer';
+    }
 }
 
 window.addEventListener('load', () => {

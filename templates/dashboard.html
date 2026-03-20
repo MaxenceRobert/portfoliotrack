@@ -256,6 +256,130 @@
 .env-per      { background: rgba(251,146,60,0.12);  color: #FB923C; border: 1px solid rgba(251,146,60,0.3);  }
 .env-livret   { background: rgba(52,211,153,0.12);  color: #34D399; border: 1px solid rgba(52,211,153,0.28); }
 .env-autre    { background: rgba(156,163,175,0.10); color: #9CA3AF; border: 1px solid rgba(156,163,175,0.2); }
+
+/* ── Filtre enveloppe ── */
+.env-filter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.env-filter-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+.env-filter-select {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    padding: 0.3rem 0.65rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 180px;
+}
+.env-filter-select:hover  { border-color: rgba(129,140,248,0.4); }
+.env-filter-select:focus  { border-color: rgba(129,140,248,0.6); }
+.env-filter-select option { background: #1a1a2e; color: white; }
+
+/* ── Plafond bar ── */
+.plafond-block {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.25rem;
+    display: none;
+}
+.plafond-bar-outer {
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 5px;
+    overflow: hidden;
+    margin: 0.5rem 0 0.35rem;
+}
+.plafond-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
+    background: linear-gradient(90deg, #34D399, #10B981);
+}
+
+/* ── Bouton crayon enveloppe ── */
+.env-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.3rem;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.env-edit-btn:hover {
+    color: #818CF8;
+    background: rgba(129,140,248,0.1);
+}
+
+/* ── Modal enveloppe ── */
+.env-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+}
+.env-modal-overlay.open { display: flex; }
+.env-modal-box {
+    background: #1a1a2e;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.env-modal-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.3rem;
+}
+.env-modal-sub {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 1.1rem;
+}
+.env-modal-select {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    padding: 0.55rem 0.75rem;
+    margin-bottom: 1rem;
+    outline: none;
+}
+.env-modal-select:focus { border-color: rgba(129,140,248,0.5); }
+.env-modal-select option { background: #1a1a2e; }
+.env-modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+}
 </style>
 
 <div class="page-header">
@@ -269,13 +393,31 @@
     </div>
 </div>
 
+<!-- ── Filtre enveloppe ── -->
+{% if summary.assets %}
+<div class="env-filter-wrap">
+    <span class="env-filter-label">Enveloppe</span>
+    <select class="env-filter-select" id="env-filter-select" onchange="applyEnvFilter(this.value)">
+        <option value="all">Tout le portefeuille</option>
+        {% set seen_envs = namespace(v=[]) %}
+        {% for assets_list in summary.by_type.values() %}
+            {% for a in assets_list %}
+                {% if not a.fully_sold and a.envelope and a.envelope not in seen_envs.v %}
+                    {% set seen_envs.v = seen_envs.v + [a.envelope] %}
+                    <option value="{{ a.envelope }}">{{ a.envelope }}</option>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </select>
+</div>
+{% endif %}
+
 <!-- ── Onboarding banner ── -->
 {% if onboarding_state and onboarding_state.show %}
 <div class="onboarding-banner">
     <div class="onboarding-title">Bienvenue — 3 étapes pour démarrer</div>
     <div class="onboarding-steps">
 
-        <!-- Étape 1 : Test de profil -->
         <div class="onboarding-step {{ 'done' if onboarding_state.has_profil else 'active' }}">
             <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_profil else '1' }}</div>
             <div>
@@ -291,7 +433,6 @@
             </div>
         </div>
 
-        <!-- Étape 2 : Premier actif -->
         <div class="onboarding-step {{ 'done' if onboarding_state.has_assets else ('active' if onboarding_state.has_profil else '') }}">
             <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_assets else '2' }}</div>
             <div>
@@ -308,7 +449,6 @@
             </div>
         </div>
 
-        <!-- Étape 3 : Tout prêt -->
         <div class="onboarding-step {{ 'done' if onboarding_state.all_done else '' }}">
             <div class="onboarding-step-num">{{ '✓' if onboarding_state.all_done else '3' }}</div>
             <div>
@@ -344,16 +484,17 @@
 
 {% else %}
 
-<!-- ── Cohérence portefeuille / profil — EN PREMIER ── -->
+<!-- ── Cohérence portefeuille / profil ── -->
 {% if portfolio_risk_score is not none %}
-<div class="card coh-card">
+<div class="card coh-card" id="coh-card">
     <div class="coh-header">
         <div class="coh-header-text">
             <div class="coh-label">Cohérence portefeuille / profil</div>
             <div class="coh-subtitle">Ton portefeuille correspond-il à ta tolérance au risque ?</div>
         </div>
         {% if coherence is not none %}
-        <span class="coh-pct-badge {{ 'coh-pct-high' if coherence >= 70 else 'coh-pct-med' if coherence >= 40 else 'coh-pct-low' }}">
+        <span id="coh-pct-badge-el"
+              class="coh-pct-badge {{ 'coh-pct-high' if coherence >= 70 else 'coh-pct-med' if coherence >= 40 else 'coh-pct-low' }}">
             {{ coherence }}% cohérent
         </span>
         {% endif %}
@@ -361,16 +502,14 @@
 
     <div style="display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap;">
 
-        <!-- Score portefeuille -->
         <div class="coh-score-block">
             <div class="coh-score-sub">Score portefeuille</div>
-            <div class="coh-score-num">{{ portfolio_risk_score }}</div>
-            {{ risk_badge(portfolio_risk_score) }}
+            <div class="coh-score-num" id="coh-portfolio-score-num">{{ portfolio_risk_score }}</div>
+            <div id="coh-portfolio-badge-wrap">{{ risk_badge(portfolio_risk_score) }}</div>
         </div>
 
         <div class="coh-sep">↔</div>
 
-        <!-- Score profil -->
         {% if last_profil %}
         <div class="coh-score-block">
             <div class="coh-score-sub">Score profil investisseur</div>
@@ -391,29 +530,22 @@
     </div>
 
     {% if coherence is not none %}
-    <!-- Jauge -->
     <div class="coh-gauge-outer">
         <div id="coh-gauge-fill"
              class="coh-gauge-fill {{ 'coh-gauge-high' if coherence >= 70 else 'coh-gauge-med' if coherence >= 40 else 'coh-gauge-low' }}"
              style="width:0%;"></div>
     </div>
-    <!-- Message -->
-    <div class="{{ 'coh-msg-high' if coherence >= 70 else 'coh-msg-med' if coherence >= 40 else 'coh-msg-low' }}">
-        {% if coherence >= 70 %}
-        ✓ Ton portefeuille est aligné avec ton profil de risque
-        {% elif coherence >= 40 %}
-        ⚡ Ton portefeuille est légèrement décalé par rapport à ton profil
-        {% else %}
-        ⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque
-        {% endif %}
+    <div id="coh-msg-el"
+         class="{{ 'coh-msg-high' if coherence >= 70 else 'coh-msg-med' if coherence >= 40 else 'coh-msg-low' }}">
+        {% if coherence >= 70 %}✓ Ton portefeuille est aligné avec ton profil de risque
+        {% elif coherence >= 40 %}⚡ Ton portefeuille est légèrement décalé par rapport à ton profil
+        {% else %}⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque{% endif %}
     </div>
-    {% if coherence < 40 %}
-    <div style="margin-top:0.85rem;">
+    <div id="coh-retest-btn" style="{{ 'display:none;' if coherence >= 40 else '' }} margin-top:0.85rem;">
         <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost btn-sm">↺ Refaire le test de profil</a>
     </div>
-    {% endif %}
     {% else %}
-    <div style="margin-top:1rem; text-align:center;">
+    <div id="coh-msg-el" style="margin-top:1rem; text-align:center;">
         <a href="{{ url_for('main.test_profil') }}"
            style="font-size:0.875rem; color:#818CF8; text-decoration:none; font-weight:600;">
             🧠 Fais ton test de profil pour voir ta cohérence →
@@ -427,37 +559,58 @@
 <div class="kpi-grid">
     <div class="kpi-card kpi-card-violet">
         <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
-        <div class="kpi-sub">{{ summary.assets|length }} actif(s) suivi(s)</div>
+        <div class="kpi-value" id="kpi-total-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
+        <div class="kpi-sub" id="kpi-assets-count">{{ summary.assets|length }} actif(s) suivi(s)</div>
     </div>
     <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">Total investi</div>
-        <div class="kpi-value" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
+        <div class="kpi-value" id="kpi-total-invested" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
         <div class="kpi-sub">Capital déployé</div>
     </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}">
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}"
+         id="kpi-unrealized-card">
         <div class="kpi-label">Plus-value latente</div>
-        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
+        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}"
+             id="kpi-unrealized">
             {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
         </div>
-        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}">
+        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}"
+             id="kpi-unrealized-pct">
             {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
         </div>
     </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}">
+    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}"
+         id="kpi-realized-card">
         <div class="kpi-label">Plus-value réalisée</div>
-        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}">
+        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}"
+             id="kpi-realized">
             {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
         </div>
         <div class="kpi-sub">Sur ventes clôturées</div>
     </div>
-    {% if summary.total_dividends > 0 %}
-    <div class="kpi-card kpi-card-blue">
+    <div class="kpi-card kpi-card-blue" id="kpi-dividends-card"
+         style="{{ 'display:none;' if summary.total_dividends <= 0 else '' }}">
         <div class="kpi-label">Dividendes reçus</div>
-        <div class="kpi-value positive">+{{ summary.total_dividends }} €</div>
+        <div class="kpi-value positive" id="kpi-dividends">+{{ summary.total_dividends }} €</div>
         <div class="kpi-sub">Rendement encaissé</div>
     </div>
-    {% endif %}
+</div>
+
+<!-- Plafond bar (affiché dynamiquement par JS) -->
+<div class="plafond-block" id="plafond-bar-block">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.5rem;">
+        <span style="font-size:0.82rem; font-weight:700; color:white;">
+            Plafond <span id="plafond-env-name"></span>
+        </span>
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">
+            <span id="plafond-invested"></span> versés /
+            <span id="plafond-total"></span> —
+            <strong id="plafond-restant" style="color:rgba(255,255,255,0.7);"></strong> disponibles
+        </span>
+    </div>
+    <div class="plafond-bar-outer">
+        <div class="plafond-bar-fill" id="plafond-bar-fill" style="width:0%;"></div>
+    </div>
 </div>
 
 <!-- Barre de gain total -->
@@ -467,9 +620,12 @@
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
         <div>
             <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
-            <div class="{{ 'positive' if total_gain >= 0 else 'negative' }}" style="font-size:1.4rem; font-weight:800;">
-                {{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }} €
-                <span style="font-size:0.9rem; font-weight:600; opacity:0.7;">
+            <div id="kpi-total-gain-line"
+                 class="{{ 'positive' if total_gain >= 0 else 'negative' }}"
+                 style="font-size:1.4rem; font-weight:800;">
+                <span id="kpi-total-gain">{{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }}</span> €
+                <span id="kpi-total-gain-pct"
+                      style="font-size:0.9rem; font-weight:600; opacity:0.7;">
                     ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
                 </span>
             </div>
@@ -484,30 +640,35 @@
 
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
-<div class="card" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.18);">
+<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.18);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
         <div>
             <span style="font-weight:700; color:white; font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
         </div>
-        <span class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
+        <span id="dca-pct-el"
+              class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
               style="font-weight:800; font-size:1.1rem;">
             {{ summary.dca_progress }}%
         </span>
     </div>
     <div class="progress-bar-wrap">
-        <div class="progress-bar" id="dca-progress-bar" data-width="{{ [summary.dca_progress, 100]|min }}" style="width:0%;"></div>
+        <div class="progress-bar" id="dca-progress-bar"
+             data-width="{{ [summary.dca_progress, 100]|min }}" style="width:0%;"></div>
     </div>
     <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
-        <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+        <span id="dca-invested-month"
+              style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
             {{ summary.invested_month }} € investis ce mois
         </span>
-        {% if summary.dca_progress >= 100 %}
-        <span style="font-size:0.78rem; color:#34D399; font-weight:600;">✓ Objectif atteint !</span>
-        {% else %}
-        <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
-            Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
+        <span id="dca-reste">
+            {% if summary.dca_progress >= 100 %}
+            <span style="font-size:0.78rem; color:#34D399; font-weight:600;">✓ Objectif atteint !</span>
+            {% else %}
+            <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+                Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
+            </span>
+            {% endif %}
         </span>
-        {% endif %}
     </div>
 </div>
 {% else %}
@@ -521,36 +682,35 @@
 </div>
 {% endif %}
 
-<!-- Actifs -->
+<!-- Actifs — chaque section enveloppée dans .asset-section pour le filtre JS -->
 {% for asset_type, assets in summary.by_type.items() %}
+<div class="asset-section" data-asset-type="{{ asset_type }}">
 <div class="section-title">{{ asset_type }}s</div>
 <div class="asset-grid">
 {% for a in assets %}
 {% if not a.fully_sold %}
 {% set ri = risk_data.get(a.ticker) %}
 
-{# Macro couleur enveloppe #}
 {% set env = a.envelope or '' %}
 {% if env == 'PEA' %}{% set env_cls = 'env-pea' %}
 {% elif env == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
 {% elif env == 'CTO' %}{% set env_cls = 'env-cto' %}
-{% elif env in ('Assurance Vie',) %}{% set env_cls = 'env-av' %}
+{% elif env == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
 {% elif env == 'PER' %}{% set env_cls = 'env-per' %}
 {% elif env in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
 {% elif env == 'Autre' %}{% set env_cls = 'env-autre' %}
 {% else %}{% set env_cls = '' %}
 {% endif %}
 
-<div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}">
+<div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}"
+     data-asset-id="{{ a.asset_id }}"
+     data-envelope="{{ env }}">
 
-    <!-- Icone décorative bg -->
     <svg class="asset-sparkline" viewBox="0 0 80 40" fill="none">
         {% if a.unrealized_gain >= 0 %}
-        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5"
-                  stroke="#34D399" stroke-width="2" fill="none"/>
+        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5" stroke="#34D399" stroke-width="2" fill="none"/>
         {% else %}
-        <polyline points="0,8 15,12 30,10 45,22 60,28 80,35"
-                  stroke="#F87171" stroke-width="2" fill="none"/>
+        <polyline points="0,8 15,12 30,10 45,22 60,28 80,35" stroke="#F87171" stroke-width="2" fill="none"/>
         {% endif %}
     </svg>
 
@@ -561,9 +721,11 @@
                                   else 'badge-action' if a.asset_type == 'Action'
                                   else 'badge-crypto' if a.asset_type == 'Crypto'
                                   else 'badge-other' }}">{{ a.ticker }}</span>
-                {% if env and env_cls %}
-                <span class="env-badge {{ env_cls }}">{{ env }}</span>
-                {% endif %}
+                <span id="env-badge-{{ a.asset_id }}">
+                    {% if env and env_cls %}
+                    <span class="env-badge {{ env_cls }}">{{ env }}</span>
+                    {% endif %}
+                </span>
                 <span style="color:white; font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
                 {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
             </div>
@@ -632,12 +794,23 @@
                     </td>
                 </tr>
                 {% endif %}
-                {% if env %}
                 <tr>
                     <td>Enveloppe fiscale</td>
-                    <td>{% if env_cls %}<span class="env-badge {{ env_cls }}">{{ env }}</span>{% else %}{{ env }}{% endif %}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.4rem;">
+                            <span id="env-table-badge-{{ a.asset_id }}">
+                                {% if env and env_cls %}
+                                <span class="env-badge {{ env_cls }}">{{ env }}</span>
+                                {% else %}
+                                <span style="color:rgba(255,255,255,0.25); font-size:0.8rem;">—</span>
+                                {% endif %}
+                            </span>
+                            <button class="env-edit-btn"
+                                    onclick="openEnvModal({{ a.asset_id }}, '{{ env }}')"
+                                    title="Modifier l'enveloppe">✎</button>
+                        </div>
+                    </td>
                 </tr>
-                {% endif %}
                 {% if ri %}
                 <tr>
                     <td>Score de risque</td>
@@ -654,7 +827,7 @@
                 </tr>
                 {% endif %}
             </table>
-            <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
                 <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
                 <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
                 <a href="{{ url_for('main.charts') }}" class="btn btn-ghost btn-sm">Graphique</a>
@@ -672,6 +845,7 @@
 {% endif %}
 {% endfor %}
 </div>
+</div><!-- /.asset-section -->
 {% endfor %}
 
 <!-- Allocation + Diversification côte à côte -->
@@ -750,16 +924,12 @@ Plotly.newPlot('pie-chart', [{
     height: 280,
     margin: { l: 10, r: 10, t: 10, b: 10 },
     showlegend: false,
-    hoverlabel: {
-        bgcolor: '#12121E',
-        bordercolor: 'rgba(129,140,248,0.3)',
-        font: { color: 'white' }
-    }
+    hoverlabel: { bgcolor: '#12121E', bordercolor: 'rgba(129,140,248,0.3)', font: { color: 'white' } }
 }, { responsive: true, displayModeBar: false });
 </script>
 {% endif %}
 
-<!-- Enveloppes fiscales -->
+<!-- Enveloppes fiscales (récap statique) -->
 {% if envelope_summary %}
 <div class="section-title" style="margin-top:1.5rem;">Enveloppes fiscales</div>
 <div class="card" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
@@ -787,24 +957,18 @@ Plotly.newPlot('pie-chart', [{
             <td style="padding:0.65rem 0;">
                 <span class="env-badge {{ env_cls }}" style="font-size:0.72rem; padding:0.15rem 0.55rem;">{{ env_name }}</span>
             </td>
-            <td style="text-align:right; color:rgba(255,255,255,0.4); font-size:0.85rem;">
-                {{ env_data.count }}
-            </td>
-            <td style="text-align:right; font-weight:600; color:rgba(255,255,255,0.7);">
-                {{ env_data.total_invested }} €
-            </td>
-            <td style="text-align:right; font-weight:700; color:white;">
-                {{ env_data.total_value }} €
-            </td>
+            <td style="text-align:right; color:rgba(255,255,255,0.4); font-size:0.85rem;">{{ env_data.count }}</td>
+            <td style="text-align:right; font-weight:600; color:rgba(255,255,255,0.7);">{{ env_data.total_invested }} €</td>
+            <td style="text-align:right; font-weight:700; color:white;">{{ env_data.total_value }} €</td>
             <td style="text-align:right; font-size:0.82rem;">
                 {% if env_data.plafond_restant is not none %}
-                {% if env_data.plafond_restant == 0 %}
-                <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
-                {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
-                <span style="color:#F6C90E; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
-                {% else %}
-                <span style="color:rgba(255,255,255,0.35);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
-                {% endif %}
+                    {% if env_data.plafond_restant == 0 %}
+                    <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
+                    {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
+                    <span style="color:#F6C90E; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                    {% else %}
+                    <span style="color:rgba(255,255,255,0.35);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                    {% endif %}
                 {% else %}
                 <span style="color:rgba(255,255,255,0.18);">—</span>
                 {% endif %}
@@ -814,15 +978,336 @@ Plotly.newPlot('pie-chart', [{
         </tbody>
     </table>
     <div style="margin-top:0.85rem; font-size:0.72rem; color:rgba(255,255,255,0.2); line-height:1.5;">
-        Les plafonds affichés (PEA : 150 000 €, PEA-PME : 225 000 €, Livret A : 22 950 €, LDDS : 12 000 €, LEP : 10 000 €)
-        sont calculés sur le montant investi et fournis à titre indicatif uniquement — vérifie auprès de ton établissement financier.
+        Plafonds indicatifs (PEA : 150 000 €, PEA-PME : 225 000 €, Livret A : 22 950 €, LDDS : 12 000 €, LEP : 10 000 €) calculés sur le montant investi.
+        Rechargez la page pour mettre à jour ce tableau après avoir modifié une enveloppe.
     </div>
 </div>
 {% endif %}
 
 {% endif %}
 
+<!-- ── Modal modification enveloppe ── -->
+<div class="env-modal-overlay" id="env-modal" onclick="if(event.target===this)closeEnvModal()">
+    <div class="env-modal-box">
+        <div class="env-modal-title">Modifier l'enveloppe fiscale</div>
+        <div class="env-modal-sub" id="env-modal-asset-name">—</div>
+        <select class="env-modal-select" id="env-modal-select">
+            <option value="">— Non spécifié —</option>
+            <option value="PEA">PEA — Plan d'Épargne en Actions</option>
+            <option value="PEA-PME">PEA-PME</option>
+            <option value="CTO">CTO — Compte-Titres Ordinaire</option>
+            <option value="Assurance Vie">Assurance Vie</option>
+            <option value="PER">PER — Plan d'Épargne Retraite</option>
+            <option value="Livret A">Livret A</option>
+            <option value="LDDS">LDDS — Livret Développement Durable</option>
+            <option value="LEP">LEP — Livret d'Épargne Populaire</option>
+            <option value="Autre">Autre</option>
+        </select>
+        <div class="env-modal-actions">
+            <button class="btn btn-ghost btn-sm" onclick="closeEnvModal()">Annuler</button>
+            <button class="btn btn-primary btn-sm" id="env-modal-confirm" onclick="submitEnvUpdate()">Confirmer</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// ── Données actifs pour le filtre client-side ──────────────────────────────
+const ALL_ASSETS     = {{ all_assets_json | tojson }};
+const PROFIL_RISK    = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
+const DCA_TARGET     = {{ summary.dca_target }};
+const PLAFONDS_MAP   = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
+
+let currentEnvFilter = localStorage.getItem('dashEnvFilter') || 'all';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmt2(n) { return n.toFixed(2); }
+function fmtInt(n) { return Math.round(n).toLocaleString('fr-FR'); }
+function sign(n)  { return n >= 0 ? '+' : ''; }
+
+function riskBadgeHTML(score) {
+    if (score === null || score === undefined) return '';
+    let lbl, col, bg, brd;
+    if      (score <= 20) { lbl='Très faible'; col='#34D399'; bg='rgba(52,211,153,0.10)';  brd='rgba(52,211,153,0.28)';  }
+    else if (score <= 40) { lbl='Faible';      col='#60A5FA'; bg='rgba(96,165,250,0.10)';  brd='rgba(96,165,250,0.28)';  }
+    else if (score <= 60) { lbl='Modéré';      col='#F6C90E'; bg='rgba(246,201,14,0.10)';  brd='rgba(246,201,14,0.22)';  }
+    else if (score <= 80) { lbl='Élevé';       col='#F97316'; bg='rgba(249,115,22,0.10)';  brd='rgba(249,115,22,0.28)';  }
+    else                  { lbl='Très élevé';  col='#F87171'; bg='rgba(248,113,113,0.10)'; brd='rgba(248,113,113,0.28)'; }
+    return `<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:${bg};color:${col};border:1px solid ${brd};white-space:nowrap;line-height:1.5;">${lbl}&thinsp;·&thinsp;${score}</span>`;
+}
+
+function envBadgeHTML(env) {
+    if (!env) return '<span style="color:rgba(255,255,255,0.25);font-size:0.8rem;">—</span>';
+    const map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av',
+                 'PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
+    const cls = map[env] || 'env-autre';
+    return `<span class="env-badge ${cls}">${env}</span>`;
+}
+
+// ── Filtre par enveloppe ───────────────────────────────────────────────────
+function applyEnvFilter(env) {
+    currentEnvFilter = env;
+    localStorage.setItem('dashEnvFilter', env);
+
+    const sel = document.getElementById('env-filter-select');
+    if (sel) sel.value = env;
+
+    // 1. Afficher/masquer cards + sections
+    document.querySelectorAll('.asset-section').forEach(section => {
+        let hasVisible = false;
+        section.querySelectorAll('[data-asset-id]').forEach(card => {
+            const cardEnv = card.dataset.envelope || '';
+            const show    = (env === 'all') || (cardEnv === env);
+            card.style.display = show ? '' : 'none';
+            if (show) hasVisible = true;
+        });
+        section.style.display = hasVisible ? '' : 'none';
+    });
+
+    // 2. Actifs visibles
+    const visible = (env === 'all')
+        ? ALL_ASSETS
+        : ALL_ASSETS.filter(a => a.envelope === env);
+
+    // 3. Calcul KPIs
+    const totalValue    = visible.reduce((s,a) => s + a.current_value, 0);
+    const totalInvested = visible.reduce((s,a) => s + a.total_invested, 0);
+    const totalUnreal   = visible.reduce((s,a) => s + a.unrealized_gain, 0);
+    const totalReal     = visible.reduce((s,a) => s + a.realized_gain, 0);
+    const totalDivs     = visible.reduce((s,a) => s + a.dividends_received, 0);
+    const unrealPct     = totalInvested > 0 ? (totalUnreal / totalInvested * 100) : 0;
+    const totalGain     = totalUnreal + totalReal + totalDivs;
+    const totalGainPct  = totalInvested > 0 ? (totalGain / totalInvested * 100) : 0;
+    const count         = visible.length;
+
+    // 4. Mise à jour KPI DOM
+    const el = id => document.getElementById(id);
+    if (el('kpi-total-value'))    el('kpi-total-value').textContent   = fmt2(totalValue) + ' €';
+    if (el('kpi-assets-count'))   el('kpi-assets-count').textContent  = count + ' actif(s) suivi(s)';
+    if (el('kpi-total-invested')) el('kpi-total-invested').textContent = fmt2(totalInvested) + ' €';
+
+    const unrEl = el('kpi-unrealized');
+    if (unrEl) {
+        unrEl.textContent = sign(totalUnreal) + fmt2(totalUnreal) + ' €';
+        unrEl.className   = 'kpi-value ' + (totalUnreal >= 0 ? 'positive' : 'negative');
+    }
+    const unrPctEl = el('kpi-unrealized-pct');
+    if (unrPctEl) {
+        unrPctEl.textContent = sign(unrealPct) + unrealPct.toFixed(2) + ' %';
+        unrPctEl.className   = 'kpi-sub ' + (unrealPct >= 0 ? 'positive' : 'negative');
+    }
+    const unrCard = el('kpi-unrealized-card');
+    if (unrCard) unrCard.className = 'kpi-card ' + (totalUnreal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
+
+    const realEl = el('kpi-realized');
+    if (realEl) {
+        realEl.textContent = sign(totalReal) + fmt2(totalReal) + ' €';
+        realEl.className   = 'kpi-value ' + (totalReal >= 0 ? 'positive' : 'negative');
+    }
+    const realCard = el('kpi-realized-card');
+    if (realCard) realCard.className = 'kpi-card ' + (totalReal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
+
+    const divCard = el('kpi-dividends-card');
+    if (divCard) {
+        divCard.style.display = totalDivs > 0 ? '' : 'none';
+        const divEl = el('kpi-dividends');
+        if (divEl && totalDivs > 0) divEl.textContent = '+' + fmt2(totalDivs) + ' €';
+    }
+
+    const gainEl    = el('kpi-total-gain');
+    const gainPctEl = el('kpi-total-gain-pct');
+    const gainLine  = el('kpi-total-gain-line');
+    if (gainEl)    gainEl.textContent    = sign(totalGain) + fmt2(Math.abs(totalGain));
+    if (gainPctEl) gainPctEl.textContent = '(' + sign(totalGainPct) + totalGainPct.toFixed(2) + '%)';
+    if (gainLine)  gainLine.className    = totalGain >= 0 ? 'positive' : 'negative';
+
+    // 5. Score risque + cohérence
+    let wSum = 0, wTotal = 0;
+    visible.forEach(a => {
+        if (a.current_value > 0 && a.risk_score !== null && a.risk_score !== undefined) {
+            wSum   += a.risk_score * a.current_value;
+            wTotal += a.current_value;
+        }
+    });
+    const portfolioRisk = wTotal > 0 ? Math.round(wSum / wTotal) : null;
+    updateCohBlock(portfolioRisk);
+
+    // 6. DCA
+    const invMonth = visible.reduce((s,a) => s + (a.invested_this_month || 0), 0);
+    updateDCABlock(invMonth);
+
+    // 7. Plafond bar
+    updatePlafondBar(env, totalInvested);
+}
+
+function updateCohBlock(portfolioRisk) {
+    const scoreEl  = document.getElementById('coh-portfolio-score-num');
+    const badgeEl  = document.getElementById('coh-portfolio-badge-wrap');
+    const gaugeEl  = document.getElementById('coh-gauge-fill');
+    const pctEl    = document.getElementById('coh-pct-badge-el');
+    const msgEl    = document.getElementById('coh-msg-el');
+    const retestEl = document.getElementById('coh-retest-btn');
+    if (!scoreEl) return;
+
+    if (portfolioRisk === null) {
+        scoreEl.textContent = '—';
+        if (badgeEl) badgeEl.innerHTML = '';
+        if (gaugeEl) gaugeEl.style.width = '0%';
+        if (pctEl)   pctEl.style.visibility = 'hidden';
+        if (msgEl)   msgEl.textContent = '';
+        return;
+    }
+
+    scoreEl.textContent = portfolioRisk;
+    if (badgeEl) badgeEl.innerHTML = riskBadgeHTML(portfolioRisk);
+
+    if (PROFIL_RISK !== null) {
+        if (pctEl) pctEl.style.visibility = '';
+        const coherence = Math.max(0, 100 - Math.abs(portfolioRisk - PROFIL_RISK));
+        if (pctEl) {
+            const cls = coherence >= 70 ? 'coh-pct-high' : coherence >= 40 ? 'coh-pct-med' : 'coh-pct-low';
+            pctEl.className   = 'coh-pct-badge ' + cls;
+            pctEl.textContent = coherence + '% cohérent';
+        }
+        if (gaugeEl) {
+            const gcls = coherence >= 70 ? 'coh-gauge-high' : coherence >= 40 ? 'coh-gauge-med' : 'coh-gauge-low';
+            gaugeEl.className  = 'coh-gauge-fill ' + gcls;
+            gaugeEl.style.width = coherence + '%';
+        }
+        if (msgEl) {
+            const mcls = coherence >= 70 ? 'coh-msg-high' : coherence >= 40 ? 'coh-msg-med' : 'coh-msg-low';
+            msgEl.className = mcls;
+            if (coherence >= 70)      msgEl.textContent = '✓ Ton portefeuille est aligné avec ton profil de risque';
+            else if (coherence >= 40) msgEl.textContent = '⚡ Ton portefeuille est légèrement décalé par rapport à ton profil';
+            else                      msgEl.textContent = '⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque';
+        }
+        if (retestEl) retestEl.style.display = coherence < 40 ? '' : 'none';
+    }
+}
+
+function updateDCABlock(invMonth) {
+    if (DCA_TARGET <= 0) return;
+    const pct    = Math.min(100, Math.round(invMonth / DCA_TARGET * 1000) / 10);
+    const bar    = document.getElementById('dca-progress-bar');
+    const pctEl  = document.getElementById('dca-pct-el');
+    const invEl  = document.getElementById('dca-invested-month');
+    const resteEl= document.getElementById('dca-reste');
+    if (bar)    bar.style.width        = Math.min(100, pct) + '%';
+    if (pctEl)  { pctEl.textContent    = pct + '%';
+                  pctEl.className      = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
+    if (invEl)  invEl.textContent      = fmt2(invMonth) + ' € investis ce mois';
+    if (resteEl) {
+        if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#34D399;font-weight:600;">✓ Objectif atteint !</span>';
+        else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
+    }
+}
+
+function updatePlafondBar(env, totalInvested) {
+    const block = document.getElementById('plafond-bar-block');
+    if (!block) return;
+    const plafond = PLAFONDS_MAP[env];
+    if (!plafond) { block.style.display = 'none'; return; }
+
+    const restant = Math.max(0, plafond - totalInvested);
+    const pct     = Math.min(100, totalInvested / plafond * 100);
+    block.style.display = '';
+
+    const nameEl    = document.getElementById('plafond-env-name');
+    const invEl     = document.getElementById('plafond-invested');
+    const totalEl   = document.getElementById('plafond-total');
+    const restantEl = document.getElementById('plafond-restant');
+    const fillEl    = document.getElementById('plafond-bar-fill');
+
+    if (nameEl)    nameEl.textContent    = env;
+    if (invEl)     invEl.textContent     = fmtInt(totalInvested) + ' €';
+    if (totalEl)   totalEl.textContent   = fmtInt(plafond) + ' €';
+    if (restantEl) restantEl.textContent = fmtInt(restant) + ' €';
+    if (fillEl) {
+        fillEl.style.width = pct + '%';
+        fillEl.style.background = pct >= 90
+            ? 'linear-gradient(90deg,#F87171,#EF4444)'
+            : pct >= 70 ? 'linear-gradient(90deg,#F6C90E,#F59E0B)'
+            : 'linear-gradient(90deg,#34D399,#10B981)';
+    }
+}
+
+// ── Modal enveloppe ────────────────────────────────────────────────────────
+let _modalAssetId = null;
+
+function openEnvModal(assetId, currentEnv) {
+    _modalAssetId = assetId;
+    const asset = ALL_ASSETS.find(a => a.asset_id === assetId);
+    const nameEl = document.getElementById('env-modal-asset-name');
+    if (nameEl) nameEl.textContent = asset ? asset.ticker + ' — ' + asset.name : '';
+    const sel = document.getElementById('env-modal-select');
+    if (sel) sel.value = currentEnv || '';
+    const overlay = document.getElementById('env-modal');
+    if (overlay) overlay.classList.add('open');
+}
+
+function closeEnvModal() {
+    const overlay = document.getElementById('env-modal');
+    if (overlay) overlay.classList.remove('open');
+    _modalAssetId = null;
+}
+
+async function submitEnvUpdate() {
+    if (!_modalAssetId) return;
+    const newEnv = document.getElementById('env-modal-select').value;
+    const btn    = document.getElementById('env-modal-confirm');
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        const res  = await fetch('/asset/update-envelope', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({asset_id: _modalAssetId, envelope: newEnv})
+        });
+        const data = await res.json();
+        if (data.success) {
+            // Mettre à jour les badges dans le DOM
+            const badgeEl      = document.getElementById('env-badge-' + _modalAssetId);
+            const tableBadgeEl = document.getElementById('env-table-badge-' + _modalAssetId);
+            if (badgeEl)      badgeEl.innerHTML      = newEnv ? envBadgeHTML(newEnv) : '';
+            if (tableBadgeEl) tableBadgeEl.innerHTML = envBadgeHTML(newEnv);
+
+            // Mettre à jour data-envelope sur la card
+            const card = document.querySelector('[data-asset-id="' + _modalAssetId + '"]');
+            if (card) card.dataset.envelope = newEnv;
+
+            // Mettre à jour ALL_ASSETS
+            const asset = ALL_ASSETS.find(a => a.asset_id === _modalAssetId);
+            if (asset) asset.envelope = newEnv;
+
+            // Reconstruire le select du filtre
+            rebuildFilterDropdown();
+
+            // Ré-appliquer le filtre courant
+            applyEnvFilter(currentEnvFilter);
+            closeEnvModal();
+        } else {
+            alert('Erreur : ' + (data.error || 'Mise à jour échouée'));
+        }
+    } catch(e) {
+        alert('Erreur réseau');
+    } finally {
+        btn.disabled = false; btn.textContent = 'Confirmer';
+    }
+}
+
+function rebuildFilterDropdown() {
+    const sel = document.getElementById('env-filter-select');
+    if (!sel) return;
+    const envs    = [...new Set(ALL_ASSETS.map(a => a.envelope).filter(e => e))].sort();
+    const current = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    envs.forEach(e => {
+        const opt   = document.createElement('option');
+        opt.value   = e; opt.textContent = e;
+        sel.appendChild(opt);
+    });
+    if ([...sel.options].some(o => o.value === current)) sel.value = current;
+}
+
+// ── Toggles accordéon ────────────────────────────────────────────────────
 function toggleAsset(id) {
     const body    = document.getElementById(id);
     const chevron = document.getElementById('chevron-' + id);
@@ -830,25 +1315,23 @@ function toggleAsset(id) {
     chevron.classList.toggle('open');
 }
 
-// Anime la jauge de cohérence + barres dynamiques
+// ── Init ─────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
+    // Jauge cohérence
     const fill = document.getElementById('coh-gauge-fill');
-    if (fill) {
-        setTimeout(function() {
-            fill.style.width = '{{ coherence if coherence is not none else 0 }}%';
-        }, 300);
-    }
-    const dcaBar = document.getElementById('dca-progress-bar');
-    if (dcaBar) {
-        setTimeout(function() {
-            dcaBar.style.width = dcaBar.dataset.width + '%';
-        }, 200);
-    }
-    document.querySelectorAll('.alloc-bar-fill').forEach(function(el) {
-        setTimeout(function() {
-            el.style.width = el.dataset.width + '%';
-        }, 250);
+    if (fill) setTimeout(() => fill.style.width = '{{ coherence if coherence is not none else 0 }}%', 300);
+
+    // Barres allocation
+    document.querySelectorAll('.alloc-bar-fill').forEach(el => {
+        setTimeout(() => el.style.width = el.dataset.width + '%', 250);
     });
+
+    // Appliquer le filtre mémorisé
+    const savedFilter = localStorage.getItem('dashEnvFilter') || 'all';
+    // Vérifier que l'enveloppe sauvegardée existe encore
+    const allEnvs = ALL_ASSETS.map(a => a.envelope).filter(e => e);
+    const validFilter = (savedFilter === 'all' || allEnvs.includes(savedFilter)) ? savedFilter : 'all';
+    applyEnvFilter(validFilter);
 });
 </script>
 

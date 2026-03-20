@@ -19,6 +19,7 @@ from database import (
     save_profil_investisseur, get_last_profil_investisseur,
     get_cached_risk_score, save_risk_score,
     get_user_by_id, set_onboarding_completed,
+    update_asset_envelope,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -401,6 +402,36 @@ def dashboard():
         else:
             env_data['plafond_restant'] = None
 
+    # all_assets_json — pour le filtre client-side par enveloppe
+    from database import get_all_purchases as _all_purch
+    import datetime as _dt2
+    _this_month = _dt2.date.today().strftime('%Y-%m')
+    monthly_by_asset = {}
+    for _p in _all_purch(current_user.id):
+        if str(_p['date']).startswith(_this_month):
+            _aid = _p['asset_id']
+            monthly_by_asset[_aid] = monthly_by_asset.get(_aid, 0) + float(_p['total_cost'])
+
+    all_assets_json = []
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            if not a.get('fully_sold', False):
+                ri = risk_data.get(a.get('ticker', '')) or {}
+                all_assets_json.append({
+                    'asset_id':           a['asset_id'],
+                    'ticker':             a['ticker'],
+                    'name':               a['name'],
+                    'asset_type':         a['asset_type'],
+                    'envelope':           a.get('envelope') or '',
+                    'current_value':      float(a.get('current_value') or 0),
+                    'total_invested':     float(a.get('total_invested') or 0),
+                    'unrealized_gain':    float(a.get('unrealized_gain') or 0),
+                    'realized_gain':      float(a.get('realized_gain') or 0),
+                    'dividends_received': float(a.get('dividends_received') or 0),
+                    'risk_score':         ri.get('score'),
+                    'invested_this_month': round(monthly_by_asset.get(a['asset_id'], 0), 2),
+                })
+
     # Onboarding
     user_db              = get_user_by_id(current_user.id)
     onboarding_completed = bool(user_db.get('onboarding_completed')) if user_db else False
@@ -423,7 +454,23 @@ def dashboard():
         last_profil=last_profil,
         envelope_summary=envelope_summary,
         onboarding_state=onboarding_state,
+        all_assets_json=all_assets_json,
     )
+
+# ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
+@main_bp.route('/asset/update-envelope', methods=['POST'])
+@login_required
+def update_envelope_route():
+    data       = request.get_json(silent=True) or {}
+    asset_id   = data.get('asset_id')
+    envelope   = data.get('envelope', '')
+    if not asset_id:
+        return jsonify({'success': False, 'error': 'asset_id manquant'})
+    asset = get_asset_by_id(int(asset_id), current_user.id)
+    if not asset:
+        return jsonify({'success': False, 'error': 'Actif introuvable'})
+    update_asset_envelope(int(asset_id), current_user.id, envelope)
+    return jsonify({'success': True})
 
 # ── Onboarding dismiss ────────────────────────────────────────────────────────
 @main_bp.route('/onboarding/dismiss', methods=['POST'])

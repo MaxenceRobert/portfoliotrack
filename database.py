@@ -451,7 +451,7 @@ def get_all_purchases(user_id):
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        f'''SELECT p.*, a.ticker, a.name, a.currency, a.isin, a.asset_type
+        f'''SELECT p.*, a.ticker, a.name, a.currency, a.isin, a.asset_type, a.envelope
            FROM purchases p
            JOIN assets a ON p.asset_id = a.id
            WHERE p.user_id = {p}
@@ -461,6 +461,18 @@ def get_all_purchases(user_id):
     rows = fetchall_as_dict(c)
     conn.close()
     return rows
+
+def update_asset_envelope(asset_id, user_id, envelope):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f'UPDATE assets SET envelope = {p} WHERE id = {p} AND user_id = {p}',
+        (envelope or None, asset_id, user_id)
+    )
+    conn.commit()
+    conn.close()
+    return c.rowcount > 0
 
 def get_purchase_by_id(purchase_id, user_id):
     p = placeholder()
