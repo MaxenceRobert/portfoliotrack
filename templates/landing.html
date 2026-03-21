@@ -35,8 +35,13 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-shrink: 0;
         }
-        .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .nav-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
         .btn {
             display: inline-flex;
             align-items: center;
@@ -49,6 +54,7 @@
             border: none;
             text-decoration: none;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .btn-primary {
             background: linear-gradient(135deg, #5B5FED, #7C3AED);
@@ -77,6 +83,64 @@
             font-weight: 600;
         }
         .btn-violet-outline:hover { background: rgba(91,95,237,0.18); color: white; border-color: rgba(91,95,237,0.6); }
+
+        /* ── Hamburger landing ── */
+        .landing-hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .landing-hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* ── Mobile menu landing ── */
+        .landing-mobile {
+            display: none;
+            position: fixed;
+            top: 64px;
+            left: 0;
+            right: 0;
+            background: rgba(8,8,16,0.98);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            z-index: 99;
+            padding: 0.75rem 0;
+        }
+        .landing-mobile.open { display: block; }
+        .landing-mobile a {
+            display: block;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s, color 0.15s;
+        }
+        .landing-mobile a:hover { background: rgba(91,95,237,0.08); color: white; }
+        .landing-mobile a:last-child { border-bottom: none; }
+        .landing-mobile .mobile-cta {
+            margin: 0.75rem 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, #5B5FED, #7C3AED);
+            color: white;
+            padding: 0.75rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            border-bottom: none;
+        }
+        .landing-mobile .mobile-cta:hover { opacity: 0.9; background: linear-gradient(135deg, #5B5FED, #7C3AED); }
 
         /* ── Hero ── */
         .hero {
@@ -233,7 +297,7 @@
         }
         .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
 
-        /* ── Comment ça fonctionne — 3 étapes ── */
+        /* ── Risk section ── */
         .risk-section {
             padding: 6rem 1.5rem;
             background: rgba(91,95,237,0.04);
@@ -453,7 +517,9 @@
         /* ── Mobile ── */
         @media (max-width: 768px) {
             nav { padding: 0 1rem; }
-            .nav-actions .btn-ghost { display: none; }
+            /* Sur mobile : cacher tous les boutons de nav-actions, montrer le hamburger */
+            .nav-actions { display: none; }
+            .landing-hamburger { display: flex; }
             .hero { padding: 5.5rem 1.25rem 3.5rem; }
             .pillars-inner { grid-template-columns: 1fr; gap: 1.5rem; }
             .pillar-plus { display: none; }
@@ -499,14 +565,41 @@
         </svg>
         PortfolioTrack
     </a>
+
+    <!-- Boutons desktop -->
     <div class="nav-actions">
+        {% if not current_user.is_authenticated %}
         <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Se connecter</a>
+        {% endif %}
         <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline">
             <i data-lucide="target" style="width:15px;height:15px;"></i> Test de profil
         </a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Mon dashboard</a>
+        {% else %}
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer gratuitement</a>
+        {% endif %}
     </div>
+
+    <!-- Hamburger (mobile uniquement) -->
+    <button class="landing-hamburger" onclick="toggleLandingMenu()" id="landingHamburger">
+        <span></span><span></span><span></span>
+    </button>
 </nav>
+
+<!-- Menu mobile landing -->
+<div class="landing-mobile" id="landingMobile">
+    <a href="{{ url_for('main.test_profil') }}">
+        <i data-lucide="target" style="width:15px;height:15px;display:inline-block;vertical-align:-2px;margin-right:6px;"></i>
+        Test de profil
+    </a>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('main.dashboard') }}">Mon dashboard</a>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}">Se connecter</a>
+    <a href="{{ url_for('auth.register') }}" class="mobile-cta">Commencer gratuitement</a>
+    {% endif %}
+</div>
 
 <!-- Hero -->
 <section class="hero">
@@ -528,9 +621,15 @@
         </p>
         <div class="hero-actions">
             <div class="hero-btns">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                    Mon dashboard →
+                </a>
+                {% else %}
                 <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
                     Commencer gratuitement →
                 </a>
+                {% endif %}
                 <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
                     <i data-lucide="target" style="width:18px;height:18px;"></i> Découvrir mon profil
                 </a>
@@ -763,9 +862,15 @@
             en 5 minutes, sans inscription.
         </p>
         <div class="cta-btns">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                Mon dashboard →
+            </a>
+            {% else %}
             <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
                 Créer un compte gratuit →
             </a>
+            {% endif %}
             <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
                 <i data-lucide="target" style="width:18px;height:18px;"></i> Test de profil investisseur
             </a>
@@ -790,7 +895,17 @@
 </footer>
 
 <script>
-    lucide.createIcons();
+function toggleLandingMenu() {
+    document.getElementById('landingMobile').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+    var menu = document.getElementById('landingMobile');
+    var btn  = document.getElementById('landingHamburger');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('open');
+    }
+});
+lucide.createIcons();
 </script>
 
 </body>

@@ -67,7 +67,6 @@
         z-index: 50;
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
-        /* NB: pas de overflow:hidden ici — ça casserait les dropdowns absolus */
     }
     .nav-brand {
         color: white;
@@ -211,6 +210,14 @@
         margin-top: 0.5rem;
     }
     .nav-mobile .mobile-logout { color: #F87171 !important; }
+
+    /* ── Nav non-connecté (guest) ── */
+    .nav-guest-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-shrink: 0;
+    }
 
     /* ── Nav icons ── */
     .nav-icon {
@@ -644,9 +651,7 @@
         .nav-links { display: none; }
         .nav-right { display: none; }
         .nav-hamburger { display: flex; }
-    }
-    /* Le bouton accent Test Profil est masqué dès 1100px (il apparaît dans le hamburger) */
-    @media (max-width: 1100px) {
+        /* Le lien accent Test Profil est masqué même si nav-links était visible */
         .nav-testprofil { display: none !important; }
     }
 
@@ -662,6 +667,8 @@
         .table-wrap { font-size: 0.8rem; }
         thead th { padding: 0.5rem 0.6rem; font-size: 0.7rem; }
         tbody td { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
+        /* Nav guest : masquer "Commencer" sur très petit écran si besoin */
+        .nav-guest-actions .btn-ghost { display: none; }
     }
     @media (max-width: 480px) {
         .kpi-grid { grid-template-columns: 1fr; }
@@ -783,6 +790,31 @@
     </a>
     <a href="{{ url_for('auth.logout') }}" class="mobile-logout">Déconnexion</a>
 </div>
+
+{% else %}
+{# ── Nav minimale pour les visiteurs non connectés (pages auth, etc.) ── #}
+<nav>
+    <a href="{{ url_for('main.landing') }}" class="nav-brand">
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="navgrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#5B5FED"/>
+                    <stop offset="100%" style="stop-color:#7C3AED"/>
+                </linearGradient>
+            </defs>
+            <rect width="28" height="28" rx="7" fill="url(#navgrad2)"/>
+            <polyline points="4,20 10,8 16,13 22,4"
+                      fill="none" stroke="white" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="22" cy="4" r="3" fill="#F6C90E"/>
+        </svg>
+        PortfolioTrack
+    </a>
+    <div class="nav-guest-actions">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Se connecter</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Commencer</a>
+    </div>
+</nav>
 {% endif %}
 
 <div class="{% if not current_user.is_authenticated %}{% else %}container{% endif %}">
@@ -813,10 +845,11 @@
 <script>
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('open');
+    if (menu) menu.classList.toggle('open');
 }
 function closeMobileMenu() {
-    document.getElementById('mobileMenu').classList.remove('open');
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.remove('open');
 }
 document.addEventListener('click', function(e) {
     const menu = document.getElementById('mobileMenu');
