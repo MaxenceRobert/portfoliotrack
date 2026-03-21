@@ -553,6 +553,23 @@
         background: rgba(255,255,255,0.05);
     }
 
+    /* ── User avatar initiales ── */
+    .user-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5B5FED, #7C3AED);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        flex-shrink: 0;
+        vertical-align: middle;
+    }
+
     /* ── Footer ── */
     footer {
         text-align: center;
@@ -664,14 +681,16 @@
                 <a href="{{ url_for('main.export_csv') }}">↓ Export CSV</a>
             </div>
         </div>
-        <a href="{{ url_for('main.test_profil') }}" class="nav-link-accent">🧠 Test Profil</a>
+        <a href="{{ url_for('main.test_profil') }}" class="nav-link-accent">Test Profil</a>
         <a href="{{ url_for('main.contact') }}">Contact</a>
     </div>
 
     <div class="nav-right">
         <div class="nav-dropdown">
-            <button class="nav-dropdown-btn">
-                👤 {{ current_user.email.split('@')[0] }} ▾
+            {%- set _nav_username = current_user.email.split('@')[0] -%}
+            <button class="nav-dropdown-btn" style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="user-avatar">{{ (_nav_username[:2])|upper }}</span>
+                {{ _nav_username }} ▾
             </button>
             <div class="nav-dropdown-menu" style="right:0; left:auto;">
                 <a href="{{ url_for('main.profile') }}">👤 Mon profil</a>
