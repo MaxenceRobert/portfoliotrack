@@ -849,7 +849,6 @@
 {% endfor %}
 
 <!-- Allocation + Diversification côte à côte -->
-<!-- BUG2 FIX: align-items:start évite que les items s'étirent à la hauteur de la rangée -->
 {% if summary.allocation %}
 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:0.5rem; align-items:start;">
 
@@ -863,7 +862,6 @@
     {% if summary.by_type %}
     <div>
         <div class="section-title">Diversification par type</div>
-        <!-- height:100% supprimé : chaque colonne prend sa hauteur naturelle -->
         <div class="card">
             <table style="width:100%; border-collapse:collapse;">
                 <thead>
@@ -873,7 +871,7 @@
                         <th style="text-align:right;">Poids</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="divers-tbody">
                 {% for asset_type, assets in summary.by_type.items() %}
                 {% set type_value = assets | selectattr('fully_sold', 'equalto', false)
                                            | sum(attribute='current_value') %}
@@ -910,24 +908,27 @@
 
 <script>
 const alloc  = {{ summary.allocation | tojson }};
-const labels = alloc.map(a => a.ticker);
-const values = alloc.map(a => a.value);
-const colors = ['#818CF8','#34D399','#F6C90E','#F87171','#C084FC',
-                '#38BDF8','#6EE7B7','#FCD34D','#FCA5A5','#A5B4FC'];
-Plotly.newPlot('pie-chart', [{
-    type: 'pie', labels: labels, values: values, hole: 0.5,
-    marker: { colors: colors },
-    textinfo: 'label+percent',
-    textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
-    hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-}], {
+const labels = alloc.map(function(a){ return a.ticker; });
+const values = alloc.map(function(a){ return a.value; });
+const PIE_COLORS = ['#818CF8','#34D399','#F6C90E','#F87171','#C084FC',
+                    '#38BDF8','#6EE7B7','#FCD34D','#FCA5A5','#A5B4FC'];
+const PIE_LAYOUT = {
     paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor:  'rgba(0,0,0,0)',
     height: 280,
     margin: { l: 10, r: 10, t: 10, b: 10 },
     showlegend: false,
     hoverlabel: { bgcolor: '#12121E', bordercolor: 'rgba(129,140,248,0.3)', font: { color: 'white' } }
-}, { responsive: true, displayModeBar: false });
+};
+const PIE_CONFIG = { responsive: true, displayModeBar: false };
+
+Plotly.newPlot('pie-chart', [{
+    type: 'pie', labels: labels, values: values, hole: 0.5,
+    marker: { colors: PIE_COLORS },
+    textinfo: 'label+percent',
+    textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
+    hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
+}], PIE_LAYOUT, PIE_CONFIG);
 </script>
 {% endif %}
 
@@ -1013,45 +1014,131 @@ Plotly.newPlot('pie-chart', [{
 </div>
 
 <script>
-// ── Données actifs pour le filtre client-side ──────────────────────────────
-const ALL_ASSETS   = {{ all_assets_json | tojson }};
-const PROFIL_RISK  = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
-const DCA_TARGET   = {{ summary.dca_target }};
-const PLAFONDS_MAP = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
+// ── Données ────────────────────────────────────────────────────────────────
+var ALL_ASSETS   = {{ all_assets_json | tojson }};
+var PROFIL_RISK  = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
+var DCA_TARGET   = {{ summary.dca_target }};
+var PLAFONDS_MAP = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
 
-let currentEnvFilter = 'all';
+var currentEnvFilter = 'all';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-function fmt2(n) { return n.toFixed(2); }
-function fmtInt(n) { return Math.round(n).toLocaleString('fr-FR'); }
+function fmt2(n)  { return n.toFixed(2); }
+function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 function sign(n)  { return n >= 0 ? '+' : ''; }
 
 function riskBadgeHTML(score) {
     if (score === null || score === undefined) return '';
-    let lbl, col, bg, brd;
+    var lbl, col, bg, brd;
     if      (score <= 20) { lbl='Très faible'; col='#34D399'; bg='rgba(52,211,153,0.10)';  brd='rgba(52,211,153,0.28)';  }
     else if (score <= 40) { lbl='Faible';      col='#60A5FA'; bg='rgba(96,165,250,0.10)';  brd='rgba(96,165,250,0.28)';  }
     else if (score <= 60) { lbl='Modéré';      col='#F6C90E'; bg='rgba(246,201,14,0.10)';  brd='rgba(246,201,14,0.22)';  }
     else if (score <= 80) { lbl='Élevé';       col='#F97316'; bg='rgba(249,115,22,0.10)';  brd='rgba(249,115,22,0.28)';  }
     else                  { lbl='Très élevé';  col='#F87171'; bg='rgba(248,113,113,0.10)'; brd='rgba(248,113,113,0.28)'; }
-    return `<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:${bg};color:${col};border:1px solid ${brd};white-space:nowrap;line-height:1.5;">${lbl}&thinsp;·&thinsp;${score}</span>`;
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:'+bg+';color:'+col+';border:1px solid '+brd+';white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
     if (!env) return '<span style="color:rgba(255,255,255,0.25);font-size:0.8rem;">—</span>';
-    const map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av',
-                 'PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
-    const cls = map[env] || 'env-autre';
-    return `<span class="env-badge ${cls}">${env}</span>`;
+    var map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av',
+               'PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
+    var cls = map[env] || 'env-autre';
+    return '<span class="env-badge '+cls+'">'+env+'</span>';
+}
+
+// ── Mise à jour donut + tableau diversification ────────────────────────────
+function updateAllocCharts(visible) {
+    var pieEl = document.getElementById('pie-chart');
+
+    // ── 1. Donut Plotly ──
+    if (pieEl && typeof Plotly !== 'undefined') {
+        var allocData = visible.filter(function(a){ return a.current_value > 0; });
+        allocData.sort(function(a,b){ return b.current_value - a.current_value; });
+
+        if (allocData.length > 0) {
+            var pieLabels = allocData.map(function(a){ return a.ticker; });
+            var pieValues = allocData.map(function(a){ return a.current_value; });
+            Plotly.react('pie-chart', [{
+                type: 'pie',
+                labels: pieLabels,
+                values: pieValues,
+                hole: 0.5,
+                marker: { colors: PIE_COLORS },
+                textinfo: 'label+percent',
+                textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
+                hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
+            }], PIE_LAYOUT, PIE_CONFIG);
+        } else {
+            // Aucun actif — donut vide symbolique
+            Plotly.react('pie-chart', [{
+                type: 'pie',
+                labels: ['—'],
+                values: [1],
+                hole: 0.5,
+                marker: { colors: ['rgba(255,255,255,0.05)'] },
+                textinfo: 'none',
+                hoverinfo: 'none'
+            }], PIE_LAYOUT, PIE_CONFIG);
+        }
+    }
+
+    // ── 2. Tableau Diversification par type ──
+    var tbody = document.getElementById('divers-tbody');
+    if (!tbody) return;
+
+    var totalVal = visible.reduce(function(s,a){ return s + a.current_value; }, 0);
+
+    // Regrouper par type
+    var byType = {};
+    visible.forEach(function(a) {
+        if (a.current_value > 0) {
+            if (!byType[a.asset_type]) byType[a.asset_type] = 0;
+            byType[a.asset_type] += a.current_value;
+        }
+    });
+
+    var entries = Object.keys(byType).map(function(t){ return [t, byType[t]]; });
+    entries.sort(function(a,b){ return b[1] - a[1]; });
+
+    tbody.innerHTML = '';
+
+    if (entries.length === 0) {
+        var trEmpty = document.createElement('tr');
+        trEmpty.innerHTML = '<td colspan="3" style="text-align:center;color:rgba(255,255,255,0.2);padding:1rem 0;font-size:0.82rem;">Aucun actif dans cette enveloppe</td>';
+        tbody.appendChild(trEmpty);
+        return;
+    }
+
+    entries.forEach(function(entry) {
+        var assetType = entry[0];
+        var typeVal   = entry[1];
+        var pct       = totalVal > 0 ? (typeVal / totalVal * 100).toFixed(1) : '0.0';
+        var badgeCls  = assetType === 'ETF'    ? 'badge-etf'
+                      : assetType === 'Action' ? 'badge-action'
+                      : assetType === 'Crypto' ? 'badge-crypto'
+                      : 'badge-other';
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><span class="badge ' + badgeCls + '">' + assetType + '</span></td>' +
+            '<td style="text-align:right; font-weight:600; color:white;">' + typeVal.toFixed(2) + ' €</td>' +
+            '<td style="text-align:right;">' +
+                '<div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">' +
+                    '<div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">' +
+                        '<div style="width:' + pct + '%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>' +
+                    '</div>' +
+                    '<span style="color:#A5B4FC; font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
+                '</div>' +
+            '</td>';
+        tbody.appendChild(tr);
+    });
 }
 
 // ── Filtre par enveloppe ───────────────────────────────────────────────────
-// BUG1 FIX: sélecteur .asset-card explicite + display:'block' explicite
 function applyEnvFilter(env) {
     currentEnvFilter = env;
     localStorage.setItem('dashEnvFilter', env);
 
-    const sel = document.getElementById('env-filter-select');
+    var sel = document.getElementById('env-filter-select');
     if (sel && sel.value !== env) sel.value = env;
 
     // 1. Afficher/masquer les cartes et sections
@@ -1066,10 +1153,10 @@ function applyEnvFilter(env) {
         section.style.display = hasVisible ? 'block' : 'none';
     });
 
-    // 2. Actifs visibles dans ALL_ASSETS
+    // 2. Actifs filtrés
     var visible = (env === 'all')
         ? ALL_ASSETS
-        : ALL_ASSETS.filter(function(a) { return (a.envelope || '') === env; });
+        : ALL_ASSETS.filter(function(a){ return (a.envelope || '') === env; });
 
     // 3. Calcul KPIs
     var totalValue    = visible.reduce(function(s,a){ return s + a.current_value; }, 0);
@@ -1083,7 +1170,7 @@ function applyEnvFilter(env) {
     var count         = visible.length;
 
     // 4. Mise à jour KPI DOM
-    function el(id) { return document.getElementById(id); }
+    function el(id){ return document.getElementById(id); }
     if (el('kpi-total-value'))    el('kpi-total-value').textContent    = fmt2(totalValue) + ' €';
     if (el('kpi-assets-count'))   el('kpi-assets-count').textContent   = count + ' actif(s) suivi(s)';
     if (el('kpi-total-invested')) el('kpi-total-invested').textContent = fmt2(totalInvested) + ' €';
@@ -1123,7 +1210,10 @@ function applyEnvFilter(env) {
     if (gainPctEl) gainPctEl.textContent = '(' + sign(totalGainPct) + totalGainPct.toFixed(2) + '%)';
     if (gainLine)  gainLine.className    = totalGain >= 0 ? 'positive' : 'negative';
 
-    // 5. Score risque + cohérence
+    // 5. Donut + tableau diversification
+    updateAllocCharts(visible);
+
+    // 6. Score risque + cohérence
     var wSum = 0, wTotal = 0;
     visible.forEach(function(a) {
         if (a.current_value > 0 && a.risk_score !== null && a.risk_score !== undefined) {
@@ -1134,11 +1224,11 @@ function applyEnvFilter(env) {
     var portfolioRisk = wTotal > 0 ? Math.round(wSum / wTotal) : null;
     updateCohBlock(portfolioRisk);
 
-    // 6. DCA
+    // 7. DCA
     var invMonth = visible.reduce(function(s,a){ return s + (a.invested_this_month || 0); }, 0);
     updateDCABlock(invMonth);
 
-    // 7. Plafond bar
+    // 8. Plafond bar
     updatePlafondBar(env, totalInvested);
 }
 
@@ -1266,17 +1356,14 @@ async function submitEnvUpdate() {
         });
         var data = await res.json();
         if (data.success) {
-            // Mettre à jour les badges dans le DOM
             var badgeEl      = document.getElementById('env-badge-' + _modalAssetId);
             var tableBadgeEl = document.getElementById('env-table-badge-' + _modalAssetId);
             if (badgeEl)      badgeEl.innerHTML      = newEnv ? envBadgeHTML(newEnv) : '';
             if (tableBadgeEl) tableBadgeEl.innerHTML = envBadgeHTML(newEnv);
 
-            // Mettre à jour data-envelope sur la card via setAttribute
             var card = document.querySelector('.asset-card[data-asset-id="' + _modalAssetId + '"]');
             if (card) card.setAttribute('data-envelope', newEnv);
 
-            // Mettre à jour ALL_ASSETS en mémoire
             var asset = ALL_ASSETS.find(function(a){ return a.asset_id === _modalAssetId; });
             if (asset) asset.envelope = newEnv;
 
@@ -1296,8 +1383,8 @@ async function submitEnvUpdate() {
 function rebuildFilterDropdown() {
     var sel = document.getElementById('env-filter-select');
     if (!sel) return;
-    var envs    = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
-    var unique  = envs.filter(function(e, i, arr){ return arr.indexOf(e) === i; }).sort();
+    var envs   = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
+    var unique = envs.filter(function(e, i, arr){ return arr.indexOf(e) === i; }).sort();
     var current = sel.value;
     while (sel.options.length > 1) sel.remove(1);
     unique.forEach(function(e) {
@@ -1323,12 +1410,12 @@ window.addEventListener('load', function() {
     var fill = document.getElementById('coh-gauge-fill');
     if (fill) setTimeout(function(){ fill.style.width = '{{ coherence if coherence is not none else 0 }}%'; }, 300);
 
-    // Barres allocation
+    // Barres allocation statiques (chargement initial avant filtre)
     document.querySelectorAll('.alloc-bar-fill').forEach(function(el) {
         setTimeout(function(){ el.style.width = el.dataset.width + '%'; }, 250);
     });
 
-    // Appliquer le filtre mémorisé en localStorage
+    // Filtre mémorisé
     var savedFilter = localStorage.getItem('dashEnvFilter') || 'all';
     var allEnvs     = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
     var validFilter = (savedFilter === 'all' || allEnvs.indexOf(savedFilter) !== -1) ? savedFilter : 'all';
