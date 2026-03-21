@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PortfolioTrack{% endblock %}</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><rect width='28' height='28' rx='7' fill='%235B5FED'/><polyline points='4,20 10,8 16,13 22,4' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/><circle cx='22' cy='4' r='3' fill='%23F6C90E'/></svg>">
     <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -66,6 +67,7 @@
         z-index: 50;
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
+        overflow: hidden;
     }
     .nav-brand {
         color: white;
@@ -78,6 +80,7 @@
         gap: 0.5rem;
         z-index: 101;
         transition: opacity 0.15s;
+        flex-shrink: 0;
     }
     .nav-brand:hover { opacity: 0.85; }
     .nav-links { display: flex; gap: 0.1rem; align-items: center; }
@@ -89,6 +92,7 @@
         font-size: 0.875rem;
         font-weight: 500;
         transition: all 0.2s;
+        white-space: nowrap;
     }
     .nav-links a:hover { background: rgba(255,255,255,0.07); color: white; }
     .nav-links a.nav-link-accent {
@@ -98,7 +102,7 @@
         border: 1px solid rgba(91,95,237,0.2);
     }
     .nav-links a.nav-link-accent:hover { background: rgba(91,95,237,0.16); color: white; border-color: rgba(91,95,237,0.4); }
-    .nav-right { display: flex; align-items: center; gap: 1rem; font-size: 0.82rem; }
+    .nav-right { display: flex; align-items: center; gap: 1rem; font-size: 0.82rem; flex-shrink: 0; }
 
     /* ── Dropdown nav ── */
     .nav-dropdown { position: relative; display: inline-block; }
@@ -129,7 +133,9 @@
         padding: 0.5rem 0;
     }
     .nav-dropdown-menu a {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         padding: 0.55rem 1rem;
         font-size: 0.875rem;
         color: rgba(255,255,255,0.55);
@@ -153,6 +159,7 @@
         border: none;
         padding: 4px;
         z-index: 101;
+        flex-shrink: 0;
     }
     .nav-hamburger span {
         display: block;
@@ -180,7 +187,9 @@
     }
     .nav-mobile.open { display: block; }
     .nav-mobile a {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
         color: rgba(255,255,255,0.6);
         text-decoration: none;
         padding: 0.75rem 1.5rem;
@@ -200,6 +209,22 @@
         margin-top: 0.5rem;
     }
     .nav-mobile .mobile-logout { color: #F87171 !important; }
+
+    /* ── Nav icons ── */
+    .nav-icon {
+        width: 15px;
+        height: 15px;
+        display: inline-block;
+        vertical-align: -2px;
+        flex-shrink: 0;
+    }
+    .nav-icon-sm {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        vertical-align: -2px;
+        flex-shrink: 0;
+    }
 
     /* ── Layout ── */
     .container {
@@ -612,11 +637,15 @@
     }
     [data-tooltip]:hover::after { opacity: 1; }
 
-    /* ── Mobile responsive ── */
-    @media (max-width: 768px) {
+    /* ── Nav responsive : hamburger à 1024px ── */
+    @media (max-width: 1024px) {
         .nav-links { display: none; }
         .nav-right { display: none; }
         .nav-hamburger { display: flex; }
+    }
+
+    /* ── Layout responsive : mobile 768px ── */
+    @media (max-width: 768px) {
         .container { padding: 1.25rem 1rem; }
         .kpi-grid { grid-template-columns: 1fr 1fr; }
         .asset-grid { grid-template-columns: 1fr; }
@@ -693,8 +722,12 @@
                 {{ _nav_username }} ▾
             </button>
             <div class="nav-dropdown-menu" style="right:0; left:auto;">
-                <a href="{{ url_for('main.profile') }}">👤 Mon profil</a>
-                <a href="{{ url_for('main.settings') }}">⚙️ Objectif DCA</a>
+                <a href="{{ url_for('main.profile') }}">
+                    <i data-lucide="user" class="nav-icon-sm"></i> Mon profil
+                </a>
+                <a href="{{ url_for('main.settings') }}">
+                    <i data-lucide="settings" class="nav-icon-sm"></i> Objectif DCA
+                </a>
                 <hr style="margin:0.4rem 0; border-color:rgba(255,255,255,0.06);">
                 <a href="{{ url_for('auth.logout') }}" style="color:#F87171;">Déconnexion</a>
             </div>
@@ -708,12 +741,24 @@
 
 <div class="nav-mobile" id="mobileMenu">
     <div class="mobile-section">Navigation</div>
-    <a href="{{ url_for('main.dashboard') }}" onclick="closeMobileMenu()">📊 Dashboard</a>
-    <a href="{{ url_for('main.charts') }}" onclick="closeMobileMenu()">📈 Graphiques</a>
-    <a href="{{ url_for('main.simulateur') }}" onclick="closeMobileMenu()">🧮 Simulateur</a>
-    <a href="{{ url_for('main.explorer') }}" onclick="closeMobileMenu()">🔍 Explorer</a>
-    <a href="{{ url_for('main.test_profil') }}" onclick="closeMobileMenu()">🧠 Test Profil</a>
-    <a href="{{ url_for('main.contact') }}" onclick="closeMobileMenu()">✉️ Contact</a>
+    <a href="{{ url_for('main.dashboard') }}" onclick="closeMobileMenu()">
+        <i data-lucide="bar-chart-2" class="nav-icon"></i> Dashboard
+    </a>
+    <a href="{{ url_for('main.charts') }}" onclick="closeMobileMenu()">
+        <i data-lucide="trending-up" class="nav-icon"></i> Graphiques
+    </a>
+    <a href="{{ url_for('main.simulateur') }}" onclick="closeMobileMenu()">
+        <i data-lucide="calculator" class="nav-icon"></i> Simulateur
+    </a>
+    <a href="{{ url_for('main.explorer') }}" onclick="closeMobileMenu()">
+        <i data-lucide="search" class="nav-icon"></i> Explorer
+    </a>
+    <a href="{{ url_for('main.test_profil') }}" onclick="closeMobileMenu()">
+        <i data-lucide="target" class="nav-icon"></i> Test Profil
+    </a>
+    <a href="{{ url_for('main.contact') }}" onclick="closeMobileMenu()">
+        <i data-lucide="mail" class="nav-icon"></i> Contact
+    </a>
     <div class="mobile-section">Actions</div>
     <a href="{{ url_for('main.add_purchase_route') }}" onclick="closeMobileMenu()">+ Achat</a>
     <a href="{{ url_for('main.add_sale_route') }}" onclick="closeMobileMenu()">+ Vente</a>
@@ -724,8 +769,12 @@
     <a href="{{ url_for('main.import_csv') }}" onclick="closeMobileMenu()">↑ Import Excel</a>
     <a href="{{ url_for('main.export_csv') }}" onclick="closeMobileMenu()">↓ Export CSV</a>
     <div class="mobile-section">Compte</div>
-    <a href="{{ url_for('main.profile') }}" onclick="closeMobileMenu()">👤 Mon profil</a>
-    <a href="{{ url_for('main.settings') }}" onclick="closeMobileMenu()">⚙️ Objectif DCA</a>
+    <a href="{{ url_for('main.profile') }}" onclick="closeMobileMenu()">
+        <i data-lucide="user" class="nav-icon"></i> Mon profil
+    </a>
+    <a href="{{ url_for('main.settings') }}" onclick="closeMobileMenu()">
+        <i data-lucide="settings" class="nav-icon"></i> Objectif DCA
+    </a>
     <a href="{{ url_for('auth.logout') }}" class="mobile-logout">Déconnexion</a>
 </div>
 {% endif %}
@@ -746,7 +795,8 @@
     Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
     <br><br>
     <span style="font-size:0.72rem; color:rgba(255,255,255,0.1); max-width:700px; display:inline-block; line-height:1.6;">
-        ⚠️ Les informations affichées sur PortfolioTrack sont fournies à titre indicatif uniquement
+        <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;"></i>
+        Les informations affichées sur PortfolioTrack sont fournies à titre indicatif uniquement
         et ne constituent pas un conseil en investissement. Les performances passées ne préjugent pas
         des performances futures. Prix fournis par Yahoo Finance avec un possible décalage.
         PortfolioTrack ne peut être tenu responsable des décisions d'investissement prises sur la
@@ -769,6 +819,7 @@ document.addEventListener('click', function(e) {
         menu.classList.remove('open');
     }
 });
+lucide.createIcons();
 </script>
 
 </body>

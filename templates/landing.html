@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PortfolioTrack — Suis ton portefeuille. Investis selon ton profil de risque.</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -37,7 +38,9 @@
         }
         .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
         .btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
             padding: 0.55rem 1.2rem;
             border-radius: 8px;
             font-size: 0.875rem;
@@ -140,15 +143,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .hero-divider {
-            display: inline-block;
-            width: 3px;
-            height: 3px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            margin: 0 0.2em;
-            vertical-align: middle;
-        }
         .hero p {
             font-size: clamp(1rem, 2vw, 1.15rem);
             color: rgba(255,255,255,0.58);
@@ -185,7 +179,17 @@
             text-align: center;
             gap: 0.75rem;
         }
-        .pillar-icon { font-size: 2.2rem; }
+        .pillar-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            background: rgba(91,95,237,0.1);
+            border: 1px solid rgba(91,95,237,0.2);
+            border-radius: 14px;
+            color: #A5B4FC;
+        }
         .pillar-title {
             font-size: 1.05rem;
             font-weight: 800;
@@ -274,7 +278,17 @@
             justify-content: center;
             box-shadow: 0 0 12px rgba(91,95,237,0.5);
         }
-        .risk-step-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; margin-top: 0.5rem; }
+        .risk-step-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            margin: 0.5rem auto 0.75rem;
+            background: rgba(91,95,237,0.1);
+            border-radius: 12px;
+            color: #A5B4FC;
+        }
         .risk-step h3 { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
         .risk-step p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
         .risk-step-arrow { font-size: 1.4rem; color: rgba(91,95,237,0.35); align-self: center; flex-shrink: 0; }
@@ -345,10 +359,20 @@
             opacity: 1;
             background: linear-gradient(90deg, transparent, rgba(91,95,237,0.7), rgba(192,132,252,0.4), transparent);
         }
-        .feature-icon { font-size: 1.75rem; margin-bottom: 1rem; display: block; }
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            margin-bottom: 1rem;
+            background: rgba(91,95,237,0.1);
+            border-radius: 12px;
+            color: #A5B4FC;
+        }
         .feature-card h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
         .feature-card p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
-        .feature-link { display: inline-block; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #818CF8; text-decoration: none; }
+        .feature-link { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #818CF8; text-decoration: none; }
         .feature-link:hover { color: #A5B4FC; }
         .feature-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
         .feature-tag {
@@ -442,12 +466,14 @@
             .how { padding: 4rem 1.25rem; }
             .cta { padding: 4rem 1.25rem; }
             .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+            .hero-btns { flex-direction: column; align-items: center; width: 100%; }
+            .hero-btns .btn { width: 100%; max-width: 380px; justify-content: center; }
+            .cta-btns { flex-direction: column; align-items: center; }
+            .cta-btns .btn { width: 100%; max-width: 380px; justify-content: center; }
         }
         @media (max-width: 480px) {
-            .hero-btns { flex-direction: column; width: 100%; }
-            .hero-btns .btn { width: 100%; text-align: center; }
-            .cta-btns { flex-direction: column; align-items: center; }
-            .cta-btns .btn { width: 100%; text-align: center; }
+            .hero-btns .btn { max-width: 100%; }
+            .cta-btns .btn { max-width: 100%; }
         }
     </style>
 <!-- Google Analytics -->
@@ -475,7 +501,9 @@
     </a>
     <div class="nav-actions">
         <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Se connecter</a>
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline">🧠 Test de profil</a>
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline">
+            <i data-lucide="target" style="width:15px;height:15px;"></i> Test de profil
+        </a>
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer gratuitement</a>
     </div>
 </nav>
@@ -504,7 +532,7 @@
                     Commencer gratuitement →
                 </a>
                 <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                    🧠 Découvrir mon profil
+                    <i data-lucide="target" style="width:18px;height:18px;"></i> Découvrir mon profil
                 </a>
                 <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
                     Simulateur DCA
@@ -519,7 +547,9 @@
 <section class="pillars">
     <div class="pillars-inner">
         <div class="pillar">
-            <span class="pillar-icon">📊</span>
+            <div class="pillar-icon">
+                <i data-lucide="bar-chart-2" style="width:24px;height:24px;"></i>
+            </div>
             <div class="pillar-title">Suivi de portefeuille</div>
             <p class="pillar-desc">
                 Prix en temps réel, performance, plus-values latentes et réalisées,
@@ -528,7 +558,9 @@
         </div>
         <div class="pillar-plus">+</div>
         <div class="pillar">
-            <span class="pillar-icon">🎯</span>
+            <div class="pillar-icon">
+                <i data-lucide="target" style="width:24px;height:24px;"></i>
+            </div>
             <div class="pillar-title">Gestion du risque</div>
             <p class="pillar-desc">
                 Score de risque 0–100 par actif, profil investisseur en 40 questions,
@@ -572,21 +604,27 @@
         <div class="risk-steps-grid">
             <div class="risk-step">
                 <div class="risk-step-num">1</div>
-                <span class="risk-step-icon">🧠</span>
+                <div class="risk-step-icon">
+                    <i data-lucide="brain" style="width:22px;height:22px;"></i>
+                </div>
                 <h3>Fais ton test de profil</h3>
                 <p>40 questions sur 8 axes — tolérance au risque, horizon d'investissement, comportement face aux baisses — pour connaître ton vrai profil.</p>
             </div>
             <div class="risk-step-arrow">→</div>
             <div class="risk-step">
                 <div class="risk-step-num">2</div>
-                <span class="risk-step-icon">📊</span>
+                <div class="risk-step-icon">
+                    <i data-lucide="bar-chart-2" style="width:22px;height:22px;"></i>
+                </div>
                 <h3>Chaque actif affiche son risque</h3>
                 <p>Score 0–100 calculé via Yahoo Finance sur la volatilité historique, le drawdown maximum et le beta sur 3 ans.</p>
             </div>
             <div class="risk-step-arrow">→</div>
             <div class="risk-step">
                 <div class="risk-step-num">3</div>
-                <span class="risk-step-icon">✅</span>
+                <div class="risk-step-icon">
+                    <i data-lucide="check-circle" style="width:22px;height:22px;"></i>
+                </div>
                 <h3>Ton Dashboard mesure la cohérence</h3>
                 <p>Un score compare le risque réel de ton portefeuille avec ton profil. Tu sais si tu investis dans ta zone de confort.</p>
             </div>
@@ -608,7 +646,9 @@
     </p>
     <div class="features-grid">
         <div class="feature-card featured-risk">
-            <span class="feature-icon">🎯</span>
+            <div class="feature-icon">
+                <i data-lucide="target" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Score de risque & Cohérence portefeuille</h3>
             <p>
                 Chaque actif reçoit un score de risque 0–100 calculé sur sa volatilité annualisée,
@@ -624,38 +664,52 @@
             </div>
         </div>
         <div class="feature-card featured">
-            <span class="feature-icon">🧠</span>
+            <div class="feature-icon">
+                <i data-lucide="brain" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Test de profil investisseur</h3>
             <p>40 questions sur 8 axes — tolérance au risque, horizon, objectifs, comportement — pour découvrir ta stratégie idéale et une recommandation générée par IA.</p>
             <a href="{{ url_for('main.test_profil') }}" class="feature-link">Faire le test gratuitement →</a>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">📈</span>
+            <div class="feature-icon">
+                <i data-lucide="trending-up" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Prix en temps réel</h3>
             <p>Connecté à Yahoo Finance — vos prix se mettent à jour automatiquement à chaque visite. ETF, actions, crypto, tout.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🎯</span>
+            <div class="feature-icon">
+                <i data-lucide="repeat" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Suivi DCA</h3>
             <p>Définissez un objectif mensuel et suivez votre progression. Idéal pour les stratégies d'investissement régulier.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">💼</span>
+            <div class="feature-icon">
+                <i data-lucide="briefcase" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Multi-actifs</h3>
             <p>ETF, actions, crypto, obligations — tout centralisé dans un seul tableau de bord.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">📊</span>
+            <div class="feature-icon">
+                <i data-lucide="bar-chart-2" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Graphiques interactifs</h3>
             <p>Courbes d'évolution journalières, comparaison MSCI World, allocation — visualisez votre portefeuille dans le temps.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">⚡</span>
+            <div class="feature-icon">
+                <i data-lucide="zap" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Saisie rapide</h3>
             <p>Entrez plusieurs achats d'un coup pour reconstituer votre historique complet en quelques minutes.</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">📥</span>
+            <div class="feature-icon">
+                <i data-lucide="download" style="width:22px;height:22px;"></i>
+            </div>
             <h3>Export CSV</h3>
             <p>Exportez tout votre historique en un clic pour vos déclarations fiscales ou analyses.</p>
         </div>
@@ -713,7 +767,7 @@
                 Créer un compte gratuit →
             </a>
             <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                🧠 Test de profil investisseur
+                <i data-lucide="target" style="width:18px;height:18px;"></i> Test de profil investisseur
             </a>
         </div>
         <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">
@@ -729,10 +783,15 @@
     <a href="{{ url_for('main.contact') }}">Contact</a>
     <br><br>
     <span style="font-size:0.72rem; max-width:680px; display:inline-block; line-height:1.6;">
-        ⚠️ Les informations affichées sont fournies à titre indicatif et ne constituent pas un conseil
+        <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;"></i>
+        Les informations affichées sont fournies à titre indicatif et ne constituent pas un conseil
         en investissement. Prix fournis par Yahoo Finance avec un possible décalage.
     </span>
 </footer>
+
+<script>
+    lucide.createIcons();
+</script>
 
 </body>
 </html>
