@@ -645,6 +645,10 @@
         .nav-right { display: none; }
         .nav-hamburger { display: flex; }
     }
+    /* Le bouton accent Test Profil est masqué dès 1100px (il apparaît dans le hamburger) */
+    @media (max-width: 1100px) {
+        .nav-testprofil { display: none !important; }
+    }
 
     /* ── Layout responsive : mobile 768px ── */
     @media (max-width: 768px) {
@@ -712,7 +716,7 @@
                 <a href="{{ url_for('main.export_csv') }}">↓ Export CSV</a>
             </div>
         </div>
-        <a href="{{ url_for('main.test_profil') }}" class="nav-link-accent">Test Profil</a>
+        <a href="{{ url_for('main.test_profil') }}" class="nav-link-accent nav-testprofil">Test Profil</a>
         <a href="{{ url_for('main.contact') }}">Contact</a>
     </div>
 
