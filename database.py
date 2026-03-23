@@ -143,6 +143,16 @@ def init_db():
                 source      TEXT NOT NULL DEFAULT 'default'
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS reset_tokens (
+                id         SERIAL PRIMARY KEY,
+                user_id    INTEGER NOT NULL,
+                token      TEXT    NOT NULL UNIQUE,
+                expires_at TIMESTAMP NOT NULL,
+                used       BOOLEAN DEFAULT FALSE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
     else:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -252,6 +262,16 @@ def init_db():
                 source      TEXT NOT NULL DEFAULT 'default'
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS reset_tokens (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL,
+                token      TEXT    NOT NULL UNIQUE,
+                expires_at TEXT    NOT NULL,
+                used       INTEGER DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
 
     conn.commit()
 
@@ -293,6 +313,34 @@ def init_db():
             c.execute('ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0')
         conn.commit()
         print("[migration] users: colonne 'onboarding_completed' ajoutée")
+    except Exception:
+        conn.rollback()
+
+    # ── Migration : table reset_tokens ───────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS reset_tokens (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER NOT NULL,
+                    token      TEXT    NOT NULL UNIQUE,
+                    expires_at TIMESTAMP NOT NULL,
+                    used       BOOLEAN DEFAULT FALSE,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS reset_tokens (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id    INTEGER NOT NULL,
+                    token      TEXT    NOT NULL UNIQUE,
+                    expires_at TEXT    NOT NULL,
+                    used       INTEGER DEFAULT 0,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
     except Exception:
         conn.rollback()
 
@@ -940,3 +988,37 @@ def import_purchases_csv(user_id, file_bytes, filename):
             errors.append(f'Ligne {i} : format incorrect ({e})')
 
     return imported, errors
+
+# ── Reset password tokens ─────────────────────────────────────────────────────
+
+def create_reset_token(user_id, token, expires_at):
+    """Store a password reset token, replacing any existing one for this user."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'DELETE FROM reset_tokens WHERE user_id = {p}', (user_id,))
+    expires_str = expires_at if is_postgres() else expires_at.isoformat()
+    c.execute(
+        f'INSERT INTO reset_tokens (user_id, token, expires_at) VALUES ({p}, {p}, {p})',
+        (user_id, token, expires_str)
+    )
+    conn.commit()
+    conn.close()
+
+def get_reset_token(token):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM reset_tokens WHERE token = {p}', (token,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    return row
+
+def invalidate_reset_token(token):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    used_val = True if is_postgres() else 1
+    c.execute(f'UPDATE reset_tokens SET used = {p} WHERE token = {p}', (used_val, token))
+    conn.commit()
+    conn.close()
