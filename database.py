@@ -384,6 +384,43 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Migration scoring v2 : vider profil_investisseur si version dépassée ──
+    # Version "scoring_v2" = recalibrage 6 axes (mars 2026)
+    SCORING_VERSION = 'scoring_v2'
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS app_migrations (
+                    key   TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS app_migrations (
+                    key   TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                )
+            ''')
+        conn.commit()
+        p = placeholder()
+        c.execute(f'SELECT value FROM app_migrations WHERE key = {p}', ('scoring_version',))
+        row = c.fetchone()
+        current_ver = row[0] if row else None
+        if current_ver != SCORING_VERSION:
+            c.execute('DELETE FROM profil_investisseur')
+            if row:
+                c.execute(f'UPDATE app_migrations SET value = {p} WHERE key = {p}',
+                          (SCORING_VERSION, 'scoring_version'))
+            else:
+                c.execute(f'INSERT INTO app_migrations (key, value) VALUES ({p}, {p})',
+                          ('scoring_version', SCORING_VERSION))
+            conn.commit()
+            print(f"Migration scoring → {SCORING_VERSION} : table profil_investisseur vidée.")
+    except Exception as e:
+        conn.rollback()
+        print(f"Migration scoring warning: {e}")
+
     conn.close()
     print("Base de données initialisée.")
 

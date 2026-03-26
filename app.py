@@ -1046,16 +1046,14 @@ def resultat_profil():
     # ── Noms des axes ─────────────────────────────────────────────────────────
     AXIS_NAMES = {
         1: 'Tolérance émotionnelle',
-        2: 'Capacité financière',
-        3: 'Horizon temporel',
-        4: 'Connaissances financières',
-        5: 'Valeurs et contraintes',
-        6: 'Objectif financier',
-        7: 'Comportement passé',
-        8: 'Projets futurs',
+        2: 'Horizon temporel',
+        3: 'Objectif financier',
+        4: 'Capacité financière',
+        5: 'Connaissances',
+        6: 'Projets futurs',
     }
 
-    # ── Scoring des questions numériques (Q1-Q4) ──────────────────────────────
+    # ── Scoring des questions numériques (Q2-Q4) ──────────────────────────────
     def numeric_score(raw, breakpoints):
         try:
             v = float(raw)
@@ -1070,9 +1068,7 @@ def resultat_profil():
                 return y0 + (v - x0) / (x1 - x0) * (y1 - y0)
         return float(breakpoints[-1][1])
 
-    # Q1 — âge : jeune → risque élevé possible
-    AGE_BP    = [(18,90),(25,80),(35,60),(50,35),(65,15),(90,5)]
-    # Q2 — horizon en années
+    # Q2 — horizon en années (facteur le plus discriminant après tolérance)
     HORIZ_BP  = [(0,5),(2,20),(5,50),(10,70),(20,85),(40,95)]
     # Q3 — mois d'épargne de précaution
     EPARG_BP  = [(0,5),(1,20),(3,45),(6,65),(12,80),(24,95)]
@@ -1081,18 +1077,16 @@ def resultat_profil():
 
     # Q5-Q10 : choix multiples
     SC = {
-        5:  {'A':0, 'B':25, 'C':60, 'D':100, 'E':50},   # reaction -30%
-        6:  {'A':20,'B':60, 'C':90, 'D':70,  'E':50},   # objectif
-        7:  {'A':10,'B':40, 'C':75, 'D':95,  'E':50},   # expérience
-        8:  {'A':10,'B':35, 'C':70, 'D':90,  'E':50},   # situation pro
-        9:  {'A':90,'B':60, 'C':30, 'D':10,  'E':50},   # projets 3 ans (inversé)
-        10: {'A':90,'B':60, 'C':30,           'E':50},   # dépendants (inversé)
+        5:  {'A':0,  'B':25, 'C':60, 'D':100, 'E':35},  # réaction chute -30% — facteur limitant principal
+        6:  {'A':20, 'B':60, 'C':90, 'D':70,  'E':50},  # objectif financier
+        7:  {'A':10, 'B':40, 'C':75, 'D':95,  'E':45},  # expérience / connaissances
+        8:  {'A':10, 'B':35, 'C':70, 'D':90,  'E':40},  # situation professionnelle
+        9:  {'A':10, 'B':35, 'C':65, 'D':90,  'E':50},  # projets 3 ans (A=gros projet imminent → risque bas)
+        10: {'A':90, 'B':60, 'C':30,           'E':50},  # dépendants financiers (A=aucun → capacité élevée)
     }
 
     def q_score(qn):
         v = answers.get(qn, '')
-        if qn == 1:
-            return numeric_score(v, AGE_BP)
         if qn == 2:
             return numeric_score(v, HORIZ_BP)
         if qn == 3:
@@ -1101,18 +1095,18 @@ def resultat_profil():
             return numeric_score(v, PCT_BP)
         return float(SC.get(qn, {}).get(v, 50))
 
-    # Axes (Q11-Q15 = questions ouvertes, pas scorées)
+    # Axes recalibrés — 6 facteurs
+    # Principe : tolérance émotionnelle est le FACTEUR LIMITANT (35%)
+    # Capacité financière ≠ appétit pour le risque (réduit à 15%)
     AXES = {
-        1: [5],           # tolérance : réaction chute
-        2: [3, 4, 8],     # capacité : épargne, % revenus, situation pro
-        3: [1, 2],        # horizon : âge, années
-        4: [7],           # connaissances
-        5: [],            # valeurs (open seulement → 50 par défaut)
-        6: [6],           # objectif
-        7: [5, 7],        # comportement : réaction + expérience passée
-        8: [8, 9, 10],    # projets futurs
+        1: [5],           # tolérance émotionnelle : réaction à une chute de 30%
+        2: [2],           # horizon temporel : années d'investissement
+        3: [6],           # objectif financier
+        4: [3, 4, 8, 10], # capacité financière : épargne, % revenus, situation pro, dépendants
+        5: [7],           # connaissances et expérience
+        6: [9],           # projets futurs à court terme
     }
-    AXIS_WEIGHTS = {1:0.25, 2:0.20, 3:0.20, 4:0.10, 5:0.02, 6:0.08, 7:0.05, 8:0.10}
+    AXIS_WEIGHTS = {1: 0.35, 2: 0.20, 3: 0.15, 4: 0.15, 5: 0.10, 6: 0.05}
 
     axis_scores = {}
     for ax, qs in AXES.items():
@@ -1347,33 +1341,170 @@ TICKER_BAR_ITEMS = [
 @main_bp.route('/api/ticker-bar')
 def ticker_bar_api():
     import yfinance as _yf
+    import threading
     now = _time.time()
     if _TICKER_BAR_CACHE['data'] and now - _TICKER_BAR_CACHE['ts'] < 900:
         return jsonify(_TICKER_BAR_CACHE['data'])
 
     results = []
-    for name, ticker in TICKER_BAR_ITEMS:
+    lock = threading.Lock()
+
+    def fetch_one(name, ticker):
         try:
             fi    = _yf.Ticker(ticker).fast_info
             price = float(fi.get('last_price') or fi.get('regularMarketPrice') or 0)
             prev  = float(fi.get('previous_close') or fi.get('regularMarketPreviousClose') or 0)
             if price <= 0:
-                continue
+                return
             chg = round((price - prev) / prev * 100, 2) if prev > 0 else 0.0
-            results.append({'name': name, 'ticker': ticker,
-                            'price': round(price, 2), 'change_pct': chg})
+            with lock:
+                results.append({'name': name, 'ticker': ticker,
+                                'price': round(price, 2), 'change_pct': chg})
         except Exception:
             pass
 
+    threads = []
+    for name, ticker in TICKER_BAR_ITEMS:
+        t = threading.Thread(target=fetch_one, args=(name, ticker), daemon=True)
+        threads.append((t, ticker))
+        t.start()
+
+    for t, _ in threads:
+        t.join(timeout=5)
+
+    # Trier dans l'ordre original
+    order = {ticker: i for i, (name, ticker) in enumerate(TICKER_BAR_ITEMS)}
+    results.sort(key=lambda x: order.get(x['ticker'], 999))
+
     data = {'items': results}
-    _TICKER_BAR_CACHE['data'] = data
-    _TICKER_BAR_CACHE['ts']   = now
+    if results:
+        _TICKER_BAR_CACHE['data'] = data
+        _TICKER_BAR_CACHE['ts']   = now
     return jsonify(data)
 
-# ── API search-assets (alias search-ticker pour Explorer) ─────────────────────
+# ── API search-assets (Explorer) avec mots-clés français ─────────────────────
+_FR_KEYWORDS = {
+    'or physique':        ['IGLN.L', 'PHAU.L', 'GLD'],
+    'matieres premieres': ['GLD', 'SLV', 'DJP', 'PDBC'],
+    'matieres':           ['GLD', 'SLV', 'DJP', 'PDBC'],
+    'or':                 ['GLD', 'GOLD', 'IAU', 'IGLN.L'],
+    'argent':             ['SLV', 'SIVR'],
+    'russie':             ['ERUS', 'RSX'],
+    'chine':              ['MCHI', 'FXI', 'CNYA.L'],
+    'inde':               ['INDA', 'NDIA.L', '5MVL.L'],
+    'japon':              ['EWJ', 'JPNE.L'],
+    'europe':             ['VGK', 'IEUR.AS', 'EXW1.DE'],
+    'usa':                ['SPY', 'QQQ', 'VOO', 'IVV'],
+    'etats-unis':         ['SPY', 'QQQ', 'VOO', 'IVV'],
+    'amerique':           ['SPY', 'QQQ', 'VOO', 'IVV'],
+    'tech':               ['QQQ', 'VGT', 'XLK'],
+    'technologie':        ['QQQ', 'VGT', 'XLK'],
+    'energie':            ['XLE', 'VDE', 'IEGY.L'],
+    'sante':              ['XLV', 'IBB', 'HEAL.L'],
+    'immobilier':         ['VNQ', 'IPRP.AS', 'EPRA.AS'],
+    'dividende':          ['VYM', 'SCHD', 'SDY', 'VHYL.L'],
+    'dividendes':         ['VYM', 'SCHD', 'SDY', 'VHYL.L'],
+    'islamique':          ['HLAL', 'ISDU.L', 'WSRI.L'],
+    'halal':              ['HLAL', 'ISDU.L', 'WSRI.L'],
+    'bitcoin':            ['BTC-USD'],
+    'btc':                ['BTC-USD'],
+    'ethereum':           ['ETH-USD'],
+    'eth':                ['ETH-USD'],
+    'crypto':             ['BTC-USD', 'ETH-USD', 'SOL-USD', 'BNB-USD'],
+    'obligations':        ['AGG', 'BND', 'AGGH.L', 'IEAG.AS'],
+    'emergents':          ['EIMI.AS', 'VWO', 'IEMG'],
+    'emerging':           ['EIMI.AS', 'VWO', 'IEMG'],
+    'monde':              ['IWDA.AS', 'VWCE.DE', 'SWRD.SW'],
+    'world':              ['IWDA.AS', 'VWCE.DE', 'SWRD.SW'],
+    'global':             ['IWDA.AS', 'VWCE.DE', 'SWRD.SW'],
+    'sp500':              ['SPY', 'VOO', 'CSPX.AS'],
+    's&p':                ['SPY', 'VOO', 'CSPX.AS'],
+    'sp 500':             ['SPY', 'VOO', 'CSPX.AS'],
+    'nasdaq':             ['QQQ', 'EQQQ.L', 'CNDX.L'],
+    'cac':                ['CAC.PA', 'EXI1.DE'],
+    'cac40':              ['CAC.PA', 'EXI1.DE'],
+    'france':             ['CAC.PA', 'EXI1.DE'],
+    'levier':             ['TQQQ', 'UPRO', 'LQQ.PA', 'CL2.PA'],
+    'leverage':           ['TQQQ', 'UPRO', 'LQQ.PA', 'CL2.PA'],
+}
+
+def _normalize(s):
+    """Minuscules + retire accents pour matching."""
+    import unicodedata
+    s = s.lower().strip()
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
 @main_bp.route('/api/search-assets')
 def search_assets():
-    return search_ticker()
+    import requests as _req
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return jsonify({'results': []})
+
+    q_norm = _normalize(q)
+
+    # 1. Chercher dans la table de mots-clés français
+    hardcoded_tickers = []
+    for kw, tickers in _FR_KEYWORDS.items():
+        if _normalize(kw) == q_norm or q_norm in _normalize(kw) or _normalize(kw) in q_norm:
+            for t in tickers:
+                if t not in hardcoded_tickers:
+                    hardcoded_tickers.append(t)
+
+    # Construire des objets résultat pour les tickers hardcodés
+    hardcoded_results = []
+    for t in hardcoded_tickers:
+        curr = 'EUR' if any(x in t for x in ['.AS', '.DE', '.PA', '.L', '.SW']) else 'USD'
+        if '-USD' in t:
+            curr = 'USD'
+        hardcoded_results.append({
+            'ticker':   t,
+            'name':     t,
+            'type':     'ETF',
+            'exchange': '',
+            'currency': curr,
+            '_hardcoded': True,
+        })
+
+    # 2. Chercher via Yahoo Finance
+    yf_results = []
+    try:
+        url = (f'https://query1.finance.yahoo.com/v1/finance/search'
+               f'?q={q}&quotesCount=8&newsCount=0&listsCount=0')
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        r = _req.get(url, headers=headers, timeout=5)
+        data = r.json()
+        for q_item in data.get('quotes', []):
+            symbol = q_item.get('symbol', '')
+            name   = q_item.get('longname') or q_item.get('shortname') or symbol
+            qtype  = q_item.get('quoteType', '')
+            exch   = q_item.get('exchDisp') or q_item.get('exchange', '')
+            curr   = q_item.get('currency', '')
+            if not curr:
+                if any(x in symbol for x in ['.PA', '.AS', '.DE', '.L', '.SW']):
+                    curr = 'EUR'
+                elif '-USD' in symbol:
+                    curr = 'USD'
+                else:
+                    curr = 'USD'
+            # Éviter doublons avec hardcoded
+            if symbol not in hardcoded_tickers:
+                yf_results.append({
+                    'ticker':   symbol,
+                    'name':     name,
+                    'type':     qtype,
+                    'exchange': exch,
+                    'currency': curr,
+                })
+    except Exception as e:
+        print(f"Search assets error: {e}")
+
+    combined = hardcoded_results + yf_results
+    # Retirer _hardcoded des objets finaux
+    for r in combined:
+        r.pop('_hardcoded', None)
+
+    return jsonify({'results': combined})
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)

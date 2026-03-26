@@ -503,6 +503,10 @@ function goToTicker() {
 <script>
 // ── Ticker bar ──
 (function() {
+    function hideTicker() {
+        var wrap = document.getElementById('ticker-bar-wrap');
+        if (wrap) wrap.style.display = 'none';
+    }
     function buildTickerHTML(items) {
         var html = '';
         items.forEach(function(it) {
@@ -516,17 +520,20 @@ function goToTicker() {
         });
         return html + html;
     }
-    fetch('/api/ticker-bar')
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function() {
+        if (ctrl) ctrl.abort();
+        hideTicker();
+    }, 3000);
+    fetch('/api/ticker-bar', ctrl ? { signal: ctrl.signal } : {})
         .then(function(r){ return r.json(); })
         .then(function(data) {
+            clearTimeout(timer);
             var track = document.getElementById('ticker-track');
-            if (!track || !data.items || !data.items.length) return;
+            if (!track || !data.items || !data.items.length) { hideTicker(); return; }
             track.innerHTML = buildTickerHTML(data.items);
         })
-        .catch(function() {
-            var wrap = document.getElementById('ticker-bar-wrap');
-            if (wrap) wrap.style.display = 'none';
-        });
+        .catch(function() { clearTimeout(timer); hideTicker(); });
 })();
 </script>
 
