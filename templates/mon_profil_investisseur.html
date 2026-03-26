@@ -24,7 +24,7 @@
     transform: translateX(-50%);
     width: 60%;
     height: 200%;
-    background: radial-gradient(ellipse, {{ profil_color }}18 0%, transparent 65%);
+    background: transparent;
     pointer-events: none;
 }
 .score-emoji { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
@@ -38,7 +38,7 @@
 .score-number {
     font-size: 3.5rem;
     font-weight: 900;
-    color: {{ profil_color }};
+    color: {% if last_profil.score_global <= 40 %}#4ade80{% elif last_profil.score_global > 80 %}#f87171{% else %}#fff{% endif %};
     line-height: 1;
     letter-spacing: -0.04em;
 }
@@ -80,10 +80,10 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     border-radius: 99px;
-    background: {{ profil_color }};
+    background: #fff;
     opacity: 0.85;
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-    box-shadow: 0 0 12px {{ profil_color }}66;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 .gauge-labels {
     display: flex;
@@ -114,7 +114,7 @@
 .axis-bar-fill {
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, #5B5FED, #818CF8);
+    background: #fff;
     transition: width 1s ease;
 }
 .axis-score-val {
@@ -137,9 +137,9 @@
     gap: 0.35rem;
     font-size: 0.72rem;
     font-weight: 700;
-    background: rgba(129,140,248,0.1);
-    color: #818CF8;
-    border: 1px solid rgba(129,140,248,0.2);
+    background: transparent;
+    color: #555;
+    border: 1px solid #222;
     border-radius: 20px;
     padding: 0.22rem 0.7rem;
     margin-bottom: 1rem;
@@ -154,9 +154,10 @@
 .dca-rate-badge {
     display: inline-block;
     font-size: 0.72rem;
-    background: rgba(91,95,237,0.12);
-    color: #818CF8;
+    background: transparent;
+    color: #555;
     border-radius: 20px;
+    border: 1px solid #222;
     padding: 0.15rem 0.55rem;
     margin-left: 0.4rem;
     font-weight: 700;
@@ -203,11 +204,11 @@
         <div class="section-title" style="margin-top:0;">Score global</div>
         <div class="gauge-bar-outer">
             <div class="gauge-segments">
-                <div class="gauge-seg" style="background:rgba(52,211,153,0.12);"></div>
-                <div class="gauge-seg" style="background:rgba(110,231,183,0.10);"></div>
-                <div class="gauge-seg" style="background:rgba(246,201,14,0.10);"></div>
-                <div class="gauge-seg" style="background:rgba(91,95,237,0.12);"></div>
-                <div class="gauge-seg" style="background:rgba(248,113,113,0.12);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
             </div>
             <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
         </div>
@@ -241,7 +242,7 @@
     <!-- Recommendation -->
     <div class="card rec-card" style="margin-bottom:1.25rem;">
         <h3>
-            <span style="color:#818CF8;">✦</span>
+            <span style="color:#555;">✦</span>
             Recommandation personnalisée
         </h3>
         <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
@@ -365,8 +366,8 @@ function runDCA() {
         {
             x: labels, y: value, name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: '{{ profil_color }}', width: 2.5 },
-            fill: 'tozeroy', fillcolor: '{{ profil_color }}20'
+            line: { color: '#fff', width: 2.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.04)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',

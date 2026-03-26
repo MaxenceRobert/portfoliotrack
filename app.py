@@ -4,7 +4,7 @@ load_dotenv()
 import markdown as md_lib
 
 from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify, session
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager, login_required, login_user, current_user
 from config import Config
 from database import (
     init_db,
@@ -20,6 +20,7 @@ from database import (
     get_cached_risk_score, save_risk_score,
     get_user_by_id, set_onboarding_completed,
     update_asset_envelope,
+    get_user_by_email, create_user,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -454,6 +455,8 @@ def dashboard():
             )
     estimated_dividends_year = round(estimated_dividends_year, 2)
 
+    is_demo = current_user.email == DEMO_EMAIL
+
     return render_template(
         'dashboard.html',
         summary=summary,
@@ -466,6 +469,7 @@ def dashboard():
         onboarding_state=onboarding_state,
         all_assets_json=all_assets_json,
         estimated_dividends_year=estimated_dividends_year,
+        is_demo=is_demo,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -1505,6 +1509,74 @@ def search_assets():
         r.pop('_hardcoded', None)
 
     return jsonify({'results': combined})
+
+# ── Route démo ────────────────────────────────────────────────────────────────
+DEMO_EMAIL    = 'demo@portfoliotrack.com'
+DEMO_PASSWORD = 'DemoPortfolio2024!'
+
+@main_bp.route('/demo')
+def demo():
+    from werkzeug.security import generate_password_hash
+    from auth import get_user_object
+
+    # Créer le compte démo s'il n'existe pas
+    user_row = get_user_by_email(DEMO_EMAIL)
+    if not user_row:
+        create_user(DEMO_EMAIL, generate_password_hash(DEMO_PASSWORD))
+        user_row = get_user_by_email(DEMO_EMAIL)
+
+    if not user_row:
+        flash('Impossible de charger le compte démo.', 'error')
+        return redirect(url_for('main.landing'))
+
+    demo_id = user_row['id']
+
+    # Ajouter des actifs fictifs si le portfolio est vide
+    existing = get_user_assets(demo_id)
+    if not existing:
+        import datetime as _dt
+        demo_assets = [
+            ('IWDA.AS', 'iShares MSCI World ETF', 'ETF',    'EUR', None, 'CTO'),
+            ('BTC-USD', 'Bitcoin',                 'Crypto', 'USD', None, 'CTO'),
+            ('AAPL',    'Apple Inc.',               'Action', 'USD', None, 'CTO'),
+        ]
+        demo_purchases = {
+            'IWDA.AS': [
+                ('2022-01-15', 50,   58.40),
+                ('2022-07-10', 30,   62.10),
+                ('2023-03-20', 20,   70.80),
+            ],
+            'BTC-USD': [
+                ('2021-11-01', 0.05, 58000.0),
+                ('2022-06-20', 0.10, 20100.0),
+                ('2023-01-10', 0.08, 17200.0),
+            ],
+            'AAPL': [
+                ('2022-03-01', 10, 162.5),
+                ('2022-10-14',  5, 138.4),
+                ('2023-06-01',  8, 178.2),
+            ],
+        }
+        for ticker, name, atype, currency, isin, envelope in demo_assets:
+            add_asset(demo_id, ticker, name, atype, currency, isin, envelope)
+
+        assets_refreshed = get_user_assets(demo_id)
+        asset_map = {a['ticker']: a['id'] for a in assets_refreshed}
+
+        for ticker, purchases in demo_purchases.items():
+            asset_id = asset_map.get(ticker)
+            if not asset_id:
+                continue
+            rows = [{'asset_id': asset_id, 'date': d, 'quantity': q, 'price': p}
+                    for d, q, p in purchases]
+            add_purchases_bulk(demo_id, rows)
+
+    # Connecter l'utilisateur démo
+    user_obj = get_user_object(demo_id)
+    if user_obj:
+        login_user(user_obj)
+    return redirect(url_for('main.dashboard'))
+
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)

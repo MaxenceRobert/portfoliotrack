@@ -9,9 +9,9 @@
     gap: 0.25rem;
     font-size: 0.65rem;
     font-weight: 700;
-    background: rgba(52,211,153,0.12);
-    color: #34D399;
-    border: 1px solid rgba(52,211,153,0.2);
+    background: transparent;
+    color: #4ade80;
+    border: 1px solid #222;
     border-radius: 6px;
     padding: 0.15rem 0.45rem;
     vertical-align: middle;
@@ -23,9 +23,9 @@
     gap: 0.25rem;
     font-size: 0.65rem;
     font-weight: 700;
-    background: rgba(91,95,237,0.1);
-    color: #818CF8;
-    border: 1px solid rgba(91,95,237,0.2);
+    background: transparent;
+    color: #555;
+    border: 1px solid #222;
     border-radius: 6px;
     padding: 0.15rem 0.45rem;
     vertical-align: middle;
@@ -109,7 +109,7 @@
                 <td>{{ d['date'] }}</td>
                 <td>
                     <span class="badge badge-etf">{{ d['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">{{ d['name'] }}</span>
+                    <span style="font-size:0.82rem; color:#555; margin-left:0.4rem;">{{ d['name'] }}</span>
                 </td>
                 <td><strong class="positive">{{ d['amount']|round(2) }} €</strong></td>
                 <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">
@@ -129,7 +129,7 @@
                 <td>{{ d['date'] }}</td>
                 <td>
                     <span class="badge badge-etf">{{ d['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">{{ d['name'] }}</span>
+                    <span style="font-size:0.82rem; color:#555; margin-left:0.4rem;">{{ d['name'] }}</span>
                 </td>
                 <td><strong class="positive">{{ d['amount'] }} €</strong></td>
                 <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">—</td>

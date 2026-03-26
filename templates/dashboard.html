@@ -4,42 +4,21 @@
 {% block content %}
 
 <style>
-/* ── KPI colorées subtiles ── */
-.kpi-card-violet {
-    border-color: rgba(91,95,237,0.2) !important;
-    background: rgba(91,95,237,0.06) !important;
-}
-.kpi-card-violet::before { background: linear-gradient(90deg, #5B5FED, #7C3AED) !important; opacity: 1 !important; }
-
-.kpi-card-green {
-    border-color: rgba(52,211,153,0.18) !important;
-    background: rgba(52,211,153,0.05) !important;
-}
-.kpi-card-green::before { background: linear-gradient(90deg, #34D399, #10B981) !important; opacity: 1 !important; }
-
-.kpi-card-amber {
-    border-color: rgba(246,201,14,0.15) !important;
-    background: rgba(246,201,14,0.04) !important;
-}
-.kpi-card-amber::before { background: linear-gradient(90deg, #F6C90E, #F59E0B) !important; opacity: 1 !important; }
-
-.kpi-card-blue {
-    border-color: rgba(56,189,248,0.15) !important;
-    background: rgba(56,189,248,0.04) !important;
-}
-.kpi-card-blue::before { background: linear-gradient(90deg, #38BDF8, #0EA5E9) !important; opacity: 1 !important; }
-
+/* ── KPI cards ── */
+.kpi-card-violet,
+.kpi-card-green,
+.kpi-card-amber,
+.kpi-card-blue,
 .kpi-card-red {
-    border-color: rgba(248,113,113,0.18) !important;
-    background: rgba(248,113,113,0.05) !important;
+    border-color: #1a1a1a !important;
+    background: #0a0a0a !important;
 }
-.kpi-card-red::before { background: linear-gradient(90deg, #F87171, #EF4444) !important; opacity: 1 !important; }
 
 /* ── Asset cards ── */
 .asset-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
     padding: 1.4rem;
     transition: border-color 0.25s, background 0.25s, transform 0.25s;
     position: relative;
@@ -47,11 +26,11 @@
 }
 .asset-card:hover {
     transform: translateY(-2px);
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.12);
+    background: #0f0f0f;
+    border-color: #222;
 }
-.asset-card-positive { border-top: 2px solid rgba(52,211,153,0.45) !important; }
-.asset-card-negative { border-top: 2px solid rgba(248,113,113,0.35) !important; }
+.asset-card-positive { border-top: 1px solid #1a1a1a !important; }
+.asset-card-negative { border-top: 1px solid #1a1a1a !important; }
 
 /* ── Accordéon ── */
 .asset-header {
@@ -74,7 +53,7 @@
     flex-shrink: 0;
     margin-left: 0.5rem;
 }
-.chevron.open { transform: rotate(180deg); color: #818CF8; }
+.chevron.open { transform: rotate(180deg); color: #fff; }
 .asset-body {
     overflow: hidden;
     max-height: 0;
@@ -103,8 +82,8 @@
 .coh-card {
     margin-bottom: 1.5rem;
     padding: 1.5rem;
-    border-color: rgba(91,95,237,0.2);
-    background: rgba(91,95,237,0.04) !important;
+    border-color: #1a1a1a;
+    background: #0a0a0a !important;
 }
 .coh-header {
     display: flex;
@@ -118,7 +97,7 @@
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.3);
+    color: #333;
     font-weight: 700;
     margin-bottom: 0.2rem;
 }
@@ -156,38 +135,38 @@
     border-radius: 99px;
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
 }
-.coh-gauge-high  { background: linear-gradient(90deg, #34D399, #10B981); }
-.coh-gauge-med   { background: linear-gradient(90deg, #F6C90E, #F59E0B); }
-.coh-gauge-low   { background: linear-gradient(90deg, #F87171, #EF4444); }
-.coh-msg-high { font-size: 0.82rem; font-weight: 600; color: #34D399; }
-.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: #F6C90E; }
-.coh-msg-low  { font-size: 0.82rem; font-weight: 600; color: #F87171; }
+.coh-gauge-high  { background: #fff; }
+.coh-gauge-med   { background: #fff; }
+.coh-gauge-low   { background: #fff; }
+.coh-msg-high { font-size: 0.82rem; font-weight: 600; color: #4ade80; }
+.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: #888; }
+.coh-msg-low  { font-size: 0.82rem; font-weight: 600; color: #f87171; }
 .coh-pct-badge {
     font-size: 0.72rem;
     font-weight: 800;
     padding: 0.2rem 0.65rem;
     border-radius: 20px;
 }
-.coh-pct-high { background: rgba(52,211,153,0.1);  color: #34D399; border: 1px solid rgba(52,211,153,0.25); }
-.coh-pct-med  { background: rgba(246,201,14,0.1);  color: #F6C90E; border: 1px solid rgba(246,201,14,0.2);  }
-.coh-pct-low  { background: rgba(248,113,113,0.1); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
+.coh-pct-high { background: transparent; color: #fff; border: 1px solid #333; }
+.coh-pct-med  { background: transparent; color: #fff; border: 1px solid #333; }
+.coh-pct-low  { background: transparent; color: #fff; border: 1px solid #333; }
 
 /* ── DCA progress ── */
-.dca-pct-done   { color: #34D399; }
-.dca-pct-active { color: #818CF8; }
+.dca-pct-done   { color: #4ade80; }
+.dca-pct-active { color: #fff; }
 
 /* ── Onboarding banner ── */
 .onboarding-banner {
-    background: rgba(91,95,237,0.06);
-    border: 1px solid rgba(91,95,237,0.2);
-    border-radius: 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.75rem;
 }
 .onboarding-title {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #818CF8;
+    color: #555;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.85rem;
@@ -207,7 +186,7 @@
     flex: 1;
     min-width: 160px;
 }
-.onboarding-step.done { color: #34D399; }
+.onboarding-step.done { color: rgba(255,255,255,0.55); }
 .onboarding-step.active { color: white; font-weight: 600; }
 .onboarding-step-num {
     width: 24px; height: 24px;
@@ -219,14 +198,14 @@
     color: rgba(255,255,255,0.3);
 }
 .onboarding-step.done .onboarding-step-num {
-    background: rgba(52,211,153,0.15);
-    border-color: rgba(52,211,153,0.4);
-    color: #34D399;
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6);
 }
 .onboarding-step.active .onboarding-step-num {
-    background: rgba(91,95,237,0.2);
-    border-color: rgba(91,95,237,0.5);
-    color: #818CF8;
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.3);
+    color: #fff;
 }
 .onboarding-actions {
     display: flex;
@@ -234,7 +213,7 @@
     gap: 0.75rem;
     flex-wrap: wrap;
 }
-.onboarding-link-active { color: #818CF8; }
+.onboarding-link-active { color: #fff; }
 .onboarding-link-muted  { color: rgba(255,255,255,0.4); }
 
 /* ── Enveloppes fiscales ── */
@@ -249,13 +228,13 @@
     letter-spacing: 0.02em;
     line-height: 1.6;
 }
-.env-pea      { background: rgba(96,165,250,0.15);  color: #60A5FA; border: 1px solid rgba(96,165,250,0.3);  }
-.env-peapme   { background: rgba(147,197,253,0.12); color: #93C5FD; border: 1px solid rgba(147,197,253,0.3); }
-.env-cto      { background: rgba(156,163,175,0.12); color: #9CA3AF; border: 1px solid rgba(156,163,175,0.25);}
-.env-av       { background: rgba(192,132,252,0.12); color: #C084FC; border: 1px solid rgba(192,132,252,0.3); }
-.env-per      { background: rgba(251,146,60,0.12);  color: #FB923C; border: 1px solid rgba(251,146,60,0.3);  }
-.env-livret   { background: rgba(52,211,153,0.12);  color: #34D399; border: 1px solid rgba(52,211,153,0.28); }
-.env-autre    { background: rgba(156,163,175,0.10); color: #9CA3AF; border: 1px solid rgba(156,163,175,0.2); }
+.env-pea      { background: transparent; color: #555; border: 1px solid #222; }
+.env-peapme   { background: transparent; color: #555; border: 1px solid #222; }
+.env-cto      { background: transparent; color: #555; border: 1px solid #222; }
+.env-av       { background: transparent; color: #555; border: 1px solid #222; }
+.env-per      { background: transparent; color: #555; border: 1px solid #222; }
+.env-livret   { background: transparent; color: #555; border: 1px solid #222; }
+.env-autre    { background: transparent; color: #555; border: 1px solid #222; }
 
 /* ── Filtre enveloppe ── */
 .env-filter-wrap {
@@ -267,15 +246,15 @@
 }
 .env-filter-label {
     font-size: 0.75rem;
-    color: rgba(255,255,255,0.3);
+    color: #333;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     white-space: nowrap;
 }
 .env-filter-select {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 8px;
     color: rgba(255,255,255,0.75);
     font-size: 0.82rem;
@@ -285,15 +264,15 @@
     transition: border-color 0.15s;
     min-width: 180px;
 }
-.env-filter-select:hover  { border-color: rgba(129,140,248,0.4); }
-.env-filter-select:focus  { border-color: rgba(129,140,248,0.6); }
-.env-filter-select option { background: #1a1a2e; color: white; }
+.env-filter-select:hover  { border-color: #333; }
+.env-filter-select:focus  { border-color: #444; }
+.env-filter-select option { background: #0a0a0a; color: white; }
 
 /* ── Plafond bar ── */
 .plafond-block {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
     padding: 0.85rem 1.1rem;
     margin-bottom: 1.25rem;
     display: none;
@@ -309,7 +288,7 @@
     height: 100%;
     border-radius: 99px;
     transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
-    background: linear-gradient(90deg, #34D399, #10B981);
+    background: #fff;
 }
 
 /* ── Bouton crayon enveloppe ── */
@@ -326,8 +305,8 @@
     flex-shrink: 0;
 }
 .env-edit-btn:hover {
-    color: #818CF8;
-    background: rgba(129,140,248,0.1);
+    color: #fff;
+    background: rgba(255,255,255,0.06);
 }
 
 /* ── Modal enveloppe ── */
@@ -343,9 +322,9 @@
 }
 .env-modal-overlay.open { display: flex; }
 .env-modal-box {
-    background: #1a1a2e;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
     padding: 1.5rem;
     width: 100%;
     max-width: 380px;
@@ -364,8 +343,8 @@
 }
 .env-modal-select {
     width: 100%;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 8px;
     color: white;
     font-size: 0.875rem;
@@ -373,8 +352,8 @@
     margin-bottom: 1rem;
     outline: none;
 }
-.env-modal-select:focus { border-color: rgba(129,140,248,0.5); }
-.env-modal-select option { background: #1a1a2e; }
+.env-modal-select:focus { border-color: #333; }
+.env-modal-select option { background: #0a0a0a; }
 .env-modal-actions {
     display: flex;
     gap: 0.6rem;
@@ -391,7 +370,7 @@
     width: 100%;
     overflow: hidden;
     background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid #1a1a1a;
     border-radius: 10px;
     margin-bottom: 1.5rem;
     padding: 0.55rem 0;
@@ -408,11 +387,11 @@
 }
 .ticker-bar-wrap::before {
     left: 0;
-    background: linear-gradient(90deg, #0d0d16 0%, transparent 100%);
+    background: linear-gradient(90deg, #070707 0%, transparent 100%);
 }
 .ticker-bar-wrap::after {
     right: 0;
-    background: linear-gradient(270deg, #0d0d16 0%, transparent 100%);
+    background: linear-gradient(270deg, #070707 0%, transparent 100%);
 }
 .ticker-track {
     display: flex;
@@ -438,8 +417,8 @@
 }
 .ticker-name { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
 .ticker-price { color: rgba(255,255,255,0.8); }
-.ticker-chg-pos { color: #34D399; font-size: 0.72rem; font-weight: 700; }
-.ticker-chg-neg { color: #F87171; font-size: 0.72rem; font-weight: 700; }
+.ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
+.ticker-chg-neg { color: #f87171; font-size: 0.72rem; font-weight: 700; }
 .ticker-loading {
     font-size: 0.75rem;
     color: rgba(255,255,255,0.25);
@@ -458,6 +437,18 @@
         <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Vente</a>
     </div>
 </div>
+
+<!-- ── Bandeau démo ── -->
+{% if is_demo %}
+<div style="background:#0a0a0a; border:1px solid #1a1a1a; border-radius:8px; padding:0.65rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; font-size:0.82rem;">
+    <span style="color:#555;">
+        <span style="color:#888; font-weight:600;">Mode démo</span> — Les données sont fictives. Aucun vrai portefeuille n'est lié à ce compte.
+    </span>
+    <a href="{{ url_for('auth.register') }}" style="color:#fff; font-weight:600; text-decoration:none; white-space:nowrap; border:1px solid #333; border-radius:4px; padding:0.25rem 0.65rem; font-size:0.78rem;">
+        Créer un vrai compte →
+    </a>
+</div>
+{% endif %}
 
 <!-- ── Ticker bar ── -->
 <div class="ticker-bar-wrap" id="ticker-bar-wrap">
@@ -498,7 +489,7 @@
                 Test de profil complété
                 {% else %}
                 <a href="{{ url_for('main.test_profil') }}"
-                   style="color:#818CF8; text-decoration:none; font-weight:600;">
+                   style="color:#fff; text-decoration:none; font-weight:600;">
                     Faire le test de profil →
                 </a>
                 <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Connaître ta tolérance au risque</div>
@@ -594,7 +585,7 @@
             <div class="coh-score-sub">Score profil investisseur</div>
             <div style="margin-top:0.5rem;">
                 <a href="{{ url_for('main.test_profil') }}"
-                   style="font-size:0.82rem; color:#818CF8; text-decoration:none; font-weight:600;">
+                   style="font-size:0.82rem; color:#fff; text-decoration:none; font-weight:600;">
                     🧠 Faire le test →
                 </a>
             </div>
@@ -620,7 +611,7 @@
     {% else %}
     <div id="coh-msg-el" style="margin-top:1rem; text-align:center;">
         <a href="{{ url_for('main.test_profil') }}"
-           style="font-size:0.875rem; color:#818CF8; text-decoration:none; font-weight:600;">
+           style="font-size:0.875rem; color:#fff; text-decoration:none; font-weight:600;">
             🧠 Fais ton test de profil pour voir ta cohérence →
         </a>
     </div>
@@ -632,12 +623,12 @@
 <div class="kpi-grid">
     <div class="kpi-card kpi-card-violet">
         <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value" id="kpi-total-value" style="color:#A5B4FC;">{{ summary.total_value }} €</div>
+        <div class="kpi-value" id="kpi-total-value" style="color:#fff;">{{ summary.total_value }} €</div>
         <div class="kpi-sub" id="kpi-assets-count">{{ summary.assets|length }} actif(s) suivi(s)</div>
     </div>
     <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">Total investi</div>
-        <div class="kpi-value" id="kpi-total-invested" style="color:#FCD34D;">{{ summary.total_invested }} €</div>
+        <div class="kpi-value" id="kpi-total-invested" style="color:#fff;">{{ summary.total_invested }} €</div>
         <div class="kpi-sub">Capital déployé</div>
     </div>
     <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}"
@@ -711,7 +702,7 @@
             </div>
         </div>
         <a href="{{ url_for('main.charts') }}"
-           style="font-size:0.82rem; color:#818CF8; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
+           style="font-size:0.82rem; color:#888; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
             Voir les graphiques →
         </a>
@@ -720,7 +711,7 @@
 
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
-<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:rgba(91,95,237,0.18);">
+<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:#1a1a1a;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
         <div>
             <span style="font-weight:700; color:white; font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
@@ -742,7 +733,7 @@
         </span>
         <span id="dca-reste">
             {% if summary.dca_progress >= 100 %}
-            <span style="font-size:0.78rem; color:#34D399; font-weight:600;">✓ Objectif atteint !</span>
+            <span style="font-size:0.78rem; color:#4ade80; font-weight:600;">✓ Objectif atteint !</span>
             {% else %}
             <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
                 Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
@@ -788,7 +779,7 @@
 
     <svg class="asset-sparkline" viewBox="0 0 80 40" fill="none">
         {% if a.unrealized_gain >= 0 %}
-        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5" stroke="#34D399" stroke-width="2" fill="none"/>
+        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5" stroke="#4ade80" stroke-width="2" fill="none"/>
         {% else %}
         <polyline points="0,8 15,12 30,10 45,22 60,28 80,35" stroke="#F87171" stroke-width="2" fill="none"/>
         {% endif %}
@@ -969,9 +960,9 @@
                         {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
                         <div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">
                             <div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">
-                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>
+                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:#fff; border-radius:99px;"></div>
                             </div>
-                            <span style="color:#A5B4FC; font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
+                            <span style="color:#fff; font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
                         </div>
                         {% else %}—{% endif %}
                     </td>
@@ -990,15 +981,15 @@
 const alloc  = {{ summary.allocation | tojson }};
 const labels = alloc.map(function(a){ return a.ticker; });
 const values = alloc.map(function(a){ return a.value; });
-const PIE_COLORS = ['#818CF8','#34D399','#F6C90E','#F87171','#C084FC',
-                    '#38BDF8','#6EE7B7','#FCD34D','#FCA5A5','#A5B4FC'];
+const PIE_COLORS = ['#fff','#888','#555','#333','#aaa',
+                    '#666','#999','#bbb','#444','#777'];
 const PIE_LAYOUT = {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor:  'rgba(0,0,0,0)',
     height: 280,
     margin: { l: 10, r: 10, t: 10, b: 10 },
     showlegend: false,
-    hoverlabel: { bgcolor: '#12121E', bordercolor: 'rgba(129,140,248,0.3)', font: { color: 'white' } }
+    hoverlabel: { bgcolor: '#0a0a0a', bordercolor: 'rgba(255,255,255,0.1)', font: { color: 'white' } }
 };
 const PIE_CONFIG = { responsive: true, displayModeBar: false };
 
@@ -1048,7 +1039,7 @@ Plotly.newPlot('pie-chart', [{
                     {% if env_data.plafond_restant == 0 %}
                     <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
                     {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
-                    <span style="color:#F6C90E; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                    <span style="color:#888; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
                     {% else %}
                     <span style="color:rgba(255,255,255,0.35);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
                     {% endif %}
@@ -1109,13 +1100,13 @@ function sign(n)  { return n >= 0 ? '+' : ''; }
 
 function riskBadgeHTML(score) {
     if (score === null || score === undefined) return '';
-    var lbl, col, bg, brd;
-    if      (score <= 20) { lbl='Très faible'; col='#34D399'; bg='rgba(52,211,153,0.10)';  brd='rgba(52,211,153,0.28)';  }
-    else if (score <= 40) { lbl='Faible';      col='#60A5FA'; bg='rgba(96,165,250,0.10)';  brd='rgba(96,165,250,0.28)';  }
-    else if (score <= 60) { lbl='Modéré';      col='#F6C90E'; bg='rgba(246,201,14,0.10)';  brd='rgba(246,201,14,0.22)';  }
-    else if (score <= 80) { lbl='Élevé';       col='#F97316'; bg='rgba(249,115,22,0.10)';  brd='rgba(249,115,22,0.28)';  }
-    else                  { lbl='Très élevé';  col='#F87171'; bg='rgba(248,113,113,0.10)'; brd='rgba(248,113,113,0.28)'; }
-    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:'+bg+';color:'+col+';border:1px solid '+brd+';white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
+    var lbl;
+    if      (score <= 20) { lbl='Très faible'; }
+    else if (score <= 40) { lbl='Faible';      }
+    else if (score <= 60) { lbl='Modéré';      }
+    else if (score <= 80) { lbl='Élevé';       }
+    else                  { lbl='Très élevé';  }
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#888;border:1px solid #222;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
@@ -1204,9 +1195,9 @@ function updateAllocCharts(visible) {
             '<td style="text-align:right;">' +
                 '<div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">' +
                     '<div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">' +
-                        '<div style="width:' + pct + '%; height:100%; background:linear-gradient(90deg,#5B5FED,#818CF8); border-radius:99px;"></div>' +
+                        '<div style="width:' + pct + '%; height:100%; background:#fff; border-radius:99px;"></div>' +
                     '</div>' +
-                    '<span style="color:#A5B4FC; font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
+                    '<span style="color:#fff; font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
                 '</div>' +
             '</td>';
         tbody.appendChild(tr);
@@ -1369,7 +1360,7 @@ function updateDCABlock(invMonth) {
                   pctEl.className   = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
     if (invEl)  invEl.textContent   = fmt2(invMonth) + ' € investis ce mois';
     if (resteEl) {
-        if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#34D399;font-weight:600;">✓ Objectif atteint !</span>';
+        if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#4ade80;font-weight:600;">✓ Objectif atteint !</span>';
         else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
     }
 }
@@ -1396,10 +1387,7 @@ function updatePlafondBar(env, totalInvested) {
     if (restantEl) restantEl.textContent = fmtInt(restant) + ' €';
     if (fillEl) {
         fillEl.style.width = pct + '%';
-        fillEl.style.background = pct >= 90
-            ? 'linear-gradient(90deg,#F87171,#EF4444)'
-            : pct >= 70 ? 'linear-gradient(90deg,#F6C90E,#F59E0B)'
-            : 'linear-gradient(90deg,#34D399,#10B981)';
+        fillEl.style.background = '#fff';
     }
 }
 

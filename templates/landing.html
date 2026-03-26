@@ -9,7 +9,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0A0A0F;
+            background: #070707;
             overflow-x: hidden;
         }
 
@@ -17,9 +17,9 @@
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
-            background: rgba(10,10,15,0.85);
+            background: rgba(7,7,7,0.92);
             backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid #1a1a1a;
             padding: 0 2rem;
             height: 64px;
             display: flex;
@@ -57,32 +57,40 @@
             white-space: nowrap;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #5B5FED, #7C3AED);
-            color: white;
-            box-shadow: 0 0 20px rgba(91,95,237,0.4);
+            background: #fff;
+            color: #0a0a0a;
         }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(91,95,237,0.6); }
+        .btn-primary:hover { transform: translateY(-1px); opacity: 0.9; }
         .btn-ghost {
-            background: rgba(255,255,255,0.08);
-            color: rgba(255,255,255,0.75);
-            border: 1px solid rgba(255,255,255,0.12);
+            background: transparent;
+            color: #555;
+            border: 1px solid #222;
         }
-        .btn-ghost:hover { background: rgba(255,255,255,0.14); color: white; }
+        .btn-ghost:hover { border-color: #333; color: rgba(255,255,255,0.75); }
         .btn-lg { padding: 0.9rem 2.2rem; font-size: 1rem; border-radius: 12px; }
         .btn-outline-white {
             background: transparent;
-            color: rgba(255,255,255,0.8);
-            border: 1px solid rgba(255,255,255,0.25);
+            color: #555;
+            border: 1px solid #222;
             font-weight: 600;
         }
-        .btn-outline-white:hover { border-color: white; color: white; background: rgba(255,255,255,0.06); }
+        .btn-outline-white:hover { border-color: #333; color: rgba(255,255,255,0.75); }
         .btn-violet-outline {
-            background: rgba(91,95,237,0.1);
-            color: #A5B4FC;
-            border: 1px solid rgba(91,95,237,0.35);
+            background: transparent;
+            color: #555;
+            border: 1px solid #222;
             font-weight: 600;
         }
-        .btn-violet-outline:hover { background: rgba(91,95,237,0.18); color: white; border-color: rgba(91,95,237,0.6); }
+        .btn-violet-outline:hover { border-color: #333; color: rgba(255,255,255,0.75); }
+        .btn-demo {
+            background: transparent;
+            color: #555;
+            border: 1px solid #222;
+            font-weight: 600;
+            border-radius: 4px;
+            padding: 0.45rem 1rem;
+        }
+        .btn-demo:hover { border-color: #333; color: rgba(255,255,255,0.75); }
 
         /* ── Hamburger landing ── */
         .landing-hamburger {
@@ -111,9 +119,9 @@
             top: 64px;
             left: 0;
             right: 0;
-            background: rgba(8,8,16,0.98);
+            background: rgba(7,7,7,0.98);
             backdrop-filter: blur(24px);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid #1a1a1a;
             z-index: 99;
             padding: 0.75rem 0;
         }
@@ -128,19 +136,19 @@
             border-bottom: 1px solid rgba(255,255,255,0.04);
             transition: background 0.15s, color 0.15s;
         }
-        .landing-mobile a:hover { background: rgba(91,95,237,0.08); color: white; }
+        .landing-mobile a:hover { background: rgba(255,255,255,0.04); color: white; }
         .landing-mobile a:last-child { border-bottom: none; }
         .landing-mobile .mobile-cta {
             margin: 0.75rem 1.5rem;
             text-align: center;
-            background: linear-gradient(135deg, #5B5FED, #7C3AED);
-            color: white;
+            background: #fff;
+            color: #0a0a0a;
             padding: 0.75rem 1.2rem;
             border-radius: 8px;
             font-weight: 700;
             border-bottom: none;
         }
-        .landing-mobile .mobile-cta:hover { opacity: 0.9; background: linear-gradient(135deg, #5B5FED, #7C3AED); }
+        .landing-mobile .mobile-cta:hover { opacity: 0.9; background: #fff; }
 
         /* ── Hero ── */
         .hero {
@@ -156,9 +164,7 @@
         .hero-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(91,95,237,0.22) 0%, transparent 70%),
-                        radial-gradient(ellipse 50% 40% at 80% 20%, rgba(124,58,237,0.14) 0%, transparent 60%),
-                        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(14,165,233,0.10) 0%, transparent 60%);
+            background: #070707;
         }
         .hero-grid {
             position: absolute;
@@ -173,9 +179,9 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(91,95,237,0.15);
-            color: #A5B4FC;
-            border: 1px solid rgba(91,95,237,0.35);
+            background: transparent;
+            color: #888;
+            border: 1px solid #222;
             padding: 0.4rem 1rem;
             border-radius: 99px;
             font-size: 0.8rem;
@@ -185,7 +191,7 @@
         }
         .badge-dot {
             width: 6px; height: 6px;
-            background: #5B5FED;
+            background: #fff;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -202,10 +208,7 @@
             letter-spacing: -0.03em;
         }
         .hero h1 .gradient-text {
-            background: linear-gradient(135deg, #818CF8, #C084FC, #38BDF8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
         }
         .hero p {
             font-size: clamp(1rem, 2vw, 1.15rem);
@@ -223,9 +226,9 @@
 
         /* ── Two pillars ── */
         .pillars {
-            background: rgba(255,255,255,0.02);
-            border-top: 1px solid rgba(255,255,255,0.06);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
+            border-bottom: 1px solid #1a1a1a;
             padding: 3rem 1.5rem;
         }
         .pillars-inner {
@@ -249,10 +252,10 @@
             justify-content: center;
             width: 52px;
             height: 52px;
-            background: rgba(91,95,237,0.1);
-            border: 1px solid rgba(91,95,237,0.2);
+            background: transparent;
+            border: 1px solid #1a1a1a;
             border-radius: 14px;
-            color: #A5B4FC;
+            color: #888;
         }
         .pillar-title {
             font-size: 1.05rem;
@@ -275,7 +278,7 @@
 
         /* ── Stats ── */
         .stats {
-            background: #0A0A0F;
+            background: #070707;
             padding: 2.5rem 1.5rem;
         }
         .stats-inner {
@@ -289,10 +292,7 @@
         .stat-num {
             font-size: 1.75rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #818CF8, #C084FC);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
             line-height: 1;
         }
         .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
@@ -300,9 +300,9 @@
         /* ── Risk section ── */
         .risk-section {
             padding: 6rem 1.5rem;
-            background: rgba(91,95,237,0.04);
-            border-top: 1px solid rgba(91,95,237,0.12);
-            border-bottom: 1px solid rgba(91,95,237,0.12);
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
+            border-bottom: 1px solid #1a1a1a;
         }
         .risk-section-inner { max-width: 1000px; margin: 0 auto; }
         .risk-steps-grid {
@@ -316,15 +316,15 @@
         .risk-step {
             flex: 1;
             min-width: 220px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(91,95,237,0.2);
-            border-radius: 16px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
             padding: 1.75rem 1.5rem;
             position: relative;
             text-align: center;
             transition: border-color 0.25s, background 0.25s;
         }
-        .risk-step:hover { border-color: rgba(91,95,237,0.4); background: rgba(91,95,237,0.07); }
+        .risk-step:hover { border-color: #222; background: #0f0f0f; }
         .risk-step-num {
             position: absolute;
             top: -13px;
@@ -332,15 +332,14 @@
             transform: translateX(-50%);
             width: 26px;
             height: 26px;
-            background: linear-gradient(135deg, #5B5FED, #7C3AED);
+            background: #fff;
             border-radius: 50%;
             font-size: 0.75rem;
             font-weight: 800;
-            color: white;
+            color: #0a0a0a;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 12px rgba(91,95,237,0.5);
         }
         .risk-step-icon {
             display: flex;
@@ -349,23 +348,23 @@
             width: 44px;
             height: 44px;
             margin: 0.5rem auto 0.75rem;
-            background: rgba(91,95,237,0.1);
+            background: transparent;
             border-radius: 12px;
-            color: #A5B4FC;
+            color: #888;
         }
         .risk-step h3 { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
         .risk-step p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
-        .risk-step-arrow { font-size: 1.4rem; color: rgba(91,95,237,0.35); align-self: center; flex-shrink: 0; }
+        .risk-step-arrow { font-size: 1.4rem; color: #333; align-self: center; flex-shrink: 0; }
 
         /* ── Features ── */
-        .features { padding: 6rem 1.5rem; background: #0A0A0F; }
+        .features { padding: 6rem 1.5rem; background: #070707; }
         .section-eyebrow {
             text-align: center;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            color: #818CF8;
+            color: #555;
             margin-bottom: 1rem;
         }
         .section-title {
@@ -393,9 +392,9 @@
             gap: 1.25rem;
         }
         .feature-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 10px;
             padding: 1.75rem;
             transition: all 0.25s;
             position: relative;
@@ -406,22 +405,16 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(91,95,237,0.5), transparent);
+            background: transparent;
             opacity: 0;
             transition: opacity 0.25s;
         }
-        .feature-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(91,95,237,0.3); transform: translateY(-2px); }
-        .feature-card:hover::before { opacity: 1; }
-        .feature-card.featured { background: rgba(91,95,237,0.08); border-color: rgba(91,95,237,0.3); }
-        .feature-card.featured::before { opacity: 1; }
+        .feature-card:hover { background: #0f0f0f; border-color: #222; transform: translateY(-2px); }
+        .feature-card.featured { background: #0a0a0a; border-color: #1a1a1a; }
         .feature-card.featured-risk {
-            background: linear-gradient(135deg, rgba(91,95,237,0.1), rgba(124,58,237,0.06));
-            border-color: rgba(91,95,237,0.35);
+            background: #0a0a0a;
+            border-color: #1a1a1a;
             grid-column: span 2;
-        }
-        .feature-card.featured-risk::before {
-            opacity: 1;
-            background: linear-gradient(90deg, transparent, rgba(91,95,237,0.7), rgba(192,132,252,0.4), transparent);
         }
         .feature-icon {
             display: flex;
@@ -430,30 +423,30 @@
             width: 44px;
             height: 44px;
             margin-bottom: 1rem;
-            background: rgba(91,95,237,0.1);
+            background: transparent;
             border-radius: 12px;
-            color: #A5B4FC;
+            color: #888;
         }
         .feature-card h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
         .feature-card p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
-        .feature-link { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #818CF8; text-decoration: none; }
-        .feature-link:hover { color: #A5B4FC; }
+        .feature-link { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #888; text-decoration: none; }
+        .feature-link:hover { color: #fff; }
         .feature-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
         .feature-tag {
             font-size: 0.7rem;
             font-weight: 700;
             padding: 0.18rem 0.55rem;
             border-radius: 20px;
-            background: rgba(91,95,237,0.12);
-            color: #A5B4FC;
-            border: 1px solid rgba(91,95,237,0.2);
+            background: transparent;
+            color: #555;
+            border: 1px solid #222;
         }
 
         /* ── How it works ── */
         .how {
             padding: 6rem 1.5rem;
-            background: rgba(255,255,255,0.02);
-            border-top: 1px solid rgba(255,255,255,0.05);
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
         }
         .steps { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
         .step {
@@ -471,20 +464,19 @@
             top: 2.8rem;
             bottom: 0;
             width: 1px;
-            background: linear-gradient(to bottom, rgba(91,95,237,0.4), transparent);
+            background: #1a1a1a;
         }
         .step-num {
             flex-shrink: 0;
             width: 2.4rem; height: 2.4rem;
-            background: linear-gradient(135deg, #5B5FED, #7C3AED);
-            color: white;
+            background: #fff;
+            color: #0a0a0a;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
             font-size: 0.9rem;
-            box-shadow: 0 0 16px rgba(91,95,237,0.4);
         }
         .step-content h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.3rem; padding-top: 0.35rem; }
         .step-content p { font-size: 0.875rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
@@ -495,9 +487,9 @@
             text-align: center;
             position: relative;
             overflow: hidden;
-            background: #0A0A0F;
+            background: #070707;
         }
-        .cta-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 50% 100%, rgba(91,95,237,0.2) 0%, transparent 70%); }
+        .cta-bg { position: absolute; inset: 0; background: #070707; }
         .cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
         .cta h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; color: white; margin-bottom: 1rem; letter-spacing: -0.02em; line-height: 1.2; }
         .cta p { color: rgba(255,255,255,0.5); font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.7; }
@@ -505,14 +497,15 @@
 
         /* ── Footer ── */
         footer {
-            background: rgba(255,255,255,0.02);
-            border-top: 1px solid rgba(255,255,255,0.06);
+            background: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
             color: rgba(255,255,255,0.3);
             text-align: center;
             padding: 2rem 1rem;
             font-size: 0.8rem;
         }
-        footer a { color: #818CF8; text-decoration: none; }
+        footer a { color: #888; text-decoration: none; }
+        footer a:hover { color: #fff; }
 
         /* ── Mobile ── */
         @media (max-width: 768px) {
@@ -532,8 +525,8 @@
             .how { padding: 4rem 1.25rem; }
             .cta { padding: 4rem 1.25rem; }
             .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .hero-btns { flex-direction: column; align-items: center; width: 100%; }
-            .hero-btns .btn { width: 100%; max-width: 380px; justify-content: center; }
+            .hero-btns { flex-wrap: wrap; justify-content: center; }
+            .hero-btns .btn { max-width: 380px; justify-content: center; }
             .cta-btns { flex-direction: column; align-items: center; }
             .cta-btns .btn { width: 100%; max-width: 380px; justify-content: center; }
         }
@@ -557,11 +550,11 @@
 <nav>
     <a href="/" class="nav-brand">
         <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-            <rect width="28" height="28" rx="7" fill="#5B5FED"/>
+            <rect width="28" height="28" rx="7" fill="#fff"/>
             <polyline points="4,20 10,8 16,13 22,4"
-                      fill="none" stroke="white" stroke-width="2.5"
+                      fill="none" stroke="#0a0a0a" stroke-width="2.5"
                       stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="22" cy="4" r="3" fill="#F6C90E"/>
+            <circle cx="22" cy="4" r="3" fill="#0a0a0a"/>
         </svg>
         PortfolioTrack
     </a>
@@ -630,6 +623,9 @@
                     Commencer gratuitement →
                 </a>
                 {% endif %}
+                <a href="{{ url_for('main.demo') }}" class="btn btn-demo btn-lg">
+                    Voir la démo
+                </a>
                 <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
                     <i data-lucide="target" style="width:18px;height:18px;"></i> Découvrir mon profil
                 </a>

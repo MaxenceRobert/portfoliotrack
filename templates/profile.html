@@ -3,7 +3,7 @@
 {% block content %}
 
 <style>
-.profil-inv-card { border-top: 2px solid rgba(91,95,237,0.4); }
+.profil-inv-card { border-top: 2px solid #1a1a1a; }
 .profil-inv-score { display: inline-flex; align-items: baseline; gap: 0.25rem; }
 .score-big { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
 .score-total { font-size: 0.9rem; color: rgba(255,255,255,0.3); font-weight: 600; }
@@ -17,22 +17,22 @@
     vertical-align: middle;
 }
 /* couleurs par profil */
-.pc-prudent    { color: #34D399; }
-.pc-modere     { color: #6EE7B7; }
-.pc-equilibre  { color: #F6C90E; }
-.pc-dynamique  { color: #818CF8; }
-.pc-agressif   { color: #F87171; }
-.badge-prudent   { background: rgba(52,211,153,0.1);  color: #34D399; border: 1px solid rgba(52,211,153,0.22); }
-.badge-modere    { background: rgba(110,231,183,0.1); color: #6EE7B7; border: 1px solid rgba(110,231,183,0.2); }
-.badge-equilibre { background: rgba(246,201,14,0.1);  color: #F6C90E; border: 1px solid rgba(246,201,14,0.2); }
-.badge-dynamique { background: rgba(91,95,237,0.12);  color: #818CF8; border: 1px solid rgba(91,95,237,0.25); }
-.badge-agressif  { background: rgba(248,113,113,0.1); color: #F87171; border: 1px solid rgba(248,113,113,0.2); }
+.pc-prudent    { color: #4ade80; }
+.pc-modere     { color: #fff; }
+.pc-equilibre  { color: #fff; }
+.pc-dynamique  { color: #fff; }
+.pc-agressif   { color: #f87171; }
+.badge-prudent   { background: transparent; color: #4ade80; border: 1px solid #222; }
+.badge-modere    { background: transparent; color: #555; border: 1px solid #222; }
+.badge-equilibre { background: transparent; color: #555; border: 1px solid #222; }
+.badge-dynamique { background: transparent; color: #555; border: 1px solid #222; }
+.badge-agressif  { background: transparent; color: #f87171; border: 1px solid #222; }
 
 .axes-mini { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
 .axis-mini-row { display: flex; align-items: center; gap: 0.75rem; }
 .axis-mini-name { font-size: 0.72rem; color: rgba(255,255,255,0.38); font-weight: 600; min-width: 155px; flex-shrink: 0; }
 .axis-mini-bar-outer { flex: 1; background: rgba(255,255,255,0.05); border-radius: 99px; height: 5px; overflow: hidden; }
-.axis-mini-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #5B5FED, #818CF8); }
+.axis-mini-bar-fill { height: 100%; border-radius: 99px; background: #fff; }
 .axis-mini-val { font-size: 0.72rem; color: rgba(255,255,255,0.4); font-weight: 700; min-width: 30px; text-align: right; }
 .profil-date { font-size: 0.75rem; color: rgba(255,255,255,0.2); margin-top: 0.25rem; }
 </style>
@@ -164,8 +164,8 @@
     </div>
 
     <!-- ── Zone de danger ── -->
-    <div class="card" style="border-top:2px solid rgba(248,113,113,0.4);">
-        <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#F87171;">Zone de danger</h3>
+    <div class="card" style="border-top:2px solid #1a1a1a;">
+        <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#f87171;">Zone de danger</h3>
         <p style="font-size:0.875rem; color:rgba(255,255,255,0.35); margin-bottom:1rem;">
             La suppression de votre compte est définitive et efface toutes vos données.
         </p>

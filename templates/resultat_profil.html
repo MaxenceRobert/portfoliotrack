@@ -9,23 +9,12 @@
 .score-hero {
     text-align: center;
     padding: 2.5rem 1.5rem 2rem;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 20px;
     margin-bottom: 1.25rem;
     position: relative;
     overflow: hidden;
-}
-.score-hero::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 200%;
-    background: radial-gradient(ellipse, {{ profil_color }}18 0%, transparent 65%);
-    pointer-events: none;
 }
 .score-emoji { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
 .score-profil-name {
@@ -38,7 +27,7 @@
 .score-number {
     font-size: 3.5rem;
     font-weight: 900;
-    color: {{ profil_color }};
+    color: {{ '#4ade80' if global_score <= 40 else ('#f87171' if global_score > 80 else '#fff') }};
     line-height: 1;
     letter-spacing: -0.04em;
 }
@@ -75,10 +64,8 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     border-radius: 99px;
-    background: {{ profil_color }};
-    opacity: 0.85;
+    background: #fff;
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-    box-shadow: 0 0 12px {{ profil_color }}66;
 }
 .gauge-labels {
     display: flex;
@@ -109,7 +96,7 @@
 .axis-bar-fill {
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, #5B5FED, #818CF8);
+    background: #fff;
     transition: width 1s ease;
 }
 .axis-score-val {
@@ -132,9 +119,9 @@
     gap: 0.35rem;
     font-size: 0.72rem;
     font-weight: 700;
-    background: rgba(129,140,248,0.1);
-    color: #818CF8;
-    border: 1px solid rgba(129,140,248,0.2);
+    background: rgba(255,255,255,0.04);
+    color: #888;
+    border: 1px solid #222;
     border-radius: 20px;
     padding: 0.22rem 0.7rem;
     margin-bottom: 1rem;
@@ -153,8 +140,8 @@
 .dca-rate-badge {
     display: inline-block;
     font-size: 0.72rem;
-    background: rgba(91,95,237,0.12);
-    color: #818CF8;
+    background: rgba(255,255,255,0.04);
+    color: #888;
     border-radius: 20px;
     padding: 0.15rem 0.55rem;
     margin-left: 0.4rem;
@@ -169,18 +156,17 @@
     margin-top: 1.25rem;
 }
 .suggestion-card {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
     border-radius: 14px;
     padding: 1.1rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    transition: border-color 0.18s, background 0.18s;
+    transition: border-color 0.18s;
 }
 .suggestion-card:hover {
-    border-color: rgba(129,140,248,0.3);
-    background: rgba(129,140,248,0.04);
+    border-color: #333;
 }
 .suggestion-header {
     display: flex;
@@ -217,8 +203,9 @@
 .suggestion-alloc {
     font-size: 0.68rem;
     font-weight: 700;
-    background: rgba(91,95,237,0.12);
-    color: #818CF8;
+    background: rgba(255,255,255,0.04);
+    color: #888;
+    border: 1px solid #222;
     border-radius: 6px;
     padding: 0.18rem 0.55rem;
 }
@@ -240,7 +227,7 @@
 .suggestion-action a {
     font-size: 0.78rem;
     font-weight: 700;
-    color: #818CF8;
+    color: #888;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -248,7 +235,7 @@
     opacity: 0.85;
     transition: opacity 0.15s;
 }
-.suggestion-action a:hover { opacity: 1; }
+.suggestion-action a:hover { opacity: 1; color: #fff; }
 
 /* ── Actions ── */
 .result-actions {
@@ -287,11 +274,11 @@
         <div class="section-title" style="margin-top:0;">Score global</div>
         <div class="gauge-bar-outer">
             <div class="gauge-segments">
-                <div class="gauge-seg" style="background:rgba(52,211,153,0.12);"></div>
-                <div class="gauge-seg" style="background:rgba(110,231,183,0.10);"></div>
-                <div class="gauge-seg" style="background:rgba(246,201,14,0.10);"></div>
-                <div class="gauge-seg" style="background:rgba(91,95,237,0.12);"></div>
-                <div class="gauge-seg" style="background:rgba(248,113,113,0.12);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
+                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
             </div>
             <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
         </div>
@@ -324,7 +311,7 @@
     <!-- Claude recommendation -->
     <div class="card rec-card" style="margin-bottom:1.25rem;">
         <h3>
-            <span style="color:#818CF8;">✦</span>
+            <span style="color:#555;">✦</span>
             Recommandation personnalisée
         </h3>
         <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
@@ -337,7 +324,7 @@
     {% if asset_suggestions %}
     <div class="card" style="padding:1.75rem 2rem; margin-bottom:1.25rem;">
         <h3 style="font-size:1rem; font-weight:800; color:white; margin-bottom:0.35rem; display:flex; align-items:center; gap:0.5rem;">
-            <span style="color:#818CF8;">◈</span>
+            <span style="color:#555;">◈</span>
             Actifs suggérés pour ton profil
         </h3>
         <p style="font-size:0.82rem; color:rgba(255,255,255,0.35); margin-bottom:0; line-height:1.5;">
@@ -347,14 +334,14 @@
             {% for a in asset_suggestions %}
             {% set risk = a.score_risque | int %}
             {% if risk < 34 %}
-                {% set risk_color = '#34D399' %}
-                {% set risk_bg = 'rgba(52,211,153,0.12)' %}
+                {% set risk_color = '#4ade80' %}
+                {% set risk_bg = 'rgba(74,222,128,0.08)' %}
             {% elif risk < 67 %}
-                {% set risk_color = '#F6C90E' %}
-                {% set risk_bg = 'rgba(246,201,14,0.12)' %}
+                {% set risk_color = '#888' %}
+                {% set risk_bg = 'rgba(255,255,255,0.04)' %}
             {% else %}
-                {% set risk_color = '#F87171' %}
-                {% set risk_bg = 'rgba(248,113,113,0.12)' %}
+                {% set risk_color = '#f87171' %}
+                {% set risk_bg = 'rgba(248,113,113,0.08)' %}
             {% endif %}
             <div class="suggestion-card">
                 <div class="suggestion-header">
@@ -439,7 +426,7 @@
 
     <!-- CTA non-auth -->
     {% if not current_user.is_authenticated %}
-    <div class="card" style="border-top:2px solid rgba(91,95,237,0.5); padding:2rem; margin-bottom:1.25rem; text-align:center;">
+    <div class="card" style="border-top:1px solid #222; padding:2rem; margin-bottom:1.25rem; text-align:center;">
         <div style="font-size:2rem; margin-bottom:0.75rem;">🔒</div>
         <h3 style="font-size:1.1rem; font-weight:800; color:white; margin-bottom:0.5rem;">
             Sauvegarde ton profil et suis tes investissements
@@ -527,8 +514,8 @@ function runDCA() {
         {
             x: labels, y: value, name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: '{{ profil_color }}', width: 2.5 },
-            fill: 'tozeroy', fillcolor: '{{ profil_color }}20'
+            line: { color: '#fff', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.04)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
