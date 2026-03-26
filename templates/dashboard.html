@@ -1515,7 +1515,7 @@ window.addEventListener('load', function() {
     var timer = setTimeout(function() {
         if (ctrl) ctrl.abort();
         hideTicker();
-    }, 3000);
+    }, 8000);
     fetch('/api/ticker-bar', ctrl ? { signal: ctrl.signal } : {})
         .then(function(r){ return r.json(); })
         .then(function(data) {

@@ -1356,16 +1356,17 @@ def ticker_bar_api():
     def fetch_one(name, ticker):
         try:
             fi    = _yf.Ticker(ticker).fast_info
-            price = float(fi.get('last_price') or fi.get('regularMarketPrice') or 0)
-            prev  = float(fi.get('previous_close') or fi.get('regularMarketPreviousClose') or 0)
+            # fast_info est un objet (pas un dict) en yfinance 0.2+ → getattr obligatoire
+            price = float(getattr(fi, 'last_price', None) or getattr(fi, 'regularMarketPrice', None) or 0)
+            prev  = float(getattr(fi, 'previous_close', None) or getattr(fi, 'regularMarketPreviousClose', None) or 0)
             if price <= 0:
                 return
             chg = round((price - prev) / prev * 100, 2) if prev > 0 else 0.0
             with lock:
                 results.append({'name': name, 'ticker': ticker,
                                 'price': round(price, 2), 'change_pct': chg})
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[ticker-bar] {ticker}: {e}")
 
     threads = []
     for name, ticker in TICKER_BAR_ITEMS:
@@ -1516,66 +1517,96 @@ DEMO_PASSWORD = 'DemoPortfolio2024!'
 
 @main_bp.route('/demo')
 def demo():
+    import traceback
     from werkzeug.security import generate_password_hash
-    from auth import get_user_object
 
-    # Créer le compte démo s'il n'existe pas
-    user_row = get_user_by_email(DEMO_EMAIL)
-    if not user_row:
-        create_user(DEMO_EMAIL, generate_password_hash(DEMO_PASSWORD))
+    try:
+        # 1. Créer le compte démo s'il n'existe pas
         user_row = get_user_by_email(DEMO_EMAIL)
+        if not user_row:
+            print(f"[demo] Création du compte démo {DEMO_EMAIL}")
+            ok = create_user(DEMO_EMAIL, generate_password_hash(DEMO_PASSWORD))
+            print(f"[demo] create_user → {ok}")
+            user_row = get_user_by_email(DEMO_EMAIL)
 
-    if not user_row:
-        flash('Impossible de charger le compte démo.', 'error')
-        return redirect(url_for('main.landing'))
+        if not user_row:
+            print("[demo] Impossible de récupérer le compte démo après création")
+            flash('Impossible de charger le compte démo.', 'error')
+            return redirect(url_for('main.landing'))
 
-    demo_id = user_row['id']
+        demo_id = user_row['id']
+        print(f"[demo] Compte démo trouvé id={demo_id}")
 
-    # Ajouter des actifs fictifs si le portfolio est vide
-    existing = get_user_assets(demo_id)
-    if not existing:
-        import datetime as _dt
-        demo_assets = [
-            ('IWDA.AS', 'iShares MSCI World ETF', 'ETF',    'EUR', None, 'CTO'),
-            ('BTC-USD', 'Bitcoin',                 'Crypto', 'USD', None, 'CTO'),
-            ('AAPL',    'Apple Inc.',               'Action', 'USD', None, 'CTO'),
-        ]
-        demo_purchases = {
-            'IWDA.AS': [
-                ('2022-01-15', 50,   58.40),
-                ('2022-07-10', 30,   62.10),
-                ('2023-03-20', 20,   70.80),
-            ],
-            'BTC-USD': [
-                ('2021-11-01', 0.05, 58000.0),
-                ('2022-06-20', 0.10, 20100.0),
-                ('2023-01-10', 0.08, 17200.0),
-            ],
-            'AAPL': [
-                ('2022-03-01', 10, 162.5),
-                ('2022-10-14',  5, 138.4),
-                ('2023-06-01',  8, 178.2),
-            ],
-        }
-        for ticker, name, atype, currency, isin, envelope in demo_assets:
-            add_asset(demo_id, ticker, name, atype, currency, isin, envelope)
+        # 2. Ajouter des actifs fictifs si le portfolio est vide
+        existing = get_user_assets(demo_id)
+        print(f"[demo] Actifs existants : {len(existing)}")
 
-        assets_refreshed = get_user_assets(demo_id)
-        asset_map = {a['ticker']: a['id'] for a in assets_refreshed}
+        if not existing:
+            demo_assets = [
+                ('IWDA.AS', 'iShares Core MSCI World ETF', 'ETF',    'EUR', '', 'CTO'),
+                ('BTC-USD', 'Bitcoin',                      'Crypto', 'USD', '', 'CTO'),
+                ('AAPL',    'Apple Inc.',                   'Action', 'USD', '', 'CTO'),
+            ]
+            demo_purchases = {
+                'IWDA.AS': [
+                    ('2022-01-15', 50.0,  58.40),
+                    ('2022-07-10', 30.0,  62.10),
+                    ('2023-03-20', 20.0,  70.80),
+                ],
+                'BTC-USD': [
+                    ('2021-11-01', 0.05, 58000.0),
+                    ('2022-06-20', 0.10, 20100.0),
+                    ('2023-01-10', 0.08, 17200.0),
+                ],
+                'AAPL': [
+                    ('2022-03-01', 10.0, 162.50),
+                    ('2022-10-14',  5.0, 138.40),
+                    ('2023-06-01',  8.0, 178.20),
+                ],
+            }
 
-        for ticker, purchases in demo_purchases.items():
-            asset_id = asset_map.get(ticker)
-            if not asset_id:
-                continue
-            rows = [{'asset_id': asset_id, 'date': d, 'quantity': q, 'price': p}
-                    for d, q, p in purchases]
-            add_purchases_bulk(demo_id, rows)
+            for ticker, name, atype, currency, isin, envelope in demo_assets:
+                result = add_asset(demo_id, ticker, name, atype, currency, isin, envelope)
+                print(f"[demo] add_asset({ticker}) → {result}")
 
-    # Connecter l'utilisateur démo
-    user_obj = get_user_object(demo_id)
-    if user_obj:
+            assets_refreshed = get_user_assets(demo_id)
+            # get_user_assets retourne des sqlite3.Row ou dicts — accès par clé string
+            asset_map = {}
+            for a in assets_refreshed:
+                try:
+                    asset_map[a['ticker']] = a['id']
+                except Exception:
+                    asset_map[a[2]] = a[0]  # fallback index si sqlite Row
+            print(f"[demo] asset_map = {asset_map}")
+
+            for ticker, purchases in demo_purchases.items():
+                asset_id = asset_map.get(ticker)
+                if not asset_id:
+                    print(f"[demo] asset_id introuvable pour {ticker}")
+                    continue
+                # Clés requises par add_purchases_bulk : shares, price_per_share
+                rows = [
+                    {'asset_id': asset_id, 'date': d, 'shares': q, 'price_per_share': p}
+                    for d, q, p in purchases
+                ]
+                add_purchases_bulk(demo_id, rows)
+                print(f"[demo] {len(rows)} achats insérés pour {ticker}")
+
+        # 3. Connecter l'utilisateur démo
+        user_obj = get_user_object(demo_id)
+        if not user_obj:
+            print("[demo] get_user_object a retourné None")
+            flash('Erreur de connexion au compte démo.', 'error')
+            return redirect(url_for('main.landing'))
+
         login_user(user_obj)
-    return redirect(url_for('main.dashboard'))
+        print(f"[demo] login_user OK pour {DEMO_EMAIL}")
+        return redirect(url_for('main.dashboard'))
+
+    except Exception:
+        traceback.print_exc()
+        flash('Une erreur est survenue lors du chargement de la démo.', 'error')
+        return redirect(url_for('main.landing'))
 
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
