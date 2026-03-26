@@ -2,18 +2,67 @@
 {% block title %}Historique des dividendes{% endblock %}
 {% block content %}
 
+<style>
+.badge-auto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(52,211,153,0.12);
+    color: #34D399;
+    border: 1px solid rgba(52,211,153,0.2);
+    border-radius: 6px;
+    padding: 0.15rem 0.45rem;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+}
+.badge-manual {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(91,95,237,0.1);
+    color: #818CF8;
+    border: 1px solid rgba(91,95,237,0.2);
+    border-radius: 6px;
+    padding: 0.15rem 0.45rem;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+}
+.section-subheader {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.9rem 1.25rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+</style>
+
+{% set has_manual = dividends and dividends|length > 0 %}
+{% set has_auto = auto_dividends and auto_dividends|length > 0 %}
+{% set manual_total = dividends|sum(attribute='amount')|round(2) if has_manual else 0 %}
+{% set auto_total = namespace(v=0.0) %}
+{% if has_auto %}
+    {% for d in auto_dividends %}{% set auto_total.v = auto_total.v + d['amount'] %}{% endfor %}
+{% endif %}
+{% set combined_total = (manual_total + auto_total.v)|round(2) %}
+
 <div class="page-header">
     <div>
         <h1>Dividendes reçus</h1>
-        <p>Tous les dividendes enregistrés sur ton portefeuille.</p>
+        <p>Historique des dividendes manuels et estimés depuis yfinance.</p>
     </div>
     <a href="{{ url_for('main.add_dividend_route') }}" class="btn btn-success">+ Dividende</a>
 </div>
 
-{% if not dividends %}
+{% if not has_manual and not has_auto %}
 <div class="card empty-state">
     <h3>Aucun dividende enregistré</h3>
-    <p>Enregistre tes dividendes pour suivre ton rendement total.</p>
+    <p>Enregistre tes dividendes ou ajoute des actifs à dividendes pour voir l'historique automatique.</p>
     <a href="{{ url_for('main.add_dividend_route') }}" class="btn btn-success">+ Ajouter un dividende</a>
 </div>
 
@@ -21,17 +70,24 @@
 
 <div class="kpi-grid">
     <div class="kpi-card">
-        <div class="kpi-label">Nombre de versements</div>
-        <div class="kpi-value">{{ dividends|length }}</div>
+        <div class="kpi-label">Versements manuels</div>
+        <div class="kpi-value">{{ dividends|length if has_manual else 0 }}</div>
     </div>
     <div class="kpi-card">
-        <div class="kpi-label">Total dividendes reçus</div>
-        <div class="kpi-value positive">
-            {{ dividends|sum(attribute='amount')|round(2) }} €
-        </div>
+        <div class="kpi-label">Total manuel</div>
+        <div class="kpi-value positive">{{ manual_total }} €</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total automatique (yfinance)</div>
+        <div class="kpi-value positive">{{ auto_total.v|round(2) }} €</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total combiné</div>
+        <div class="kpi-value positive">{{ combined_total }} €</div>
     </div>
 </div>
 
+<!-- Combined table -->
 <div class="card table-card">
     <div class="table-wrap">
         <table>
@@ -40,23 +96,48 @@
                     <th>Date</th>
                     <th>Actif</th>
                     <th>Montant reçu</th>
-                    <th>Note</th>
+                    <th>Détail</th>
+                    <th>Note / Source</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
+
+            {% if has_auto %}
+            {% for d in auto_dividends %}
+            <tr>
+                <td>{{ d['date'] }}</td>
+                <td>
+                    <span class="badge badge-etf">{{ d['ticker'] }}</span>
+                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">{{ d['name'] }}</span>
+                </td>
+                <td><strong class="positive">{{ d['amount']|round(2) }} €</strong></td>
+                <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">
+                    {{ d['shares_held']|round(4) }} parts × {{ d['amount_per_share']|round(4) }} €
+                </td>
+                <td>
+                    <span class="badge-auto">⚡ Auto</span>
+                </td>
+                <td style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+
+            {% if has_manual %}
             {% for d in dividends %}
             <tr>
                 <td>{{ d['date'] }}</td>
                 <td>
                     <span class="badge badge-etf">{{ d['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">
-                        {{ d['name'] }}
-                    </span>
+                    <span style="font-size:0.82rem; color:#6B7280; margin-left:0.4rem;">{{ d['name'] }}</span>
                 </td>
                 <td><strong class="positive">{{ d['amount'] }} €</strong></td>
-                <td style="color:#9CA3AF; font-size:0.82rem;">
-                    {{ d['notes'] or '—' }}
+                <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">—</td>
+                <td>
+                    <span class="badge-manual">✎ Manuel</span>
+                    {% if d['notes'] %}
+                    <span style="font-size:0.78rem; color:rgba(255,255,255,0.35); margin-left:0.3rem;">{{ d['notes'] }}</span>
+                    {% endif %}
                 </td>
                 <td>
                     <form method="POST"
@@ -67,6 +148,8 @@
                 </td>
             </tr>
             {% endfor %}
+            {% endif %}
+
             </tbody>
         </table>
     </div>

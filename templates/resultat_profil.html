@@ -161,6 +161,95 @@
     font-weight: 700;
 }
 
+/* ── Asset suggestions ── */
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1.25rem;
+}
+.suggestion-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: border-color 0.18s, background 0.18s;
+}
+.suggestion-card:hover {
+    border-color: rgba(129,140,248,0.3);
+    background: rgba(129,140,248,0.04);
+}
+.suggestion-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.suggestion-ticker {
+    font-size: 1rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.02em;
+}
+.suggestion-name {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.45);
+    margin-top: 0.15rem;
+    line-height: 1.35;
+}
+.suggestion-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+.suggestion-type {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4);
+    border-radius: 6px;
+    padding: 0.18rem 0.55rem;
+}
+.suggestion-alloc {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(91,95,237,0.12);
+    color: #818CF8;
+    border-radius: 6px;
+    padding: 0.18rem 0.55rem;
+}
+.suggestion-risk {
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 0.18rem 0.55rem;
+}
+.suggestion-explication {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.55;
+    flex: 1;
+}
+.suggestion-action {
+    margin-top: 0.25rem;
+}
+.suggestion-action a {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #818CF8;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+.suggestion-action a:hover { opacity: 1; }
+
 /* ── Actions ── */
 .result-actions {
     display: flex;
@@ -174,6 +263,7 @@
     .score-number { font-size: 2.8rem; }
     .score-profil-name { font-size: 1.6rem; }
     .rec-card, .dca-card { padding: 1.25rem; }
+    .suggestions-grid { grid-template-columns: 1fr; }
     .result-actions { flex-direction: column; }
     .result-actions .btn { text-align: center; }
 }
@@ -242,6 +332,63 @@
             {{ recommendation_html | safe }}
         </div>
     </div>
+
+    <!-- Asset suggestions -->
+    {% if asset_suggestions %}
+    <div class="card" style="padding:1.75rem 2rem; margin-bottom:1.25rem;">
+        <h3 style="font-size:1rem; font-weight:800; color:white; margin-bottom:0.35rem; display:flex; align-items:center; gap:0.5rem;">
+            <span style="color:#818CF8;">◈</span>
+            Actifs suggérés pour ton profil
+        </h3>
+        <p style="font-size:0.82rem; color:rgba(255,255,255,0.35); margin-bottom:0; line-height:1.5;">
+            Sélection indicative générée par IA · pas un conseil d'investissement
+        </p>
+        <div class="suggestions-grid">
+            {% for a in asset_suggestions %}
+            {% set risk = a.score_risque | int %}
+            {% if risk < 34 %}
+                {% set risk_color = '#34D399' %}
+                {% set risk_bg = 'rgba(52,211,153,0.12)' %}
+            {% elif risk < 67 %}
+                {% set risk_color = '#F6C90E' %}
+                {% set risk_bg = 'rgba(246,201,14,0.12)' %}
+            {% else %}
+                {% set risk_color = '#F87171' %}
+                {% set risk_bg = 'rgba(248,113,113,0.12)' %}
+            {% endif %}
+            <div class="suggestion-card">
+                <div class="suggestion-header">
+                    <div>
+                        <div class="suggestion-ticker">{{ a.ticker }}</div>
+                        <div class="suggestion-name">{{ a.nom }}</div>
+                    </div>
+                </div>
+                <div class="suggestion-badges">
+                    {% if a.type %}
+                    <span class="suggestion-type">{{ a.type }}</span>
+                    {% endif %}
+                    {% if a.allocation_pct %}
+                    <span class="suggestion-alloc">{{ a.allocation_pct }}% alloc.</span>
+                    {% endif %}
+                    {% if a.score_risque %}
+                    <span class="suggestion-risk" style="background:{{ risk_bg }}; color:{{ risk_color }};">
+                        Risque {{ risk }}/100
+                    </span>
+                    {% endif %}
+                </div>
+                {% if a.explication %}
+                <div class="suggestion-explication">{{ a.explication }}</div>
+                {% endif %}
+                <div class="suggestion-action">
+                    <a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}">
+                        Voir dans Explorer →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- DCA Simulator -->
     <div class="card dca-card" style="margin-bottom:1.25rem;">

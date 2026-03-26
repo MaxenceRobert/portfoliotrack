@@ -3,7 +3,8 @@ from datetime import datetime, date, timedelta
 from database import (
     get_user_assets, get_purchases_by_asset,
     get_sales_by_asset, get_dca_goal, get_all_purchases,
-    get_dividends_by_asset, get_total_dividends
+    get_dividends_by_asset, get_total_dividends,
+    get_auto_div_cache, save_auto_div_cache,
 )
 
 
@@ -463,3 +464,95 @@ def get_ticker_history(ticker, period='1y'):
     except Exception as e:
         print(f"Erreur historique {ticker}: {e}")
         return [], []
+
+
+# ── Dividendes automatiques (Yahoo Finance, cache 24h) ────────────────────────
+
+def get_ticker_dividends(ticker):
+    """
+    Retourne l'historique des dividendes par action pour un ticker (cache 24h).
+    Format : [{'date': 'YYYY-MM-DD', 'amount_per_share': float}, ...]
+    """
+    cached = get_auto_div_cache(ticker)
+    if cached is not None:
+        return cached
+
+    try:
+        t    = yf.Ticker(ticker)
+        divs = t.dividends
+        if divs is None or divs.empty:
+            result = []
+        else:
+            result = [
+                {
+                    'date':             d.strftime('%Y-%m-%d'),
+                    'amount_per_share': round(float(v), 6),
+                }
+                for d, v in zip(divs.index, divs)
+                if float(v) > 0
+            ]
+        save_auto_div_cache(ticker, result)
+        return result
+    except Exception as e:
+        print(f"[auto_div] {ticker}: erreur → {e}")
+        return []
+
+
+def get_auto_dividends_for_asset(ticker, purchases, sales):
+    """
+    Calcule les dividendes réellement reçus par l'utilisateur en fonction
+    de sa position réelle à chaque date de détachement.
+    Retourne : [{'date', 'amount_per_share', 'shares_held', 'total_amount'}, ...]
+    """
+    if not purchases:
+        return []
+
+    div_history = get_ticker_dividends(ticker)
+    if not div_history:
+        return []
+
+    # Construire la liste des événements (achats/ventes) triés chronologiquement
+    events = sorted(
+        [{'date': p['date'], 'type': 'buy',  'shares': float(p['shares'])} for p in purchases] +
+        [{'date': s['date'], 'type': 'sell', 'shares': float(s['shares'])} for s in sales],
+        key=lambda x: x['date']
+    )
+
+    auto_divs = []
+    for div in div_history:
+        div_date = div['date']
+        # Calculer les parts détenues à la date de détachement
+        shares_held = 0.0
+        for e in events:
+            if e['date'] <= div_date:
+                shares_held += e['shares'] if e['type'] == 'buy' else -e['shares']
+            else:
+                break
+        shares_held = max(0.0, round(shares_held, 6))
+        if shares_held > 0.0001:
+            total = round(shares_held * div['amount_per_share'], 2)
+            if total > 0:
+                auto_divs.append({
+                    'date':             div_date,
+                    'amount_per_share': div['amount_per_share'],
+                    'shares_held':      shares_held,
+                    'total_amount':     total,
+                })
+
+    return auto_divs
+
+
+def get_estimated_annual_dividend(ticker, shares_held):
+    """
+    Dividende annuel estimé = somme des dividendes par action des 12 derniers mois × parts détenues.
+    """
+    if shares_held <= 0:
+        return 0.0
+
+    div_history = get_ticker_dividends(ticker)
+    if not div_history:
+        return 0.0
+
+    cutoff = (date.today() - timedelta(days=365)).strftime('%Y-%m-%d')
+    trailing = sum(d['amount_per_share'] for d in div_history if d['date'] >= cutoff)
+    return round(trailing * shares_held, 2)

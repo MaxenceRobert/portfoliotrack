@@ -24,7 +24,8 @@ from database import (
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
     get_portfolio_chart_data, get_benchmark_curve,
-    get_ticker_info, get_ticker_history
+    get_ticker_info, get_ticker_history,
+    get_auto_dividends_for_asset, get_estimated_annual_dividend,
 )
 from auth import auth_bp, get_user_object
 import plotly.graph_objects as go
@@ -444,6 +445,15 @@ def dashboard():
         'all_done':   has_profil and has_assets,
     }
 
+    # KPI dividendes estimés cette année (trailing 12 mois × parts détenues)
+    estimated_dividends_year = 0.0
+    for a in summary.get('assets', []):
+        if not a.get('fully_sold', False) and float(a.get('shares_held') or 0) > 0:
+            estimated_dividends_year += get_estimated_annual_dividend(
+                a['ticker'], float(a['shares_held'])
+            )
+    estimated_dividends_year = round(estimated_dividends_year, 2)
+
     return render_template(
         'dashboard.html',
         summary=summary,
@@ -455,6 +465,7 @@ def dashboard():
         envelope_summary=envelope_summary,
         onboarding_state=onboarding_state,
         all_assets_json=all_assets_json,
+        estimated_dividends_year=estimated_dividends_year,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -833,8 +844,27 @@ def add_dividend_route():
 @main_bp.route('/dividends')
 @login_required
 def dividends():
+    from database import get_purchases_by_asset, get_sales_by_asset
     all_d = get_all_dividends(current_user.id)
-    return render_template('dividends.html', dividends=all_d)
+
+    assets = get_user_assets(current_user.id)
+    auto_divs_list = []
+    for asset in assets:
+        purchases = get_purchases_by_asset(asset['id'], current_user.id)
+        sales     = get_sales_by_asset(asset['id'], current_user.id)
+        for d in get_auto_dividends_for_asset(asset['ticker'], purchases, sales):
+            auto_divs_list.append({
+                'date':             d['date'],
+                'ticker':           asset['ticker'],
+                'name':             asset['name'],
+                'amount':           d['total_amount'],
+                'shares_held':      d['shares_held'],
+                'amount_per_share': d['amount_per_share'],
+                'source':           'auto',
+            })
+    auto_divs_list.sort(key=lambda x: x['date'], reverse=True)
+
+    return render_template('dividends.html', dividends=all_d, auto_dividends=auto_divs_list)
 
 @main_bp.route('/dividends/delete/<int:dividend_id>', methods=['POST'])
 @login_required
@@ -1003,39 +1033,17 @@ def test_profil():
 def resultat_profil():
     import os
     import requests as req
+    import json as _json
 
+    # ── Lecture des réponses (15 questions) ────────────────────────────────────
     answers = {}
-    for i in range(1, 41):
-        answers[i] = request.form.get(f'q{i}', '')
+    for i in range(1, 16):
+        answers[i] = request.form.get(f'q{i}', '').strip()
     answers_text = {}
-    for i in range(1, 41):
-        answers_text[i] = request.form.get(f'q{i}_text', '')
+    for i in range(1, 16):
+        answers_text[i] = request.form.get(f'q{i}_text', '').strip()
 
-    DEFAULT = {'A': 0, 'B': 33, 'C': 66, 'D': 100}
-    EXCEPTIONS = {
-        5:  {'A': 0, 'B': 25, 'C': 50, 'D': 100},
-        8:  {'A': 25, 'B': 50, 'C': 75, 'D': 100},
-        13: {'A': 100, 'B': 80, 'C': 50, 'D': 25},
-        19: {'A': 25, 'B': 25, 'C': 75, 'D': 100},
-        26: {'A': 0, 'B': 50, 'C': 100, 'D': 75},
-        27: {'A': 25, 'B': 75, 'C': 75, 'D': 100},
-        33: {'A': 25, 'B': 0, 'C': 50, 'D': 100},
-        34: {'A': 25, 'B': 0, 'C': 50, 'D': 100},
-        36: {'A': 100, 'B': 25, 'C': 50, 'D': 0},
-        38: {'A': 100, 'B': 75, 'C': 25, 'D': 0},
-    }
-    OPEN_QS = {22, 23, 28, 37}
-    AXES = {
-        1: [1, 2, 3, 4, 5],
-        2: [6, 7, 8, 9, 10],
-        3: [11, 12, 13, 14, 15],
-        4: [16, 17, 18, 19, 20],
-        5: [21, 22, 23, 24, 25],
-        6: [26, 27, 28, 29, 30],
-        7: [31, 32, 33, 34, 35],
-        8: [36, 37, 38, 39, 40],
-    }
-    AXIS_WEIGHTS = {1: 0.20, 2: 0.20, 3: 0.15, 4: 0.10, 5: 0.05, 6: 0.15, 7: 0.10, 8: 0.05}
+    # ── Noms des axes ─────────────────────────────────────────────────────────
     AXIS_NAMES = {
         1: 'Tolérance émotionnelle',
         2: 'Capacité financière',
@@ -1047,115 +1055,197 @@ def resultat_profil():
         8: 'Projets futurs',
     }
 
-    def get_score(qn, ans):
-        if not ans or ans == 'E':
-            return 50
-        return EXCEPTIONS.get(qn, DEFAULT).get(ans, 50)
+    # ── Scoring des questions numériques (Q1-Q4) ──────────────────────────────
+    def numeric_score(raw, breakpoints):
+        try:
+            v = float(raw)
+        except (ValueError, TypeError):
+            return 50.0
+        if v <= breakpoints[0][0]:
+            return float(breakpoints[0][1])
+        for i in range(len(breakpoints) - 1):
+            x0, y0 = breakpoints[i]
+            x1, y1 = breakpoints[i + 1]
+            if x0 <= v <= x1:
+                return y0 + (v - x0) / (x1 - x0) * (y1 - y0)
+        return float(breakpoints[-1][1])
+
+    # Q1 — âge : jeune → risque élevé possible
+    AGE_BP    = [(18,90),(25,80),(35,60),(50,35),(65,15),(90,5)]
+    # Q2 — horizon en années
+    HORIZ_BP  = [(0,5),(2,20),(5,50),(10,70),(20,85),(40,95)]
+    # Q3 — mois d'épargne de précaution
+    EPARG_BP  = [(0,5),(1,20),(3,45),(6,65),(12,80),(24,95)]
+    # Q4 — % revenus investissables
+    PCT_BP    = [(0,10),(5,30),(10,50),(20,70),(30,85),(50,95)]
+
+    # Q5-Q10 : choix multiples
+    SC = {
+        5:  {'A':0, 'B':25, 'C':60, 'D':100, 'E':50},   # reaction -30%
+        6:  {'A':20,'B':60, 'C':90, 'D':70,  'E':50},   # objectif
+        7:  {'A':10,'B':40, 'C':75, 'D':95,  'E':50},   # expérience
+        8:  {'A':10,'B':35, 'C':70, 'D':90,  'E':50},   # situation pro
+        9:  {'A':90,'B':60, 'C':30, 'D':10,  'E':50},   # projets 3 ans (inversé)
+        10: {'A':90,'B':60, 'C':30,           'E':50},   # dépendants (inversé)
+    }
+
+    def q_score(qn):
+        v = answers.get(qn, '')
+        if qn == 1:
+            return numeric_score(v, AGE_BP)
+        if qn == 2:
+            return numeric_score(v, HORIZ_BP)
+        if qn == 3:
+            return numeric_score(v, EPARG_BP)
+        if qn == 4:
+            return numeric_score(v, PCT_BP)
+        return float(SC.get(qn, {}).get(v, 50))
+
+    # Axes (Q11-Q15 = questions ouvertes, pas scorées)
+    AXES = {
+        1: [5],           # tolérance : réaction chute
+        2: [3, 4, 8],     # capacité : épargne, % revenus, situation pro
+        3: [1, 2],        # horizon : âge, années
+        4: [7],           # connaissances
+        5: [],            # valeurs (open seulement → 50 par défaut)
+        6: [6],           # objectif
+        7: [5, 7],        # comportement : réaction + expérience passée
+        8: [8, 9, 10],    # projets futurs
+    }
+    AXIS_WEIGHTS = {1:0.25, 2:0.20, 3:0.20, 4:0.10, 5:0.02, 6:0.08, 7:0.05, 8:0.10}
 
     axis_scores = {}
     for ax, qs in AXES.items():
-        scored = [q for q in qs if q not in OPEN_QS]
-        axis_scores[ax] = (sum(get_score(q, answers.get(q, '')) for q in scored) / len(scored)) if scored else 50
+        if qs:
+            axis_scores[ax] = sum(q_score(q) for q in qs) / len(qs)
+        else:
+            axis_scores[ax] = 50.0
 
-    global_score = round(sum(axis_scores[ax] * AXIS_WEIGHTS[ax] for ax in AXES))
+    global_score = max(0, min(100, round(
+        sum(axis_scores[ax] * AXIS_WEIGHTS[ax] for ax in AXES)
+    )))
 
     if global_score <= 20:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'Prudent', '80% fonds euros / 20% actions', 3.0, '#34D399', '🛡️'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Prudent',       '80% fonds euros / 20% actions',    3.0, '#34D399', '🛡️'
     elif global_score <= 40:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'Modéré Prudent', '60% fonds euros / 40% actions', 4.0, '#6EE7B7', '⚖️'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Modéré Prudent','60% fonds euros / 40% actions',    4.0, '#6EE7B7', '⚖️'
     elif global_score <= 60:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'Équilibré', '50% obligations / 50% actions', 5.0, '#F6C90E', '🎯'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Équilibré',     '50% obligations / 50% actions',    5.0, '#F6C90E', '🎯'
     elif global_score <= 80:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'Dynamique', '20% obligations / 80% actions', 7.0, '#5B5FED', '🚀'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Dynamique',     '20% obligations / 80% actions',    7.0, '#5B5FED', '🚀'
     else:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'Agressif', '95% actions / 5% liquidités', 9.0, '#F87171', '⚡'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'Agressif',      '95% actions / 5% liquidités',      9.0, '#F87171', '⚡'
 
     axis_scores_r = {k: round(v) for k, v in axis_scores.items()}
 
-    def ans_display(qn):
-        val = answers.get(qn, '')
-        if not val:
-            return 'Non renseigné'
-        if val == 'E':
-            return f"Autre: {answers_text.get(qn, '').strip()}"
-        return val
-
-    contraintes_text = (
-        f"Contraintes éthiques/religieuses: {ans_display(21)}. "
-        f"Importance de l'impact: {ans_display(24)}. "
-        f"Contraintes fiscales: {ans_display(25)}."
-    )
-
-    system_prompt = (
-        "Tu es un outil pédagogique d'orientation financière. Tu génères des recommandations "
-        "éducatives personnalisées basées sur un profil utilisateur. Tu n'es pas un conseiller "
-        "en investissement agréé. Chaque recommandation doit inclure un disclaimer clair précisant "
-        "qu'il s'agit d'une orientation pédagogique et non d'un conseil en investissement "
-        "personnalisé. Tu rédiges en français, avec un ton accessible, direct et bienveillant."
-    )
-
-    user_prompt = (
-        f"Voici le profil complet d'un utilisateur ayant complété le test de profil investisseur.\n\n"
-        f"Score global : {global_score}/100. Profil : {profil}.\n\n"
-        f"Scores par axe — Tolérance émotionnelle : {axis_scores_r[1]}/100, "
-        f"Capacité financière : {axis_scores_r[2]}/100, "
-        f"Horizon temporel : {axis_scores_r[3]}/100, "
-        f"Connaissances financières : {axis_scores_r[4]}/100, "
-        f"Objectif financier : {axis_scores_r[6]}/100, "
-        f"Comportement passé : {axis_scores_r[7]}/100, "
-        f"Projets futurs : {axis_scores_r[8]}/100.\n\n"
-        f"Contraintes et valeurs : {contraintes_text}\n"
-        f"Convictions sectorielles : {answers.get(22, '') or 'Aucune préférence particulière'}.\n"
-        f"Convictions géographiques : {answers.get(23, '') or 'Aucune préférence particulière'}.\n"
-        f"Objectif de vie : {answers.get(28, '') or 'Non renseigné'}.\n"
-        f"Projets futurs détaillés : {answers.get(37, '') or 'Aucun projet précis'}.\n\n"
-        f"Génère une recommandation concise et accessible structurée ainsi : "
-        f"1) Analyse du profil en 3 phrases maximum, "
-        f"2) 2-3 enveloppes fiscales adaptées avec 3 bullet points chacune, "
-        f"3) Maximum 3 exemples d'ETF illustratifs avec disclaimer, "
-        f"4) Allocation indicative en pourcentages par grande catégorie uniquement, "
-        f"5) 3 points de vigilance de 2 lignes chacun, "
-        f"6) Disclaimer légal en une phrase. "
-        f"Sois direct, accessible, et va à l'essentiel. Pas de tableaux complexes, pas de listes exhaustives."
+    # ── Contexte des questions ouvertes pour Claude ────────────────────────────
+    open_ctx = (
+        f"Situation financière / objectif: {answers.get(11) or 'Non renseigné'}. "
+        f"Convictions sectorielles ou contraintes éthiques: {answers.get(12) or 'Aucune'}. "
+        f"Convictions géographiques: {answers.get(13) or 'Aucune'}. "
+        f"Types d'actifs souhaités ou à éviter: {answers.get(14) or 'Aucune préférence'}. "
+        f"Montant mensuel envisagé: {answers.get(15) or '?'} €/mois."
     )
 
     api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    api_headers = {
+        'x-api-key': api_key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+    }
+
+    # ── Appel 1 : recommandation textuelle ────────────────────────────────────
+    system_prompt = (
+        "Tu es un outil pédagogique d'orientation financière. Tu génères des recommandations "
+        "éducatives personnalisées. Tu n'es pas un conseiller en investissement agréé. "
+        "Chaque recommandation inclut un disclaimer clair. Tu rédiges en français, ton accessible et bienveillant."
+    )
+    user_prompt = (
+        f"Profil investisseur — score {global_score}/100 ({profil}).\n"
+        f"Axes : tolérance {axis_scores_r[1]}/100, capacité {axis_scores_r[2]}/100, "
+        f"horizon {axis_scores_r[3]}/100, connaissances {axis_scores_r[4]}/100, "
+        f"objectif {axis_scores_r[6]}/100, comportement {axis_scores_r[7]}/100, "
+        f"projets {axis_scores_r[8]}/100.\n"
+        f"Contexte libre : {open_ctx}\n\n"
+        f"Génère une recommandation concise : "
+        f"1) Analyse du profil (3 phrases max). "
+        f"2) 2-3 enveloppes fiscales adaptées (3 bullet points chacune). "
+        f"3) Max 3 ETF illustratifs avec disclaimer. "
+        f"4) Allocation indicative par catégorie (%). "
+        f"5) 3 points de vigilance (2 lignes chacun). "
+        f"6) Disclaimer légal en 1 phrase. "
+        f"Sois direct, accessible, sans tableaux complexes."
+    )
+
     recommendation = ''
     if api_key:
         try:
             resp = req.post(
                 'https://api.anthropic.com/v1/messages',
-                headers={
-                    'x-api-key': api_key,
-                    'anthropic-version': '2023-06-01',
-                    'content-type': 'application/json',
-                },
+                headers=api_headers,
                 json={
-                    'model': 'claude-haiku-4-5-20251001',
+                    'model':      'claude-haiku-4-5-20251001',
                     'max_tokens': 1500,
-                    'system': system_prompt,
-                    'messages': [{'role': 'user', 'content': user_prompt}]
+                    'system':     system_prompt,
+                    'messages':   [{'role': 'user', 'content': user_prompt}],
                 },
-                timeout=30
+                timeout=30,
             )
             if resp.status_code == 200:
                 recommendation = resp.json()['content'][0]['text']
             else:
-                print(f"Anthropic API error: {resp.status_code} {resp.text}")
+                print(f"Anthropic rec error: {resp.status_code}")
         except Exception as e:
-            print(f"Anthropic API error: {e}")
+            print(f"Anthropic rec error: {e}")
 
     if not recommendation:
         recommendation = (
             f"**Profil {profil}** — Score global : {global_score}/100\n\n"
             "La génération de recommandation personnalisée n'est pas disponible pour le moment. "
-            "Consultez un conseiller financier agréé pour obtenir des conseils adaptés à votre situation.\n\n"
-            "> ⚠️ Les informations affichées sont fournies à titre indicatif uniquement et ne constituent "
-            "pas un conseil en investissement personnalisé."
+            "Consultez un conseiller financier agréé.\n\n"
+            "> ⚠️ À titre indicatif uniquement, pas un conseil en investissement."
         )
 
     rec_html = md_lib.markdown(recommendation, extensions=['nl2br'])
 
+    # ── Appel 2 : actifs suggérés (JSON) ──────────────────────────────────────
+    asset_suggestions = []
+    if api_key:
+        assets_prompt = (
+            f"Tu es un outil pédagogique en investissement. "
+            f"Profil : score {global_score}/100 ({profil}), horizon {answers.get(2, '?')} ans. "
+            f"{open_ctx}\n\n"
+            f"Recommande exactement 6 actifs réels adaptés à ce profil. "
+            f"Réponds UNIQUEMENT en JSON valide, sans markdown ni texte autour, format exact :\n"
+            f'[{{"ticker":"XXXX","nom":"Nom complet","type":"ETF","score_risque":45,'
+            f'"allocation_pct":20,"explication":"Pourquoi cet actif correspond"}}, ...]\n'
+            f"Types autorisés : ETF, Action, Crypto, Obligation. "
+            f"score_risque = estimation 0-100. allocation_pct = allocation suggérée (total ~100%). "
+            f"Tickers Yahoo Finance exacts obligatoires. "
+            f"DISCLAIMER : à titre illustratif uniquement."
+        )
+        try:
+            resp2 = req.post(
+                'https://api.anthropic.com/v1/messages',
+                headers=api_headers,
+                json={
+                    'model':    'claude-haiku-4-5-20251001',
+                    'max_tokens': 1200,
+                    'messages': [{'role': 'user', 'content': assets_prompt}],
+                },
+                timeout=25,
+            )
+            if resp2.status_code == 200:
+                raw = resp2.json()['content'][0]['text'].strip()
+                # Extraire le JSON même si du texte entoure
+                start = raw.find('[')
+                end   = raw.rfind(']') + 1
+                if start >= 0 and end > start:
+                    asset_suggestions = _json.loads(raw[start:end])
+        except Exception as e:
+            print(f"Anthropic assets error: {e}")
+
+    # ── Sauvegarde ────────────────────────────────────────────────────────────
     if current_user.is_authenticated:
         try:
             save_profil_investisseur(
@@ -1179,6 +1269,7 @@ def resultat_profil():
         axis_scores=axis_scores_r,
         axis_names=AXIS_NAMES,
         recommendation_html=rec_html,
+        asset_suggestions=asset_suggestions,
     )
 
 # ── Mon profil investisseur (résultat sauvegardé) ────────────────────────────
@@ -1226,6 +1317,63 @@ def mon_profil_investisseur():
         axis_names=axis_names,
         recommendation_html=rec_html,
     )
+
+# ── Barre ticker Bloomberg (cache mémoire 15 min) ─────────────────────────────
+import time as _time
+_TICKER_BAR_CACHE = {'data': None, 'ts': 0}
+
+TICKER_BAR_ITEMS = [
+    ('S&P 500',    'SPY'),
+    ('NASDAQ',     'QQQ'),
+    ('CAC 40',     '^FCHI'),
+    ('MSCI World', 'IWDA.AS'),
+    ('VWCE',       'VWCE.DE'),
+    ('DAX',        '^GDAXI'),
+    ('Dow Jones',  '^DJI'),
+    ('Nikkei',     '^N225'),
+    ('Or',         'GC=F'),
+    ('Pétrole',    'CL=F'),
+    ('BTC',        'BTC-USD'),
+    ('ETH',        'ETH-USD'),
+    ('EUR/USD',    'EURUSD=X'),
+    ('Apple',      'AAPL'),
+    ('NVIDIA',     'NVDA'),
+    ('Microsoft',  'MSFT'),
+    ('Amazon',     'AMZN'),
+    ('Tesla',      'TSLA'),
+    ('Stoxx 600',  '^STOXX'),
+]
+
+@main_bp.route('/api/ticker-bar')
+def ticker_bar_api():
+    import yfinance as _yf
+    now = _time.time()
+    if _TICKER_BAR_CACHE['data'] and now - _TICKER_BAR_CACHE['ts'] < 900:
+        return jsonify(_TICKER_BAR_CACHE['data'])
+
+    results = []
+    for name, ticker in TICKER_BAR_ITEMS:
+        try:
+            fi    = _yf.Ticker(ticker).fast_info
+            price = float(fi.get('last_price') or fi.get('regularMarketPrice') or 0)
+            prev  = float(fi.get('previous_close') or fi.get('regularMarketPreviousClose') or 0)
+            if price <= 0:
+                continue
+            chg = round((price - prev) / prev * 100, 2) if prev > 0 else 0.0
+            results.append({'name': name, 'ticker': ticker,
+                            'price': round(price, 2), 'change_pct': chg})
+        except Exception:
+            pass
+
+    data = {'items': results}
+    _TICKER_BAR_CACHE['data'] = data
+    _TICKER_BAR_CACHE['ts']   = now
+    return jsonify(data)
+
+# ── API search-assets (alias search-ticker pour Explorer) ─────────────────────
+@main_bp.route('/api/search-assets')
+def search_assets():
+    return search_ticker()
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)

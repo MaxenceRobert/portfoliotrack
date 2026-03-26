@@ -114,12 +114,68 @@
     .risk-block-divider { display: none; }
     .risk-block-metrics { gap: 1rem; }
 }
+
+/* ── Ticker bar ── */
+.ticker-bar-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    padding: 0.55rem 0;
+    position: relative;
+}
+.ticker-bar-wrap::before,
+.ticker-bar-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 48px;
+    z-index: 2;
+    pointer-events: none;
+}
+.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, #0d0d16 0%, transparent 100%); }
+.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, #0d0d16 0%, transparent 100%); }
+.ticker-track {
+    display: flex;
+    white-space: nowrap;
+    width: max-content;
+    animation: tickerScroll 55s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 1.25rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    white-space: nowrap;
+}
+.ticker-name { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+.ticker-price { color: rgba(255,255,255,0.8); }
+.ticker-chg-pos { color: #34D399; font-size: 0.72rem; font-weight: 700; }
+.ticker-chg-neg { color: #F87171; font-size: 0.72rem; font-weight: 700; }
+.ticker-loading { font-size: 0.75rem; color: rgba(255,255,255,0.25); padding: 0 1.5rem; font-style: italic; }
 </style>
 
 <div class="page-header">
     <div>
         <h1>Explorer un actif</h1>
         <p>Recherchez n'importe quel ETF, action ou crypto disponible sur Yahoo Finance.</p>
+    </div>
+</div>
+
+<!-- ── Ticker bar ── -->
+<div class="ticker-bar-wrap" id="ticker-bar-wrap">
+    <div class="ticker-track" id="ticker-track">
+        <span class="ticker-loading">Chargement des marchés…</span>
     </div>
 </div>
 
@@ -442,6 +498,36 @@ function goToTicker() {
     const val = input.value.trim().toUpperCase();
     if (val) window.location.href = `{{ url_for('main.explorer') }}?ticker=${val}&period={{ period }}`;
 }
+</script>
+
+<script>
+// ── Ticker bar ──
+(function() {
+    function buildTickerHTML(items) {
+        var html = '';
+        items.forEach(function(it) {
+            var chgClass = it.change_pct >= 0 ? 'ticker-chg-pos' : 'ticker-chg-neg';
+            var chgSign  = it.change_pct >= 0 ? '+' : '';
+            html += '<span class="ticker-item">' +
+                '<span class="ticker-name">' + it.name + '</span>' +
+                '<span class="ticker-price">' + it.price + '</span>' +
+                '<span class="' + chgClass + '">' + chgSign + it.change_pct.toFixed(2) + '%</span>' +
+            '</span>';
+        });
+        return html + html;
+    }
+    fetch('/api/ticker-bar')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var track = document.getElementById('ticker-track');
+            if (!track || !data.items || !data.items.length) return;
+            track.innerHTML = buildTickerHTML(data.items);
+        })
+        .catch(function() {
+            var wrap = document.getElementById('ticker-bar-wrap');
+            if (wrap) wrap.style.display = 'none';
+        });
+})();
 </script>
 
 {% endblock %}

@@ -153,6 +153,14 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS auto_dividends_cache (
+                id        SERIAL PRIMARY KEY,
+                ticker    TEXT NOT NULL UNIQUE,
+                data_json TEXT NOT NULL,
+                cached_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
     else:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -272,6 +280,14 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS auto_dividends_cache (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker    TEXT NOT NULL UNIQUE,
+                data_json TEXT NOT NULL,
+                cached_at TEXT DEFAULT (datetime('now'))
+            )
+        ''')
 
     conn.commit()
 
@@ -338,6 +354,30 @@ def init_db():
                     expires_at TEXT    NOT NULL,
                     used       INTEGER DEFAULT 0,
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # ── Migration : table auto_dividends_cache ────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS auto_dividends_cache (
+                    id        SERIAL PRIMARY KEY,
+                    ticker    TEXT NOT NULL UNIQUE,
+                    data_json TEXT NOT NULL,
+                    cached_at TIMESTAMP DEFAULT NOW()
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS auto_dividends_cache (
+                    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker    TEXT NOT NULL UNIQUE,
+                    data_json TEXT NOT NULL,
+                    cached_at TEXT DEFAULT (datetime('now'))
                 )
             ''')
         conn.commit()
@@ -1020,5 +1060,59 @@ def invalidate_reset_token(token):
     c = conn.cursor()
     used_val = True if is_postgres() else 1
     c.execute(f'UPDATE reset_tokens SET used = {p} WHERE token = {p}', (used_val, token))
+    conn.commit()
+    conn.close()
+
+# ── Auto dividends cache (Yahoo Finance, TTL 24h) ─────────────────────────────
+
+def get_auto_div_cache(ticker):
+    """Returns cached per-share dividend list if < 24h old, else None."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM auto_dividends_cache WHERE ticker = {p}', (ticker,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    if not row:
+        return None
+    cached_at = row['cached_at']
+    try:
+        if isinstance(cached_at, str):
+            dt = datetime.datetime.fromisoformat(
+                cached_at.replace('Z', '').split('.')[0].replace('T', ' ')
+            )
+        else:
+            dt = cached_at
+            if hasattr(dt, 'tzinfo') and dt.tzinfo:
+                dt = dt.replace(tzinfo=None)
+        if (datetime.datetime.utcnow() - dt).total_seconds() >= 86400:
+            return None
+    except Exception:
+        pass
+    try:
+        return json.loads(row['data_json'])
+    except Exception:
+        return None
+
+def save_auto_div_cache(ticker, data):
+    """Upsert per-share dividend list for a ticker."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    data_str = json.dumps(data)
+    if is_postgres():
+        c.execute(f'''
+            INSERT INTO auto_dividends_cache (ticker, data_json)
+            VALUES ({p}, {p})
+            ON CONFLICT(ticker) DO UPDATE SET data_json=EXCLUDED.data_json, cached_at=NOW()
+        ''', (ticker, data_str))
+    else:
+        c.execute(f'''
+            INSERT INTO auto_dividends_cache (ticker, data_json, cached_at)
+            VALUES ({p}, {p}, datetime('now'))
+            ON CONFLICT(ticker) DO UPDATE SET
+                data_json=excluded.data_json,
+                cached_at=datetime('now')
+        ''', (ticker, data_str))
     conn.commit()
     conn.close()
