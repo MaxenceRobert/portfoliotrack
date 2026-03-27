@@ -9,8 +9,8 @@
 .score-hero {
     text-align: center;
     padding: 2.5rem 1.5rem 2rem;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(74,122,155,0.05);
+    border: 1px solid rgba(74,122,155,0.09);
     border-radius: 20px;
     margin-bottom: 1.25rem;
     position: relative;
@@ -31,38 +31,38 @@
 .score-profil-name {
     font-size: 2rem;
     font-weight: 800;
-    color: white;
+    color: #e8f0ff;
     letter-spacing: -0.03em;
     margin-bottom: 0.4rem;
 }
 .score-number {
     font-size: 3.5rem;
     font-weight: 900;
-    color: {% if last_profil.score_global <= 40 %}#4ade80{% elif last_profil.score_global > 80 %}#f87171{% else %}#fff{% endif %};
+    color: {% if last_profil.score_global <= 40 %}#4ade80{% elif last_profil.score_global > 80 %}#f87171{% else %}#e8f0ff{% endif %};
     line-height: 1;
     letter-spacing: -0.04em;
 }
-.score-suffix { font-size: 1.2rem; color: rgba(255,255,255,0.3); font-weight: 600; }
+.score-suffix { font-size: 1.2rem; color: rgba(232,240,255,0.3); font-weight: 600; }
 .score-alloc {
     margin-top: 0.75rem;
     display: inline-block;
     font-size: 0.82rem;
-    color: rgba(255,255,255,0.45);
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(232,240,255,0.45);
+    background: rgba(74,122,155,0.07);
+    border: 1px solid rgba(74,122,155,0.10);
     border-radius: 20px;
     padding: 0.3rem 1rem;
 }
 .score-date {
     margin-top: 0.6rem;
     font-size: 0.75rem;
-    color: rgba(255,255,255,0.2);
+    color: rgba(232,240,255,0.2);
 }
 
 /* ── Score gauge ── */
 .gauge-wrap { margin-bottom: 1.25rem; }
 .gauge-bar-outer {
-    background: rgba(255,255,255,0.06);
+    background: rgba(74,122,155,0.06);
     border-radius: 99px;
     height: 12px;
     position: relative;
@@ -80,16 +80,16 @@
     position: absolute;
     left: 0; top: 0; bottom: 0;
     border-radius: 99px;
-    background: #fff;
+    background: #e8f0ff;
     opacity: 0.85;
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 12px rgba(4,8,15,0.4);
 }
 .gauge-labels {
     display: flex;
     justify-content: space-between;
     font-size: 0.65rem;
-    color: rgba(255,255,255,0.2);
+    color: rgba(232,240,255,0.2);
     font-weight: 600;
     padding: 0 2px;
 }
@@ -99,14 +99,14 @@
 .axis-row { display: flex; align-items: center; gap: 1rem; }
 .axis-name {
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.45);
+    color: rgba(232,240,255,0.45);
     font-weight: 600;
     min-width: 175px;
     flex-shrink: 0;
 }
 .axis-bar-outer {
     flex: 1;
-    background: rgba(255,255,255,0.05);
+    background: rgba(74,122,155,0.07);
     border-radius: 99px;
     height: 7px;
     overflow: hidden;
@@ -114,12 +114,12 @@
 .axis-bar-fill {
     height: 100%;
     border-radius: 99px;
-    background: #fff;
+    background: #e8f0ff;
     transition: width 1s ease;
 }
 .axis-score-val {
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(232,240,255,0.5);
     font-weight: 700;
     min-width: 34px;
     text-align: right;
@@ -127,8 +127,8 @@
 
 /* ── Recommendation ── */
 .rec-card { padding: 2rem; }
-.rec-card h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-.rec-body { color: rgba(255,255,255,0.68); font-size: 0.9rem; line-height: 1.75; }
+.rec-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.rec-body { color: rgba(232,240,255,0.68); font-size: 0.9rem; line-height: 1.75; }
 .rec-body p { margin-bottom: 1rem; }
 .rec-body p:last-child { margin-bottom: 0; }
 .rec-badge {
@@ -138,8 +138,8 @@
     font-size: 0.72rem;
     font-weight: 700;
     background: transparent;
-    color: #555;
-    border: 1px solid #222;
+    color: #4a7a9b;
+    border: 1px solid #1a2a3a;
     border-radius: 20px;
     padding: 0.22rem 0.7rem;
     margin-bottom: 1rem;
@@ -147,17 +147,17 @@
 
 /* ── DCA simulator ── */
 .dca-card { padding: 2rem; }
-.dca-card h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.dca-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
 .dca-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
 .dca-inputs .form-group { margin: 0; }
-.dca-hint { font-size: 0.72rem; color: rgba(255,255,255,0.25); margin-top: 0.25rem; }
+.dca-hint { font-size: 0.72rem; color: rgba(232,240,255,0.25); margin-top: 0.25rem; }
 .dca-rate-badge {
     display: inline-block;
     font-size: 0.72rem;
     background: transparent;
-    color: #555;
+    color: #4a7a9b;
     border-radius: 20px;
-    border: 1px solid #222;
+    border: 1px solid #1a2a3a;
     padding: 0.15rem 0.55rem;
     margin-left: 0.4rem;
     font-weight: 700;
@@ -204,11 +204,11 @@
         <div class="section-title" style="margin-top:0;">Score global</div>
         <div class="gauge-bar-outer">
             <div class="gauge-segments">
-                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
-                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
-                <div class="gauge-seg" style="background:rgba(255,255,255,0.03);"></div>
-                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
-                <div class="gauge-seg" style="background:rgba(255,255,255,0.04);"></div>
+                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
+                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
+                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
+                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
+                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
             </div>
             <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
         </div>
@@ -242,7 +242,7 @@
     <!-- Recommendation -->
     <div class="card rec-card" style="margin-bottom:1.25rem;">
         <h3>
-            <span style="color:#555;">✦</span>
+            <span style="color:#4a7a9b;">✦</span>
             Recommandation personnalisée
         </h3>
         <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
@@ -360,25 +360,25 @@ function runDCA() {
         {
             x: labels, y: invested, name: 'Total investi (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: 'rgba(255,255,255,0.25)', dash: 'dot', width: 2 },
-            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.03)'
+            line: { color: 'rgba(232,240,255,0.25)', dash: 'dot', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.05)'
         },
         {
             x: labels, y: value, name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: '#fff', width: 2.5 },
-            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.04)'
+            line: { color: '#e8f0ff', width: 2.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor:  'rgba(0,0,0,0)',
         height: 320,
         margin: { l: 60, r: 20, t: 20, b: 40 },
-        legend: { orientation: 'h', y: -0.18, font: { color: 'rgba(255,255,255,0.45)' }, bgcolor: 'rgba(0,0,0,0)' },
+        legend: { orientation: 'h', y: -0.18, font: { color: 'rgba(232,240,255,0.45)' }, bgcolor: 'rgba(0,0,0,0)' },
         hovermode: 'x unified',
-        hoverlabel: { bgcolor: '#16161F', bordercolor: 'rgba(255,255,255,0.1)', font: { color: 'rgba(255,255,255,0.8)' } },
-        xaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: 'rgba(255,255,255,0.35)' }, linecolor: 'rgba(255,255,255,0.07)' },
-        yaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: 'rgba(255,255,255,0.35)' }, linecolor: 'rgba(255,255,255,0.07)', tickformat: ',.0f', ticksuffix: ' €' }
+        hoverlabel: { bgcolor: '#16161F', bordercolor: 'rgba(74,122,155,0.1)', font: { color: 'rgba(232,240,255,0.8)' } },
+        xaxis: { gridcolor: 'rgba(74,122,155,0.1)', tickfont: { color: 'rgba(232,240,255,0.35)' }, linecolor: 'rgba(74,122,155,0.1)' },
+        yaxis: { gridcolor: 'rgba(74,122,155,0.1)', tickfont: { color: 'rgba(232,240,255,0.35)' }, linecolor: 'rgba(74,122,155,0.1)', tickformat: ',.0f', ticksuffix: ' €' }
     }, { responsive: true, displayModeBar: false });
 }
 

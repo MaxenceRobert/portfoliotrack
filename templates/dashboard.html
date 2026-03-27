@@ -10,14 +10,14 @@
 .kpi-card-amber,
 .kpi-card-blue,
 .kpi-card-red {
-    border-color: #1a1a1a !important;
-    background: #0a0a0a !important;
+    border-color: var(--border) !important;
+    background: var(--bg-card) !important;
 }
 
 /* ── Asset cards ── */
 .asset-card {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1.4rem;
     transition: border-color 0.25s, background 0.25s, transform 0.25s;
@@ -26,11 +26,11 @@
 }
 .asset-card:hover {
     transform: translateY(-2px);
-    background: #0f0f0f;
-    border-color: #222;
+    background: var(--bg-card);
+    border-color: var(--border);
 }
-.asset-card-positive { border-top: 1px solid #1a1a1a !important; }
-.asset-card-negative { border-top: 1px solid #1a1a1a !important; }
+.asset-card-positive { border-top: 1px solid var(--border) !important; }
+.asset-card-negative { border-top: 1px solid var(--border) !important; }
 
 /* ── Accordéon ── */
 .asset-header {
@@ -44,16 +44,16 @@
     margin: -0.25rem;
     transition: background 0.15s;
 }
-.asset-header:hover { background: rgba(255,255,255,0.03); }
-.asset-header:hover .chevron { color: white; }
+.asset-header:hover { background: rgba(74,122,155,0.05); }
+.asset-header:hover .chevron { color: var(--text); }
 .chevron {
-    color: rgba(255,255,255,0.25);
+    color: rgba(232,240,255,0.25);
     font-size: 0.8rem;
     transition: transform 0.25s, color 0.15s;
     flex-shrink: 0;
     margin-left: 0.5rem;
 }
-.chevron.open { transform: rotate(180deg); color: #fff; }
+.chevron.open { transform: rotate(180deg); color: var(--text); }
 .asset-body {
     overflow: hidden;
     max-height: 0;
@@ -82,8 +82,8 @@
 .coh-card {
     margin-bottom: 1.5rem;
     padding: 1.5rem;
-    border-color: #1a1a1a;
-    background: #0a0a0a !important;
+    border-color: var(--border);
+    background: var(--bg-card) !important;
 }
 .coh-header {
     display: flex;
@@ -97,34 +97,34 @@
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #333;
+    color: var(--text-label);
     font-weight: 700;
     margin-bottom: 0.2rem;
 }
 .coh-subtitle {
     font-size: 0.9rem;
     font-weight: 700;
-    color: white;
+    color: var(--text);
     letter-spacing: -0.01em;
 }
 .coh-score-block { text-align: center; }
 .coh-score-num {
     font-size: 2.4rem;
     font-weight: 900;
-    color: white;
+    color: var(--text);
     line-height: 1;
     letter-spacing: -0.03em;
     margin-bottom: 0.35rem;
 }
 .coh-score-sub {
     font-size: 0.72rem;
-    color: rgba(255,255,255,0.3);
+    color: rgba(232,240,255,0.3);
     margin-bottom: 0.35rem;
     font-weight: 600;
 }
-.coh-sep { color: rgba(255,255,255,0.18); font-size: 1.5rem; font-weight: 300; }
+.coh-sep { color: rgba(232,240,255,0.18); font-size: 1.5rem; font-weight: 300; }
 .coh-gauge-outer {
-    background: rgba(255,255,255,0.05);
+    background: rgba(74,122,155,0.07);
     border-radius: 99px;
     height: 8px;
     overflow: hidden;
@@ -135,11 +135,11 @@
     border-radius: 99px;
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
 }
-.coh-gauge-high  { background: #fff; }
-.coh-gauge-med   { background: #fff; }
-.coh-gauge-low   { background: #fff; }
+.coh-gauge-high  { background: var(--text); }
+.coh-gauge-med   { background: var(--text); }
+.coh-gauge-low   { background: var(--text); }
 .coh-msg-high { font-size: 0.82rem; font-weight: 600; color: #4ade80; }
-.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: #888; }
+.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
 .coh-msg-low  { font-size: 0.82rem; font-weight: 600; color: #f87171; }
 .coh-pct-badge {
     font-size: 0.72rem;
@@ -147,18 +147,18 @@
     padding: 0.2rem 0.65rem;
     border-radius: 20px;
 }
-.coh-pct-high { background: transparent; color: #fff; border: 1px solid #333; }
-.coh-pct-med  { background: transparent; color: #fff; border: 1px solid #333; }
-.coh-pct-low  { background: transparent; color: #fff; border: 1px solid #333; }
+.coh-pct-high { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
+.coh-pct-med  { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
+.coh-pct-low  { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
 
 /* ── DCA progress ── */
 .dca-pct-done   { color: #4ade80; }
-.dca-pct-active { color: #fff; }
+.dca-pct-active { color: var(--text); }
 
 /* ── Onboarding banner ── */
 .onboarding-banner {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.75rem;
@@ -166,7 +166,7 @@
 .onboarding-title {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #555;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.85rem;
@@ -182,30 +182,30 @@
     align-items: center;
     gap: 0.55rem;
     font-size: 0.85rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(232,240,255,0.55);
     flex: 1;
     min-width: 160px;
 }
-.onboarding-step.done { color: rgba(255,255,255,0.55); }
-.onboarding-step.active { color: white; font-weight: 600; }
+.onboarding-step.done { color: rgba(232,240,255,0.65); }
+.onboarding-step.active { color: var(--text); font-weight: 600; }
 .onboarding-step-num {
     width: 24px; height: 24px;
     border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(74,122,155,0.15);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.72rem; font-weight: 800;
     flex-shrink: 0;
-    color: rgba(255,255,255,0.3);
+    color: rgba(232,240,255,0.3);
 }
 .onboarding-step.done .onboarding-step-num {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.2);
-    color: rgba(255,255,255,0.6);
+    background: rgba(74,122,155,0.06);
+    border-color: rgba(74,122,155,0.2);
+    color: rgba(232,240,255,0.6);
 }
 .onboarding-step.active .onboarding-step-num {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.3);
-    color: #fff;
+    background: rgba(74,122,155,0.1);
+    border-color: rgba(232,240,255,0.3);
+    color: var(--text);
 }
 .onboarding-actions {
     display: flex;
@@ -213,8 +213,8 @@
     gap: 0.75rem;
     flex-wrap: wrap;
 }
-.onboarding-link-active { color: #fff; }
-.onboarding-link-muted  { color: rgba(255,255,255,0.4); }
+.onboarding-link-active { color: var(--text); }
+.onboarding-link-muted  { color: rgba(232,240,255,0.4); }
 
 /* ── Enveloppes fiscales ── */
 .env-badge {
@@ -228,13 +228,13 @@
     letter-spacing: 0.02em;
     line-height: 1.6;
 }
-.env-pea      { background: transparent; color: #555; border: 1px solid #222; }
-.env-peapme   { background: transparent; color: #555; border: 1px solid #222; }
-.env-cto      { background: transparent; color: #555; border: 1px solid #222; }
-.env-av       { background: transparent; color: #555; border: 1px solid #222; }
-.env-per      { background: transparent; color: #555; border: 1px solid #222; }
-.env-livret   { background: transparent; color: #555; border: 1px solid #222; }
-.env-autre    { background: transparent; color: #555; border: 1px solid #222; }
+.env-pea      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-peapme   { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-cto      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-av       { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-per      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-livret   { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.env-autre    { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
 
 /* ── Filtre enveloppe ── */
 .env-filter-wrap {
@@ -246,17 +246,17 @@
 }
 .env-filter-label {
     font-size: 0.75rem;
-    color: #333;
+    color: var(--text-label);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     white-space: nowrap;
 }
 .env-filter-select {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    color: rgba(255,255,255,0.75);
+    color: rgba(232,240,255,0.75);
     font-size: 0.82rem;
     padding: 0.3rem 0.65rem;
     cursor: pointer;
@@ -264,21 +264,21 @@
     transition: border-color 0.15s;
     min-width: 180px;
 }
-.env-filter-select:hover  { border-color: #333; }
-.env-filter-select:focus  { border-color: #444; }
-.env-filter-select option { background: #0a0a0a; color: white; }
+.env-filter-select:hover  { border-color: var(--text-label); }
+.env-filter-select:focus  { border-color: var(--text-muted); }
+.env-filter-select option { background: var(--bg-card); color: var(--text); }
 
 /* ── Plafond bar ── */
 .plafond-block {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 0.85rem 1.1rem;
     margin-bottom: 1.25rem;
     display: none;
 }
 .plafond-bar-outer {
-    background: rgba(255,255,255,0.06);
+    background: rgba(74,122,155,0.06);
     border-radius: 99px;
     height: 5px;
     overflow: hidden;
@@ -288,7 +288,7 @@
     height: 100%;
     border-radius: 99px;
     transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
-    background: #fff;
+    background: var(--text);
 }
 
 /* ── Bouton crayon enveloppe ── */
@@ -296,7 +296,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba(255,255,255,0.2);
+    color: rgba(232,240,255,0.2);
     font-size: 0.75rem;
     padding: 0.15rem 0.3rem;
     border-radius: 4px;
@@ -305,8 +305,8 @@
     flex-shrink: 0;
 }
 .env-edit-btn:hover {
-    color: #fff;
-    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    background: rgba(74,122,155,0.06);
 }
 
 /* ── Modal enveloppe ── */
@@ -314,7 +314,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(4,8,15,0.7);
     backdrop-filter: blur(4px);
     z-index: 9000;
     align-items: center;
@@ -322,38 +322,38 @@
 }
 .env-modal-overlay.open { display: flex; }
 .env-modal-box {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1.5rem;
     width: 100%;
     max-width: 380px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    box-shadow: 0 24px 64px rgba(4,8,15,0.85);
 }
 .env-modal-title {
     font-size: 0.95rem;
     font-weight: 700;
-    color: white;
+    color: var(--text);
     margin-bottom: 0.3rem;
 }
 .env-modal-sub {
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.3);
+    color: rgba(232,240,255,0.3);
     margin-bottom: 1.1rem;
 }
 .env-modal-select {
     width: 100%;
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    color: white;
+    color: var(--text);
     font-size: 0.875rem;
     padding: 0.55rem 0.75rem;
     margin-bottom: 1rem;
     outline: none;
 }
-.env-modal-select:focus { border-color: #333; }
-.env-modal-select option { background: #0a0a0a; }
+.env-modal-select:focus { border-color: var(--text-label); }
+.env-modal-select option { background: var(--bg-card); }
 .env-modal-actions {
     display: flex;
     gap: 0.6rem;
@@ -369,8 +369,8 @@
 .ticker-bar-wrap {
     width: 100%;
     overflow: hidden;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid #1a1a1a;
+    background: rgba(74,122,155,0.05);
+    border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 1.5rem;
     padding: 0.55rem 0;
@@ -387,11 +387,11 @@
 }
 .ticker-bar-wrap::before {
     left: 0;
-    background: linear-gradient(90deg, #070707 0%, transparent 100%);
+    background: linear-gradient(90deg, #070d18 0%, transparent 100%);
 }
 .ticker-bar-wrap::after {
     right: 0;
-    background: linear-gradient(270deg, #070707 0%, transparent 100%);
+    background: linear-gradient(270deg, #070d18 0%, transparent 100%);
 }
 .ticker-track {
     display: flex;
@@ -412,16 +412,16 @@
     padding: 0 1.25rem;
     font-size: 0.78rem;
     font-weight: 600;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(74,122,155,0.1);
     white-space: nowrap;
 }
-.ticker-name { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
-.ticker-price { color: rgba(255,255,255,0.8); }
+.ticker-name { color: rgba(232,240,255,0.45); font-size: 0.72rem; }
+.ticker-price { color: rgba(232,240,255,0.85); }
 .ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
 .ticker-chg-neg { color: #f87171; font-size: 0.72rem; font-weight: 700; }
 .ticker-loading {
     font-size: 0.75rem;
-    color: rgba(255,255,255,0.25);
+    color: rgba(232,240,255,0.25);
     padding: 0 1.5rem;
     font-style: italic;
 }
@@ -440,11 +440,11 @@
 
 <!-- ── Bandeau démo ── -->
 {% if is_demo %}
-<div style="background:#0a0a0a; border:1px solid #1a1a1a; border-radius:8px; padding:0.65rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; font-size:0.82rem;">
-    <span style="color:#555;">
-        <span style="color:#888; font-weight:600;">Mode démo</span> — Les données sont fictives. Aucun vrai portefeuille n'est lié à ce compte.
+<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.65rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; font-size:0.82rem;">
+    <span style="color:var(--text-muted);">
+        <span style="color:var(--text-muted); font-weight:600;">Mode démo</span> — Les données sont fictives. Aucun vrai portefeuille n'est lié à ce compte.
     </span>
-    <a href="{{ url_for('auth.register') }}" style="color:#fff; font-weight:600; text-decoration:none; white-space:nowrap; border:1px solid #333; border-radius:4px; padding:0.25rem 0.65rem; font-size:0.78rem;">
+    <a href="{{ url_for('auth.register') }}" style="color:var(--text); font-weight:600; text-decoration:none; white-space:nowrap; border:1px solid var(--text-label); border-radius:4px; padding:0.25rem 0.65rem; font-size:0.78rem;">
         Créer un vrai compte →
     </a>
 </div>
@@ -489,10 +489,10 @@
                 Test de profil complété
                 {% else %}
                 <a href="{{ url_for('main.test_profil') }}"
-                   style="color:#fff; text-decoration:none; font-weight:600;">
+                   style="color:var(--text); text-decoration:none; font-weight:600;">
                     Faire le test de profil →
                 </a>
-                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Connaître ta tolérance au risque</div>
+                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Connaître ta tolérance au risque</div>
                 {% endif %}
             </div>
         </div>
@@ -508,7 +508,7 @@
                    style="text-decoration:none; font-weight:600;">
                     Enregistrer un achat →
                 </a>
-                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Ajouter ton premier investissement</div>
+                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Ajouter ton premier investissement</div>
                 {% endif %}
             </div>
         </div>
@@ -520,7 +520,7 @@
                 Dashboard prêt — bonne analyse !
                 {% else %}
                 Dashboard prêt
-                <div style="font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:1px;">Tes analyses seront visibles ici</div>
+                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Tes analyses seront visibles ici</div>
                 {% endif %}
             </div>
         </div>
@@ -585,7 +585,7 @@
             <div class="coh-score-sub">Score profil investisseur</div>
             <div style="margin-top:0.5rem;">
                 <a href="{{ url_for('main.test_profil') }}"
-                   style="font-size:0.82rem; color:#fff; text-decoration:none; font-weight:600;">
+                   style="font-size:0.82rem; color:var(--text); text-decoration:none; font-weight:600;">
                     🧠 Faire le test →
                 </a>
             </div>
@@ -611,7 +611,7 @@
     {% else %}
     <div id="coh-msg-el" style="margin-top:1rem; text-align:center;">
         <a href="{{ url_for('main.test_profil') }}"
-           style="font-size:0.875rem; color:#fff; text-decoration:none; font-weight:600;">
+           style="font-size:0.875rem; color:var(--text); text-decoration:none; font-weight:600;">
             🧠 Fais ton test de profil pour voir ta cohérence →
         </a>
     </div>
@@ -623,12 +623,12 @@
 <div class="kpi-grid">
     <div class="kpi-card kpi-card-violet">
         <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value" id="kpi-total-value" style="color:#fff;">{{ summary.total_value }} €</div>
+        <div class="kpi-value" id="kpi-total-value" style="color:var(--text);">{{ summary.total_value }} €</div>
         <div class="kpi-sub" id="kpi-assets-count">{{ summary.assets|length }} actif(s) suivi(s)</div>
     </div>
     <div class="kpi-card kpi-card-amber">
         <div class="kpi-label">Total investi</div>
-        <div class="kpi-value" id="kpi-total-invested" style="color:#fff;">{{ summary.total_invested }} €</div>
+        <div class="kpi-value" id="kpi-total-invested" style="color:var(--text);">{{ summary.total_invested }} €</div>
         <div class="kpi-sub">Capital déployé</div>
     </div>
     <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}"
@@ -670,13 +670,13 @@
 <!-- Plafond bar (affiché dynamiquement par JS) -->
 <div class="plafond-block" id="plafond-bar-block">
     <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.5rem;">
-        <span style="font-size:0.82rem; font-weight:700; color:white;">
+        <span style="font-size:0.82rem; font-weight:700; color:#e8f0ff;">
             Plafond <span id="plafond-env-name"></span>
         </span>
-        <span style="font-size:0.75rem; color:rgba(255,255,255,0.4);">
+        <span style="font-size:0.75rem; color:rgba(232,240,255,0.45);">
             <span id="plafond-invested"></span> versés /
             <span id="plafond-total"></span> —
-            <strong id="plafond-restant" style="color:rgba(255,255,255,0.7);"></strong> disponibles
+            <strong id="plafond-restant" style="color:rgba(232,240,255,0.75);"></strong> disponibles
         </span>
     </div>
     <div class="plafond-bar-outer">
@@ -687,10 +687,10 @@
 <!-- Barre de gain total -->
 {% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
 {% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
-<div class="card" style="margin-bottom:1.5rem; border-color:rgba(255,255,255,0.08); padding:1.25rem 1.5rem;">
+<div class="card" style="margin-bottom:1.5rem; border-color:rgba(74,122,155,0.1); padding:1.25rem 1.5rem;">
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
         <div>
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(232,240,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
             <div id="kpi-total-gain-line"
                  class="{{ 'positive' if total_gain >= 0 else 'negative' }}"
                  style="font-size:1.4rem; font-weight:800;">
@@ -702,7 +702,7 @@
             </div>
         </div>
         <a href="{{ url_for('main.charts') }}"
-           style="font-size:0.82rem; color:#888; text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
+           style="font-size:0.82rem; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
             Voir les graphiques →
         </a>
@@ -711,10 +711,10 @@
 
 <!-- DCA -->
 {% if summary.dca_target > 0 %}
-<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:#1a1a1a;">
+<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:var(--border);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
         <div>
-            <span style="font-weight:700; color:white; font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
+            <span style="font-weight:700; color:var(--text); font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
         </div>
         <span id="dca-pct-el"
               class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
@@ -728,14 +728,14 @@
     </div>
     <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
         <span id="dca-invested-month"
-              style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+              style="font-size:0.78rem; color:rgba(232,240,255,0.3);">
             {{ summary.invested_month }} € investis ce mois
         </span>
         <span id="dca-reste">
             {% if summary.dca_progress >= 100 %}
             <span style="font-size:0.78rem; color:#4ade80; font-weight:600;">✓ Objectif atteint !</span>
             {% else %}
-            <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
+            <span style="font-size:0.78rem; color:rgba(232,240,255,0.3);">
                 Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
             </span>
             {% endif %}
@@ -745,9 +745,9 @@
 {% else %}
 <div style="margin-bottom:1.5rem;">
     <a href="{{ url_for('main.settings') }}"
-       style="font-size:0.82rem; color:rgba(255,255,255,0.2); text-decoration:none; transition:color 0.15s;"
-       onmouseover="this.style.color='rgba(255,255,255,0.45)'"
-       onmouseout="this.style.color='rgba(255,255,255,0.2)'">
+       style="font-size:0.82rem; color:rgba(232,240,255,0.2); text-decoration:none; transition:color 0.15s;"
+       onmouseover="this.style.color='rgba(232,240,255,0.55)'"
+       onmouseout="this.style.color='rgba(232,240,255,0.2)'">
         ＋ Définir un objectif DCA mensuel →
     </a>
 </div>
@@ -797,11 +797,11 @@
                     <span class="env-badge {{ env_cls }}">{{ env }}</span>
                     {% endif %}
                 </span>
-                <span style="color:white; font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
+                <span style="color:var(--text); font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
                 {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
             </div>
             <div class="asset-summary-line">
-                <span style="font-size:0.875rem; color:rgba(255,255,255,0.5); font-weight:500;">
+                <span style="font-size:0.875rem; color:rgba(232,240,255,0.55); font-weight:500;">
                     {{ a.current_value }} €
                 </span>
                 <span class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}"
@@ -817,7 +817,7 @@
     </div>
 
     <div class="asset-body" id="asset-{{ a.asset_id }}">
-        <div style="border-top:1px solid rgba(255,255,255,0.06); margin-top:0.85rem; padding-top:0.85rem;">
+        <div style="border-top:1px solid rgba(74,122,155,0.1); margin-top:0.85rem; padding-top:0.85rem;">
             <table class="asset-table">
                 <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
                 <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
@@ -826,7 +826,7 @@
                     <td>
                         <strong>{{ a.current_price }} {{ a.currency }}</strong>
                         {% if a.price_timestamp %}
-                        <div style="font-size:0.7rem; color:rgba(255,255,255,0.2); font-weight:400;">{{ a.price_timestamp }}</div>
+                        <div style="font-size:0.7rem; color:rgba(232,240,255,0.2); font-weight:400;">{{ a.price_timestamp }}</div>
                         {% endif %}
                     </td>
                 </tr>
@@ -873,7 +873,7 @@
                                 {% if env and env_cls %}
                                 <span class="env-badge {{ env_cls }}">{{ env }}</span>
                                 {% else %}
-                                <span style="color:rgba(255,255,255,0.25); font-size:0.8rem;">—</span>
+                                <span style="color:rgba(232,240,255,0.25); font-size:0.8rem;">—</span>
                                 {% endif %}
                             </span>
                             <button class="env-edit-btn"
@@ -888,11 +888,11 @@
                     <td>
                         {{ risk_badge(ri.score) }}
                         {% if ri.source == 'yahoo' %}
-                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.22); margin-top:0.2rem;">
+                        <div style="font-size:0.68rem; color:rgba(232,240,255,0.22); margin-top:0.2rem;">
                             Vol. {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · Beta {{ ri.beta }}
                         </div>
                         {% else %}
-                        <div style="font-size:0.68rem; color:rgba(255,255,255,0.18); margin-top:0.2rem;">Score par défaut</div>
+                        <div style="font-size:0.68rem; color:rgba(232,240,255,0.18); margin-top:0.2rem;">Score par défaut</div>
                         {% endif %}
                     </td>
                 </tr>
@@ -954,15 +954,15 @@
                                           else 'badge-crypto' if asset_type == 'Crypto'
                                           else 'badge-other' }}">{{ asset_type }}</span>
                     </td>
-                    <td style="text-align:right; font-weight:600; color:white;">{{ type_value|round(2) }} €</td>
+                    <td style="text-align:right; font-weight:600; color:var(--text);">{{ type_value|round(2) }} €</td>
                     <td style="text-align:right;">
                         {% if summary.total_value > 0 %}
                         {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
                         <div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">
-                            <div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">
-                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:#fff; border-radius:99px;"></div>
+                            <div style="width:50px; height:4px; background:rgba(74,122,155,0.1); border-radius:99px; overflow:hidden;">
+                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:var(--text); border-radius:99px;"></div>
                             </div>
-                            <span style="color:#fff; font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
+                            <span style="color:var(--text); font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
                         </div>
                         {% else %}—{% endif %}
                     </td>
@@ -981,15 +981,15 @@
 const alloc  = {{ summary.allocation | tojson }};
 const labels = alloc.map(function(a){ return a.ticker; });
 const values = alloc.map(function(a){ return a.value; });
-const PIE_COLORS = ['#fff','#888','#555','#333','#aaa',
-                    '#666','#999','#bbb','#444','#777'];
+const PIE_COLORS = ['#e8f0ff','#4a7a9b','#2a4a6a','#1a2a3a','#7ab0cc',
+                    '#3a6a8a','#6aa0bb','#9ac0d8','#0f1e2e','#5a90aa'];
 const PIE_LAYOUT = {
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor:  'rgba(0,0,0,0)',
     height: 280,
     margin: { l: 10, r: 10, t: 10, b: 10 },
     showlegend: false,
-    hoverlabel: { bgcolor: '#0a0a0a', bordercolor: 'rgba(255,255,255,0.1)', font: { color: 'white' } }
+    hoverlabel: { bgcolor: '#070d18', bordercolor: 'rgba(74,122,155,0.1)', font: { color: '#e8f0ff' } }
 };
 const PIE_CONFIG = { responsive: true, displayModeBar: false };
 
@@ -997,7 +997,7 @@ Plotly.newPlot('pie-chart', [{
     type: 'pie', labels: labels, values: values, hole: 0.5,
     marker: { colors: PIE_COLORS },
     textinfo: 'label+percent',
-    textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
+    textfont: { color: 'rgba(232,240,255,0.85)', size: 11 },
     hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
 }], PIE_LAYOUT, PIE_CONFIG);
 </script>
@@ -1027,31 +1027,31 @@ Plotly.newPlot('pie-chart', [{
         {% elif env_name in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
         {% else %}{% set env_cls = 'env-autre' %}
         {% endif %}
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <tr style="border-bottom:1px solid rgba(74,122,155,0.07);">
             <td style="padding:0.65rem 0;">
                 <span class="env-badge {{ env_cls }}" style="font-size:0.72rem; padding:0.15rem 0.55rem;">{{ env_name }}</span>
             </td>
-            <td class="env-col-actifs" style="text-align:right; color:rgba(255,255,255,0.4); font-size:0.85rem;">{{ env_data.count }}</td>
-            <td style="text-align:right; font-weight:600; color:rgba(255,255,255,0.7);">{{ env_data.total_invested }} €</td>
-            <td style="text-align:right; font-weight:700; color:white;">{{ env_data.total_value }} €</td>
+            <td class="env-col-actifs" style="text-align:right; color:rgba(232,240,255,0.45); font-size:0.85rem;">{{ env_data.count }}</td>
+            <td style="text-align:right; font-weight:600; color:rgba(232,240,255,0.75);">{{ env_data.total_invested }} €</td>
+            <td style="text-align:right; font-weight:700; color:#e8f0ff;">{{ env_data.total_value }} €</td>
             <td class="env-col-plafond" style="text-align:right; font-size:0.82rem;">
                 {% if env_data.plafond_restant is not none %}
                     {% if env_data.plafond_restant == 0 %}
                     <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
                     {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
-                    <span style="color:#888; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                    <span style="color:#4a7a9b; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
                     {% else %}
-                    <span style="color:rgba(255,255,255,0.35);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
+                    <span style="color:rgba(232,240,255,0.40);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
                     {% endif %}
                 {% else %}
-                <span style="color:rgba(255,255,255,0.18);">—</span>
+                <span style="color:rgba(232,240,255,0.18);">—</span>
                 {% endif %}
             </td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
-    <div style="margin-top:0.85rem; font-size:0.72rem; color:rgba(255,255,255,0.2); line-height:1.5;">
+    <div style="margin-top:0.85rem; font-size:0.72rem; color:rgba(74,122,155,0.22); line-height:1.5;">
         Plafonds indicatifs (PEA : 150 000 €, PEA-PME : 225 000 €, Livret A : 22 950 €, LDDS : 12 000 €, LEP : 10 000 €) calculés sur le montant investi.
         Rechargez la page pour mettre à jour ce tableau après avoir modifié une enveloppe.
     </div>
@@ -1106,11 +1106,11 @@ function riskBadgeHTML(score) {
     else if (score <= 60) { lbl='Modéré';      }
     else if (score <= 80) { lbl='Élevé';       }
     else                  { lbl='Très élevé';  }
-    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#888;border:1px solid #222;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#4a7a9b;border:1px solid #222;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
-    if (!env) return '<span style="color:rgba(255,255,255,0.25);font-size:0.8rem;">—</span>';
+    if (!env) return '<span style="color:rgba(232,240,255,0.25);font-size:0.8rem;">—</span>';
     var map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av',
                'PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
     var cls = map[env] || 'env-autre';
@@ -1136,7 +1136,7 @@ function updateAllocCharts(visible) {
                 hole: 0.5,
                 marker: { colors: PIE_COLORS },
                 textinfo: 'label+percent',
-                textfont: { color: 'rgba(255,255,255,0.85)', size: 11 },
+                textfont: { color: 'rgba(232,240,255,0.85)', size: 11 },
                 hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
             }], PIE_LAYOUT, PIE_CONFIG);
         } else {
@@ -1146,7 +1146,7 @@ function updateAllocCharts(visible) {
                 labels: ['—'],
                 values: [1],
                 hole: 0.5,
-                marker: { colors: ['rgba(255,255,255,0.05)'] },
+                marker: { colors: ['rgba(74,122,155,0.07)'] },
                 textinfo: 'none',
                 hoverinfo: 'none'
             }], PIE_LAYOUT, PIE_CONFIG);
@@ -1175,7 +1175,7 @@ function updateAllocCharts(visible) {
 
     if (entries.length === 0) {
         var trEmpty = document.createElement('tr');
-        trEmpty.innerHTML = '<td colspan="3" style="text-align:center;color:rgba(255,255,255,0.2);padding:1rem 0;font-size:0.82rem;">Aucun actif dans cette enveloppe</td>';
+        trEmpty.innerHTML = '<td colspan="3" style="text-align:center;color:rgba(232,240,255,0.2);padding:1rem 0;font-size:0.82rem;">Aucun actif dans cette enveloppe</td>';
         tbody.appendChild(trEmpty);
         return;
     }
@@ -1191,13 +1191,13 @@ function updateAllocCharts(visible) {
         var tr = document.createElement('tr');
         tr.innerHTML =
             '<td><span class="badge ' + badgeCls + '">' + assetType + '</span></td>' +
-            '<td style="text-align:right; font-weight:600; color:white;">' + typeVal.toFixed(2) + ' €</td>' +
+            '<td style="text-align:right; font-weight:600; color:var(--text);">' + typeVal.toFixed(2) + ' €</td>' +
             '<td style="text-align:right;">' +
                 '<div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">' +
-                    '<div style="width:50px; height:4px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden;">' +
-                        '<div style="width:' + pct + '%; height:100%; background:#fff; border-radius:99px;"></div>' +
+                    '<div style="width:50px; height:4px; background:rgba(74,122,155,0.1); border-radius:99px; overflow:hidden;">' +
+                        '<div style="width:' + pct + '%; height:100%; background:var(--text); border-radius:99px;"></div>' +
                     '</div>' +
-                    '<span style="color:#fff; font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
+                    '<span style="color:var(--text); font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
                 '</div>' +
             '</td>';
         tbody.appendChild(tr);
@@ -1361,7 +1361,7 @@ function updateDCABlock(invMonth) {
     if (invEl)  invEl.textContent   = fmt2(invMonth) + ' € investis ce mois';
     if (resteEl) {
         if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#4ade80;font-weight:600;">✓ Objectif atteint !</span>';
-        else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
+        else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(232,240,255,0.30);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
     }
 }
 

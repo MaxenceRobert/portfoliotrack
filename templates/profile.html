@@ -3,10 +3,10 @@
 {% block content %}
 
 <style>
-.profil-inv-card { border-top: 2px solid #1a1a1a; }
+.profil-inv-card { border-top: 2px solid #1a2a3a; }
 .profil-inv-score { display: inline-flex; align-items: baseline; gap: 0.25rem; }
 .score-big { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
-.score-total { font-size: 0.9rem; color: rgba(255,255,255,0.3); font-weight: 600; }
+.score-total { font-size: 0.9rem; color: rgba(232,240,255,0.3); font-weight: 600; }
 .profil-name-badge {
     display: inline-block;
     font-size: 0.72rem;
@@ -18,23 +18,23 @@
 }
 /* couleurs par profil */
 .pc-prudent    { color: #4ade80; }
-.pc-modere     { color: #fff; }
-.pc-equilibre  { color: #fff; }
-.pc-dynamique  { color: #fff; }
+.pc-modere     { color: #e8f0ff; }
+.pc-equilibre  { color: #e8f0ff; }
+.pc-dynamique  { color: #e8f0ff; }
 .pc-agressif   { color: #f87171; }
-.badge-prudent   { background: transparent; color: #4ade80; border: 1px solid #222; }
-.badge-modere    { background: transparent; color: #555; border: 1px solid #222; }
-.badge-equilibre { background: transparent; color: #555; border: 1px solid #222; }
-.badge-dynamique { background: transparent; color: #555; border: 1px solid #222; }
-.badge-agressif  { background: transparent; color: #f87171; border: 1px solid #222; }
+.badge-prudent   { background: transparent; color: #4ade80; border: 1px solid #1a2a3a; }
+.badge-modere    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.badge-equilibre { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.badge-dynamique { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.badge-agressif  { background: transparent; color: #f87171; border: 1px solid #1a2a3a; }
 
 .axes-mini { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
 .axis-mini-row { display: flex; align-items: center; gap: 0.75rem; }
-.axis-mini-name { font-size: 0.72rem; color: rgba(255,255,255,0.38); font-weight: 600; min-width: 155px; flex-shrink: 0; }
-.axis-mini-bar-outer { flex: 1; background: rgba(255,255,255,0.05); border-radius: 99px; height: 5px; overflow: hidden; }
-.axis-mini-bar-fill { height: 100%; border-radius: 99px; background: #fff; }
-.axis-mini-val { font-size: 0.72rem; color: rgba(255,255,255,0.4); font-weight: 700; min-width: 30px; text-align: right; }
-.profil-date { font-size: 0.75rem; color: rgba(255,255,255,0.2); margin-top: 0.25rem; }
+.axis-mini-name { font-size: 0.72rem; color: rgba(232,240,255,0.38); font-weight: 600; min-width: 155px; flex-shrink: 0; }
+.axis-mini-bar-outer { flex: 1; background: rgba(74,122,155,0.07); border-radius: 99px; height: 5px; overflow: hidden; }
+.axis-mini-bar-fill { height: 100%; border-radius: 99px; background: #e8f0ff; }
+.axis-mini-val { font-size: 0.72rem; color: rgba(232,240,255,0.4); font-weight: 700; min-width: 30px; text-align: right; }
+.profil-date { font-size: 0.75rem; color: rgba(232,240,255,0.2); margin-top: 0.25rem; }
 </style>
 
 <div class="page-header">
@@ -48,7 +48,7 @@
 
     <!-- ── Profil investisseur ── -->
     <div class="card profil-inv-card" style="cursor:pointer;" onclick="window.location.href='/mon-profil-investisseur'">
-        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:#e8f0ff;">
             🧠 Mon profil investisseur
         </h3>
 
@@ -111,7 +111,7 @@
         {% else %}
         <div style="text-align:center; padding:1.5rem 0;">
             <div style="font-size:2rem; margin-bottom:0.75rem;">🧠</div>
-            <p style="color:rgba(255,255,255,0.38); font-size:0.875rem; margin-bottom:1.25rem; line-height:1.6;">
+            <p style="color:rgba(232,240,255,0.38); font-size:0.875rem; margin-bottom:1.25rem; line-height:1.6;">
                 Tu n'as pas encore fait le test de profil investisseur.<br>
                 40 questions pour découvrir ta stratégie idéale.
             </p>
@@ -122,13 +122,13 @@
 
     <!-- ── Email ── -->
     <div class="card">
-        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer l'adresse email</h3>
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:#e8f0ff;">Changer l'adresse email</h3>
         <form method="POST">
             <input type="hidden" name="action" value="email">
             <div class="form-group">
                 <label>Email actuel</label>
                 <input type="text" value="{{ current_user.email }}" disabled
-                       style="background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.3); cursor:not-allowed;">
+                       style="background:rgba(74,122,155,0.05); color:rgba(232,240,255,0.3); cursor:not-allowed;">
             </div>
             <div class="form-group">
                 <label for="new_email">Nouvel email</label>
@@ -144,7 +144,7 @@
 
     <!-- ── Mot de passe ── -->
     <div class="card">
-        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:white;">Changer le mot de passe</h3>
+        <h3 style="font-size:1rem; margin-bottom:1.25rem; color:#e8f0ff;">Changer le mot de passe</h3>
         <form method="POST">
             <input type="hidden" name="action" value="password">
             <div class="form-group">
@@ -164,15 +164,15 @@
     </div>
 
     <!-- ── Zone de danger ── -->
-    <div class="card" style="border-top:2px solid #1a1a1a;">
+    <div class="card" style="border-top:2px solid #1a2a3a;">
         <h3 style="font-size:1rem; margin-bottom:0.5rem; color:#f87171;">Zone de danger</h3>
-        <p style="font-size:0.875rem; color:rgba(255,255,255,0.35); margin-bottom:1rem;">
+        <p style="font-size:0.875rem; color:rgba(232,240,255,0.35); margin-bottom:1rem;">
             La suppression de votre compte est définitive et efface toutes vos données.
         </p>
         <button class="btn btn-danger btn-sm" disabled title="Fonctionnalité à venir">
             Supprimer mon compte
         </button>
-        <div style="font-size:0.75rem; color:rgba(255,255,255,0.25); margin-top:0.5rem;">
+        <div style="font-size:0.75rem; color:rgba(232,240,255,0.25); margin-top:0.5rem;">
             Contactez-nous pour supprimer votre compte manuellement.
         </div>
     </div>

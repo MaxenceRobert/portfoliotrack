@@ -3,905 +3,767 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PortfolioTrack — Suis ton portefeuille. Investis selon ton profil de risque.</title>
+    <title>PortfolioTrack — Investissez selon votre profil de risque.</title>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #04080f;
+            --bg-card:   #070d18;
+            --bg-card2:  #0a1428;
+            --border:    #1a2a3a;
+            --text:      #e8f0ff;
+            --muted:     #4a7a9b;
+            --dimmed:    #2a4a6a;
+            --green:     #4ade80;
+            --red:       #f87171;
+            --blue-btn:  #1e5fa8;
+            --blue-btn-h:#2470c4;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #070707;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             overflow-x: hidden;
         }
 
-        /* ── Nav ── */
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ── NAV ── */
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
-            background: rgba(7,7,7,0.92);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid #1a1a1a;
-            padding: 0 2rem;
             height: 64px;
+            background: rgba(7, 13, 24, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            z-index: 100;
+            padding: 0 2rem;
+            z-index: 200;
         }
+
         .nav-brand {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: white;
-            text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
+            text-decoration: none;
             flex-shrink: 0;
         }
+        .nav-brand-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-brand-text {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
         .nav-actions {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.6rem;
             align-items: center;
         }
+
+        /* ── BUTTONS ── */
         .btn {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            padding: 0.55rem 1.2rem;
+            padding: 0.5rem 1.15rem;
             border-radius: 8px;
             font-size: 0.875rem;
             font-weight: 600;
             cursor: pointer;
-            border: none;
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.18s ease;
             white-space: nowrap;
-        }
-        .btn-primary {
-            background: #fff;
-            color: #0a0a0a;
-        }
-        .btn-primary:hover { transform: translateY(-1px); opacity: 0.9; }
-        .btn-ghost {
-            background: transparent;
-            color: #555;
-            border: 1px solid #222;
-        }
-        .btn-ghost:hover { border-color: #333; color: rgba(255,255,255,0.75); }
-        .btn-lg { padding: 0.9rem 2.2rem; font-size: 1rem; border-radius: 12px; }
-        .btn-outline-white {
-            background: transparent;
-            color: #555;
-            border: 1px solid #222;
-            font-weight: 600;
-        }
-        .btn-outline-white:hover { border-color: #333; color: rgba(255,255,255,0.75); }
-        .btn-violet-outline {
-            background: transparent;
-            color: #555;
-            border: 1px solid #222;
-            font-weight: 600;
-        }
-        .btn-violet-outline:hover { border-color: #333; color: rgba(255,255,255,0.75); }
-        .btn-demo {
-            background: transparent;
-            color: #555;
-            border: 1px solid #222;
-            font-weight: 600;
-            border-radius: 4px;
-            padding: 0.45rem 1rem;
-        }
-        .btn-demo:hover { border-color: #333; color: rgba(255,255,255,0.75); }
-
-        /* ── Hamburger landing ── */
-        .landing-hamburger {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            cursor: pointer;
-            background: none;
             border: none;
-            padding: 4px;
-            flex-shrink: 0;
-        }
-        .landing-hamburger span {
-            display: block;
-            width: 24px;
-            height: 2px;
-            background: white;
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-
-        /* ── Mobile menu landing ── */
-        .landing-mobile {
-            display: none;
-            position: fixed;
-            top: 64px;
-            left: 0;
-            right: 0;
-            background: rgba(7,7,7,0.98);
-            backdrop-filter: blur(24px);
-            border-bottom: 1px solid #1a1a1a;
-            z-index: 99;
-            padding: 0.75rem 0;
-        }
-        .landing-mobile.open { display: block; }
-        .landing-mobile a {
-            display: block;
-            color: rgba(255,255,255,0.65);
-            text-decoration: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            transition: background 0.15s, color 0.15s;
-        }
-        .landing-mobile a:hover { background: rgba(255,255,255,0.04); color: white; }
-        .landing-mobile a:last-child { border-bottom: none; }
-        .landing-mobile .mobile-cta {
-            margin: 0.75rem 1.5rem;
-            text-align: center;
-            background: #fff;
-            color: #0a0a0a;
-            padding: 0.75rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 700;
-            border-bottom: none;
-        }
-        .landing-mobile .mobile-cta:hover { opacity: 0.9; background: #fff; }
-
-        /* ── Hero ── */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 7rem 1.5rem 5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            background: #070707;
-        }
-        .hero-grid {
-            position: absolute;
-            inset: 0;
-            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-        }
-        .hero-inner { max-width: 840px; position: relative; z-index: 1; }
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: transparent;
-            color: #888;
-            border: 1px solid #222;
-            padding: 0.4rem 1rem;
-            border-radius: 99px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-            letter-spacing: 0.04em;
-        }
-        .badge-dot {
-            width: 6px; height: 6px;
-            background: #fff;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-        .hero h1 {
-            font-size: clamp(2.2rem, 5.5vw, 4rem);
-            font-weight: 800;
-            color: white;
-            line-height: 1.12;
-            margin-bottom: 1.5rem;
-            letter-spacing: -0.03em;
-        }
-        .hero h1 .gradient-text {
-            color: #fff;
-        }
-        .hero p {
-            font-size: clamp(1rem, 2vw, 1.15rem);
-            color: rgba(255,255,255,0.58);
-            line-height: 1.75;
-            margin-bottom: 2.5rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .hero-actions { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
-        .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-        .hero-note { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
-        .hero-note span { color: rgba(255,255,255,0.55); }
-
-        /* ── Two pillars ── */
-        .pillars {
-            background: #0a0a0a;
-            border-top: 1px solid #1a1a1a;
-            border-bottom: 1px solid #1a1a1a;
-            padding: 3rem 1.5rem;
-        }
-        .pillars-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 2rem;
-            align-items: center;
-        }
-        .pillar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 0.75rem;
-        }
-        .pillar-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 52px;
-            height: 52px;
-            background: transparent;
-            border: 1px solid #1a1a1a;
-            border-radius: 14px;
-            color: #888;
-        }
-        .pillar-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -0.02em;
-        }
-        .pillar-desc {
-            font-size: 0.82rem;
-            color: rgba(255,255,255,0.42);
-            line-height: 1.6;
-            max-width: 280px;
-        }
-        .pillar-plus {
-            font-size: 1.8rem;
-            color: rgba(255,255,255,0.12);
-            font-weight: 300;
-            text-align: center;
-        }
-
-        /* ── Stats ── */
-        .stats {
-            background: #070707;
-            padding: 2.5rem 1.5rem;
-        }
-        .stats-inner {
-            max-width: 900px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 2rem;
-            text-align: center;
-        }
-        .stat-num {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: #fff;
             line-height: 1;
         }
-        .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
-
-        /* ── Risk section ── */
-        .risk-section {
-            padding: 6rem 1.5rem;
-            background: #0a0a0a;
-            border-top: 1px solid #1a1a1a;
-            border-bottom: 1px solid #1a1a1a;
-        }
-        .risk-section-inner { max-width: 1000px; margin: 0 auto; }
-        .risk-steps-grid {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            max-width: 900px;
-            margin: 0 auto 2.5rem;
-            flex-wrap: wrap;
-        }
-        .risk-step {
-            flex: 1;
-            min-width: 220px;
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            border-radius: 10px;
-            padding: 1.75rem 1.5rem;
-            position: relative;
-            text-align: center;
-            transition: border-color 0.25s, background 0.25s;
-        }
-        .risk-step:hover { border-color: #222; background: #0f0f0f; }
-        .risk-step-num {
-            position: absolute;
-            top: -13px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 26px;
-            height: 26px;
-            background: #fff;
-            border-radius: 50%;
-            font-size: 0.75rem;
-            font-weight: 800;
-            color: #0a0a0a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .risk-step-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            margin: 0.5rem auto 0.75rem;
+        .btn-ghost {
             background: transparent;
-            border-radius: 12px;
-            color: #888;
+            color: var(--muted);
+            border: 1px solid var(--border);
         }
-        .risk-step h3 { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
-        .risk-step p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
-        .risk-step-arrow { font-size: 1.4rem; color: #333; align-self: center; flex-shrink: 0; }
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--muted);
+        }
+        .btn-primary {
+            background: var(--blue-btn);
+            color: #e8f0ff;
+        }
+        .btn-primary:hover {
+            background: var(--blue-btn-h);
+            transform: translateY(-1px);
+        }
+        .btn-accent {
+            background: var(--green);
+            color: #04080f;
+        }
+        .btn-accent:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-lg {
+            padding: 0.85rem 2rem;
+            font-size: 1rem;
+            border-radius: 10px;
+        }
 
-        /* ── Features ── */
-        .features { padding: 6rem 1.5rem; background: #070707; }
+        /* ── HERO SPLIT ── */
+        .hero {
+            display: flex;
+            min-height: calc(100vh - 64px);
+            margin-top: 64px;
+        }
+
+        /* LEFT */
+        .hero-left {
+            flex: 0 0 55%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 5rem 4rem 5rem 5rem;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.9rem;
+            border: 1px solid var(--dimmed);
+            border-radius: 999px;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 1.8rem;
+            width: fit-content;
+        }
+
+        .hero-headline {
+            font-size: clamp(2.2rem, 3.5vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+        }
+        .hero-headline .accent-word {
+            color: var(--green);
+        }
+
+        .hero-subtext {
+            font-size: 1.05rem;
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-cta-row {
+            display: flex;
+            gap: 0.9rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-proof {
+            font-size: 0.8rem;
+            color: var(--dimmed);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .social-proof-dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--dimmed);
+        }
+
+        /* RIGHT */
+        .hero-right {
+            flex: 0 0 45%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5rem 4rem 5rem 2rem;
+            background: linear-gradient(135deg, rgba(10,20,40,0.3) 0%, transparent 100%);
+        }
+
+        /* PRODUCT PREVIEW CARD */
+        .preview-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(4,8,15,0.68), 0 0 0 1px rgba(74,122,155,0.05);
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .preview-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--green);
+        }
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        .preview-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .kpi-cell {
+            padding: 0.85rem 1.25rem;
+            border-right: 1px solid var(--border);
+        }
+        .kpi-cell:last-child { border-right: none; }
+        .kpi-label {
+            font-size: 0.68rem;
+            color: var(--dimmed);
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .kpi-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .kpi-value.positive { color: var(--green); }
+
+        .preview-ticker-row {
+            display: flex;
+            gap: 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card2);
+        }
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .ticker-item:last-child { border-right: none; }
+        .ticker-sym { color: var(--muted); }
+        .ticker-chg.up { color: var(--green); }
+        .ticker-chg.dn { color: var(--red); }
+
+        .preview-assets {
+            padding: 0.5rem 0;
+        }
+        .asset-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1.25rem;
+            transition: background 0.15s;
+        }
+        .asset-row:hover { background: rgba(74,122,155,0.04); }
+        .asset-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: -0.02em;
+            flex-shrink: 0;
+        }
+        .asset-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .asset-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .asset-type {
+            font-size: 0.7rem;
+            color: var(--dimmed);
+            margin-top: 0.1rem;
+        }
+        .asset-perf {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .asset-perf-val {
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .asset-perf-val.up { color: var(--green); }
+        .asset-perf-val.dn { color: var(--red); }
+        .asset-alloc {
+            font-size: 0.68rem;
+            color: var(--dimmed);
+            margin-top: 0.1rem;
+            text-align: right;
+        }
+
+        .preview-footer {
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--border);
+            background: var(--bg-card2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .preview-footer-text {
+            font-size: 0.7rem;
+            color: var(--dimmed);
+        }
+        .mini-bar {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+        }
+        .mini-bar-col {
+            width: 4px;
+            background: var(--dimmed);
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+        .mini-bar-col.active {
+            background: var(--green);
+            opacity: 1;
+        }
+
+        /* ── FEATURES SECTION ── */
+        .features {
+            padding: 5rem 5rem 5rem;
+            background: var(--bg);
+        }
+
         .section-eyebrow {
             text-align: center;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 700;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #555;
-            margin-bottom: 1rem;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
         }
         .section-title {
             text-align: center;
-            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-size: clamp(1.6rem, 2.5vw, 2.2rem);
             font-weight: 800;
-            color: white;
-            margin-bottom: 1rem;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
+            color: var(--text);
+            letter-spacing: -0.03em;
+            margin-bottom: 3.5rem;
         }
-        .section-sub {
-            text-align: center;
-            color: rgba(255,255,255,0.45);
-            font-size: 1rem;
-            max-width: 500px;
-            margin: 0 auto 4rem;
-            line-height: 1.7;
-        }
-        .features-grid {
-            max-width: 1000px;
-            margin: 0 auto;
+
+        .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
         }
+
         .feature-card {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            border-radius: 10px;
-            padding: 1.75rem;
-            transition: all 0.25s;
-            position: relative;
-            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 2rem 1.75rem;
+            transition: border-color 0.2s, transform 0.2s;
         }
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: transparent;
-            opacity: 0;
-            transition: opacity 0.25s;
+        .feature-card:hover {
+            border-color: var(--muted);
+            transform: translateY(-3px);
         }
-        .feature-card:hover { background: #0f0f0f; border-color: #222; transform: translateY(-2px); }
-        .feature-card.featured { background: #0a0a0a; border-color: #1a1a1a; }
-        .feature-card.featured-risk {
-            background: #0a0a0a;
-            border-color: #1a1a1a;
-            grid-column: span 2;
-        }
-        .feature-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .feature-icon-wrap {
             width: 44px;
             height: 44px;
-            margin-bottom: 1rem;
-            background: transparent;
-            border-radius: 12px;
-            color: #888;
-        }
-        .feature-card h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
-        .feature-card p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
-        .feature-link { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 1rem; font-size: 0.8rem; font-weight: 700; color: #888; text-decoration: none; }
-        .feature-link:hover { color: #fff; }
-        .feature-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
-        .feature-tag {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.18rem 0.55rem;
-            border-radius: 20px;
-            background: transparent;
-            color: #555;
-            border: 1px solid #222;
-        }
-
-        /* ── How it works ── */
-        .how {
-            padding: 6rem 1.5rem;
-            background: #0a0a0a;
-            border-top: 1px solid #1a1a1a;
-        }
-        .steps { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
-        .step {
-            display: flex;
-            gap: 1.5rem;
-            align-items: flex-start;
-            position: relative;
-            padding-bottom: 2rem;
-        }
-        .step:last-child { padding-bottom: 0; }
-        .step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            left: 1.15rem;
-            top: 2.8rem;
-            bottom: 0;
-            width: 1px;
-            background: #1a1a1a;
-        }
-        .step-num {
-            flex-shrink: 0;
-            width: 2.4rem; height: 2.4rem;
-            background: #fff;
-            color: #0a0a0a;
-            border-radius: 50%;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
-            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+            color: var(--muted);
         }
-        .step-content h3 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.3rem; padding-top: 0.35rem; }
-        .step-content p { font-size: 0.875rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
-
-        /* ── CTA ── */
-        .cta {
-            padding: 7rem 1.5rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            background: #070707;
+        .feature-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.6rem;
         }
-        .cta-bg { position: absolute; inset: 0; background: #070707; }
-        .cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
-        .cta h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; color: white; margin-bottom: 1rem; letter-spacing: -0.02em; line-height: 1.2; }
-        .cta p { color: rgba(255,255,255,0.5); font-size: 1rem; margin-bottom: 2.5rem; line-height: 1.7; }
-        .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .feature-card-desc {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.65;
+        }
 
-        /* ── Footer ── */
+        /* ── FOOTER ── */
         footer {
-            background: #0a0a0a;
-            border-top: 1px solid #1a1a1a;
-            color: rgba(255,255,255,0.3);
-            text-align: center;
-            padding: 2rem 1rem;
-            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            background: var(--bg-card);
+            padding: 1.5rem 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
-        footer a { color: #888; text-decoration: none; }
-        footer a:hover { color: #fff; }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .footer-links a {
+            font-size: 0.82rem;
+            color: var(--dimmed);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .footer-links a:hover { color: var(--muted); }
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--dimmed);
+        }
 
-        /* ── Mobile ── */
-        @media (max-width: 768px) {
-            nav { padding: 0 1rem; }
-            /* Sur mobile : cacher tous les boutons de nav-actions, montrer le hamburger */
-            .nav-actions { display: none; }
-            .landing-hamburger { display: flex; }
-            .hero { padding: 5.5rem 1.25rem 3.5rem; }
-            .pillars-inner { grid-template-columns: 1fr; gap: 1.5rem; }
-            .pillar-plus { display: none; }
-            .features { padding: 4rem 1.25rem; }
-            .features-grid { grid-template-columns: 1fr; }
-            .feature-card.featured-risk { grid-column: span 1; }
-            .risk-section { padding: 4rem 1.25rem; }
-            .risk-steps-grid { flex-direction: column; }
-            .risk-step-arrow { display: none; }
-            .how { padding: 4rem 1.25rem; }
-            .cta { padding: 4rem 1.25rem; }
-            .stats-inner { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .hero-btns { flex-wrap: wrap; justify-content: center; }
-            .hero-btns .btn { max-width: 380px; justify-content: center; }
-            .cta-btns { flex-direction: column; align-items: center; }
-            .cta-btns .btn { width: 100%; max-width: 380px; justify-content: center; }
+        /* ── MOBILE ── */
+        @media (max-width: 900px) {
+            nav { padding: 0 1.25rem; }
+
+            .hero {
+                flex-direction: column;
+                min-height: auto;
+            }
+            .hero-left {
+                flex: none;
+                padding: 3rem 1.5rem 2rem;
+            }
+            .hero-right {
+                flex: none;
+                padding: 0 1.5rem 3rem;
+                background: none;
+            }
+            .preview-card {
+                max-width: 100%;
+            }
+            .features {
+                padding: 3.5rem 1.5rem;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            footer {
+                padding: 1.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
+
         @media (max-width: 480px) {
-            .hero-btns .btn { max-width: 100%; }
-            .cta-btns .btn { max-width: 100%; }
+            .hero-headline { font-size: 1.9rem; }
+            .hero-cta-row { flex-direction: column; align-items: flex-start; }
+            .btn-lg { width: 100%; justify-content: center; }
+            .preview-kpi-row { grid-template-columns: 1fr 1fr; }
+            .kpi-cell:nth-child(3) { grid-column: span 2; border-right: none; border-top: 1px solid var(--border); }
+            .nav-actions .btn-ghost { display: none; }
         }
     </style>
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-4GYZ9CCJVF"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-4GYZ9CCJVF');
-</script>
 </head>
 <body>
 
-<!-- Nav -->
+<!-- ═══ NAV ═══ -->
 <nav>
-    <a href="/" class="nav-brand">
-        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-            <rect width="28" height="28" rx="7" fill="#fff"/>
-            <polyline points="4,20 10,8 16,13 22,4"
-                      fill="none" stroke="#0a0a0a" stroke-width="2.5"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="22" cy="4" r="3" fill="#0a0a0a"/>
-        </svg>
-        PortfolioTrack
+    <a href="#" class="nav-brand">
+        <div class="nav-brand-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="28" height="28" rx="7" fill="#0a1428"/>
+                <polyline points="4,20 9,13 14,16 19,9 24,12" stroke="#e8f0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="19" cy="9" r="2" fill="#4ade80"/>
+            </svg>
+        </div>
+        <span class="nav-brand-text">PortfolioTrack</span>
     </a>
-
-    <!-- Boutons desktop -->
     <div class="nav-actions">
         {% if not current_user.is_authenticated %}
         <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Se connecter</a>
         {% endif %}
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline">
-            <i data-lucide="target" style="width:15px;height:15px;"></i> Test de profil
-        </a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Mon dashboard</a>
         {% else %}
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer gratuitement</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Commencer</a>
         {% endif %}
     </div>
-
-    <!-- Hamburger (mobile uniquement) -->
-    <button class="landing-hamburger" onclick="toggleLandingMenu()" id="landingHamburger">
-        <span></span><span></span><span></span>
-    </button>
 </nav>
 
-<!-- Menu mobile landing -->
-<div class="landing-mobile" id="landingMobile">
-    <a href="{{ url_for('main.test_profil') }}">
-        <i data-lucide="target" style="width:15px;height:15px;display:inline-block;vertical-align:-2px;margin-right:6px;"></i>
-        Test de profil
-    </a>
-    {% if current_user.is_authenticated %}
-    <a href="{{ url_for('main.dashboard') }}">Mon dashboard</a>
-    {% else %}
-    <a href="{{ url_for('auth.login') }}">Se connecter</a>
-    <a href="{{ url_for('auth.register') }}" class="mobile-cta">Commencer gratuitement</a>
-    {% endif %}
-</div>
-
-<!-- Hero -->
+<!-- ═══ HERO SPLIT ═══ -->
 <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-inner">
-        <div class="hero-badge">
-            <span class="badge-dot"></span>
-            Score de risque par actif · Unique en France
-        </div>
-        <h1>
-            Suis ton portefeuille.<br>
-            <span class="gradient-text">Investis selon ton profil de risque.</span>
+
+    <!-- LEFT: marketing copy -->
+    <div class="hero-left">
+        <span class="badge-pill">
+            <i data-lucide="trending-up" style="width:12px;height:12px;"></i>
+            Suivi de portefeuille
+        </span>
+
+        <h1 class="hero-headline">
+            Investissez selon<br>votre <span class="accent-word">profil de risque.</span>
         </h1>
-        <p>
-            Centralisez ETF, actions et crypto dans un seul tableau de bord.
-            Chaque actif affiche son score de risque — et votre Dashboard mesure
-            si votre portefeuille est cohérent avec votre tolérance au risque.
+
+        <p class="hero-subtext">
+            Suivez vos ETF, actions et crypto. Analysez vos dividendes.
+            Découvrez votre profil d'investisseur en 15 questions.
         </p>
-        <div class="hero-actions">
-            <div class="hero-btns">
-                {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                    Mon dashboard →
-                </a>
-                {% else %}
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                    Commencer gratuitement →
-                </a>
-                {% endif %}
-                <a href="{{ url_for('main.demo') }}" class="btn btn-demo btn-lg">
-                    Voir la démo
-                </a>
-                <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                    <i data-lucide="target" style="width:18px;height:18px;"></i> Découvrir mon profil
-                </a>
-                <a href="{{ url_for('main.simulateur') }}" class="btn btn-outline-white btn-lg">
-                    Simulateur DCA
-                </a>
-            </div>
-            <p class="hero-note">100% gratuit · <span>Sans inscription pour le test de profil</span></p>
-        </div>
-    </div>
-</section>
 
-<!-- Les deux piliers -->
-<section class="pillars">
-    <div class="pillars-inner">
-        <div class="pillar">
-            <div class="pillar-icon">
-                <i data-lucide="bar-chart-2" style="width:24px;height:24px;"></i>
-            </div>
-            <div class="pillar-title">Suivi de portefeuille</div>
-            <p class="pillar-desc">
-                Prix en temps réel, performance, plus-values latentes et réalisées,
-                dividendes, DCA — tout au même endroit.
-            </p>
-        </div>
-        <div class="pillar-plus">+</div>
-        <div class="pillar">
-            <div class="pillar-icon">
-                <i data-lucide="target" style="width:24px;height:24px;"></i>
-            </div>
-            <div class="pillar-title">Gestion du risque</div>
-            <p class="pillar-desc">
-                Score de risque 0–100 par actif, profil investisseur en 40 questions,
-                et score de cohérence portefeuille / profil en temps réel.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- Stats -->
-<section class="stats">
-    <div class="stats-inner">
-        <div>
-            <div class="stat-num">Live</div>
-            <div class="stat-label">Prix Yahoo Finance</div>
-        </div>
-        <div>
-            <div class="stat-num">0–100</div>
-            <div class="stat-label">Score de risque par actif</div>
-        </div>
-        <div>
-            <div class="stat-num">ETF · Actions · Crypto</div>
-            <div class="stat-label">Tous types d'actifs</div>
-        </div>
-        <div>
-            <div class="stat-num">100%</div>
-            <div class="stat-label">Gratuit et sans pub</div>
-        </div>
-    </div>
-</section>
-
-<!-- Feature unique : risque / cohérence — 3 étapes -->
-<section class="risk-section">
-    <div class="risk-section-inner">
-        <div class="section-eyebrow">Ce qui nous rend unique</div>
-        <h2 class="section-title">Investir en cohérence<br>avec son profil de risque.</h2>
-        <p class="section-sub">
-            La plupart des outils te disent combien tu as gagné.
-            Nous, on te dit aussi si tu investis de façon cohérente avec ta vraie tolérance au risque.
-        </p>
-        <div class="risk-steps-grid">
-            <div class="risk-step">
-                <div class="risk-step-num">1</div>
-                <div class="risk-step-icon">
-                    <i data-lucide="brain" style="width:22px;height:22px;"></i>
-                </div>
-                <h3>Fais ton test de profil</h3>
-                <p>40 questions sur 8 axes — tolérance au risque, horizon d'investissement, comportement face aux baisses — pour connaître ton vrai profil.</p>
-            </div>
-            <div class="risk-step-arrow">→</div>
-            <div class="risk-step">
-                <div class="risk-step-num">2</div>
-                <div class="risk-step-icon">
-                    <i data-lucide="bar-chart-2" style="width:22px;height:22px;"></i>
-                </div>
-                <h3>Chaque actif affiche son risque</h3>
-                <p>Score 0–100 calculé via Yahoo Finance sur la volatilité historique, le drawdown maximum et le beta sur 3 ans.</p>
-            </div>
-            <div class="risk-step-arrow">→</div>
-            <div class="risk-step">
-                <div class="risk-step-num">3</div>
-                <div class="risk-step-icon">
-                    <i data-lucide="check-circle" style="width:22px;height:22px;"></i>
-                </div>
-                <h3>Ton Dashboard mesure la cohérence</h3>
-                <p>Un score compare le risque réel de ton portefeuille avec ton profil. Tu sais si tu investis dans ta zone de confort.</p>
-            </div>
-        </div>
-        <div style="text-align:center;">
-            <a href="{{ url_for('main.test_profil') }}" class="btn btn-primary btn-lg">
-                Découvre ton profil de risque — gratuit, sans inscription →
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- Features -->
-<section class="features">
-    <div class="section-eyebrow">Fonctionnalités</div>
-    <h2 class="section-title">Tout ce qu'il vous faut.<br>Rien de superflu.</h2>
-    <p class="section-sub">
-        Conçu pour les investisseurs particuliers qui veulent de la clarté, pas de la complexité.
-    </p>
-    <div class="features-grid">
-        <div class="feature-card featured-risk">
-            <div class="feature-icon">
-                <i data-lucide="target" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Score de risque & Cohérence portefeuille</h3>
-            <p>
-                Chaque actif reçoit un score de risque 0–100 calculé sur sa volatilité annualisée,
-                son drawdown maximum et son beta vs MSCI World sur 3 ans.
-                Le Dashboard calcule le score de risque pondéré de ton portefeuille entier
-                et le compare à ton profil investisseur pour afficher un score de cohérence.
-            </p>
-            <div class="feature-tags">
-                <span class="feature-tag">Volatilité annualisée</span>
-                <span class="feature-tag">Drawdown max</span>
-                <span class="feature-tag">Beta vs MSCI World</span>
-                <span class="feature-tag">Score cohérence 0–100%</span>
-            </div>
-        </div>
-        <div class="feature-card featured">
-            <div class="feature-icon">
-                <i data-lucide="brain" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Test de profil investisseur</h3>
-            <p>40 questions sur 8 axes — tolérance au risque, horizon, objectifs, comportement — pour découvrir ta stratégie idéale et une recommandation générée par IA.</p>
-            <a href="{{ url_for('main.test_profil') }}" class="feature-link">Faire le test gratuitement →</a>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="trending-up" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Prix en temps réel</h3>
-            <p>Connecté à Yahoo Finance — vos prix se mettent à jour automatiquement à chaque visite. ETF, actions, crypto, tout.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="repeat" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Suivi DCA</h3>
-            <p>Définissez un objectif mensuel et suivez votre progression. Idéal pour les stratégies d'investissement régulier.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="briefcase" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Multi-actifs</h3>
-            <p>ETF, actions, crypto, obligations — tout centralisé dans un seul tableau de bord.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="bar-chart-2" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Graphiques interactifs</h3>
-            <p>Courbes d'évolution journalières, comparaison MSCI World, allocation — visualisez votre portefeuille dans le temps.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="zap" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Saisie rapide</h3>
-            <p>Entrez plusieurs achats d'un coup pour reconstituer votre historique complet en quelques minutes.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i data-lucide="download" style="width:22px;height:22px;"></i>
-            </div>
-            <h3>Export CSV</h3>
-            <p>Exportez tout votre historique en un clic pour vos déclarations fiscales ou analyses.</p>
-        </div>
-    </div>
-</section>
-
-<!-- How it works -->
-<section class="how">
-    <div class="section-eyebrow">Comment ça marche</div>
-    <h2 class="section-title">Opérationnel en 3 minutes.</h2>
-    <p class="section-sub">Pas d'API key. Pas de configuration. Juste votre portefeuille.</p>
-    <div class="steps">
-        <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-                <h3>Créez votre compte</h3>
-                <p>Un email et un mot de passe. Vos données sont privées et isolées. Ou commencez par le test de profil — sans inscription.</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-                <h3>Ajoutez vos actifs</h3>
-                <p>Entrez le ticker de votre ETF ou action — le prix et le score de risque sont récupérés automatiquement via Yahoo Finance.</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-                <h3>Saisissez vos achats</h3>
-                <p>Date, parts, prix — votre historique est reconstitué instantanément avec la courbe d'évolution journalière.</p>
-            </div>
-        </div>
-        <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-content">
-                <h3>Mesurez votre cohérence</h3>
-                <p>Faites votre test de profil et votre Dashboard affiche immédiatement si votre portefeuille correspond à votre tolérance au risque.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- CTA -->
-<section class="cta">
-    <div class="cta-bg"></div>
-    <div class="cta-inner">
-        <h2>Suivez votre portefeuille.<br>Investissez avec cohérence.</h2>
-        <p>
-            Commencez gratuitement — ou découvrez votre profil de risque
-            en 5 minutes, sans inscription.
-        </p>
-        <div class="cta-btns">
+        <div class="hero-cta-row">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                Mon dashboard →
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-accent btn-lg">
+                Mon dashboard <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
             </a>
             {% else %}
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                Créer un compte gratuit →
+            <a href="{{ url_for('auth.register') }}" class="btn btn-accent btn-lg">
+                Commencer gratuitement <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
             </a>
             {% endif %}
-            <a href="{{ url_for('main.test_profil') }}" class="btn btn-violet-outline btn-lg">
-                <i data-lucide="target" style="width:18px;height:18px;"></i> Test de profil investisseur
-            </a>
+            <a href="{{ url_for('main.demo') }}" class="btn btn-ghost btn-lg">Voir la démo</a>
         </div>
-        <p style="margin-top:1.25rem; font-size:0.82rem; color:rgba(255,255,255,0.3);">
-            Gratuit · Sans engagement · Sans inscription pour le test
-        </p>
+
+        <div class="social-proof">
+            <span>Gratuit</span>
+            <span class="social-proof-dot"></span>
+            <span>Aucune carte requise</span>
+            <span class="social-proof-dot"></span>
+            <span>Accès immédiat</span>
+        </div>
+    </div>
+
+    <!-- RIGHT: product preview card -->
+    <div class="hero-right">
+        <div class="preview-card">
+            <!-- Header -->
+            <div class="preview-header">
+                <span class="preview-title">Portfolio</span>
+                <span class="live-badge">
+                    <span class="live-dot"></span>
+                    Live
+                </span>
+            </div>
+
+            <!-- KPI row -->
+            <div class="preview-kpi-row">
+                <div class="kpi-cell">
+                    <div class="kpi-label">Valeur totale</div>
+                    <div class="kpi-value">12 450 €</div>
+                </div>
+                <div class="kpi-cell">
+                    <div class="kpi-label">Performance</div>
+                    <div class="kpi-value positive">+8.4%</div>
+                </div>
+                <div class="kpi-cell">
+                    <div class="kpi-label">Actifs</div>
+                    <div class="kpi-value">3</div>
+                </div>
+            </div>
+
+            <!-- Ticker strip -->
+            <div class="preview-ticker-row">
+                <div class="ticker-item">
+                    <span class="ticker-sym">IWDA.AS</span>
+                    <span class="ticker-chg up">+0.8%</span>
+                </div>
+                <div class="ticker-item">
+                    <span class="ticker-sym">BTC-USD</span>
+                    <span class="ticker-chg up">+2.1%</span>
+                </div>
+                <div class="ticker-item">
+                    <span class="ticker-sym">AAPL</span>
+                    <span class="ticker-chg dn">−0.3%</span>
+                </div>
+            </div>
+
+            <!-- Asset list -->
+            <div class="preview-assets">
+                <div class="asset-row">
+                    <div class="asset-badge">IWDA</div>
+                    <div class="asset-info">
+                        <div class="asset-name">iShares MSCI World</div>
+                        <div class="asset-type">ETF · PEA</div>
+                    </div>
+                    <div class="asset-perf">
+                        <div class="asset-perf-val up">+12.3%</div>
+                        <div class="asset-alloc">60% alloc.</div>
+                    </div>
+                </div>
+                <div class="asset-row">
+                    <div class="asset-badge">BTC</div>
+                    <div class="asset-info">
+                        <div class="asset-name">Bitcoin</div>
+                        <div class="asset-type">Crypto · CTO</div>
+                    </div>
+                    <div class="asset-perf">
+                        <div class="asset-perf-val up">+34.7%</div>
+                        <div class="asset-alloc">25% alloc.</div>
+                    </div>
+                </div>
+                <div class="asset-row">
+                    <div class="asset-badge">AAPL</div>
+                    <div class="asset-info">
+                        <div class="asset-name">Apple Inc.</div>
+                        <div class="asset-type">Action · CTO</div>
+                    </div>
+                    <div class="asset-perf">
+                        <div class="asset-perf-val dn">−2.1%</div>
+                        <div class="asset-alloc">15% alloc.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card footer -->
+            <div class="preview-footer">
+                <span class="preview-footer-text">Mis à jour il y a 3 min</span>
+                <div class="mini-bar">
+                    <div class="mini-bar-col" style="height:8px;"></div>
+                    <div class="mini-bar-col" style="height:12px;"></div>
+                    <div class="mini-bar-col" style="height:7px;"></div>
+                    <div class="mini-bar-col active" style="height:16px;"></div>
+                    <div class="mini-bar-col" style="height:10px;"></div>
+                    <div class="mini-bar-col active" style="height:18px;"></div>
+                    <div class="mini-bar-col active" style="height:14px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- Footer -->
+<!-- ═══ FEATURES ═══ -->
+<section class="features">
+    <p class="section-eyebrow">Fonctionnalités</p>
+    <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap">
+                <i data-lucide="brain" style="width:20px;height:20px;"></i>
+            </div>
+            <div class="feature-card-title">Profil investisseur</div>
+            <p class="feature-card-desc">
+                15 questions pour découvrir votre tolérance au risque et aligner
+                votre portefeuille avec vos objectifs financiers.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap">
+                <i data-lucide="bar-chart-2" style="width:20px;height:20px;"></i>
+            </div>
+            <div class="feature-card-title">Analyse automatique</div>
+            <p class="feature-card-desc">
+                Dividendes estimés, cohérence de portefeuille et recommandations
+                personnalisées générées automatiquement.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon-wrap">
+                <i data-lucide="layers" style="width:20px;height:20px;"></i>
+            </div>
+            <div class="feature-card-title">Multi-actifs</div>
+            <p class="feature-card-desc">
+                ETF, actions, crypto — tout en un seul endroit. Gérez plusieurs
+                enveloppes fiscales : PEA, CTO, assurance-vie.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
 <footer>
-    PortfolioTrack — Suivi de portefeuille boursier en temps réel.<br>
-    Créé par <strong style="color:rgba(255,255,255,0.5);">Maxence Robert</strong> —
-    <a href="{{ url_for('main.contact') }}">Contact</a>
-    <br><br>
-    <span style="font-size:0.72rem; max-width:680px; display:inline-block; line-height:1.6;">
-        <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;"></i>
-        Les informations affichées sont fournies à titre indicatif et ne constituent pas un conseil
-        en investissement. Prix fournis par Yahoo Finance avec un possible décalage.
-    </span>
+    <a href="#" class="footer-brand">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="7" fill="#0a1428"/>
+            <polyline points="4,20 9,13 14,16 19,9 24,12" stroke="#e8f0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="19" cy="9" r="2" fill="#4ade80"/>
+        </svg>
+        PortfolioTrack
+    </a>
+    <div class="footer-links">
+        <a href="{{ url_for('main.contact') }}">Contact</a>
+        <a href="{{ url_for('main.test_profil') }}">Test de profil</a>
+        <a href="{{ url_for('main.demo') }}">Démo</a>
+    </div>
+    <span class="footer-copy">© 2026 PortfolioTrack</span>
 </footer>
 
 <script>
-function toggleLandingMenu() {
-    document.getElementById('landingMobile').classList.toggle('open');
-}
-document.addEventListener('click', function(e) {
-    var menu = document.getElementById('landingMobile');
-    var btn  = document.getElementById('landingHamburger');
-    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.remove('open');
-    }
-});
-lucide.createIcons();
+    lucide.createIcons();
 </script>
 
 </body>

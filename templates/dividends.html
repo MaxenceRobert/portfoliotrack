@@ -11,7 +11,7 @@
     font-weight: 700;
     background: transparent;
     color: #4ade80;
-    border: 1px solid #222;
+    border: 1px solid #1a2a3a;
     border-radius: 6px;
     padding: 0.15rem 0.45rem;
     vertical-align: middle;
@@ -24,8 +24,8 @@
     font-size: 0.65rem;
     font-weight: 700;
     background: transparent;
-    color: #555;
-    border: 1px solid #222;
+    color: #4a7a9b;
+    border: 1px solid #1a2a3a;
     border-radius: 6px;
     padding: 0.15rem 0.45rem;
     vertical-align: middle;
@@ -34,11 +34,11 @@
 .section-subheader {
     font-size: 0.8rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.3);
+    color: rgba(232,240,255,0.3);
     text-transform: uppercase;
     letter-spacing: 0.07em;
     padding: 0.9rem 1.25rem 0.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(74,122,155,0.07);
 }
 </style>
 
@@ -109,16 +109,16 @@
                 <td>{{ d['date'] }}</td>
                 <td>
                     <span class="badge badge-etf">{{ d['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#555; margin-left:0.4rem;">{{ d['name'] }}</span>
+                    <span style="font-size:0.82rem; color:#4a7a9b; margin-left:0.4rem;">{{ d['name'] }}</span>
                 </td>
                 <td><strong class="positive">{{ d['amount']|round(2) }} €</strong></td>
-                <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">
+                <td style="font-size:0.78rem; color:rgba(232,240,255,0.35);">
                     {{ d['shares_held']|round(4) }} parts × {{ d['amount_per_share']|round(4) }} €
                 </td>
                 <td>
                     <span class="badge-auto">⚡ Auto</span>
                 </td>
-                <td style="color:rgba(255,255,255,0.2); font-size:0.75rem;">—</td>
+                <td style="color:rgba(232,240,255,0.2); font-size:0.75rem;">—</td>
             </tr>
             {% endfor %}
             {% endif %}
@@ -129,14 +129,14 @@
                 <td>{{ d['date'] }}</td>
                 <td>
                     <span class="badge badge-etf">{{ d['ticker'] }}</span>
-                    <span style="font-size:0.82rem; color:#555; margin-left:0.4rem;">{{ d['name'] }}</span>
+                    <span style="font-size:0.82rem; color:#4a7a9b; margin-left:0.4rem;">{{ d['name'] }}</span>
                 </td>
                 <td><strong class="positive">{{ d['amount'] }} €</strong></td>
-                <td style="font-size:0.78rem; color:rgba(255,255,255,0.35);">—</td>
+                <td style="font-size:0.78rem; color:rgba(232,240,255,0.35);">—</td>
                 <td>
                     <span class="badge-manual">✎ Manuel</span>
                     {% if d['notes'] %}
-                    <span style="font-size:0.78rem; color:rgba(255,255,255,0.35); margin-left:0.3rem;">{{ d['notes'] }}</span>
+                    <span style="font-size:0.78rem; color:rgba(232,240,255,0.35); margin-left:0.3rem;">{{ d['notes'] }}</span>
                     {% endif %}
                 </td>
                 <td>

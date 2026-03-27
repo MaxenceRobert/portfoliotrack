@@ -12,14 +12,14 @@
     .purchases-mobile  { display: none; }
 }
 .purchase-mobile-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(74,122,155,0.05);
+    border: 1px solid rgba(74,122,155,0.09);
     border-radius: 12px;
     padding: 1rem;
     margin-bottom: 0.75rem;
     transition: border-color 0.2s;
 }
-.purchase-mobile-card:hover { border-color: rgba(255,255,255,0.12); }
+.purchase-mobile-card:hover { border-color: rgba(74,122,155,0.14); }
 .pm-row {
     display: flex;
     justify-content: space-between;
@@ -27,8 +27,8 @@
     padding: 0.2rem 0;
     font-size: 0.82rem;
 }
-.pm-label { color: rgba(255,255,255,0.3); }
-.pm-value { color: rgba(255,255,255,0.75); font-weight: 500; }
+.pm-label { color: rgba(232,240,255,0.3); }
+.pm-value { color: rgba(232,240,255,0.75); font-weight: 500; }
 
 /* ── Envelope badges ── */
 .env-badge {
@@ -40,20 +40,20 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
-.env-pea    { background: transparent; color: #555; border: 1px solid #222; }
-.env-peapme { background: transparent; color: #555; border: 1px solid #222; }
-.env-cto    { background: transparent; color: #555; border: 1px solid #222; }
-.env-av     { background: transparent; color: #555; border: 1px solid #222; }
-.env-per    { background: transparent; color: #555; border: 1px solid #222; }
-.env-livret { background: transparent; color: #555; border: 1px solid #222; }
-.env-autre  { background: transparent; color: #555; border: 1px solid #222; }
+.env-pea    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-peapme { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-cto    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-av     { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-per    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-livret { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-autre  { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
 
 /* ── Envelope edit button ── */
 .env-edit-btn {
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba(255,255,255,0.25);
+    color: rgba(232,240,255,0.25);
     font-size: 0.8rem;
     padding: 2px 4px;
     border-radius: 4px;
@@ -62,14 +62,14 @@
     vertical-align: middle;
     margin-left: 2px;
 }
-.env-edit-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.env-edit-btn:hover { color: #e8f0ff; background: rgba(74,122,155,0.07); }
 
 /* ── Modal ── */
 .env-modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(4,8,15,0.6);
     backdrop-filter: blur(4px);
     z-index: 9000;
     align-items: center;
@@ -77,19 +77,19 @@
 }
 .env-modal-overlay.active { display: flex; }
 .env-modal-box {
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: #070d18;
+    border: 1px solid #1a2a3a;
     border-radius: 16px;
     padding: 1.75rem;
     width: 340px;
     max-width: 90vw;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    box-shadow: 0 30px 80px rgba(4,8,15,0.6);
 }
 .env-modal-box h3 {
     margin: 0 0 1.25rem;
     font-size: 1rem;
     font-weight: 700;
-    color: white;
+    color: #e8f0ff;
 }
 .env-modal-box select {
     width: 100%;
@@ -121,7 +121,7 @@
 
 <!-- Filtre -->
 <div style="margin-bottom:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); font-weight:700;
+    <span style="font-size:0.75rem; color:rgba(232,240,255,0.25); font-weight:700;
                  text-transform:uppercase; letter-spacing:0.08em;">Filtrer :</span>
     <button class="btn btn-sm btn-primary filter-btn" onclick="filterAsset('all', this)">Tous</button>
     {% for a in assets %}
@@ -164,11 +164,11 @@
                     data-cost="{{ p['total_cost'] | float }}"
                     data-fees="{{ p['fees'] | float if p['fees'] else 0 }}"
                     data-gain="{{ gain | float if gain is not none else 0 }}">
-                    <td style="white-space:nowrap; color:rgba(255,255,255,0.5); font-size:0.82rem;">{{ p['date'] }}</td>
+                    <td style="white-space:nowrap; color:rgba(232,240,255,0.5); font-size:0.82rem;">{{ p['date'] }}</td>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
                             <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                            <span style="font-size:0.82rem; color:rgba(255,255,255,0.4);">{{ p['name'] }}</span>
+                            <span style="font-size:0.82rem; color:rgba(232,240,255,0.4);">{{ p['name'] }}</span>
                         </div>
                     </td>
                     <td>
@@ -180,7 +180,7 @@
                     <td>
                         <div style="display:flex; align-items:center; gap:0.25rem;">
                             <span class="env-badge-row-{{ p['asset_id'] }} {% if env == 'PEA' %}env-badge env-pea{% elif env == 'PEA-PME' %}env-badge env-peapme{% elif env == 'CTO' %}env-badge env-cto{% elif env == 'Assurance Vie' %}env-badge env-av{% elif env == 'PER' %}env-badge env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-badge env-livret{% elif env %}env-badge env-autre{% else %}env-badge{% endif %}"
-                                  style="{% if not env %}color:rgba(255,255,255,0.15); font-size:0.72rem;{% endif %}">{{ env or '—' }}</span>
+                                  style="{% if not env %}color:rgba(232,240,255,0.15); font-size:0.72rem;{% endif %}">{{ env or '—' }}</span>
                             <button class="env-edit-btn" title="Modifier l'enveloppe"
                                     onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
                         </div>
@@ -190,12 +190,12 @@
                     <td class="neutral">
                         {% if p['fees'] and p['fees'] | float > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
                     </td>
-                    <td><strong style="color:white;">{{ p['total_cost'] }} €</strong></td>
+                    <td><strong style="color:#e8f0ff;">{{ p['total_cost'] }} €</strong></td>
                     <td>
                         {% if cv is not none %}
-                        <strong style="color:white;">{{ cv }} €</strong>
+                        <strong style="color:#e8f0ff;">{{ cv }} €</strong>
                         {% else %}
-                        <span style="color:rgba(255,255,255,0.2);">—</span>
+                        <span style="color:rgba(232,240,255,0.2);">—</span>
                         {% endif %}
                     </td>
                     <td>
@@ -207,10 +207,10 @@
                             {{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%
                         </div>
                         {% else %}
-                        <span style="color:rgba(255,255,255,0.2);">—</span>
+                        <span style="color:rgba(232,240,255,0.2);">—</span>
                         {% endif %}
                     </td>
-                    <td style="font-size:0.82rem; color:rgba(255,255,255,0.38); max-width:120px;">
+                    <td style="font-size:0.82rem; color:rgba(232,240,255,0.38); max-width:120px;">
                         {{ p['notes'] or '—' }}
                     </td>
                     <td>
@@ -244,16 +244,16 @@
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                 <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                <span style="font-size:0.85rem; color:white; font-weight:600;">{{ p['name'] }}</span>
+                <span style="font-size:0.85rem; color:#e8f0ff; font-weight:600;">{{ p['name'] }}</span>
                 {% if env %}
                 <span class="env-badge-row-{{ p['asset_id'] }} env-badge {% if env == 'PEA' %}env-pea{% elif env == 'PEA-PME' %}env-peapme{% elif env == 'CTO' %}env-cto{% elif env == 'Assurance Vie' %}env-av{% elif env == 'PER' %}env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-livret{% else %}env-autre{% endif %}">{{ env }}</span>
                 {% else %}
-                <span class="env-badge-row-{{ p['asset_id'] }}" style="font-size:0.68rem; color:rgba(255,255,255,0.15);">—</span>
+                <span class="env-badge-row-{{ p['asset_id'] }}" style="font-size:0.68rem; color:rgba(232,240,255,0.15);">—</span>
                 {% endif %}
                 <button class="env-edit-btn" title="Modifier l'enveloppe"
                         onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
             </div>
-            <span style="font-size:0.75rem; color:rgba(255,255,255,0.3);">{{ p['date'] }}</span>
+            <span style="font-size:0.75rem; color:rgba(232,240,255,0.3);">{{ p['date'] }}</span>
         </div>
 
         <div class="pm-row">
@@ -262,12 +262,12 @@
         </div>
         <div class="pm-row">
             <span class="pm-label">Total investi</span>
-            <span class="pm-value" style="color:white; font-weight:700;">{{ p['total_cost'] }} €</span>
+            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ p['total_cost'] }} €</span>
         </div>
         {% if cv is not none %}
         <div class="pm-row">
             <span class="pm-label">Valeur actuelle</span>
-            <span class="pm-value" style="color:white; font-weight:700;">{{ cv }} €</span>
+            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ cv }} €</span>
         </div>
         {% endif %}
         {% if gain is not none %}
@@ -288,7 +288,7 @@
         {% endif %}
 
         <div style="display:flex; gap:0.4rem; margin-top:0.75rem; padding-top:0.75rem;
-                    border-top:1px solid rgba(255,255,255,0.05);">
+                    border-top:1px solid rgba(74,122,155,0.07);">
             <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
                class="btn btn-ghost btn-sm">Éditer</a>
             <form method="POST"
@@ -439,7 +439,7 @@ async function submitEnvUpdate() {
                     el.className  = envBadgeClass(env);
                     el.textContent = env || '—';
                     if (!env) {
-                        el.style.cssText = 'font-size:0.68rem; color:rgba(255,255,255,0.15);';
+                        el.style.cssText = 'font-size:0.68rem; color:rgba(232,240,255,0.15);';
                     } else {
                         el.style.cssText = '';
                     }

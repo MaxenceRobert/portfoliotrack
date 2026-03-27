@@ -57,8 +57,8 @@
 </div>
 
 <div class="card" id="cta-section" style="display:none; margin-top:1.5rem; text-align:center; padding:2rem;">
-    <h3 style="margin-bottom:0.5rem; color:white;">Prêt à suivre ton vrai portefeuille ?</h3>
-    <p style="color:rgba(255,255,255,0.4); margin-bottom:1.5rem;">
+    <h3 style="margin-bottom:0.5rem; color:#e8f0ff;">Prêt à suivre ton vrai portefeuille ?</h3>
+    <p style="color:rgba(232,240,255,0.4); margin-bottom:1.5rem;">
         PortfolioTrack te permet de suivre tes investissements réels,
         comparer ta performance au MSCI World et visualiser ta progression DCA.
     </p>
@@ -117,15 +117,15 @@ function simulate() {
             x: labels, y: invested,
             name: 'Total investi (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: 'rgba(255,255,255,0.3)', dash: 'dot', width: 2 },
-            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.04)'
+            line: { color: 'rgba(232,240,255,0.30)', dash: 'dot', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
         },
         {
             x: labels, y: value,
             name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
             line: { color: '#fff', width: 2.5 },
-            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.04)'
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
@@ -134,24 +134,24 @@ function simulate() {
         margin: { l: 60, r: 20, t: 20, b: 40 },
         legend: {
             orientation: 'h', y: -0.15,
-            font: { color: 'rgba(255,255,255,0.5)' },
+            font: { color: 'rgba(232,240,255,0.55)' },
             bgcolor: 'rgba(0,0,0,0)'
         },
         hovermode: 'x unified',
         hoverlabel: {
             bgcolor: '#16161F',
-            bordercolor: 'rgba(255,255,255,0.1)',
-            font: { color: 'rgba(255,255,255,0.8)' }
+            bordercolor: 'rgba(74,122,155,0.12)',
+            font: { color: 'rgba(232,240,255,0.85)' }
         },
         xaxis: {
-            gridcolor: 'rgba(255,255,255,0.06)',
-            tickfont: { color: 'rgba(255,255,255,0.4)' },
-            linecolor: 'rgba(255,255,255,0.08)'
+            gridcolor: 'rgba(74,122,155,0.08)',
+            tickfont: { color: 'rgba(232,240,255,0.45)' },
+            linecolor: 'rgba(74,122,155,0.10)'
         },
         yaxis: {
-            gridcolor: 'rgba(255,255,255,0.06)',
-            tickfont: { color: 'rgba(255,255,255,0.4)' },
-            linecolor: 'rgba(255,255,255,0.08)',
+            gridcolor: 'rgba(74,122,155,0.08)',
+            tickfont: { color: 'rgba(232,240,255,0.45)' },
+            linecolor: 'rgba(74,122,155,0.10)',
             tickformat: ',.0f',
             ticksuffix: ' €'
         }

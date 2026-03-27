@@ -10,29 +10,29 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0; right: 0;
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
+    background: #070d18;
+    border: 1px solid #1a2a3a;
     border-radius: 12px;
     z-index: 1000;
     max-height: 280px;
     overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 12px rgba(4,8,15,0.5);
 }
 .explorer-suggestion-item {
     padding: 0.7rem 1rem;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(74,122,155,0.06);
     transition: background 0.12s;
 }
 .explorer-suggestion-item:last-child { border-bottom: none; }
-.explorer-suggestion-item:hover { background: #111; }
+.explorer-suggestion-item:hover { background: #1a2a3a; }
 
 /* Bloc risque prominent */
 .risk-block {
     margin-bottom: 1.5rem;
     border-radius: 16px;
-    border: 1px solid #1a1a1a;
-    background: #0a0a0a;
+    border: 1px solid #1a2a3a;
+    background: #070d18;
     padding: 1.5rem;
     display: flex;
     gap: 2rem;
@@ -62,7 +62,7 @@
 }
 .risk-block-score-sub {
     font-size: 0.7rem;
-    color: rgba(255,255,255,0.3);
+    color: rgba(232,240,255,0.3);
     margin-top: 0.2rem;
 }
 .risk-block-divider {
@@ -86,24 +86,24 @@
 .risk-metric-name {
     font-size: 0.72rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.45);
+    color: rgba(74,122,155,0.45);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 .risk-metric-value {
     font-size: 1.35rem;
     font-weight: 800;
-    color: white;
+    color: #e8f0ff;
     letter-spacing: -0.02em;
 }
 .risk-metric-desc {
     font-size: 0.72rem;
-    color: rgba(255,255,255,0.28);
+    color: rgba(74,122,155,0.28);
     line-height: 1.4;
 }
 .risk-block-source {
     font-size: 0.68rem;
-    color: rgba(255,255,255,0.2);
+    color: rgba(74,122,155,0.2);
     margin-top: 0.75rem;
     text-align: center;
     width: 100%;
@@ -118,8 +118,8 @@
 .ticker-bar-wrap {
     width: 100%;
     overflow: hidden;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(74,122,155,0.05);
+    border: 1px solid rgba(74,122,155,0.06);
     border-radius: 10px;
     margin-bottom: 1.5rem;
     padding: 0.55rem 0;
@@ -134,8 +134,8 @@
     z-index: 2;
     pointer-events: none;
 }
-.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, #070707 0%, transparent 100%); }
-.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, #070707 0%, transparent 100%); }
+.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, #070d18 0%, transparent 100%); }
+.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, #070d18 0%, transparent 100%); }
 .ticker-track {
     display: flex;
     white-space: nowrap;
@@ -154,14 +154,14 @@
     padding: 0 1.25rem;
     font-size: 0.78rem;
     font-weight: 600;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(74,122,155,0.06);
     white-space: nowrap;
 }
-.ticker-name { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
-.ticker-price { color: rgba(255,255,255,0.8); }
+.ticker-name { color: rgba(74,122,155,0.45); font-size: 0.72rem; }
+.ticker-price { color: rgba(232,240,255,0.8); }
 .ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
 .ticker-chg-neg { color: #F87171; font-size: 0.72rem; font-weight: 700; }
-.ticker-loading { font-size: 0.75rem; color: rgba(255,255,255,0.25); padding: 0 1.5rem; font-style: italic; }
+.ticker-loading { font-size: 0.75rem; color: rgba(232,240,255,0.25); padding: 0 1.5rem; font-style: italic; }
 </style>
 
 <div class="page-header">
@@ -178,13 +178,13 @@
     </div>
 </div>
 
-<div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:#0a0a0a; border:1px solid #222; border-radius:12px; font-size:0.875rem; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:0.6rem;">
-    <span style="color:#888;">📊</span>
+<div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:#070d18; border:1px solid #1a2a3a; border-radius:12px; font-size:0.875rem; color:rgba(232,240,255,0.55); display:flex; align-items:center; gap:0.6rem;">
+    <span style="color:#4a7a9b;">📊</span>
     Chaque actif affiche son niveau de risque historique. Compare-les avant d'investir pour rester cohérent avec ton profil.
     {% if current_user.is_authenticated %}
-    <a href="{{ url_for('main.dashboard') }}" style="color:#888; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Voir ma cohérence →</a>
+    <a href="{{ url_for('main.dashboard') }}" style="color:#4a7a9b; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Voir ma cohérence →</a>
     {% else %}
-    <a href="{{ url_for('main.test_profil') }}" style="color:#888; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Découvrir mon profil →</a>
+    <a href="{{ url_for('main.test_profil') }}" style="color:#4a7a9b; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Découvrir mon profil →</a>
     {% endif %}
 </div>
 
@@ -200,12 +200,12 @@
         </div>
         <button class="btn btn-primary" onclick="goToTicker()">Rechercher</button>
     </div>
-    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(255,255,255,0.25);">
+    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(232,240,255,0.25);">
         Tape le nom ou le ticker — ex:
-        <span style="color:#888; cursor:pointer;" onclick="setTicker('AAPL')">AAPL</span>,
-        <span style="color:#888; cursor:pointer;" onclick="setTicker('IWDA.AS')">IWDA.AS</span>,
-        <span style="color:#888; cursor:pointer;" onclick="setTicker('BTC-USD')">BTC-USD</span>,
-        <span style="color:#888; cursor:pointer;" onclick="setTicker('ESE.PA')">ESE.PA</span>
+        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('AAPL')">AAPL</span>,
+        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('IWDA.AS')">IWDA.AS</span>,
+        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('BTC-USD')">BTC-USD</span>,
+        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('ESE.PA')">ESE.PA</span>
     </div>
 </div>
 
@@ -220,22 +220,22 @@
     <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
-                <h2 style="color:white; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
+                <h2 style="color:#e8f0ff; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
                 <span class="badge badge-etf">{{ info.ticker }}</span>
                 {% if info.exchange %}
-                <span style="font-size:0.75rem; color:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.1); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
+                <span style="font-size:0.75rem; color:rgba(232,240,255,0.25); border:1px solid rgba(74,122,155,0.12); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
                 {% endif %}
                 {% if info.asset_type %}
-                <span style="font-size:0.75rem; color:rgba(255,255,255,0.25);">{{ info.asset_type }}</span>
+                <span style="font-size:0.75rem; color:rgba(232,240,255,0.25);">{{ info.asset_type }}</span>
                 {% endif %}
             </div>
             {% if info.sector and info.sector != '—' %}
-            <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">{{ info.sector }}</div>
+            <div style="font-size:0.82rem; color:rgba(232,240,255,0.35);">{{ info.sector }}</div>
             {% endif %}
         </div>
         <div style="text-align:right;">
-            <div style="font-size:2.2rem; font-weight:800; color:white; letter-spacing:-0.02em;">
-                {{ info.current_price }} <span style="font-size:1rem; font-weight:500; color:rgba(255,255,255,0.4);">{{ info.currency }}</span>
+            <div style="font-size:2.2rem; font-weight:800; color:#e8f0ff; letter-spacing:-0.02em;">
+                {{ info.current_price }} <span style="font-size:1rem; font-weight:500; color:rgba(74,122,155,0.4);">{{ info.currency }}</span>
             </div>
             {% if info.previous_close %}
             {% set change = ((info.current_price - info.previous_close) / info.previous_close * 100)|round(2) %}
@@ -255,7 +255,7 @@
     {% if info.market_cap %}
     <div class="kpi-card">
         <div class="kpi-label">Market Cap</div>
-        <div class="kpi-value" style="font-size:1.3rem; color:#fff;">
+        <div class="kpi-value" style="font-size:1.3rem; color:#e8f0ff;">
             {% if info.market_cap >= 1000000000000 %}{{ (info.market_cap / 1000000000000)|round(2) }} T
             {% elif info.market_cap >= 1000000000 %}{{ (info.market_cap / 1000000000)|round(2) }} Md
             {% else %}{{ (info.market_cap / 1000000)|round(2) }} M
@@ -282,15 +282,15 @@
     <div class="kpi-card">
         <div class="kpi-label">Range 52 semaines</div>
         <div style="margin-top:0.4rem;">
-            <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:rgba(255,255,255,0.35); margin-bottom:0.3rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:rgba(232,240,255,0.35); margin-bottom:0.3rem;">
                 <span class="negative">{{ info.fifty_two_week_low }}</span>
                 <span class="positive">{{ info.fifty_two_week_high }}</span>
             </div>
             {% set range_pct = ((info.current_price - info.fifty_two_week_low) / (info.fifty_two_week_high - info.fifty_two_week_low) * 100)|round(1) if (info.fifty_two_week_high - info.fifty_two_week_low) > 0 else 50 %}
-            <div style="background:rgba(255,255,255,0.07); border-radius:99px; height:5px; overflow:hidden;">
-                <div class="range-bar-fill" data-width="{{ range_pct }}" style="width:0%; height:100%; background:#fff; border-radius:99px;"></div>
+            <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:5px; overflow:hidden;">
+                <div class="range-bar-fill" data-width="{{ range_pct }}" style="width:0%; height:100%; background:#e8f0ff; border-radius:99px;"></div>
             </div>
-            <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:0.25rem; text-align:center;">
+            <div style="font-size:0.72rem; color:rgba(232,240,255,0.3); margin-top:0.25rem; text-align:center;">
                 Position actuelle : {{ range_pct }}% du range
             </div>
         </div>
@@ -307,7 +307,7 @@
 {% elif risk_info.score <= 40 %}
   {% set r_col = '#4ade80' %}{% set r_lbl = 'Faible' %}
 {% elif risk_info.score <= 60 %}
-  {% set r_col = '#555' %}{% set r_lbl = 'Modéré' %}
+  {% set r_col = '#4a7a9b' %}{% set r_lbl = 'Modéré' %}
 {% else %}
   {% set r_col = '#f87171' %}{% set r_lbl = 'Élevé' %}
 {% endif %}
@@ -350,7 +350,7 @@
 <!-- Graphique -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <strong style="color:white;">Cours historique</strong>
+        <strong style="color:#e8f0ff;">Cours historique</strong>
         <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
             {% for p, label in [('1mo','1M'), ('3mo','3M'), ('6mo','6M'), ('1y','1A'), ('2y','2A'), ('5y','5A')] %}
             <a href="{{ url_for('main.explorer') }}?ticker={{ info.ticker }}&period={{ p }}"
@@ -363,10 +363,10 @@
 
 <!-- CTA achat -->
 {% if current_user.is_authenticated %}
-<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-color:#1a1a1a;">
+<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-color:#1a2a3a;">
     <div>
-        <div style="font-weight:700; color:white; margin-bottom:0.25rem;">Investir dans {{ info.ticker }}</div>
-        <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">
+        <div style="font-weight:700; color:#e8f0ff; margin-bottom:0.25rem;">Investir dans {{ info.ticker }}</div>
+        <div style="font-size:0.82rem; color:rgba(232,240,255,0.35);">
             Enregistre un achat — l'actif sera ajouté automatiquement à ton portefeuille.
         </div>
     </div>
@@ -374,10 +374,10 @@
        class="btn btn-primary">+ Enregistrer un achat</a>
 </div>
 {% else %}
-<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:2rem; border-color:#1a1a1a;">
+<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:2rem; border-color:#1a2a3a;">
     <div style="font-size:1.5rem; margin-bottom:0.75rem;">📈</div>
-    <div style="font-weight:700; color:white; margin-bottom:0.5rem;">Suivre cet actif</div>
-    <p style="color:rgba(255,255,255,0.35); margin-bottom:1.25rem; font-size:0.875rem;">
+    <div style="font-weight:700; color:#e8f0ff; margin-bottom:0.5rem;">Suivre cet actif</div>
+    <p style="color:rgba(232,240,255,0.35); margin-bottom:1.25rem; font-size:0.875rem;">
         Crée un compte gratuit pour enregistrer tes achats et suivre ta performance.
     </p>
     <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit →</a>
@@ -404,25 +404,25 @@ Plotly.newPlot('price-chart', [{
     fill: 'tozeroy',
     fillcolor: fillColor
 }], {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
+    paper_bgcolor: 'rgba(4,8,15,0)',
+    plot_bgcolor: 'rgba(4,8,15,0)',
     height: isMobile ? 240 : 360,
     margin: isMobile ? { l: 45, r: 10, t: 10, b: 40 } : { l: 20, r: 20, t: 10, b: 40 },
     hoverlabel: {
-        bgcolor: '#0C0C14',
-        bordercolor: 'rgba(255,255,255,0.1)',
-        font: { color: 'white' }
+        bgcolor: '#0f1e2e',
+        bordercolor: 'rgba(74,122,155,0.12)',
+        font: { color: '#e8f0ff' }
     },
     hovermode: 'x unified',
     xaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        tickfont: { color: 'rgba(255,255,255,0.35)' },
-        linecolor: 'rgba(255,255,255,0.07)'
+        gridcolor: 'rgba(74,122,155,0.07)',
+        tickfont: { color: 'rgba(232,240,255,0.35)' },
+        linecolor: 'rgba(74,122,155,0.07)'
     },
     yaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        tickfont: { color: 'rgba(255,255,255,0.35)' },
-        linecolor: 'rgba(255,255,255,0.07)',
+        gridcolor: 'rgba(74,122,155,0.07)',
+        tickfont: { color: 'rgba(232,240,255,0.35)' },
+        linecolor: 'rgba(74,122,155,0.07)',
         ticksuffix: ' {{ info.currency }}'
     }
 }, { responsive: true, displayModeBar: false });
@@ -470,11 +470,11 @@ function showSuggestions(results) {
     suggestionsBox.innerHTML = results.map(r => `
         <div class="explorer-suggestion-item" onclick="pickSuggestion('${r.ticker}')">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="background:rgba(255,255,255,0.07); color:#888; font-size:0.72rem;
+                <span style="background:rgba(74,122,155,0.07); color:#4a7a9b; font-size:0.72rem;
                              font-weight:700; padding:2px 7px; border-radius:5px;">${r.ticker}</span>
-                <span style="color:white; font-size:0.875rem; font-weight:500;">${r.name}</span>
+                <span style="color:#e8f0ff; font-size:0.875rem; font-weight:500;">${r.name}</span>
             </div>
-            <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:2px;">
+            <div style="font-size:0.72rem; color:rgba(232,240,255,0.3); margin-top:2px;">
                 ${r.exchange} · ${r.type} · ${r.currency}
             </div>
         </div>

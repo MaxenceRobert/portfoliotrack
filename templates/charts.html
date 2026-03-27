@@ -19,11 +19,11 @@
 {% else %}
 
 {% if portfolio_chart %}
-<div class="card" style="margin-bottom:1.5rem; border-top:2px solid #1a1a1a;">
+<div class="card" style="margin-bottom:1.5rem; border-top:2px solid #1a2a3a;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
-            <strong style="font-size:1.05rem; color:white;">📊 Portefeuille total</strong>
-            <span style="font-size:0.82rem; color:rgba(255,255,255,0.35); margin-left:0.5rem;">Tous actifs confondus</span>
+            <strong style="font-size:1.05rem; color:#e8f0ff;">📊 Portefeuille total</strong>
+            <span style="font-size:0.82rem; color:rgba(232,240,255,0.35); margin-left:0.5rem;">Tous actifs confondus</span>
         </div>
         <div style="display:flex; gap:0.5rem;">
             <button class="btn btn-sm btn-primary" onclick="setMode('portfolio', 'eur', this)">Valeur (€)</button>
@@ -39,9 +39,9 @@
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
             <span class="badge badge-etf">{{ data.asset.ticker }}</span>
-            <strong style="margin-left:0.5rem; color:white;">{{ data.asset.name }}</strong>
+            <strong style="margin-left:0.5rem; color:#e8f0ff;">{{ data.asset.name }}</strong>
             {% if data.asset.isin %}
-            <span style="font-size:0.8rem; color:rgba(255,255,255,0.3); margin-left:0.5rem;">{{ data.asset.isin }}</span>
+            <span style="font-size:0.8rem; color:rgba(232,240,255,0.3); margin-left:0.5rem;">{{ data.asset.isin }}</span>
             {% endif %}
         </div>
         <div style="display:flex; gap:0.5rem;">
@@ -75,23 +75,23 @@ const darkLayout = {
         : { l: 20, r: 20, t: 40, b: 40 },
     hoverlabel: {
         bgcolor: '#16161F',
-        bordercolor: 'rgba(255,255,255,0.1)',
-        font: { color: 'rgba(255,255,255,0.8)' }
+        bordercolor: 'rgba(74,122,155,0.1)',
+        font: { color: 'rgba(232,240,255,0.8)' }
     },
-    font: { color: 'rgba(255,255,255,0.5)', size: isMobile ? 10 : 12 },
+    font: { color: 'rgba(232,240,255,0.5)', size: isMobile ? 10 : 12 },
     xaxis: {
-        gridcolor: 'rgba(255,255,255,0.06)',
-        linecolor: 'rgba(255,255,255,0.08)',
-        tickfont: { color: 'rgba(255,255,255,0.4)', size: isMobile ? 9 : 11 },
+        gridcolor: 'rgba(74,122,155,0.06)',
+        linecolor: 'rgba(74,122,155,0.06)',
+        tickfont: { color: 'rgba(232,240,255,0.4)', size: isMobile ? 9 : 11 },
         tickangle: isMobile ? -45 : 0
     },
     yaxis: {
-        gridcolor: 'rgba(255,255,255,0.06)',
-        linecolor: 'rgba(255,255,255,0.08)',
-        tickfont: { color: 'rgba(255,255,255,0.4)', size: isMobile ? 9 : 11 }
+        gridcolor: 'rgba(74,122,155,0.06)',
+        linecolor: 'rgba(74,122,155,0.06)',
+        tickfont: { color: 'rgba(232,240,255,0.4)', size: isMobile ? 9 : 11 }
     },
     legend: {
-        font: { color: 'rgba(255,255,255,0.5)', size: isMobile ? 9 : 11 },
+        font: { color: 'rgba(232,240,255,0.5)', size: isMobile ? 9 : 11 },
         bgcolor: 'rgba(0,0,0,0)',
         orientation: 'h',
         y: isMobile ? -0.35 : -0.15

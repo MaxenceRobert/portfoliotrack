@@ -16,7 +16,7 @@
         <div class="form-group">
             <label>Actif</label>
             <input type="text" value="{{ purchase['ticker'] }} — {{ purchase['name'] if purchase.get('name') else purchase['ticker'] }}"
-                   disabled style="background:rgba(255,255,255,0.02); color:rgba(255,255,255,0.3); cursor:not-allowed;">
+                   disabled style="background:rgba(74,122,155,0.04); color:rgba(232,240,255,0.30); cursor:not-allowed;">
             <div class="form-hint">L'actif ne peut pas être modifié.</div>
         </div>
 
@@ -46,12 +46,12 @@
             <label>Montant total</label>
             <div id="total-display" style="
                 padding: 0.65rem 0.9rem;
-                background: rgba(255,255,255,0.04);
-                border: 1px solid #1a1a1a;
+                background: rgba(74,122,155,0.06);
+                border: 1px solid #1a2a3a;
                 border-radius: 10px;
                 font-size: 1.1rem;
                 font-weight: 700;
-                color: #fff;
+                color: #e8f0ff;
             ">{{ purchase['total_cost'] }} €</div>
             <div class="form-hint">Calculé automatiquement (parts × prix).</div>
         </div>
@@ -65,7 +65,7 @@
                        placeholder="ex: 1.99">
             </div>
             <div class="form-group">
-                <label for="notes">Note <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
+                <label for="notes">Note <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
                 <input type="text" id="notes" name="notes"
                        value="{{ purchase['notes'] or '' }}"
                        placeholder="ex: Achat mensuel DCA">

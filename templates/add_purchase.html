@@ -47,13 +47,13 @@ function addRow() {
                     top:100%; left:0; right:0;
                     background:rgba(12,12,20,0.98);
                     backdrop-filter:blur(20px);
-                    border:1px solid rgba(255,255,255,0.1);
+                    border:1px solid rgba(74,122,155,0.1);
                     border-radius:12px;
                     z-index:1000;
                     max-height:240px;
                     overflow-y:auto;
                     margin-top:4px;
-                    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+                    box-shadow:0 20px 50px rgba(4,8,15,0.5);
                 "></div>
             </div>
             <input type="hidden" id="ticker-${i}" name="ticker_${i}">
@@ -62,7 +62,7 @@ function addRow() {
             <input type="hidden" id="asset_type-${i}" name="asset_type_${i}">
             <input type="hidden" id="asset_id-${i}" name="asset_id_${i}">
             <div id="selected-asset-${i}" style="display:none; margin-top:0.5rem;
-                 background:rgba(255,255,255,0.04); border:1px solid #1a1a1a;
+                 background:rgba(74,122,155,0.06); border:1px solid #1a2a3a;
                  border-radius:8px; padding:0.5rem 0.75rem; font-size:0.82rem;">
             </div>
         </div>
@@ -95,13 +95,13 @@ function addRow() {
                        step="0.01" min="0" value="0" placeholder="0.00">
             </div>
             <div class="form-group">
-                <label>Note <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
+                <label>Note <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
                 <input type="text" name="notes_${i}" placeholder="ex: Achat mensuel DCA">
             </div>
         </div>
 
         <div class="form-group" id="envelope-group-${i}">
-            <label style="font-size:0.82rem;">Enveloppe fiscale <span style="font-weight:400; color:rgba(255,255,255,0.3);">(si nouvel actif)</span></label>
+            <label style="font-size:0.82rem;">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(si nouvel actif)</span></label>
             <select name="envelope_${i}" style="font-size:0.85rem;">
                 <option value="">— Non spécifié —</option>
                 <option value="PEA">PEA</option>
@@ -117,8 +117,8 @@ function addRow() {
         </div>
 
         <div style="display:flex; align-items:center; gap:1rem; margin-top:0.25rem;">
-            <div style="font-size:0.82rem; color:rgba(255,255,255,0.35);">Total :</div>
-            <div id="total-${i}" style="font-weight:700; color:#fff; font-size:1rem;">—</div>
+            <div style="font-size:0.82rem; color:rgba(232,240,255,0.4);">Total :</div>
+            <div id="total-${i}" style="font-weight:700; color:#e8f0ff; font-size:1rem;">—</div>
         </div>
     `;
 
@@ -168,15 +168,15 @@ function showSuggestions(i, existing, yahooResults) {
     if (existing.length) {
         html += `<div style="padding:0.4rem 1rem; font-size:0.68rem; font-weight:700;
                              text-transform:uppercase; letter-spacing:0.1em;
-                             color:rgba(255,255,255,0.2);">Déjà dans ton portefeuille</div>`;
+                             color:rgba(74,122,155,0.2);">Déjà dans ton portefeuille</div>`;
         html += existing.map(a => `
             <div onclick="selectExisting(${i}, ${JSON.stringify(a).replace(/"/g, '&quot;')})"
-                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s;"
-                 onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.06); transition:background 0.1s;"
+                 onmouseover="this.style.background='rgba(74,122,155,0.06)'"
                  onmouseout="this.style.background='transparent'">
-                <span style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.72rem;
+                <span style="background:rgba(74,122,155,0.06); color:#e8f0ff; font-size:0.72rem;
                              font-weight:700; padding:2px 7px; border-radius:5px;">${a.ticker}</span>
-                <span style="color:white; font-size:0.875rem; margin-left:0.5rem;">${a.name}</span>
+                <span style="color:#e8f0ff; font-size:0.875rem; margin-left:0.5rem;">${a.name}</span>
             </div>
         `).join('');
     }
@@ -184,18 +184,18 @@ function showSuggestions(i, existing, yahooResults) {
     if (yahooResults.length) {
         html += `<div style="padding:0.4rem 1rem; font-size:0.68rem; font-weight:700;
                              text-transform:uppercase; letter-spacing:0.1em;
-                             color:rgba(255,255,255,0.2);">Yahoo Finance</div>`;
+                             color:rgba(74,122,155,0.2);">Yahoo Finance</div>`;
         html += yahooResults.map(r => `
             <div onclick="selectYahoo(${i}, ${JSON.stringify(r).replace(/"/g, '&quot;')})"
-                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s;"
-                 onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.06); transition:background 0.1s;"
+                 onmouseover="this.style.background='rgba(74,122,155,0.06)'"
                  onmouseout="this.style.background='transparent'">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <span style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.72rem;
+                    <span style="background:rgba(74,122,155,0.06); color:#e8f0ff; font-size:0.72rem;
                                  font-weight:700; padding:2px 7px; border-radius:5px;">${r.ticker}</span>
-                    <span style="color:white; font-size:0.875rem;">${r.name}</span>
+                    <span style="color:#e8f0ff; font-size:0.875rem;">${r.name}</span>
                 </div>
-                <div style="font-size:0.72rem; color:rgba(255,255,255,0.28); margin-top:2px;">
+                <div style="font-size:0.72rem; color:rgba(232,240,255,0.30); margin-top:2px;">
                     ${r.exchange} · ${r.type} · ${r.currency}
                 </div>
             </div>
@@ -217,7 +217,7 @@ function selectExisting(i, asset) {
     document.getElementById(`suggestions-${i}`).style.display = 'none';
 
     const sel = document.getElementById(`selected-asset-${i}`);
-    sel.innerHTML = `✓ <strong style="color:#4ade80;">${asset.ticker}</strong> — ${asset.name} <span style="color:rgba(255,255,255,0.28);">(déjà dans ton portefeuille)</span>`;
+    sel.innerHTML = `✓ <strong style="color:#4ade80;">${asset.ticker}</strong> — ${asset.name} <span style="color:rgba(232,240,255,0.30);">(déjà dans ton portefeuille)</span>`;
     sel.style.display = 'block';
 }
 
@@ -233,7 +233,7 @@ function selectYahoo(i, r) {
     document.getElementById(`suggestions-${i}`).style.display = 'none';
 
     const sel = document.getElementById(`selected-asset-${i}`);
-    sel.innerHTML = `✓ <strong style="color:#fff;">${r.ticker}</strong> — ${r.name} <span style="color:rgba(255,255,255,0.28);">(sera ajouté automatiquement)</span>`;
+    sel.innerHTML = `✓ <strong style="color:#e8f0ff;">${r.ticker}</strong> — ${r.name} <span style="color:rgba(232,240,255,0.30);">(sera ajouté automatiquement)</span>`;
     sel.style.display = 'block';
 }
 

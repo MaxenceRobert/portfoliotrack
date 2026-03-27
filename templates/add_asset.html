@@ -25,7 +25,7 @@
                     top:100%;
                     left:0; right:0;
                     background:#16161F;
-                    border:1px solid rgba(255,255,255,0.1);
+                    border:1px solid rgba(74,122,155,0.1);
                     border-radius:10px;
                     z-index:1000;
                     max-height:280px;
@@ -36,8 +36,8 @@
             <div class="form-hint">Tape le nom ou le ticker — les résultats Yahoo Finance apparaissent automatiquement.</div>
         </div>
 
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.07); margin:1.25rem 0;">
-        <div style="font-size:0.78rem; color:rgba(255,255,255,0.3); margin-bottom:1rem;">
+        <hr style="border:none; border-top:1px solid rgba(74,122,155,0.09); margin:1.25rem 0;">
+        <div style="font-size:0.78rem; color:rgba(232,240,255,0.30); margin-bottom:1rem;">
             Ou remplis manuellement :
         </div>
 
@@ -77,7 +77,7 @@
         </div>
 
         <div class="form-group">
-            <label for="isin">ISIN <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
+            <label for="isin">ISIN <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
             <input type="text" id="isin" name="isin"
                    placeholder="ex: IE00B4L5Y983"
                    maxlength="12"
@@ -85,7 +85,7 @@
         </div>
 
         <div class="form-group">
-            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:rgba(255,255,255,0.3);">(optionnel)</span></label>
+            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
             <select id="envelope" name="envelope">
                 <option value="">— Non spécifié —</option>
                 <option value="PEA">PEA — Plan d'Épargne en Actions</option>
@@ -144,18 +144,18 @@ function showSuggestions(results) {
     }
     box.innerHTML = results.map(r => `
         <div onclick="selectAsset(${JSON.stringify(r).replace(/"/g, '&quot;')})"
-             style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);
+             style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.07);
                     transition:background 0.1s;"
-             onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+             onmouseover="this.style.background='rgba(74,122,155,0.08)'"
              onmouseout="this.style.background='transparent'">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="background:rgba(255,255,255,0.06); color:#fff; font-size:0.72rem;
+                <span style="background:rgba(74,122,155,0.08); color:#e8f0ff; font-size:0.72rem;
                              font-weight:700; padding:2px 6px; border-radius:4px;">
                     ${r.ticker}
                 </span>
-                <span style="color:white; font-size:0.875rem; font-weight:500;">${r.name}</span>
+                <span style="color:#e8f0ff; font-size:0.875rem; font-weight:500;">${r.name}</span>
             </div>
-            <div style="font-size:0.75rem; color:rgba(255,255,255,0.35); margin-top:2px;">
+            <div style="font-size:0.75rem; color:rgba(232,240,255,0.4); margin-top:2px;">
                 ${r.exchange} · ${r.type} · ${r.currency}
             </div>
         </div>
