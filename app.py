@@ -1167,10 +1167,10 @@ def resultat_profil():
     )
     user_prompt = (
         f"Profil investisseur — score {global_score}/100 ({profil}).\n"
-        f"Axes : tolérance {axis_scores_r[1]}/100, capacité {axis_scores_r[2]}/100, "
-        f"horizon {axis_scores_r[3]}/100, connaissances {axis_scores_r[4]}/100, "
-        f"objectif {axis_scores_r[6]}/100, comportement {axis_scores_r[7]}/100, "
-        f"projets {axis_scores_r[8]}/100.\n"
+        f"Axes (0-100) : tolérance émotionnelle {axis_scores_r[1]}, "
+        f"horizon temporel {axis_scores_r[2]}, objectif financier {axis_scores_r[3]}, "
+        f"capacité financière {axis_scores_r[4]}, connaissances {axis_scores_r[5]}, "
+        f"projets futurs {axis_scores_r[6]}.\n"
         f"Contexte libre : {open_ctx}\n\n"
         f"Génère une recommandation concise : "
         f"1) Analyse du profil (3 phrases max). "
@@ -1457,6 +1457,7 @@ def search_assets():
 
     # 1. Chercher dans la table de mots-clés français
     hardcoded_tickers = []
+    
     for kw, tickers in _FR_KEYWORDS.items():
         if _normalize(kw) == q_norm or q_norm in _normalize(kw) or _normalize(kw) in q_norm:
             for t in tickers:
@@ -1544,46 +1545,68 @@ def demo():
         demo_id = user_row['id']
         print(f"[demo] Compte démo trouvé id={demo_id}")
 
-        # 2. Ajouter des actifs fictifs si le portfolio est vide
+        # 2. Ajouter des actifs fictifs si le portfolio est insuffisant
         existing = get_user_assets(demo_id)
         print(f"[demo] Actifs existants : {len(existing)}")
 
-        if not existing:
+        if len(existing) < 10:
+            # Wipe existing assets and recreate enriched demo
+            from database import delete_asset as _del_asset
+            for a in existing:
+                try:
+                    _del_asset(demo_id, a['id'])
+                except Exception:
+                    pass
+
+            # 14 actifs répartis sur 3 enveloppes
+            # (ticker, name, type, currency, isin, envelope, workspace)
             demo_assets = [
-                ('IWDA.AS', 'iShares Core MSCI World ETF', 'ETF',    'EUR', '', 'CTO'),
-                ('BTC-USD', 'Bitcoin',                      'Crypto', 'USD', '', 'CTO'),
-                ('AAPL',    'Apple Inc.',                   'Action', 'USD', '', 'CTO'),
+                # PEA
+                ('IWDA.AS',  'iShares Core MSCI World ETF',            'ETF',    'EUR', 'IE00B4L5Y983', 'PEA',            'perso'),
+                ('PAEEM.PA', 'Amundi MSCI Emerging Markets ETF',        'ETF',    'EUR', 'LU1681045370', 'PEA',            'perso'),
+                ('ESE.PA',   'Amundi S&P 500 ESG ETF',                  'ETF',    'EUR', 'LU1992086910', 'PEA',            'perso'),
+                ('PANX.PA',  'Amundi Nasdaq-100 ETF',                   'ETF',    'EUR', 'LU1681038243', 'PEA',            'perso'),
+                ('PVAL.PA',  'Amundi MSCI World Value ETF',             'ETF',    'EUR', 'LU1681048055', 'PEA',            'perso'),
+                ('CW8.PA',   'Amundi MSCI World ETF',                   'ETF',    'EUR', 'LU1681043599', 'PEA',            'perso'),
+                ('LYYA.PA',  'Amundi Core Global Aggregate Bond ETF',   'ETF',    'EUR', 'LU1829220216', 'PEA',            'perso'),
+                # CTO
+                ('AAPL',     'Apple Inc.',                              'Action', 'USD', 'US0378331005', 'CTO',            'perso'),
+                ('NVDA',     'NVIDIA Corporation',                      'Action', 'USD', 'US67066G1040', 'CTO',            'perso'),
+                ('MSFT',     'Microsoft Corporation',                   'Action', 'USD', 'US5949181045', 'CTO',            'perso'),
+                ('BTC-USD',  'Bitcoin',                                 'Crypto', 'USD', '',             'CTO',            'perso'),
+                ('ETH-USD',  'Ethereum',                                'Crypto', 'USD', '',             'CTO',            'perso'),
+                # Assurance Vie
+                ('GLD',      'SPDR Gold Shares',                        'ETF',    'USD', 'US78463V1070', 'Assurance Vie',  'perso'),
+                ('AGGH.L',   'iShares Core Global Aggregate Bond ETF',  'ETF',    'USD', 'IE00BDBRDM35', 'Assurance Vie',  'perso'),
             ]
             demo_purchases = {
-                'IWDA.AS': [
-                    ('2022-01-15', 50.0,  58.40),
-                    ('2022-07-10', 30.0,  62.10),
-                    ('2023-03-20', 20.0,  70.80),
-                ],
-                'BTC-USD': [
-                    ('2021-11-01', 0.05, 58000.0),
-                    ('2022-06-20', 0.10, 20100.0),
-                    ('2023-01-10', 0.08, 17200.0),
-                ],
-                'AAPL': [
-                    ('2022-03-01', 10.0, 162.50),
-                    ('2022-10-14',  5.0, 138.40),
-                    ('2023-06-01',  8.0, 178.20),
-                ],
+                'IWDA.AS':  [('2021-06-01', 40.0, 68.20), ('2022-01-15', 30.0, 60.10), ('2022-09-10', 25.0, 63.80), ('2023-04-05', 20.0, 75.50)],
+                'PAEEM.PA': [('2022-02-01', 60.0, 22.10), ('2022-10-15', 40.0, 19.40), ('2023-05-20', 30.0, 24.80)],
+                'ESE.PA':   [('2022-03-10', 20.0, 18.50), ('2023-01-20', 15.0, 20.30), ('2023-08-10', 10.0, 22.90)],
+                'PANX.PA':  [('2021-11-15', 15.0, 41.20), ('2022-06-20', 20.0, 29.80), ('2023-03-10', 10.0, 38.60)],
+                'PVAL.PA':  [('2022-04-01', 25.0, 31.40), ('2023-02-14', 15.0, 34.10)],
+                'CW8.PA':   [('2022-07-01', 10.0, 372.50), ('2023-01-09', 5.0, 389.20)],
+                'LYYA.PA':  [('2022-05-10', 50.0, 8.20), ('2022-11-01', 30.0, 7.90)],
+                'AAPL':     [('2022-03-01', 10.0, 162.50), ('2022-10-14', 5.0, 138.40), ('2023-06-01', 8.0, 178.20)],
+                'NVDA':     [('2022-10-01', 5.0, 125.60), ('2023-01-25', 3.0, 195.30), ('2023-05-30', 2.0, 390.20)],
+                'MSFT':     [('2022-02-10', 6.0, 295.00), ('2023-03-15', 4.0, 265.80)],
+                'BTC-USD':  [('2021-11-01', 0.05, 58000.0), ('2022-06-20', 0.10, 20100.0), ('2023-01-10', 0.08, 17200.0)],
+                'ETH-USD':  [('2022-01-01', 0.50, 3500.0), ('2022-07-01', 0.80, 1050.0), ('2023-02-01', 0.30, 1620.0)],
+                'GLD':      [('2022-03-15', 8.0, 185.40), ('2022-11-10', 5.0, 162.80), ('2023-06-01', 3.0, 187.50)],
+                'AGGH.L':   [('2022-04-20', 30.0, 52.30), ('2022-12-05', 20.0, 47.80)],
             }
 
-            for ticker, name, atype, currency, isin, envelope in demo_assets:
-                result = add_asset(demo_id, ticker, name, atype, currency, isin, envelope)
+            for ticker, name, atype, currency, isin, envelope, workspace in demo_assets:
+                result = add_asset(demo_id, ticker, name, atype, currency, isin, envelope, workspace)
                 print(f"[demo] add_asset({ticker}) → {result}")
 
             assets_refreshed = get_user_assets(demo_id)
-            # get_user_assets retourne des sqlite3.Row ou dicts — accès par clé string
             asset_map = {}
             for a in assets_refreshed:
                 try:
                     asset_map[a['ticker']] = a['id']
                 except Exception:
-                    asset_map[a[2]] = a[0]  # fallback index si sqlite Row
+                    asset_map[a[2]] = a[0]
             print(f"[demo] asset_map = {asset_map}")
 
             for ticker, purchases in demo_purchases.items():
@@ -1591,13 +1614,44 @@ def demo():
                 if not asset_id:
                     print(f"[demo] asset_id introuvable pour {ticker}")
                     continue
-                # Clés requises par add_purchases_bulk : shares, price_per_share
                 rows = [
                     {'asset_id': asset_id, 'date': d, 'shares': q, 'price_per_share': p}
                     for d, q, p in purchases
                 ]
                 add_purchases_bulk(demo_id, rows)
                 print(f"[demo] {len(rows)} achats insérés pour {ticker}")
+
+            # Profil investisseur démo : score 62 → Dynamique
+            try:
+                save_profil_investisseur(
+                    user_id=demo_id,
+                    score_global=62,
+                    nom_profil='Dynamique',
+                    scores_axes={1: 70, 2: 75, 3: 65, 4: 60, 5: 55, 6: 50},
+                    recommandation=(
+                        "**Profil Dynamique** — Score global : 62/100\n\n"
+                        "Ton profil indique une bonne tolérance au risque et un horizon long terme favorable à une exposition "
+                        "majoritaire en actions. Les enveloppes fiscales PEA et Assurance Vie sont particulièrement adaptées.\n\n"
+                        "**Enveloppes recommandées :** PEA (exonération fiscale après 5 ans), "
+                        "Assurance Vie (flexibilité et transmission), CTO (accès international).\n\n"
+                        "**ETF illustratifs :** IWDA.AS (monde), PANX.PA (Nasdaq), PAEEM.PA (émergents). "
+                        "*Ceci n'est pas un conseil en investissement. Tout investissement comporte un risque de perte en capital.*"
+                    ),
+                )
+            except Exception as e:
+                print(f"[demo] save_profil_investisseur error: {e}")
+
+            # Objectif DCA : 500 €/mois
+            try:
+                set_dca_goal(demo_id, 500.0)
+            except Exception as e:
+                print(f"[demo] set_dca_goal error: {e}")
+
+            # Marquer onboarding comme complété
+            try:
+                set_onboarding_completed(demo_id)
+            except Exception as e:
+                print(f"[demo] set_onboarding_completed error: {e}")
 
         # 3. Connecter l'utilisateur démo
         user_obj = get_user_object(demo_id)

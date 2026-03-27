@@ -454,6 +454,18 @@ function goNext() {
 function goPrev() {
     if (current > 0) { current--; renderQuestion(); }
 }
+
+// Intercept Enter key — prevent form submission, trigger goNext() instead
+document.getElementById('quiz-form').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const tag = e.target.tagName;
+        // Allow Enter in textarea (new line), block everywhere else
+        if (tag !== 'TEXTAREA') {
+            e.preventDefault();
+            goNext();
+        }
+    }
+});
 </script>
 
 {% endblock %}

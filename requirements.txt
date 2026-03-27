@@ -39,3 +39,4 @@ urllib3==2.6.3
 websockets==16.0
 Werkzeug==3.1.6
 yfinance==1.2.0
+reportlab
