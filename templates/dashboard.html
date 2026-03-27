@@ -147,9 +147,11 @@ table.dash-assets thead th.num { text-align: right; }
     display: flex;
     flex-direction: column;
     gap: 8px;
-    overflow: hidden;
+    overflow-y: auto;
     min-height: 0;
 }
+.dash-right-col::-webkit-scrollbar { width: 3px; }
+.dash-right-col::-webkit-scrollbar-thumb { background: #0a1428; border-radius: 99px; }
 .dash-alloc-block {
     background: #070d18;
     border: 1px solid #0a1428;
@@ -176,23 +178,13 @@ table.dash-assets thead th.num { text-align: right; }
     flex-shrink: 0;
 }
 
-/* Left col wrapper */
-.dash-left-col {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 0;
-    overflow: hidden;
-}
 /* Performance chart block */
 .dash-perf-block {
     background: #070d18;
     border: 1px solid #0a1428;
     border-radius: 10px;
     padding: 10px 10px 6px;
-    flex: 0 0 200px;
-    min-height: 150px;
-    overflow: visible;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
 }
@@ -329,7 +321,6 @@ table.dash-assets thead th.num { text-align: right; }
     .dash-table-scroll { overflow: visible; max-height: 400px; }
     .dash-alloc-block { min-height: 180px; flex: none; }
     .dash-gain-block, .dash-dca-block { flex-shrink: 0; }
-    .dash-left-col { overflow: visible; }
     .dash-perf-block { flex: none; height: 200px; }
 }
 @media (max-width: 480px) {
@@ -524,8 +515,7 @@ table.dash-assets thead th.num { text-align: right; }
 {# ══ ZONE BASSE ══ #}
 <div class="dash-bottom">
 
-    {# Colonne gauche — tableau + perf chart #}
-    <div class="dash-left-col">
+    {# Colonne gauche — tableau #}
     <div class="dash-table-wrap">
         <div class="dash-table-scroll">
             <table class="dash-assets">
@@ -614,14 +604,6 @@ table.dash-assets thead th.num { text-align: right; }
         </div>
     </div>{# /dash-table-wrap #}
 
-    {# Performance par actif — barres horizontales #}
-    <div class="dash-perf-block">
-        <div class="micro-label" style="margin-bottom:4px;">Performance par actif</div>
-        <div id="perf-bar-chart" style="width:100%; height:168px;"></div>
-    </div>
-
-    </div>{# /dash-left-col #}
-
     {# Colonne droite — blocs #}
     <div class="dash-right-col">
 
@@ -674,6 +656,12 @@ table.dash-assets thead th.num { text-align: right; }
         <div class="dash-type-block">
             <div class="micro-label" style="margin-bottom:6px;">Composition</div>
             <div id="type-breakdown"></div>
+        </div>
+
+        {# Performance par actif — barres horizontales #}
+        <div class="dash-perf-block">
+            <div class="micro-label" style="margin-bottom:4px;">Performance par actif</div>
+            <div id="perf-bar-chart" style="width:100%; height:200px;"></div>
         </div>
 
     </div>{# /dash-right-col #}
@@ -793,9 +781,11 @@ function updatePerfChart(visible) {
         cliponaxis:false,
         hovertemplate:'%{y} — %{x:+.2f}%<extra></extra>'
     }];
-    var layout = Object.assign({},_barLayout,{height:168});
-    Plotly.purge(el);
-    Plotly.newPlot(el, traces, layout, PIE_CONFIG);
+    var layout = Object.assign({},_barLayout,{height:200});
+    setTimeout(function(){
+        Plotly.purge(el);
+        Plotly.newPlot(el, traces, layout, PIE_CONFIG);
+    }, 100);
 }
 
 // ── Composition par type ──────────────────────────────────────────────────────
