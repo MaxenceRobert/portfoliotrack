@@ -168,8 +168,8 @@ def calc_asset_stats(asset, purchases, sales):
     }
 
 
-def get_portfolio_summary(user_id):
-    assets     = get_user_assets(user_id)
+def get_portfolio_summary(user_id, workspace=None):
+    assets     = get_user_assets(user_id, workspace)
     stats_list = []
     total_inv  = 0
     total_val  = 0

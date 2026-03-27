@@ -151,12 +151,17 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0 1.25rem;
+    padding: 0.35rem 1.25rem;
     font-size: 0.78rem;
     font-weight: 600;
     border-right: 1px solid rgba(74,122,155,0.06);
     white-space: nowrap;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.12s;
 }
+.ticker-item:hover { background: rgba(10,20,40,0.7); }
 .ticker-name { color: rgba(74,122,155,0.45); font-size: 0.72rem; }
 .ticker-price { color: rgba(232,240,255,0.8); }
 .ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
@@ -511,11 +516,11 @@ function goToTicker() {
         items.forEach(function(it) {
             var chgClass = it.change_pct >= 0 ? 'ticker-chg-pos' : 'ticker-chg-neg';
             var chgSign  = it.change_pct >= 0 ? '+' : '';
-            html += '<span class="ticker-item">' +
+            html += '<a class="ticker-item" href="/explorer?ticker=' + encodeURIComponent(it.ticker) + '">' +
                 '<span class="ticker-name">' + it.name + '</span>' +
                 '<span class="ticker-price">' + it.price + '</span>' +
                 '<span class="' + chgClass + '">' + chgSign + it.change_pct.toFixed(2) + '%</span>' +
-            '</span>';
+            '</a>';
         });
         return html + html;
     }

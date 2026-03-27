@@ -52,9 +52,31 @@ def init_db():
                 name        TEXT    NOT NULL,
                 asset_type  TEXT    NOT NULL DEFAULT 'ETF',
                 currency    TEXT    NOT NULL DEFAULT 'EUR',
+                workspace   TEXT    DEFAULT 'perso',
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE(user_id, ticker)
             )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS alternative_assets (
+                id                SERIAL PRIMARY KEY,
+                user_id           INTEGER NOT NULL,
+                name              TEXT NOT NULL,
+                category          TEXT NOT NULL DEFAULT 'Autre',
+                acquisition_value REAL NOT NULL DEFAULT 0,
+                current_value     REAL NOT NULL DEFAULT 0,
+                acquisition_date  TEXT,
+                notes             TEXT DEFAULT '',
+                workspace         TEXT DEFAULT 'perso',
+                created_at        TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS asset_catalog (
+                ticker TEXT PRIMARY KEY, name TEXT NOT NULL,
+                category TEXT, subcategory TEXT, region TEXT,
+                description TEXT, currency TEXT DEFAULT 'EUR')
         ''')
         c.execute('''
             CREATE TABLE IF NOT EXISTS purchases (
@@ -179,9 +201,31 @@ def init_db():
                 name        TEXT    NOT NULL,
                 asset_type  TEXT    NOT NULL DEFAULT 'ETF',
                 currency    TEXT    NOT NULL DEFAULT 'EUR',
+                workspace   TEXT    DEFAULT 'perso',
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE(user_id, ticker)
             )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS alternative_assets (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id           INTEGER NOT NULL,
+                name              TEXT NOT NULL,
+                category          TEXT NOT NULL DEFAULT 'Autre',
+                acquisition_value REAL NOT NULL DEFAULT 0,
+                current_value     REAL NOT NULL DEFAULT 0,
+                acquisition_date  TEXT,
+                notes             TEXT DEFAULT '',
+                workspace         TEXT DEFAULT 'perso',
+                created_at        TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS asset_catalog (
+                ticker TEXT PRIMARY KEY, name TEXT NOT NULL,
+                category TEXT, subcategory TEXT, region TEXT,
+                description TEXT, currency TEXT DEFAULT 'EUR')
         ''')
         c.execute('''
             CREATE TABLE IF NOT EXISTS purchases (
@@ -384,6 +428,57 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Migration : colonne workspace sur assets ──────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('ALTER TABLE assets ADD COLUMN IF NOT EXISTS workspace TEXT DEFAULT \'perso\'')
+        else:
+            c.execute('ALTER TABLE assets ADD COLUMN workspace TEXT DEFAULT \'perso\'')
+        conn.commit()
+        print("[migration] assets: colonne 'workspace' ajoutée")
+    except Exception:
+        conn.rollback()
+
+    # ── Migration : table alternative_assets ──────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''CREATE TABLE IF NOT EXISTS alternative_assets (
+                id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+                name TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'Autre',
+                acquisition_value REAL NOT NULL DEFAULT 0,
+                current_value REAL NOT NULL DEFAULT 0,
+                acquisition_date TEXT, notes TEXT DEFAULT '', workspace TEXT DEFAULT 'perso',
+                created_at TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)''')
+        else:
+            c.execute('''CREATE TABLE IF NOT EXISTS alternative_assets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+                name TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'Autre',
+                acquisition_value REAL NOT NULL DEFAULT 0,
+                current_value REAL NOT NULL DEFAULT 0,
+                acquisition_date TEXT, notes TEXT DEFAULT '', workspace TEXT DEFAULT 'perso',
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # ── Migration : table asset_catalog ───────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''CREATE TABLE IF NOT EXISTS asset_catalog (
+                ticker TEXT PRIMARY KEY, name TEXT NOT NULL,
+                category TEXT, subcategory TEXT, region TEXT,
+                description TEXT, currency TEXT DEFAULT 'EUR')''')
+        else:
+            c.execute('''CREATE TABLE IF NOT EXISTS asset_catalog (
+                ticker TEXT PRIMARY KEY, name TEXT NOT NULL,
+                category TEXT, subcategory TEXT, region TEXT,
+                description TEXT, currency TEXT DEFAULT 'EUR')''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     # ── Migration scoring v2 : vider profil_investisseur si version dépassée ──
     # Version "scoring_v2" = recalibrage 6 axes (mars 2026)
     SCORING_VERSION = 'scoring_v2'
@@ -480,16 +575,16 @@ def set_onboarding_completed(user_id):
     conn.commit()
     conn.close()
 
-def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope=''):
+def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope='', workspace='perso'):
     p = placeholder()
     conn = get_db()
     try:
         c = conn.cursor()
         c.execute(
-            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency, envelope)
-               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})''',
+            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency, envelope, workspace)
+               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})''',
             (user_id, isin.upper() if isin else '', ticker.upper(), name, asset_type,
-             currency.upper(), envelope or None)
+             currency.upper(), envelope or None, workspace or 'perso')
         )
         conn.commit()
         return True
@@ -499,11 +594,14 @@ def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope='')
     finally:
         conn.close()
 
-def get_user_assets(user_id):
+def get_user_assets(user_id, workspace=None):
     p = placeholder()
     conn = get_db()
     c = conn.cursor()
-    c.execute(f'SELECT * FROM assets WHERE user_id = {p} ORDER BY asset_type, name ASC', (user_id,))
+    if workspace and workspace != 'all':
+        c.execute(f'SELECT * FROM assets WHERE user_id = {p} AND workspace = {p} ORDER BY asset_type, name ASC', (user_id, workspace))
+    else:
+        c.execute(f'SELECT * FROM assets WHERE user_id = {p} ORDER BY asset_type, name ASC', (user_id,))
     rows = fetchall_as_dict(c)
     conn.close()
     return rows
@@ -1153,3 +1251,254 @@ def save_auto_div_cache(ticker, data):
         ''', (ticker, data_str))
     conn.commit()
     conn.close()
+
+# ── Alternative Assets CRUD ───────────────────────────────────────────────────
+
+def add_alternative_asset(user_id, name, category, acquisition_value, current_value, acquisition_date, notes='', workspace='perso'):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'''INSERT INTO alternative_assets (user_id, name, category, acquisition_value, current_value, acquisition_date, notes, workspace)
+           VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})''',
+            (user_id, name, category, acquisition_value, current_value, acquisition_date, notes, workspace))
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+def get_alternative_assets(user_id, workspace=None):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    if workspace and workspace != 'all':
+        c.execute(f'SELECT * FROM alternative_assets WHERE user_id = {p} AND workspace = {p} ORDER BY name ASC', (user_id, workspace))
+    else:
+        c.execute(f'SELECT * FROM alternative_assets WHERE user_id = {p} ORDER BY name ASC', (user_id,))
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+def update_alternative_asset(asset_id, user_id, name, category, acquisition_value, current_value, acquisition_date, notes='', workspace='perso'):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'''UPDATE alternative_assets SET name={p}, category={p}, acquisition_value={p},
+       current_value={p}, acquisition_date={p}, notes={p}, workspace={p}
+       WHERE id={p} AND user_id={p}''',
+        (name, category, acquisition_value, current_value, acquisition_date, notes, workspace, asset_id, user_id))
+    conn.commit()
+    conn.close()
+
+def delete_alternative_asset(asset_id, user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'DELETE FROM alternative_assets WHERE id = {p} AND user_id = {p}', (asset_id, user_id))
+    conn.commit()
+    conn.close()
+
+# ── Asset Catalog ─────────────────────────────────────────────────────────────
+
+def populate_asset_catalog():
+    """Populate asset_catalog with a comprehensive list of tickers. Uses INSERT OR IGNORE / ON CONFLICT DO NOTHING."""
+    CATALOG = [
+        # ETF MONDE
+        ('IWDA.AS','iShares Core MSCI World ETF','ETF','Monde','Mondial','ETF MSCI World All Countries','EUR'),
+        ('VWCE.DE','Vanguard FTSE All-World UCITS ETF','ETF','Monde','Mondial','ETF monde entier Vanguard','EUR'),
+        ('SWRD.SW','SPDR MSCI World UCITS ETF','ETF','Monde','Mondial','ETF MSCI World SPDR','USD'),
+        ('XDWD.DE','Xtrackers MSCI World Swap UCITS ETF','ETF','Monde','Mondial','ETF MSCI World Xtrackers','EUR'),
+        ('IUSQ.DE','iShares MSCI ACWI UCITS ETF','ETF','Monde','Mondial','ETF ACWI iShares','EUR'),
+        ('HMWO.L','HSBC MSCI World UCITS ETF','ETF','Monde','Mondial','ETF MSCI World HSBC','USD'),
+        ('CSPX.AS','iShares Core S&P 500 UCITS ETF','ETF','USA','S&P 500','ETF S&P 500 iShares USD','USD'),
+        # ETF USA
+        ('SPY','SPDR S&P 500 ETF Trust','ETF','USA','S&P 500','ETF S&P 500 SPDR','USD'),
+        ('VOO','Vanguard S&P 500 ETF','ETF','USA','S&P 500','ETF S&P 500 Vanguard','USD'),
+        ('QQQ','Invesco QQQ Trust (NASDAQ-100)','ETF','USA','Tech','ETF NASDAQ-100','USD'),
+        ('IVV','iShares Core S&P 500 ETF','ETF','USA','S&P 500','ETF S&P 500 iShares','USD'),
+        ('VTI','Vanguard Total Stock Market ETF','ETF','USA','Marché Total','ETF marché US total Vanguard','USD'),
+        ('ARKK','ARK Innovation ETF','ETF','USA','Innovation','ETF innovation disruptive ARK','USD'),
+        ('TQQQ','ProShares UltraPro QQQ','ETF','USA','Levier','ETF NASDAQ-100 x3 levier','USD'),
+        ('UPRO','ProShares UltraPro S&P500','ETF','USA','Levier','ETF S&P500 x3 levier','USD'),
+        ('SOXL','Direxion Daily Semiconductor Bull 3X','ETF','USA','Levier','ETF semi-conducteurs x3','USD'),
+        ('SCHD','Schwab US Dividend Equity ETF','ETF','USA','Dividendes','ETF dividendes US Schwab','USD'),
+        # ETF EUROPE
+        ('EXW1.DE','iShares Core EURO STOXX 50 UCITS ETF','ETF','Europe','Eurozone','ETF Euro Stoxx 50','EUR'),
+        ('DXET.DE','Xtrackers Euro Stoxx 50 UCITS ETF','ETF','Europe','Eurozone','ETF Euro Stoxx 50 Xtrackers','EUR'),
+        ('IEUR.AS','iShares Core MSCI Europe UCITS ETF','ETF','Europe','MSCI Europe','ETF Europe iShares','EUR'),
+        ('MEUD.PA','Amundi MSCI Europe UCITS ETF','ETF','Europe','MSCI Europe','ETF Europe Amundi','EUR'),
+        ('SX5EEX','Euro Stoxx 50 Index','Indice','Europe','Eurozone','Indice Euro Stoxx 50','EUR'),
+        # ETF EMERGENTS
+        ('EIMI.AS','iShares Core MSCI EM IMI UCITS ETF','ETF','Emergents','Monde émergent','ETF marchés émergents iShares','USD'),
+        ('VWO','Vanguard FTSE Emerging Markets ETF','ETF','Emergents','Monde émergent','ETF émergents Vanguard','USD'),
+        ('IEMG','iShares Core MSCI Emerging Markets ETF','ETF','Emergents','Monde émergent','ETF émergents iShares','USD'),
+        ('PAEEM.PA','Amundi MSCI Emerging Markets UCITS ETF','ETF','Emergents','Monde émergent','ETF émergents Amundi','EUR'),
+        ('AEEM.PA','Amundi MSCI Emerging Markets UCITS ETF EUR','ETF','Emergents','Monde émergent','ETF émergents Amundi EUR','EUR'),
+        # ETF SECTORIELS
+        ('XLK','Technology Select Sector SPDR','ETF','USA','Technologie','ETF secteur tech US','USD'),
+        ('XLV','Health Care Select Sector SPDR','ETF','USA','Santé','ETF secteur santé US','USD'),
+        ('XLE','Energy Select Sector SPDR','ETF','USA','Énergie','ETF secteur énergie US','USD'),
+        ('XLF','Financial Select Sector SPDR','ETF','USA','Finance','ETF secteur financier US','USD'),
+        ('XLI','Industrial Select Sector SPDR','ETF','USA','Industrie','ETF secteur industriel US','USD'),
+        ('XLP','Consumer Staples Select Sector SPDR','ETF','USA','Conso. de base','ETF consommation de base US','USD'),
+        ('VNQ','Vanguard Real Estate ETF','ETF','USA','Immobilier','ETF REIT immobilier US','USD'),
+        ('IBB','iShares Biotechnology ETF','ETF','USA','Biotech','ETF biotechnologie','USD'),
+        ('SOXX','iShares Semiconductor ETF','ETF','USA','Semi-conducteurs','ETF semi-conducteurs','USD'),
+        ('ICLN','iShares Global Clean Energy ETF','ETF','Monde','Énergie propre','ETF énergie propre mondiale','USD'),
+        # ETF OBLIGATAIRES
+        ('AGGH.L','iShares Core Global Aggregate Bond UCITS ETF','ETF','Monde','Obligations','ETF obligations mondiales agrégées','USD'),
+        ('TLT','iShares 20+ Year Treasury Bond ETF','ETF','USA','Obligations','ETF obligations US long terme','USD'),
+        ('BND','Vanguard Total Bond Market ETF','ETF','USA','Obligations','ETF obligations US total Vanguard','USD'),
+        ('IEAG.AS','iShares Core Euro Aggregate Bond UCITS ETF','ETF','Europe','Obligations','ETF obligations EUR agrégées','EUR'),
+        ('EUNR.DE','iShares Euro Govt Bond 15-30yr UCITS ETF','ETF','Europe','Obligations','ETF obligations souveraines EUR LT','EUR'),
+        ('HYG','iShares iBoxx High Yield Corporate Bond ETF','ETF','USA','Obligations HY','ETF obligations haut rendement US','USD'),
+        ('LQD','iShares iBoxx Investment Grade Corporate Bond ETF','ETF','USA','Obligations IG','ETF obligations IG US','USD'),
+        ('VBMFX','Vanguard Total Bond Market Index Fund','ETF','USA','Obligations','Fonds obligations US total Vanguard','USD'),
+        # ETF MATIÈRES PREMIÈRES
+        ('GLD','SPDR Gold Shares','ETF','Monde','Or','ETF or SPDR','USD'),
+        ('SLV','iShares Silver Trust','ETF','Monde','Argent','ETF argent iShares','USD'),
+        ('IGLN.L','iShares Physical Gold ETC','ETF','Monde','Or','ETC or physique iShares','USD'),
+        ('PDBC','Invesco Optimum Yield Diversified Commodity No K-1','ETF','Monde','Matières premières','ETF matières premières diversifié','USD'),
+        ('CPER','United States Copper Index Fund','ETF','Monde','Cuivre','ETF cuivre US','USD'),
+        # ETF LEVIERS
+        ('LQQ.PA','Amundi Nasdaq-100 Daily (2x) Leveraged UCITS ETF','ETF','USA','Levier','ETF NASDAQ-100 x2 Amundi','EUR'),
+        ('CL2.PA','Amundi S&P 500 Daily (2x) Leveraged UCITS ETF','ETF','USA','Levier','ETF S&P500 x2 Amundi','EUR'),
+        ('SSO','ProShares Ultra S&P500','ETF','USA','Levier','ETF S&P500 x2 levier','USD'),
+        ('QLD','ProShares Ultra QQQ','ETF','USA','Levier','ETF NASDAQ-100 x2 levier','USD'),
+        ('SPXL','Direxion Daily S&P 500 Bull 3X Shares','ETF','USA','Levier','ETF S&P500 x3 Direxion','USD'),
+        ('BTC3L.L','WisdomTree Bitcoin 3x Daily Leveraged ETP','ETF','Crypto','Levier','ETP Bitcoin x3 WisdomTree','USD'),
+        # ETF ESG/ISLAMIQUE
+        ('WSRI.L','SPDR Bloomberg SASB Corporate Bond ESG UCITS ETF','ETF','Monde','ESG','ETF ESG obligations SPDR','USD'),
+        ('ISDU.L','iShares MSCI World Islamic UCITS ETF','ETF','Monde','Islamique','ETF MSCI World islamique iShares','USD'),
+        ('HLAL','Wahed FTSE USA Shariah ETF','ETF','USA','Islamique','ETF Shariah US Wahed','USD'),
+        ('ESGW.L','iShares MSCI World ESG Screened UCITS ETF','ETF','Monde','ESG','ETF monde ESG iShares','USD'),
+        ('BNPE.PA','BNP Paribas Easy Low Carbon 100 Europe PAB UCITS ETF','ETF','Europe','ESG','ETF ESG Europe BNP Paribas','EUR'),
+        ('SUWS.L','UBS MSCI World Socially Responsible UCITS ETF','ETF','Monde','ESG','ETF ISR monde UBS','USD'),
+        # ETF GÉOGRAPHIQUES
+        ('EWJ','iShares MSCI Japan ETF','ETF','Japon','Japon','ETF Japon iShares','USD'),
+        ('INDA','iShares MSCI India ETF','ETF','Inde','Inde','ETF Inde iShares','USD'),
+        ('MCHI','iShares MSCI China ETF','ETF','Chine','Chine','ETF Chine iShares','USD'),
+        ('EWZ','iShares MSCI Brazil ETF','ETF','Brésil','Brésil','ETF Brésil iShares','USD'),
+        ('EZA','iShares MSCI South Africa ETF','ETF','Afrique du Sud','Afrique','ETF Afrique du Sud iShares','USD'),
+        ('VGK','Vanguard FTSE Europe ETF','ETF','Europe','Europe','ETF Europe Vanguard','USD'),
+        ('EWT','iShares MSCI Taiwan ETF','ETF','Taïwan','Asie','ETF Taïwan iShares','USD'),
+        ('EWY','iShares MSCI South Korea ETF','ETF','Corée du Sud','Asie','ETF Corée du Sud iShares','USD'),
+        ('ENOR','iShares MSCI Norway ETF','ETF','Norvège','Europe','ETF Norvège iShares','USD'),
+        ('EWD','iShares MSCI Sweden ETF','ETF','Suède','Europe','ETF Suède iShares','USD'),
+        ('EWQ','iShares MSCI France ETF','ETF','France','Europe','ETF France iShares','USD'),
+        ('EWG','iShares MSCI Germany ETF','ETF','Allemagne','Europe','ETF Allemagne iShares','USD'),
+        ('EWU','iShares MSCI United Kingdom ETF','ETF','Royaume-Uni','Europe','ETF Royaume-Uni iShares','USD'),
+        ('EWA','iShares MSCI Australia ETF','ETF','Australie','Pacifique','ETF Australie iShares','USD'),
+        ('EWC','iShares MSCI Canada ETF','ETF','Canada','Amériques','ETF Canada iShares','USD'),
+        # ETF DIVIDENDES
+        ('VYM','Vanguard High Dividend Yield ETF','ETF','USA','Dividendes','ETF hauts dividendes Vanguard','USD'),
+        ('SDY','SPDR S&P Dividend ETF','ETF','USA','Dividendes','ETF dividendes S&P SPDR','USD'),
+        ('VHYL.L','Vanguard FTSE All-World High Dividend Yield UCITS ETF','ETF','Monde','Dividendes','ETF dividendes monde Vanguard','USD'),
+        ('IDVY.L','iShares Euro Dividend UCITS ETF','ETF','Europe','Dividendes','ETF dividendes Europe iShares','EUR'),
+        ('DWX','SPDR S&P International Dividend ETF','ETF','Monde','Dividendes','ETF dividendes international SPDR','USD'),
+        ('SPYD','SPDR Portfolio S&P 500 High Dividend ETF','ETF','USA','Dividendes','ETF hauts dividendes S&P 500','USD'),
+        # ACTIONS FRANCE (CAC 40 + grandes caps)
+        ('MC.PA','LVMH Moët Hennessy Louis Vuitton','Action','France','Luxe','Groupe de luxe français no.1 mondial','EUR'),
+        ('TTE.PA','TotalEnergies SE','Action','France','Énergie','Major pétrolier français','EUR'),
+        ('AIR.PA','Airbus SE','Action','France','Aéronautique','Leader mondial aéronautique civil','EUR'),
+        ('OR.PA',"L'Oréal SA",'Action','France','Cosmétiques','Leader mondial cosmétiques','EUR'),
+        ('SAN.PA','Sanofi SA','Action','France','Pharma','Groupe pharmaceutique français','EUR'),
+        ('BNP.PA','BNP Paribas SA','Action','France','Banque','Première banque française','EUR'),
+        ('AI.PA','Air Liquide SA','Action','France','Chimie','Leader mondial gaz industriels','EUR'),
+        ('DG.PA','Vinci SA','Action','France','Infrastructure','Leader mondial concessions infrastructure','EUR'),
+        ('RI.PA','Pernod Ricard SA','Action','France','Spiritueux','Groupe de spiritueux mondial','EUR'),
+        ('CAP.PA','Capgemini SE','Action','France','Tech','Leader européen services numériques','EUR'),
+        ('SU.PA','Schneider Electric SE','Action','France','Énergie','Spécialiste gestion énergie','EUR'),
+        ('CS.PA','AXA SA','Action','France','Assurance',"Groupe d'assurance mondial",'EUR'),
+        ('BN.PA','Danone SA','Action','France','Agroalimentaire','Groupe agroalimentaire mondial','EUR'),
+        ('RMS.PA','Hermès International SA','Action','France','Luxe','Maison de luxe française','EUR'),
+        ('KER.PA','Kering SA','Action','France','Luxe','Groupe de luxe (Gucci, YSL)','EUR'),
+        ('DSY.PA','Dassault Systèmes SE','Action','France','Logiciels 3D','Logiciels 3D et simulation','EUR'),
+        ('SAF.PA','Safran SA','Action','France','Aéronautique','Équipements aéronautiques','EUR'),
+        ('MT.PA','ArcelorMittal SA','Action','Europe','Acier','Leader mondial acier','EUR'),
+        ('ACA.PA','Crédit Agricole SA','Action','France','Banque','Groupe bancaire français','EUR'),
+        ('GLE.PA','Société Générale SA','Action','France','Banque','Banque française internationale','EUR'),
+        # ACTIONS US (S&P 500 / grandes caps)
+        ('AAPL','Apple Inc.','Action','USA','Tech','Fabricant iPhone, Mac, services','USD'),
+        ('MSFT','Microsoft Corporation','Action','USA','Tech','Cloud, Windows, Office, IA','USD'),
+        ('GOOGL','Alphabet Inc.','Action','USA','Tech','Google, YouTube, cloud GCP','USD'),
+        ('AMZN','Amazon.com Inc.','Action','USA','E-commerce / Cloud','E-commerce et cloud AWS','USD'),
+        ('NVDA','NVIDIA Corporation','Action','USA','Semi-conducteurs','Puces GPU, IA, data centers','USD'),
+        ('TSLA','Tesla Inc.','Action','USA','Automobile EV','Véhicules électriques et énergie','USD'),
+        ('META','Meta Platforms Inc.','Action','USA','Réseaux sociaux','Facebook, Instagram, WhatsApp','USD'),
+        ('JPM','JPMorgan Chase & Co.','Action','USA','Banque','Première banque US par actifs','USD'),
+        ('V','Visa Inc.','Action','USA','Paiements','Réseau de paiement mondial','USD'),
+        ('JNJ','Johnson & Johnson','Action','USA','Pharma / Medtech','Pharma et dispositifs médicaux','USD'),
+        ('BRK-B','Berkshire Hathaway Inc.','Action','USA','Conglomérat','Holding de Warren Buffett','USD'),
+        ('WMT','Walmart Inc.','Action','USA','Distribution','Plus grand distributeur mondial','USD'),
+        ('MA','Mastercard Incorporated','Action','USA','Paiements','Réseau de paiement mondial','USD'),
+        ('PG','Procter & Gamble Co.','Action','USA','Conso. de base','Produits de grande consommation','USD'),
+        ('HD','The Home Depot Inc.','Action','USA','Distribution','Matériaux de construction US','USD'),
+        ('BAC','Bank of America Corp.','Action','USA','Banque','Grande banque américaine','USD'),
+        ('XOM','Exxon Mobil Corporation','Action','USA','Énergie','Major pétrolier américain','USD'),
+        ('CVX','Chevron Corporation','Action','USA','Énergie','Major pétrolier américain','USD'),
+        ('PFE','Pfizer Inc.','Action','USA','Pharma','Groupe pharmaceutique mondial','USD'),
+        ('KO','The Coca-Cola Company','Action','USA','Boissons','Leader mondial boissons','USD'),
+        ('DIS','The Walt Disney Company','Action','USA','Médias','Médias, parcs, streaming','USD'),
+        ('NFLX','Netflix Inc.','Action','USA','Streaming','Plateforme streaming mondiale','USD'),
+        ('AMD','Advanced Micro Devices Inc.','Action','USA','Semi-conducteurs','Processeurs CPU et GPU','USD'),
+        ('INTC','Intel Corporation','Action','USA','Semi-conducteurs','Fabricant de puces CPU','USD'),
+        ('CRM','Salesforce Inc.','Action','USA','SaaS','CRM cloud leader','USD'),
+        # ACTIONS EUROPE
+        ('ASML.AS','ASML Holding NV','Action','Pays-Bas','Semi-conducteurs','Machines lithographie EUV','EUR'),
+        ('NESN.SW','Nestlé SA','Action','Suisse','Agroalimentaire','Plus grand groupe alimentaire mondial','CHF'),
+        ('SAP.DE','SAP SE','Action','Allemagne','Logiciels ERP','Leader européen logiciels entreprise','EUR'),
+        ('VOW3.DE','Volkswagen AG','Action','Allemagne','Automobile','Groupe automobile mondial VW','EUR'),
+        ('BMW.DE','Bayerische Motoren Werke AG','Action','Allemagne','Automobile','Constructeur automobile premium','EUR'),
+        ('SIE.DE','Siemens AG','Action','Allemagne','Industrie','Conglomérat industriel allemand','EUR'),
+        ('ALV.DE','Allianz SE','Action','Allemagne','Assurance','Premier assureur européen','EUR'),
+        # CRYPTO
+        ('BTC-USD','Bitcoin','Crypto','Monde','Layer 1','Première cryptomonnaie','USD'),
+        ('ETH-USD','Ethereum','Crypto','Monde','Layer 1','Plateforme smart contracts','USD'),
+        ('SOL-USD','Solana','Crypto','Monde','Layer 1','Blockchain haute performance','USD'),
+        ('BNB-USD','Binance Coin','Crypto','Monde','Exchange','Token natif Binance','USD'),
+        ('XRP-USD','XRP (Ripple)','Crypto','Monde','Paiements','Protocole paiements internationaux','USD'),
+        ('ADA-USD','Cardano','Crypto','Monde','Layer 1','Blockchain proof-of-stake Cardano','USD'),
+        ('AVAX-USD','Avalanche','Crypto','Monde','Layer 1','Blockchain rapide Avalanche','USD'),
+        ('DOGE-USD','Dogecoin','Crypto','Monde','Mème coin','Cryptomonnaie mème','USD'),
+        ('DOT-USD','Polkadot','Crypto','Monde','Layer 0','Protocole interopérabilité blockchains','USD'),
+        ('LINK-USD','Chainlink','Crypto','Monde','Oracle','Oracle blockchain décentralisé','USD'),
+        ('MATIC-USD','Polygon','Crypto','Monde','Layer 2','Solution Layer 2 Ethereum','USD'),
+        ('LTC-USD','Litecoin','Crypto','Monde','Layer 1','Fork Bitcoin rapide','USD'),
+        ('BCH-USD','Bitcoin Cash','Crypto','Monde','Layer 1','Fork Bitcoin','USD'),
+        ('ATOM-USD','Cosmos','Crypto','Monde','Layer 0','Écosystème de blockchains interopérables','USD'),
+        # INDICES
+        ('^GSPC','S&P 500 Index','Indice','USA','Grands indices','Indice S&P 500 des 500 grandes caps US','USD'),
+        ('^IXIC','NASDAQ Composite','Indice','USA','Grands indices','Indice composite NASDAQ','USD'),
+        ('^FCHI','CAC 40 Index','Indice','France','Grands indices','Indice des 40 plus grandes caps françaises','EUR'),
+        ('^GDAXI','DAX Performance Index','Indice','Allemagne','Grands indices','Indice des 40 plus grandes caps allemandes','EUR'),
+        ('^STOXX50E','Euro Stoxx 50','Indice','Europe','Grands indices','Indice des 50 plus grandes caps eurozone','EUR'),
+        ('^N225','Nikkei 225','Indice','Japon','Grands indices','Indice des 225 plus grandes caps japonaises','JPY'),
+        ('^HSI','Hang Seng Index','Indice','Hong Kong','Grands indices','Indice de la bourse de Hong Kong','HKD'),
+        ('^FTSE','FTSE 100','Indice','Royaume-Uni','Grands indices','Indice des 100 plus grandes caps UK','GBP'),
+        ('^RUT','Russell 2000','Indice','USA','Grands indices','Indice des petites caps US','USD'),
+    ]
+
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        if is_postgres():
+            for row in CATALOG:
+                c.execute(f'''INSERT INTO asset_catalog (ticker, name, category, subcategory, region, description, currency)
+                    VALUES ({p},{p},{p},{p},{p},{p},{p})
+                    ON CONFLICT(ticker) DO NOTHING''', row)
+        else:
+            for row in CATALOG:
+                c.execute(f'''INSERT OR IGNORE INTO asset_catalog (ticker, name, category, subcategory, region, description, currency)
+                    VALUES ({p},{p},{p},{p},{p},{p},{p})''', row)
+        conn.commit()
+        print(f"[catalog] {len(CATALOG)} actifs insérés/mis à jour dans asset_catalog")
+    except Exception as e:
+        conn.rollback()
+        print(f"[catalog] Erreur populate_asset_catalog: {e}")
+    finally:
+        conn.close()

@@ -4,7 +4,153 @@
 {% block content %}
 
 <style>
-/* ── KPI cards ── */
+/* ── Override content-container for full-width 3-panel layout ── */
+.content-area  { padding: 0 !important; overflow: hidden; }
+.content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+
+/* ══ 3-panel wrapper ══════════════════════════════════════════ */
+.dash-wrapper {
+    display: flex;
+    height: calc(100vh - var(--header-h));
+    overflow: hidden;
+}
+
+/* ── Left panel ── */
+.dash-left {
+    width: 200px;
+    flex-shrink: 0;
+    background: #020509;
+    border-right: 1px solid #0a1428;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.dash-left::-webkit-scrollbar { width: 3px; }
+.dash-left::-webkit-scrollbar-thumb { background: #0a1428; border-radius: 99px; }
+
+/* ── Center panel ── */
+.dash-center {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.25rem 1.4rem;
+    min-width: 0;
+}
+.dash-center::-webkit-scrollbar { width: 4px; }
+.dash-center::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* ── Right panel ── */
+.dash-right {
+    width: 180px;
+    flex-shrink: 0;
+    background: #020509;
+    border-left: 1px solid #0a1428;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 0.85rem;
+}
+.dash-right::-webkit-scrollbar { width: 3px; }
+.dash-right::-webkit-scrollbar-thumb { background: #0a1428; border-radius: 99px; }
+
+/* ── Panel shared ── */
+.dash-sep {
+    height: 1px;
+    background: #0a1428;
+    margin: 0.85rem 0;
+    flex-shrink: 0;
+}
+.dash-section-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #3d6b8f;
+    margin-bottom: 0.5rem;
+    margin-top: 0.1rem;
+}
+
+/* ── Left: big value ── */
+.dash-total-value {
+    font-size: 26px;
+    font-weight: 200;
+    color: #e8f0ff;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+    word-break: break-word;
+}
+.dash-total-perf {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+
+/* ── Left: asset rows ── */
+.dash-asset-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #0a1428;
+    cursor: default;
+    transition: background 0.12s;
+    border-radius: 4px;
+    padding: 0.28rem 0.3rem;
+    margin: 0 -0.3rem;
+}
+.dash-asset-row:hover { background: rgba(74,122,155,0.07); }
+.dash-ticker {
+    font-family: monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6a9bbf;
+}
+.dash-asset-name {
+    font-size: 0.68rem;
+    color: #3d6b8f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+/* ── Left: coherence compact ── */
+.dash-coh-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+}
+.dash-coh-num {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #e8f0ff;
+    line-height: 1;
+}
+.dash-coh-sub {
+    font-size: 0.6rem;
+    color: #3d6b8f;
+    margin-top: 0.1rem;
+}
+
+/* ── Demo banner ── */
+.demo-banner {
+    background: rgba(74,122,155,0.08);
+    border-bottom: 1px solid rgba(74,122,155,0.2);
+    padding: 0.55rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+/* ══ CENTER: KPI cards ══════════════════════════════════════ */
 .kpi-card-violet,
 .kpi-card-green,
 .kpi-card-amber,
@@ -14,41 +160,35 @@
     background: var(--bg-card) !important;
 }
 
-/* ── Asset cards ── */
+/* ── CENTER: asset cards (accordéon) ── */
 .asset-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 1.4rem;
-    transition: border-color 0.25s, background 0.25s, transform 0.25s;
+    padding: 1.1rem 1.2rem;
+    transition: border-color 0.25s;
     position: relative;
     overflow: hidden;
+    margin-bottom: 0.65rem;
 }
-.asset-card:hover {
-    transform: translateY(-2px);
-    background: var(--bg-card);
-    border-color: var(--border);
-}
-.asset-card-positive { border-top: 1px solid var(--border) !important; }
-.asset-card-negative { border-top: 1px solid var(--border) !important; }
+.asset-card:hover { border-color: var(--accent); }
 
-/* ── Accordéon ── */
 .asset-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     user-select: none;
-    border-radius: 8px;
-    padding: 0.25rem;
-    margin: -0.25rem;
+    border-radius: 6px;
+    padding: 0.2rem;
+    margin: -0.2rem;
     transition: background 0.15s;
 }
-.asset-header:hover { background: rgba(74,122,155,0.05); }
+.asset-header:hover { background: rgba(74,122,155,0.06); }
 .asset-header:hover .chevron { color: var(--text); }
 .chevron {
-    color: rgba(232,240,255,0.25);
-    font-size: 0.8rem;
+    color: #3d6b8f;
+    font-size: 0.75rem;
     transition: transform 0.25s, color 0.15s;
     flex-shrink: 0;
     margin-left: 0.5rem;
@@ -60,193 +200,93 @@
     transition: max-height 0.35s ease, opacity 0.3s;
     opacity: 0;
 }
-.asset-body.open { max-height: 700px; opacity: 1; }
+.asset-body.open { max-height: 800px; opacity: 1; }
 .asset-summary-line {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
-    margin-top: 0.4rem;
+    margin-top: 0.3rem;
 }
-
-/* ── Mini sparkline placeholder ── */
 .asset-sparkline {
     position: absolute;
     bottom: 0; right: 0;
-    width: 80px; height: 40px;
-    opacity: 0.12;
+    width: 70px; height: 35px;
+    opacity: 0.1;
     pointer-events: none;
 }
 
-/* ── Cohérence ── */
+/* ── CENTER: Cohérence card ── */
 .coh-card {
-    margin-bottom: 1.5rem;
-    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    padding: 1.25rem 1.4rem;
     border-color: var(--border);
     background: var(--bg-card) !important;
+    display: none; /* moved to left panel summary, full card hidden */
 }
-.coh-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-.coh-label {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-label);
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-}
-.coh-subtitle {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.01em;
-}
-.coh-score-block { text-align: center; }
-.coh-score-num {
-    font-size: 2.4rem;
-    font-weight: 900;
-    color: var(--text);
-    line-height: 1;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.35rem;
-}
-.coh-score-sub {
-    font-size: 0.72rem;
-    color: rgba(232,240,255,0.3);
-    margin-bottom: 0.35rem;
-    font-weight: 600;
-}
-.coh-sep { color: rgba(232,240,255,0.18); font-size: 1.5rem; font-weight: 300; }
-.coh-gauge-outer {
-    background: rgba(74,122,155,0.07);
-    border-radius: 99px;
-    height: 8px;
+
+/* ── CENTER: Ticker bar ── */
+.ticker-bar-wrap {
+    width: 100%;
     overflow: hidden;
-    margin: 1rem 0 0.6rem;
-}
-.coh-gauge-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-}
-.coh-gauge-high  { background: var(--text); }
-.coh-gauge-med   { background: var(--text); }
-.coh-gauge-low   { background: var(--text); }
-.coh-msg-high { font-size: 0.82rem; font-weight: 600; color: #4ade80; }
-.coh-msg-med  { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
-.coh-msg-low  { font-size: 0.82rem; font-weight: 600; color: #f87171; }
-.coh-pct-badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 0.2rem 0.65rem;
-    border-radius: 20px;
-}
-.coh-pct-high { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
-.coh-pct-med  { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
-.coh-pct-low  { background: transparent; color: var(--text); border: 1px solid var(--text-label); }
-
-/* ── DCA progress ── */
-.dca-pct-done   { color: #4ade80; }
-.dca-pct-active { color: var(--text); }
-
-/* ── Onboarding banner ── */
-.onboarding-banner {
-    background: var(--bg-card);
+    background: rgba(74,122,155,0.04);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.75rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    padding: 0.45rem 0;
+    position: relative;
 }
-.onboarding-title {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.85rem;
+.ticker-bar-wrap::before,
+.ticker-bar-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40px;
+    z-index: 2;
+    pointer-events: none;
 }
-.onboarding-steps {
+.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, #070d18 0%, transparent 100%); }
+.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, #070d18 0%, transparent 100%); }
+.ticker-track {
     display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
+    white-space: nowrap;
+    animation: tickerScroll 55s linear infinite;
+    width: max-content;
 }
-.onboarding-step {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    font-size: 0.85rem;
-    color: rgba(232,240,255,0.55);
-    flex: 1;
-    min-width: 160px;
-}
-.onboarding-step.done { color: rgba(232,240,255,0.65); }
-.onboarding-step.active { color: var(--text); font-weight: 600; }
-.onboarding-step-num {
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(74,122,155,0.15);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 800;
-    flex-shrink: 0;
-    color: rgba(232,240,255,0.3);
-}
-.onboarding-step.done .onboarding-step-num {
-    background: rgba(74,122,155,0.06);
-    border-color: rgba(74,122,155,0.2);
-    color: rgba(232,240,255,0.6);
-}
-.onboarding-step.active .onboarding-step-num {
-    background: rgba(74,122,155,0.1);
-    border-color: rgba(232,240,255,0.3);
-    color: var(--text);
-}
-.onboarding-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-.onboarding-link-active { color: var(--text); }
-.onboarding-link-muted  { color: rgba(232,240,255,0.4); }
-
-/* ── Enveloppes fiscales ── */
-.env-badge {
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.ticker-item {
     display: inline-flex;
     align-items: center;
-    font-size: 0.64rem;
-    font-weight: 800;
-    padding: 0.1rem 0.4rem;
-    border-radius: 5px;
+    gap: 0.4rem;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-right: 1px solid rgba(74,122,155,0.08);
     white-space: nowrap;
-    letter-spacing: 0.02em;
-    line-height: 1.6;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 4px;
 }
-.env-pea      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-peapme   { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-cto      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-av       { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-per      { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-livret   { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-.env-autre    { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.ticker-item:hover { background: rgba(10,20,40,0.6); }
+.ticker-name { color: #3d6b8f; font-size: 0.68rem; }
+.ticker-price { color: rgba(232,240,255,0.82); }
+.ticker-chg-pos { color: #4ade80; font-size: 0.68rem; font-weight: 700; }
+.ticker-chg-neg { color: #f87171; font-size: 0.68rem; font-weight: 700; }
+.ticker-loading { font-size: 0.73rem; color: #3d6b8f; padding: 0 1.5rem; font-style: italic; }
 
-/* ── Filtre enveloppe ── */
+/* ── CENTER: Env filter ── */
 .env-filter-wrap {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.1rem;
     flex-wrap: wrap;
 }
 .env-filter-label {
-    font-size: 0.75rem;
-    color: var(--text-label);
+    font-size: 0.72rem;
+    color: #3d6b8f;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -255,66 +295,107 @@
 .env-filter-select {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    color: rgba(232,240,255,0.75);
-    font-size: 0.82rem;
-    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    color: #6a9bbf;
+    font-size: 0.8rem;
+    padding: 0.28rem 0.6rem;
     cursor: pointer;
     outline: none;
     transition: border-color 0.15s;
-    min-width: 180px;
+    min-width: 170px;
 }
-.env-filter-select:hover  { border-color: var(--text-label); }
-.env-filter-select:focus  { border-color: var(--text-muted); }
+.env-filter-select:hover  { border-color: #3d6b8f; }
+.env-filter-select:focus  { border-color: #6a9bbf; }
 .env-filter-select option { background: var(--bg-card); color: var(--text); }
 
-/* ── Plafond bar ── */
+/* ── CENTER: Plafond bar ── */
 .plafond-block {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.85rem 1.1rem;
-    margin-bottom: 1.25rem;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
     display: none;
 }
 .plafond-bar-outer {
     background: rgba(74,122,155,0.06);
     border-radius: 99px;
-    height: 5px;
+    height: 4px;
     overflow: hidden;
-    margin: 0.5rem 0 0.35rem;
+    margin: 0.4rem 0 0.3rem;
 }
 .plafond-bar-fill {
     height: 100%;
     border-radius: 99px;
     transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
-    background: var(--text);
+    background: var(--text-muted);
 }
 
-/* ── Bouton crayon enveloppe ── */
-.env-edit-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(232,240,255,0.2);
+/* ── DCA ── */
+.dca-pct-done   { color: #4ade80; }
+.dca-pct-active { color: var(--text); }
+
+/* ── RIGHT: onboarding compact ── */
+.onboarding-compact {
+    margin-bottom: 0.85rem;
+    padding: 0.75rem;
+    background: rgba(74,122,155,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     font-size: 0.75rem;
-    padding: 0.15rem 0.3rem;
+}
+.onboarding-compact-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #3d6b8f;
+    margin-bottom: 0.5rem;
+}
+.onboarding-step-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0;
+    font-size: 0.72rem;
+    color: rgba(232,240,255,0.45);
+    border-bottom: 1px solid rgba(74,122,155,0.07);
+}
+.onboarding-step-compact:last-child { border-bottom: none; }
+.onboarding-step-compact.done  { color: rgba(232,240,255,0.60); }
+.onboarding-step-compact.active { color: var(--text); font-weight: 600; }
+.onboarding-step-compact a { color: inherit; text-decoration: none; }
+.onboarding-step-compact a:hover { text-decoration: underline; }
+
+/* ── RIGHT: env badges ── */
+.env-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 0.08rem 0.38rem;
     border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
-    line-height: 1;
-    flex-shrink: 0;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
 }
-.env-edit-btn:hover {
-    color: var(--text);
-    background: rgba(74,122,155,0.06);
-}
+.env-pea    { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-peapme { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-cto    { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-av     { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-per    { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-livret { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.env-autre  { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+
+/* ── RIGHT: pie chart compact ── */
+.dash-right #pie-chart { height: 160px !important; }
 
 /* ── Modal enveloppe ── */
 .env-modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(4,8,15,0.7);
+    background: rgba(4,8,15,0.75);
     backdrop-filter: blur(4px);
     z-index: 9000;
     align-items: center;
@@ -330,17 +411,8 @@
     max-width: 380px;
     box-shadow: 0 24px 64px rgba(4,8,15,0.85);
 }
-.env-modal-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 0.3rem;
-}
-.env-modal-sub {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.3);
-    margin-bottom: 1.1rem;
-}
+.env-modal-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+.env-modal-sub   { font-size: 0.78rem; color: #3d6b8f; margin-bottom: 1.1rem; }
 .env-modal-select {
     width: 100%;
     background: var(--bg-card);
@@ -352,715 +424,619 @@
     margin-bottom: 1rem;
     outline: none;
 }
-.env-modal-select:focus { border-color: var(--text-label); }
+.env-modal-select:focus { border-color: #3d6b8f; }
 .env-modal-select option { background: var(--bg-card); }
-.env-modal-actions {
-    display: flex;
-    gap: 0.6rem;
-    justify-content: flex-end;
-}
-/* ── Enveloppes table mobile ── */
+.env-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+/* ── Env filter table (env-col hidden on mobile) ── */
 .env-table-wrap { overflow-x: auto; }
 @media (max-width: 768px) {
     .env-col-actifs, .env-col-plafond { display: none; }
 }
 
-/* ── Ticker bar ── */
-.ticker-bar-wrap {
-    width: 100%;
-    overflow: hidden;
-    background: rgba(74,122,155,0.05);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    padding: 0.55rem 0;
-    position: relative;
+/* ── Cohérence helper classes (used by JS) ── */
+.coh-label    { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #3d6b8f; font-weight: 700; margin-bottom: 0.2rem; }
+.coh-subtitle { font-size: 0.9rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.coh-score-block { text-align: center; }
+.coh-score-num   { font-size: 2rem; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -0.03em; margin-bottom: 0.25rem; }
+.coh-score-sub   { font-size: 0.7rem; color: #3d6b8f; margin-bottom: 0.25rem; font-weight: 600; }
+.coh-sep { color: #3d6b8f; font-size: 1.2rem; font-weight: 300; }
+.coh-gauge-outer { background: rgba(74,122,155,0.07); border-radius: 99px; height: 6px; overflow: hidden; margin: 0.75rem 0 0.5rem; }
+.coh-gauge-fill  { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(0.22,1,0.36,1); }
+.coh-gauge-high  { background: var(--positive); }
+.coh-gauge-med   { background: var(--text-muted); }
+.coh-gauge-low   { background: var(--negative); }
+.coh-msg-high { font-size: 0.8rem; font-weight: 600; color: #4ade80; }
+.coh-msg-med  { font-size: 0.8rem; font-weight: 600; color: #6a9bbf; }
+.coh-msg-low  { font-size: 0.8rem; font-weight: 600; color: #f87171; }
+.coh-pct-badge { font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 20px; }
+.coh-pct-high { background: transparent; color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.coh-pct-med  { background: transparent; color: #6a9bbf; border: 1px solid var(--border); }
+.coh-pct-low  { background: transparent; color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.coh-retest-btn { margin-top: 0.75rem; }
+
+/* ── Mobile: stack panels ── */
+@media (max-width: 768px) {
+    .dash-wrapper  { flex-direction: column; height: auto; overflow: visible; }
+    .dash-left     { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #0a1428; padding: 1rem; }
+    .dash-center   { padding: 1rem; }
+    .dash-right    { width: 100%; height: auto; border-left: none; border-top: 1px solid #0a1428; padding: 1rem; }
+    .dash-total-value { font-size: 22px; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .dash-right #pie-chart { height: 200px !important; }
 }
-.ticker-bar-wrap::before,
-.ticker-bar-wrap::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 48px;
-    z-index: 2;
-    pointer-events: none;
-}
-.ticker-bar-wrap::before {
-    left: 0;
-    background: linear-gradient(90deg, #070d18 0%, transparent 100%);
-}
-.ticker-bar-wrap::after {
-    right: 0;
-    background: linear-gradient(270deg, #070d18 0%, transparent 100%);
-}
-.ticker-track {
-    display: flex;
-    gap: 0;
-    white-space: nowrap;
-    animation: tickerScroll 55s linear infinite;
-    width: max-content;
-}
-.ticker-track:hover { animation-play-state: paused; }
-@keyframes tickerScroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-.ticker-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0 1.25rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    border-right: 1px solid rgba(74,122,155,0.1);
-    white-space: nowrap;
-}
-.ticker-name { color: rgba(232,240,255,0.45); font-size: 0.72rem; }
-.ticker-price { color: rgba(232,240,255,0.85); }
-.ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
-.ticker-chg-neg { color: #f87171; font-size: 0.72rem; font-weight: 700; }
-.ticker-loading {
-    font-size: 0.75rem;
-    color: rgba(232,240,255,0.25);
-    padding: 0 1.5rem;
-    font-style: italic;
+@media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
 }
 </style>
 
-<div class="page-header">
-    <div>
-        <h1>Mon Portefeuille</h1>
-        <p>Prix mis à jour en temps réel via Yahoo Finance</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Achat</a>
-        <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning">− Vente</a>
-    </div>
-</div>
-
-<!-- ── Bandeau démo ── -->
+{# ── Demo banner (above 3 panels) ── #}
 {% if is_demo %}
-<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.65rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; font-size:0.82rem;">
-    <span style="color:var(--text-muted);">
-        <span style="color:var(--text-muted); font-weight:600;">Mode démo</span> — Les données sont fictives. Aucun vrai portefeuille n'est lié à ce compte.
+<div class="demo-banner">
+    <span style="color:#6a9bbf;">
+        <span style="color:#e8f0ff; font-weight:600;">Mode démo</span> — données fictives, aucun vrai portefeuille.
     </span>
-    <a href="{{ url_for('auth.register') }}" style="color:var(--text); font-weight:600; text-decoration:none; white-space:nowrap; border:1px solid var(--text-label); border-radius:4px; padding:0.25rem 0.65rem; font-size:0.78rem;">
-        Créer un vrai compte →
-    </a>
+    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <a href="{{ url_for('auth.register') }}"
+           style="color:#e8f0ff; font-weight:600; text-decoration:none; border:1px solid #3d6b8f; border-radius:4px; padding:0.22rem 0.6rem; font-size:0.75rem;">
+            Créer un compte →
+        </a>
+        <a href="{{ url_for('main.demo_logout') }}"
+           style="color:#f87171; font-weight:600; text-decoration:none; border:1px solid rgba(248,113,113,0.3); border-radius:4px; padding:0.22rem 0.6rem; font-size:0.75rem;">
+            Quitter la démo
+        </a>
+    </div>
 </div>
 {% endif %}
 
-<!-- ── Ticker bar ── -->
-<div class="ticker-bar-wrap" id="ticker-bar-wrap">
-    <div class="ticker-track" id="ticker-track">
-        <span class="ticker-loading">Chargement des marchés…</span>
-    </div>
-</div>
+<div class="dash-wrapper">
 
-<!-- ── Filtre enveloppe ── -->
-{% if summary.assets %}
-<div class="env-filter-wrap">
-    <span class="env-filter-label">Enveloppe</span>
-    <select class="env-filter-select" id="env-filter-select" onchange="applyEnvFilter(this.value)">
-        <option value="all">Tout le portefeuille</option>
-        {% set seen_envs = namespace(v=[]) %}
-        {% for assets_list in summary.by_type.values() %}
-            {% for a in assets_list %}
-                {% if not a.fully_sold and a.envelope and a.envelope not in seen_envs.v %}
-                    {% set seen_envs.v = seen_envs.v + [a.envelope] %}
-                    <option value="{{ a.envelope }}">{{ a.envelope }}</option>
-                {% endif %}
+{# ══════════════════════════════════════════
+   PANNEAU GAUCHE
+══════════════════════════════════════════ #}
+<div class="dash-left">
+
+    <div class="dash-section-label">Portefeuille</div>
+    <div class="dash-total-value" id="left-total-value">{{ summary.total_value }} €</div>
+    <div class="dash-total-perf {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}">
+        {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
+        <span style="font-weight:400; font-size:0.72rem; opacity:0.8;">
+            ({{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }}%)
+        </span>
+    </div>
+    {% if summary.total_invested > 0 %}
+    <div style="font-size:0.7rem; color:#3d6b8f; margin-top:0.2rem;">{{ summary.total_invested }} € investis</div>
+    {% endif %}
+
+    {% if summary.assets %}
+    <div class="dash-sep"></div>
+    <div class="dash-section-label">{{ summary.assets|length }} actif(s)</div>
+    {% for asset_type, assets in summary.by_type.items() %}
+    {% for a in assets %}
+    {% if not a.fully_sold %}
+    <div class="dash-asset-row"
+         onclick="window.location.href='{{ url_for('main.explorer') }}?ticker={{ a.ticker }}'"
+         title="{{ a.name }}">
+        <div style="min-width:0; flex:1;">
+            <div class="dash-ticker">{{ a.ticker }}</div>
+            <div class="dash-asset-name">{{ a.name|truncate(18, true, '') }}</div>
+        </div>
+        <span class="{{ 'positive' if a.unrealized_pct >= 0 else 'negative' }}"
+              style="font-size:0.7rem; font-weight:700; flex-shrink:0;">
+            {{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%
+        </span>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+
+    {% if portfolio_risk_score is not none %}
+    <div class="dash-sep"></div>
+    <div class="dash-section-label">Cohérence</div>
+    <div class="dash-coh-row">
+        <div>
+            <div class="dash-coh-num">{{ portfolio_risk_score }}</div>
+            <div class="dash-coh-sub">Portefeuille</div>
+        </div>
+        {% if last_profil %}
+        <div style="color:#3d6b8f; font-size:0.75rem;">↔</div>
+        <div>
+            <div class="dash-coh-num">{{ profil_risk_score }}</div>
+            <div class="dash-coh-sub">Profil</div>
+        </div>
+        {% else %}
+        <a href="{{ url_for('main.test_profil') }}"
+           style="font-size:0.68rem; color:#3d6b8f; text-decoration:none; line-height:1.3;">
+            Faire le test →
+        </a>
+        {% endif %}
+    </div>
+    {% if coherence is not none %}
+    <div class="{{ 'positive' if coherence >= 70 else 'coh-msg-med' if coherence >= 40 else 'negative' }}"
+         style="font-size:0.75rem; font-weight:700; margin-bottom:0.3rem;">
+        {{ coherence }}% cohérent
+    </div>
+    <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:4px; overflow:hidden; margin-bottom:0.2rem;">
+        <div style="height:100%; border-radius:99px; width:{{ coherence }}%;
+                    background:{{ '#4ade80' if coherence >= 70 else '#6a9bbf' if coherence >= 40 else '#f87171' }};
+                    transition:width 1s ease;"></div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if summary.dca_target > 0 %}
+    <div class="dash-sep"></div>
+    <div class="dash-section-label">DCA · {{ summary.dca_target }}€/mois</div>
+    <div style="font-size:0.75rem; font-weight:700;
+                color:{{ '#4ade80' if summary.dca_progress >= 100 else '#e8f0ff' }}; margin-bottom:0.3rem;">
+        {{ summary.dca_progress }}%
+    </div>
+    <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:4px; overflow:hidden; margin-bottom:0.4rem;">
+        <div style="height:100%; border-radius:99px; width:{{ [summary.dca_progress, 100]|min }}%;
+                    background:{{ '#4ade80' if summary.dca_progress >= 100 else '#6a9bbf' }}; transition:width 0.8s ease;"></div>
+    </div>
+    <div style="font-size:0.68rem; color:#3d6b8f;">{{ summary.invested_month }} € ce mois</div>
+    {% endif %}
+
+    {% if estimated_dividends_year > 0 %}
+    <div class="dash-sep"></div>
+    <div class="dash-section-label">Dividendes estimés</div>
+    <div class="positive" style="font-size:1rem; font-weight:700;">+{{ estimated_dividends_year }} €</div>
+    <div style="font-size:0.65rem; color:#3d6b8f; margin-top:0.1rem;">cette année · yfinance</div>
+    {% endif %}
+
+    <div style="flex:1;"></div>
+    <div style="padding-top:0.75rem; border-top:1px solid #0a1428; display:flex; flex-direction:column; gap:0.3rem;">
+        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-success"
+           style="font-size:0.72rem; padding:0.3rem 0.6rem; justify-content:center;">+ Achat</a>
+        <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-ghost"
+           style="font-size:0.72rem; padding:0.3rem 0.6rem; justify-content:center;">− Vente</a>
+    </div>
+
+</div><!-- /dash-left -->
+
+{# ══════════════════════════════════════════
+   PANNEAU CENTRAL
+══════════════════════════════════════════ #}
+<div class="dash-center">
+
+    {# ── Ticker bar ── #}
+    <div class="ticker-bar-wrap" id="ticker-bar-wrap">
+        <div class="ticker-track" id="ticker-track">
+            <span class="ticker-loading">Chargement des marchés…</span>
+        </div>
+    </div>
+
+    {# ── Filtre enveloppe ── #}
+    {% if summary.assets %}
+    <div class="env-filter-wrap">
+        <span class="env-filter-label">Enveloppe</span>
+        <select class="env-filter-select" id="env-filter-select" onchange="applyEnvFilter(this.value)">
+            <option value="all">Tout le portefeuille</option>
+            {% set seen_envs = namespace(v=[]) %}
+            {% for assets_list in summary.by_type.values() %}
+                {% for a in assets_list %}
+                    {% if not a.fully_sold and a.envelope and a.envelope not in seen_envs.v %}
+                        {% set seen_envs.v = seen_envs.v + [a.envelope] %}
+                        <option value="{{ a.envelope }}">{{ a.envelope }}</option>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
-    </select>
-</div>
-{% endif %}
-
-<!-- ── Onboarding banner ── -->
-{% if onboarding_state and onboarding_state.show %}
-<div class="onboarding-banner">
-    <div class="onboarding-title">Bienvenue — 3 étapes pour démarrer</div>
-    <div class="onboarding-steps">
-
-        <div class="onboarding-step {{ 'done' if onboarding_state.has_profil else 'active' }}">
-            <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_profil else '1' }}</div>
-            <div>
-                {% if onboarding_state.has_profil %}
-                Test de profil complété
-                {% else %}
-                <a href="{{ url_for('main.test_profil') }}"
-                   style="color:var(--text); text-decoration:none; font-weight:600;">
-                    Faire le test de profil →
-                </a>
-                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Connaître ta tolérance au risque</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="onboarding-step {{ 'done' if onboarding_state.has_assets else ('active' if onboarding_state.has_profil else '') }}">
-            <div class="onboarding-step-num">{{ '✓' if onboarding_state.has_assets else '2' }}</div>
-            <div>
-                {% if onboarding_state.has_assets %}
-                Premier actif enregistré
-                {% else %}
-                <a href="{{ url_for('main.add_purchase_route') }}"
-                   class="{{ 'onboarding-link-active' if onboarding_state.has_profil else 'onboarding-link-muted' }}"
-                   style="text-decoration:none; font-weight:600;">
-                    Enregistrer un achat →
-                </a>
-                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Ajouter ton premier investissement</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="onboarding-step {{ 'done' if onboarding_state.all_done else '' }}">
-            <div class="onboarding-step-num">{{ '✓' if onboarding_state.all_done else '3' }}</div>
-            <div>
-                {% if onboarding_state.all_done %}
-                Dashboard prêt — bonne analyse !
-                {% else %}
-                Dashboard prêt
-                <div style="font-size:0.75rem; color:rgba(232,240,255,0.3); margin-top:1px;">Tes analyses seront visibles ici</div>
-                {% endif %}
-            </div>
-        </div>
-
+        </select>
     </div>
-    <div class="onboarding-actions">
-        <form method="POST" action="{{ url_for('main.onboarding_dismiss') }}" style="display:inline;">
+    {% endif %}
+
+    {% if not summary.assets %}
+    <div class="card empty-state">
+        <div style="font-size:3rem; margin-bottom:1rem;">📈</div>
+        <h3>Ton portefeuille est vide</h3>
+        <p>Enregistre ton premier achat — l'actif est créé automatiquement.</p>
+        <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Enregistrer un achat</a>
+    </div>
+
+    {% else %}
+
+    {# ── KPI Grid ── #}
+    <div class="kpi-grid" style="margin-top:0; margin-bottom:1.25rem;">
+        <div class="kpi-card kpi-card-violet">
+            <div class="kpi-label">Valeur actuelle</div>
+            <div class="kpi-value" id="kpi-total-value" style="color:var(--text);">{{ summary.total_value }} €</div>
+            <div class="kpi-sub" id="kpi-assets-count">{{ summary.assets|length }} actif(s)</div>
+        </div>
+        <div class="kpi-card kpi-card-amber">
+            <div class="kpi-label">Total investi</div>
+            <div class="kpi-value" id="kpi-total-invested" style="color:var(--text);">{{ summary.total_invested }} €</div>
+            <div class="kpi-sub">Capital déployé</div>
+        </div>
+        <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}" id="kpi-unrealized-card">
+            <div class="kpi-label">Plus-value latente</div>
+            <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}" id="kpi-unrealized">
+                {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
+            </div>
+            <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}" id="kpi-unrealized-pct">
+                {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
+            </div>
+        </div>
+        <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}" id="kpi-realized-card">
+            <div class="kpi-label">Plus-value réalisée</div>
+            <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}" id="kpi-realized">
+                {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
+            </div>
+            <div class="kpi-sub">Sur ventes clôturées</div>
+        </div>
+        <div class="kpi-card kpi-card-blue" id="kpi-dividends-card"
+             style="{{ 'display:none;' if summary.total_dividends <= 0 else '' }}">
+            <div class="kpi-label">Dividendes reçus</div>
+            <div class="kpi-value positive" id="kpi-dividends">+{{ summary.total_dividends }} €</div>
+            <div class="kpi-sub">Rendement encaissé</div>
+        </div>
+    </div>
+
+    {# ── Plafond bar ── #}
+    <div class="plafond-block" id="plafond-bar-block">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.5rem;">
+            <span style="font-size:0.8rem; font-weight:700; color:#e8f0ff;">
+                Plafond <span id="plafond-env-name"></span>
+            </span>
+            <span style="font-size:0.72rem; color:rgba(232,240,255,0.50);">
+                <span id="plafond-invested"></span> / <span id="plafond-total"></span> —
+                <strong id="plafond-restant" style="color:rgba(232,240,255,0.75);"></strong> disponibles
+            </span>
+        </div>
+        <div class="plafond-bar-outer">
+            <div class="plafond-bar-fill" id="plafond-bar-fill" style="width:0%;"></div>
+        </div>
+    </div>
+
+    {# ── Gain total bar ── #}
+    {% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
+    {% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
+    <div class="card" style="margin-bottom:1.25rem; border-color:rgba(74,122,155,0.1); padding:1rem 1.25rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+                <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:#3d6b8f; margin-bottom:0.2rem;">
+                    Gain total (latent + réalisé + dividendes)
+                </div>
+                <div id="kpi-total-gain-line"
+                     class="{{ 'positive' if total_gain >= 0 else 'negative' }}"
+                     style="font-size:1.3rem; font-weight:800;">
+                    <span id="kpi-total-gain">{{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }}</span> €
+                    <span id="kpi-total-gain-pct" style="font-size:0.85rem; font-weight:600; opacity:0.7;">
+                        ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
+                    </span>
+                </div>
+            </div>
+            <a href="{{ url_for('main.charts') }}"
+               style="font-size:0.78rem; color:#3d6b8f; text-decoration:none; opacity:0.85; transition:opacity 0.15s;"
+               onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85">
+                Graphiques →
+            </a>
+        </div>
+    </div>
+
+    {# ── DCA block (center, JS-managed) ── #}
+    {% if summary.dca_target > 0 %}
+    <div class="card" id="dca-block" style="margin-bottom:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <span style="font-weight:700; color:var(--text); font-size:0.9rem;">DCA — {{ summary.dca_target }} €/mois</span>
+            <span id="dca-pct-el" class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
+                  style="font-weight:800; font-size:1rem;">{{ summary.dca_progress }}%</span>
+        </div>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar" id="dca-progress-bar"
+                 data-width="{{ [summary.dca_progress, 100]|min }}" style="width:0%;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:0.4rem;">
+            <span id="dca-invested-month" style="font-size:0.75rem; color:#3d6b8f;">
+                {{ summary.invested_month }} € ce mois
+            </span>
+            <span id="dca-reste">
+                {% if summary.dca_progress >= 100 %}
+                <span style="font-size:0.75rem; color:#4ade80; font-weight:600;">✓ Objectif atteint !</span>
+                {% else %}
+                <span style="font-size:0.75rem; color:#3d6b8f;">
+                    Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
+                </span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    {% else %}
+    <div style="margin-bottom:1.1rem;">
+        <a href="{{ url_for('main.settings') }}"
+           style="font-size:0.78rem; color:#3d6b8f; text-decoration:none; transition:color 0.15s;"
+           onmouseover="this.style.color='#6a9bbf'" onmouseout="this.style.color='#3d6b8f'">
+            ＋ Définir un objectif DCA mensuel →
+        </a>
+    </div>
+    {% endif %}
+
+    {# ── Plotly allocation bar chart ── #}
+    {% if summary.allocation %}
+    <div class="card" style="margin-bottom:1.25rem; padding:1rem 1.25rem;">
+        <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:#3d6b8f; margin-bottom:0.5rem;">
+            Allocation du portefeuille
+        </div>
+        <div id="alloc-bar-chart"></div>
+    </div>
+    {% endif %}
+
+    {# ── Actifs ── #}
+    {% for asset_type, assets in summary.by_type.items() %}
+    <div class="asset-section" data-asset-type="{{ asset_type }}">
+    <div class="section-title">{{ asset_type }}s</div>
+    {% for a in assets %}
+    {% if not a.fully_sold %}
+    {% set ri = risk_data.get(a.ticker) %}
+    {% set env = a.envelope or '' %}
+    {% if env == 'PEA' %}{% set env_cls = 'env-pea' %}
+    {% elif env == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
+    {% elif env == 'CTO' %}{% set env_cls = 'env-cto' %}
+    {% elif env == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
+    {% elif env == 'PER' %}{% set env_cls = 'env-per' %}
+    {% elif env in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
+    {% elif env == 'Autre' %}{% set env_cls = 'env-autre' %}
+    {% else %}{% set env_cls = '' %}
+    {% endif %}
+
+    <div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}"
+         data-asset-id="{{ a.asset_id }}" data-envelope="{{ env }}">
+
+        <svg class="asset-sparkline" viewBox="0 0 80 40" fill="none">
+            {% if a.unrealized_gain >= 0 %}
+            <polyline points="0,35 15,28 30,30 45,18 60,12 80,5" stroke="#4ade80" stroke-width="2" fill="none"/>
+            {% else %}
+            <polyline points="0,8 15,12 30,10 45,22 60,28 80,35" stroke="#f87171" stroke-width="2" fill="none"/>
+            {% endif %}
+        </svg>
+
+        <div class="asset-header" onclick="toggleAsset('asset-{{ a.asset_id }}')">
+            <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                    <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF'
+                                      else 'badge-action' if a.asset_type == 'Action'
+                                      else 'badge-crypto' if a.asset_type == 'Crypto'
+                                      else 'badge-other' }}">{{ a.ticker }}</span>
+                    <span id="env-badge-{{ a.asset_id }}">
+                        {% if env and env_cls %}
+                        <span class="env-badge {{ env_cls }}">{{ env }}</span>
+                        {% endif %}
+                    </span>
+                    <span style="color:var(--text); font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">{{ a.name }}</span>
+                    {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
+                </div>
+                <div class="asset-summary-line">
+                    <span style="font-size:0.85rem; color:rgba(232,240,255,0.60); font-weight:500;">{{ a.current_value }} €</span>
+                    <span class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}"
+                          style="font-size:0.85rem; font-weight:700;">
+                        {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
+                        <span style="font-weight:500; font-size:0.78rem; opacity:0.75;">
+                            ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
+                        </span>
+                    </span>
+                </div>
+            </div>
+            <span class="chevron" id="chevron-asset-{{ a.asset_id }}">▼</span>
+        </div>
+
+        <div class="asset-body" id="asset-{{ a.asset_id }}">
+            <div style="border-top:1px solid rgba(74,122,155,0.1); margin-top:0.75rem; padding-top:0.75rem;">
+                <table class="asset-table">
+                    <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
+                    <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
+                    <tr>
+                        <td>Prix actuel</td>
+                        <td>
+                            <strong>{{ a.current_price }} {{ a.currency }}</strong>
+                            {% if a.price_timestamp %}
+                            <div style="font-size:0.68rem; color:#3d6b8f; font-weight:400;">{{ a.price_timestamp }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr><td>Investi</td><td>{{ a.total_invested }} €</td></tr>
+                    <tr><td>Frais cumulés</td><td class="neutral">{{ a.total_fees }} €</td></tr>
+                    <tr><td>Valeur actuelle</td><td><strong>{{ a.current_value }} €</strong></td></tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}">
+                            <strong>
+                                {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
+                                ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
+                            </strong>
+                        </td>
+                    </tr>
+                    {% if a.realized_gain != 0 %}
+                    <tr>
+                        <td>P&L réalisé</td>
+                        <td class="{{ 'positive' if a.realized_gain >= 0 else 'negative' }}">
+                            {{ '+' if a.realized_gain >= 0 else '' }}{{ a.realized_gain }} €
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if a.dividends_received > 0 %}
+                    <tr>
+                        <td>Dividendes reçus</td>
+                        <td class="positive">+{{ a.dividends_received }} €</td>
+                    </tr>
+                    <tr>
+                        <td>Rendement total</td>
+                        <td class="{{ 'positive' if a.total_return >= 0 else 'negative' }}">
+                            <strong>
+                                {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
+                                ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
+                            </strong>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>Enveloppe fiscale</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:0.4rem;">
+                                <span id="env-table-badge-{{ a.asset_id }}">
+                                    {% if env and env_cls %}
+                                    <span class="env-badge {{ env_cls }}">{{ env }}</span>
+                                    {% else %}
+                                    <span style="color:#3d6b8f; font-size:0.8rem;">—</span>
+                                    {% endif %}
+                                </span>
+                                <button class="env-edit-btn"
+                                        onclick="openEnvModal({{ a.asset_id }}, '{{ env }}')"
+                                        title="Modifier l'enveloppe"
+                                        style="background:none; border:none; cursor:pointer; color:#3d6b8f; font-size:0.72rem; padding:0.12rem 0.3rem; border-radius:4px; transition:color 0.15s;"
+                                        onmouseover="this.style.color='#e8f0ff'" onmouseout="this.style.color='#3d6b8f'">✎</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% if ri %}
+                    <tr>
+                        <td>Score de risque</td>
+                        <td>
+                            {{ risk_badge(ri.score) }}
+                            {% if ri.source == 'yahoo' %}
+                            <div style="font-size:0.65rem; color:#3d6b8f; margin-top:0.2rem;">
+                                Vol. {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · Beta {{ ri.beta }}
+                            </div>
+                            {% else %}
+                            <div style="font-size:0.65rem; color:#3d6b8f; margin-top:0.2rem;">Score par défaut</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+                <div style="margin-top:0.85rem; display:flex; gap:0.35rem; flex-wrap:wrap; align-items:center;">
+                    <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
+                    <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
+                    <a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}" class="btn btn-ghost btn-sm">Explorer</a>
+                    <form method="POST"
+                          action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Supprimer {{ a.name }} et tous ses achats/ventes ?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    </div><!-- /.asset-section -->
+    {% endfor %}
+
+    {% endif %}{# /if summary.assets #}
+
+</div><!-- /dash-center -->
+
+{# ══════════════════════════════════════════
+   PANNEAU DROIT
+══════════════════════════════════════════ #}
+<div class="dash-right">
+
+    {# ── Onboarding compact ── #}
+    {% if onboarding_state and onboarding_state.show %}
+    <div class="onboarding-compact">
+        <div class="onboarding-compact-title">Démarrage</div>
+        <div class="onboarding-step-compact {{ 'done' if onboarding_state.has_profil else 'active' }}">
+            <span>{{ '✓' if onboarding_state.has_profil else '1' }}</span>
+            {% if onboarding_state.has_profil %}
+            Test de profil
+            {% else %}
+            <a href="{{ url_for('main.test_profil') }}">Faire le test →</a>
+            {% endif %}
+        </div>
+        <div class="onboarding-step-compact {{ 'done' if onboarding_state.has_assets else ('active' if onboarding_state.has_profil else '') }}">
+            <span>{{ '✓' if onboarding_state.has_assets else '2' }}</span>
+            {% if onboarding_state.has_assets %}
+            Premier achat
+            {% else %}
+            <a href="{{ url_for('main.add_purchase_route') }}">Enregistrer →</a>
+            {% endif %}
+        </div>
+        <div class="onboarding-step-compact {{ 'done' if onboarding_state.all_done else '' }}">
+            <span>{{ '✓' if onboarding_state.all_done else '3' }}</span>
+            Dashboard prêt
+        </div>
+        <form method="POST" action="{{ url_for('main.onboarding_dismiss') }}" style="margin-top:0.5rem;">
             <button type="submit" class="btn btn-ghost btn-sm"
-                    style="font-size:0.78rem; opacity:0.55;"
+                    style="width:100%; font-size:0.68rem; justify-content:center; opacity:0.55;"
                     onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.55">
-                Passer l'onboarding
+                Passer
             </button>
         </form>
     </div>
-</div>
-{% endif %}
-
-{% if not summary.assets %}
-<div class="card empty-state">
-    <div style="font-size:3rem; margin-bottom:1rem;">📈</div>
-    <h3>Ton portefeuille est vide</h3>
-    <p>Enregistre ton premier achat — l'actif est créé automatiquement.</p>
-    <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Enregistrer un achat</a>
-</div>
-
-{% else %}
-
-<!-- ── Cohérence portefeuille / profil ── -->
-{% if portfolio_risk_score is not none %}
-<div class="card coh-card" id="coh-card">
-    <div class="coh-header">
-        <div class="coh-header-text">
-            <div class="coh-label">Cohérence portefeuille / profil</div>
-            <div class="coh-subtitle">Ton portefeuille correspond-il à ta tolérance au risque ?</div>
-        </div>
-        {% if coherence is not none %}
-        <span id="coh-pct-badge-el"
-              class="coh-pct-badge {{ 'coh-pct-high' if coherence >= 70 else 'coh-pct-med' if coherence >= 40 else 'coh-pct-low' }}">
-            {{ coherence }}% cohérent
-        </span>
-        {% endif %}
-    </div>
-
-    <div style="display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap;">
-
-        <div class="coh-score-block">
-            <div class="coh-score-sub">Score portefeuille</div>
-            <div class="coh-score-num" id="coh-portfolio-score-num">{{ portfolio_risk_score }}</div>
-            <div id="coh-portfolio-badge-wrap">{{ risk_badge(portfolio_risk_score) }}</div>
-        </div>
-
-        <div class="coh-sep">↔</div>
-
-        {% if last_profil %}
-        <div class="coh-score-block">
-            <div class="coh-score-sub">Score profil investisseur</div>
-            <div class="coh-score-num">{{ profil_risk_score }}</div>
-            {{ risk_badge(profil_risk_score) }}
-        </div>
-        {% else %}
-        <div class="coh-score-block">
-            <div class="coh-score-sub">Score profil investisseur</div>
-            <div style="margin-top:0.5rem;">
-                <a href="{{ url_for('main.test_profil') }}"
-                   style="font-size:0.82rem; color:var(--text); text-decoration:none; font-weight:600;">
-                    🧠 Faire le test →
-                </a>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    {% if coherence is not none %}
-    <div class="coh-gauge-outer">
-        <div id="coh-gauge-fill"
-             class="coh-gauge-fill {{ 'coh-gauge-high' if coherence >= 70 else 'coh-gauge-med' if coherence >= 40 else 'coh-gauge-low' }}"
-             style="width:0%;"></div>
-    </div>
-    <div id="coh-msg-el"
-         class="{{ 'coh-msg-high' if coherence >= 70 else 'coh-msg-med' if coherence >= 40 else 'coh-msg-low' }}">
-        {% if coherence >= 70 %}✓ Ton portefeuille est aligné avec ton profil de risque
-        {% elif coherence >= 40 %}⚡ Ton portefeuille est légèrement décalé par rapport à ton profil
-        {% else %}⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque{% endif %}
-    </div>
-    <div id="coh-retest-btn" style="{{ 'display:none;' if coherence >= 40 else '' }} margin-top:0.85rem;">
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost btn-sm">↺ Refaire le test de profil</a>
-    </div>
-    {% else %}
-    <div id="coh-msg-el" style="margin-top:1rem; text-align:center;">
-        <a href="{{ url_for('main.test_profil') }}"
-           style="font-size:0.875rem; color:var(--text); text-decoration:none; font-weight:600;">
-            🧠 Fais ton test de profil pour voir ta cohérence →
-        </a>
-    </div>
     {% endif %}
-</div>
-{% endif %}
 
-<!-- KPI Grid -->
-<div class="kpi-grid">
-    <div class="kpi-card kpi-card-violet">
-        <div class="kpi-label">Valeur actuelle</div>
-        <div class="kpi-value" id="kpi-total-value" style="color:var(--text);">{{ summary.total_value }} €</div>
-        <div class="kpi-sub" id="kpi-assets-count">{{ summary.assets|length }} actif(s) suivi(s)</div>
-    </div>
-    <div class="kpi-card kpi-card-amber">
-        <div class="kpi-label">Total investi</div>
-        <div class="kpi-value" id="kpi-total-invested" style="color:var(--text);">{{ summary.total_invested }} €</div>
-        <div class="kpi-sub">Capital déployé</div>
-    </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_unrealized >= 0 else 'kpi-card-red' }}"
-         id="kpi-unrealized-card">
-        <div class="kpi-label">Plus-value latente</div>
-        <div class="kpi-value {{ 'positive' if summary.total_unrealized >= 0 else 'negative' }}"
-             id="kpi-unrealized">
-            {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
-        </div>
-        <div class="kpi-sub {{ 'positive' if summary.unrealized_pct >= 0 else 'negative' }}"
-             id="kpi-unrealized-pct">
-            {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }} %
-        </div>
-    </div>
-    <div class="kpi-card {{ 'kpi-card-green' if summary.total_realized >= 0 else 'kpi-card-red' }}"
-         id="kpi-realized-card">
-        <div class="kpi-label">Plus-value réalisée</div>
-        <div class="kpi-value {{ 'positive' if summary.total_realized >= 0 else 'negative' }}"
-             id="kpi-realized">
-            {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
-        </div>
-        <div class="kpi-sub">Sur ventes clôturées</div>
-    </div>
-    <div class="kpi-card kpi-card-blue" id="kpi-dividends-card"
-         style="{{ 'display:none;' if summary.total_dividends <= 0 else '' }}">
-        <div class="kpi-label">Dividendes reçus</div>
-        <div class="kpi-value positive" id="kpi-dividends">+{{ summary.total_dividends }} €</div>
-        <div class="kpi-sub">Rendement encaissé</div>
-    </div>
-    {% if estimated_dividends_year > 0 %}
-    <div class="kpi-card kpi-card-green">
-        <div class="kpi-label">Dividendes estimés cette année</div>
-        <div class="kpi-value positive">+{{ estimated_dividends_year }} €</div>
-        <div class="kpi-sub">Projection 12 mois · yfinance</div>
-    </div>
+    {# ── Donut allocation ── #}
+    {% if summary.allocation %}
+    <div class="dash-section-label">Allocation</div>
+    <div id="pie-chart"></div>
+    <div class="dash-sep"></div>
     {% endif %}
-</div>
 
-<!-- Plafond bar (affiché dynamiquement par JS) -->
-<div class="plafond-block" id="plafond-bar-block">
-    <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0.5rem;">
-        <span style="font-size:0.82rem; font-weight:700; color:#e8f0ff;">
-            Plafond <span id="plafond-env-name"></span>
-        </span>
-        <span style="font-size:0.75rem; color:rgba(232,240,255,0.45);">
-            <span id="plafond-invested"></span> versés /
-            <span id="plafond-total"></span> —
-            <strong id="plafond-restant" style="color:rgba(232,240,255,0.75);"></strong> disponibles
-        </span>
-    </div>
-    <div class="plafond-bar-outer">
-        <div class="plafond-bar-fill" id="plafond-bar-fill" style="width:0%;"></div>
-    </div>
-</div>
-
-<!-- Barre de gain total -->
-{% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
-{% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
-<div class="card" style="margin-bottom:1.5rem; border-color:rgba(74,122,155,0.1); padding:1.25rem 1.5rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-        <div>
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:rgba(232,240,255,0.3); margin-bottom:0.25rem;">Gain total (latent + réalisé + dividendes)</div>
-            <div id="kpi-total-gain-line"
-                 class="{{ 'positive' if total_gain >= 0 else 'negative' }}"
-                 style="font-size:1.4rem; font-weight:800;">
-                <span id="kpi-total-gain">{{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }}</span> €
-                <span id="kpi-total-gain-pct"
-                      style="font-size:0.9rem; font-weight:600; opacity:0.7;">
-                    ({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)
-                </span>
-            </div>
+    {# ── Enveloppes fiscales ── #}
+    {% if envelope_summary %}
+    <div class="dash-section-label">Enveloppes</div>
+    {% for env_name, env_data in envelope_summary.items() %}
+    {% if env_name == 'PEA' %}{% set env_cls = 'env-pea' %}
+    {% elif env_name == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
+    {% elif env_name == 'CTO' %}{% set env_cls = 'env-cto' %}
+    {% elif env_name == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
+    {% elif env_name == 'PER' %}{% set env_cls = 'env-per' %}
+    {% elif env_name in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
+    {% else %}{% set env_cls = 'env-autre' %}
+    {% endif %}
+    <div style="padding:0.4rem 0; border-bottom:1px solid #0a1428;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.15rem;">
+            <span class="env-badge {{ env_cls }}">{{ env_name }}</span>
+            <span style="font-size:0.7rem; font-weight:700; color:#e8f0ff;">{{ env_data.total_value }} €</span>
         </div>
-        <a href="{{ url_for('main.charts') }}"
-           style="font-size:0.82rem; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:0.35rem; opacity:0.8; transition:opacity 0.15s;"
-           onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
-            Voir les graphiques →
-        </a>
-    </div>
-</div>
-
-<!-- DCA -->
-{% if summary.dca_target > 0 %}
-<div class="card" id="dca-block" style="margin-bottom:1.5rem; border-color:var(--border);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-        <div>
-            <span style="font-weight:700; color:var(--text); font-size:0.95rem;">Objectif DCA — {{ summary.dca_target }} €/mois</span>
-        </div>
-        <span id="dca-pct-el"
-              class="{{ 'dca-pct-done' if summary.dca_progress >= 100 else 'dca-pct-active' }}"
-              style="font-weight:800; font-size:1.1rem;">
-            {{ summary.dca_progress }}%
-        </span>
-    </div>
-    <div class="progress-bar-wrap">
-        <div class="progress-bar" id="dca-progress-bar"
-             data-width="{{ [summary.dca_progress, 100]|min }}" style="width:0%;"></div>
-    </div>
-    <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
-        <span id="dca-invested-month"
-              style="font-size:0.78rem; color:rgba(232,240,255,0.3);">
-            {{ summary.invested_month }} € investis ce mois
-        </span>
-        <span id="dca-reste">
-            {% if summary.dca_progress >= 100 %}
-            <span style="font-size:0.78rem; color:#4ade80; font-weight:600;">✓ Objectif atteint !</span>
-            {% else %}
-            <span style="font-size:0.78rem; color:rgba(232,240,255,0.3);">
-                Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €
-            </span>
+        <div style="font-size:0.65rem; color:#3d6b8f;">{{ env_data.total_invested }} € inv. · {{ env_data.count }} actif(s)</div>
+        {% if env_data.plafond_restant is not none %}
+        <div style="font-size:0.62rem; margin-top:0.15rem;
+                    color:{{ '#f87171' if env_data.plafond_restant == 0 else '#3d6b8f' }};">
+            {% if env_data.plafond_restant == 0 %}Plafond atteint
+            {% else %}{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} € restants
             {% endif %}
-        </span>
-    </div>
-</div>
-{% else %}
-<div style="margin-bottom:1.5rem;">
-    <a href="{{ url_for('main.settings') }}"
-       style="font-size:0.82rem; color:rgba(232,240,255,0.2); text-decoration:none; transition:color 0.15s;"
-       onmouseover="this.style.color='rgba(232,240,255,0.55)'"
-       onmouseout="this.style.color='rgba(232,240,255,0.2)'">
-        ＋ Définir un objectif DCA mensuel →
-    </a>
-</div>
-{% endif %}
-
-<!-- Actifs -->
-{% for asset_type, assets in summary.by_type.items() %}
-<div class="asset-section" data-asset-type="{{ asset_type }}">
-<div class="section-title">{{ asset_type }}s</div>
-<div class="asset-grid">
-{% for a in assets %}
-{% if not a.fully_sold %}
-{% set ri = risk_data.get(a.ticker) %}
-
-{% set env = a.envelope or '' %}
-{% if env == 'PEA' %}{% set env_cls = 'env-pea' %}
-{% elif env == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
-{% elif env == 'CTO' %}{% set env_cls = 'env-cto' %}
-{% elif env == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
-{% elif env == 'PER' %}{% set env_cls = 'env-per' %}
-{% elif env in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
-{% elif env == 'Autre' %}{% set env_cls = 'env-autre' %}
-{% else %}{% set env_cls = '' %}
-{% endif %}
-
-<div class="asset-card {{ 'asset-card-positive' if a.unrealized_gain >= 0 else 'asset-card-negative' }}"
-     data-asset-id="{{ a.asset_id }}"
-     data-envelope="{{ env }}">
-
-    <svg class="asset-sparkline" viewBox="0 0 80 40" fill="none">
-        {% if a.unrealized_gain >= 0 %}
-        <polyline points="0,35 15,28 30,30 45,18 60,12 80,5" stroke="#4ade80" stroke-width="2" fill="none"/>
-        {% else %}
-        <polyline points="0,8 15,12 30,10 45,22 60,28 80,35" stroke="#F87171" stroke-width="2" fill="none"/>
+        </div>
         {% endif %}
-    </svg>
-
-    <div class="asset-header" onclick="toggleAsset('asset-{{ a.asset_id }}')">
-        <div style="flex:1; min-width:0;">
-            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF'
-                                  else 'badge-action' if a.asset_type == 'Action'
-                                  else 'badge-crypto' if a.asset_type == 'Crypto'
-                                  else 'badge-other' }}">{{ a.ticker }}</span>
-                <span id="env-badge-{{ a.asset_id }}">
-                    {% if env and env_cls %}
-                    <span class="env-badge {{ env_cls }}">{{ env }}</span>
-                    {% endif %}
-                </span>
-                <span style="color:var(--text); font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">{{ a.name }}</span>
-                {% if ri %}{{ risk_badge(ri.score) }}{% endif %}
-            </div>
-            <div class="asset-summary-line">
-                <span style="font-size:0.875rem; color:rgba(232,240,255,0.55); font-weight:500;">
-                    {{ a.current_value }} €
-                </span>
-                <span class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}"
-                      style="font-size:0.875rem; font-weight:700;">
-                    {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
-                    <span style="font-weight:500; font-size:0.82rem; opacity:0.75;">
-                        ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
-                    </span>
-                </span>
-            </div>
-        </div>
-        <span class="chevron" id="chevron-asset-{{ a.asset_id }}">▼</span>
     </div>
-
-    <div class="asset-body" id="asset-{{ a.asset_id }}">
-        <div style="border-top:1px solid rgba(74,122,155,0.1); margin-top:0.85rem; padding-top:0.85rem;">
-            <table class="asset-table">
-                <tr><td>Parts détenues</td><td>{{ a.shares_held }}</td></tr>
-                <tr><td>Prix moyen</td><td>{{ a.avg_price }} {{ a.currency }}</td></tr>
-                <tr>
-                    <td>Prix actuel</td>
-                    <td>
-                        <strong>{{ a.current_price }} {{ a.currency }}</strong>
-                        {% if a.price_timestamp %}
-                        <div style="font-size:0.7rem; color:rgba(232,240,255,0.2); font-weight:400;">{{ a.price_timestamp }}</div>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr><td>Investi</td><td>{{ a.total_invested }} €</td></tr>
-                <tr><td>Frais cumulés</td><td class="neutral">{{ a.total_fees }} €</td></tr>
-                <tr><td>Valeur actuelle</td><td><strong>{{ a.current_value }} €</strong></td></tr>
-                <tr>
-                    <td>Performance</td>
-                    <td class="{{ 'positive' if a.unrealized_gain >= 0 else 'negative' }}">
-                        <strong>
-                            {{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €
-                            ({{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%)
-                        </strong>
-                    </td>
-                </tr>
-                {% if a.realized_gain != 0 %}
-                <tr>
-                    <td>P&L réalisé</td>
-                    <td class="{{ 'positive' if a.realized_gain >= 0 else 'negative' }}">
-                        {{ '+' if a.realized_gain >= 0 else '' }}{{ a.realized_gain }} €
-                    </td>
-                </tr>
-                {% endif %}
-                {% if a.dividends_received > 0 %}
-                <tr>
-                    <td>Dividendes reçus</td>
-                    <td class="positive">+{{ a.dividends_received }} €</td>
-                </tr>
-                <tr>
-                    <td>Rendement total</td>
-                    <td class="{{ 'positive' if a.total_return >= 0 else 'negative' }}">
-                        <strong>
-                            {{ '+' if a.total_return >= 0 else '' }}{{ a.total_return }} €
-                            ({{ '+' if a.total_return_pct >= 0 else '' }}{{ a.total_return_pct }}%)
-                        </strong>
-                    </td>
-                </tr>
-                {% endif %}
-                <tr>
-                    <td>Enveloppe fiscale</td>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:0.4rem;">
-                            <span id="env-table-badge-{{ a.asset_id }}">
-                                {% if env and env_cls %}
-                                <span class="env-badge {{ env_cls }}">{{ env }}</span>
-                                {% else %}
-                                <span style="color:rgba(232,240,255,0.25); font-size:0.8rem;">—</span>
-                                {% endif %}
-                            </span>
-                            <button class="env-edit-btn"
-                                    onclick="openEnvModal({{ a.asset_id }}, '{{ env }}')"
-                                    title="Modifier l'enveloppe">✎</button>
-                        </div>
-                    </td>
-                </tr>
-                {% if ri %}
-                <tr>
-                    <td>Score de risque</td>
-                    <td>
-                        {{ risk_badge(ri.score) }}
-                        {% if ri.source == 'yahoo' %}
-                        <div style="font-size:0.68rem; color:rgba(232,240,255,0.22); margin-top:0.2rem;">
-                            Vol. {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · Beta {{ ri.beta }}
-                        </div>
-                        {% else %}
-                        <div style="font-size:0.68rem; color:rgba(232,240,255,0.18); margin-top:0.2rem;">Score par défaut</div>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endif %}
-            </table>
-            <div style="margin-top:1rem; display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
-                <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm">+ Achat</a>
-                <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm">− Vente</a>
-                <a href="{{ url_for('main.charts') }}" class="btn btn-ghost btn-sm">Graphique</a>
-                <form method="POST"
-                      action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
-                      style="display:inline;"
-                      onsubmit="return confirm('Supprimer {{ a.name }} et tous ses achats/ventes ?')">
-                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-</div>
-{% endif %}
-{% endfor %}
-</div>
-</div><!-- /.asset-section -->
-{% endfor %}
-
-<!-- Allocation + Diversification côte à côte -->
-{% if summary.allocation %}
-<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:0.5rem; align-items:start;">
-
-    <div>
-        <div class="section-title">Allocation</div>
-        <div class="card">
-            <div id="pie-chart"></div>
-        </div>
-    </div>
-
-    {% if summary.by_type %}
-    <div>
-        <div class="section-title">Diversification par type</div>
-        <div class="card">
-            <table style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th style="text-align:right;">Valeur</th>
-                        <th style="text-align:right;">Poids</th>
-                    </tr>
-                </thead>
-                <tbody id="divers-tbody">
-                {% for asset_type, assets in summary.by_type.items() %}
-                {% set type_value = assets | selectattr('fully_sold', 'equalto', false)
-                                           | sum(attribute='current_value') %}
-                {% if type_value > 0 %}
-                <tr>
-                    <td>
-                        <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
-                                          else 'badge-action' if asset_type == 'Action'
-                                          else 'badge-crypto' if asset_type == 'Crypto'
-                                          else 'badge-other' }}">{{ asset_type }}</span>
-                    </td>
-                    <td style="text-align:right; font-weight:600; color:var(--text);">{{ type_value|round(2) }} €</td>
-                    <td style="text-align:right;">
-                        {% if summary.total_value > 0 %}
-                        {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
-                        <div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">
-                            <div style="width:50px; height:4px; background:rgba(74,122,155,0.1); border-radius:99px; overflow:hidden;">
-                                <div class="alloc-bar-fill" data-width="{{ pct }}" style="width:0%; height:100%; background:var(--text); border-radius:99px;"></div>
-                            </div>
-                            <span style="color:var(--text); font-weight:600; min-width:35px; text-align:right;">{{ pct }}%</span>
-                        </div>
-                        {% else %}—{% endif %}
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+    {% endfor %}
+    <div class="dash-sep"></div>
     {% endif %}
 
-</div>
-
-<script>
-const alloc  = {{ summary.allocation | tojson }};
-const labels = alloc.map(function(a){ return a.ticker; });
-const values = alloc.map(function(a){ return a.value; });
-const PIE_COLORS = ['#e8f0ff','#4a7a9b','#2a4a6a','#1a2a3a','#7ab0cc',
-                    '#3a6a8a','#6aa0bb','#9ac0d8','#0f1e2e','#5a90aa'];
-const PIE_LAYOUT = {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor:  'rgba(0,0,0,0)',
-    height: 280,
-    margin: { l: 10, r: 10, t: 10, b: 10 },
-    showlegend: false,
-    hoverlabel: { bgcolor: '#070d18', bordercolor: 'rgba(74,122,155,0.1)', font: { color: '#e8f0ff' } }
-};
-const PIE_CONFIG = { responsive: true, displayModeBar: false };
-
-Plotly.newPlot('pie-chart', [{
-    type: 'pie', labels: labels, values: values, hole: 0.5,
-    marker: { colors: PIE_COLORS },
-    textinfo: 'label+percent',
-    textfont: { color: 'rgba(232,240,255,0.85)', size: 11 },
-    hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-}], PIE_LAYOUT, PIE_CONFIG);
-</script>
-{% endif %}
-
-<!-- Enveloppes fiscales (récap statique) -->
-{% if envelope_summary %}
-<div class="section-title" style="margin-top:1.5rem;">Enveloppes fiscales</div>
-<div class="card env-table-wrap" style="padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr>
-                <th style="text-align:left;">Enveloppe</th>
-                <th class="env-col-actifs" style="text-align:right;">Actifs</th>
-                <th style="text-align:right;">Investi</th>
-                <th style="text-align:right;">Valeur actuelle</th>
-                <th class="env-col-plafond" style="text-align:right;">Plafond restant</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for env_name, env_data in envelope_summary.items() %}
-        {% if env_name == 'PEA' %}{% set env_cls = 'env-pea' %}
-        {% elif env_name == 'PEA-PME' %}{% set env_cls = 'env-peapme' %}
-        {% elif env_name == 'CTO' %}{% set env_cls = 'env-cto' %}
-        {% elif env_name == 'Assurance Vie' %}{% set env_cls = 'env-av' %}
-        {% elif env_name == 'PER' %}{% set env_cls = 'env-per' %}
-        {% elif env_name in ('Livret A', 'LDDS', 'LEP') %}{% set env_cls = 'env-livret' %}
-        {% else %}{% set env_cls = 'env-autre' %}
-        {% endif %}
-        <tr style="border-bottom:1px solid rgba(74,122,155,0.07);">
-            <td style="padding:0.65rem 0;">
-                <span class="env-badge {{ env_cls }}" style="font-size:0.72rem; padding:0.15rem 0.55rem;">{{ env_name }}</span>
+    {# ── Diversification par type ── #}
+    {% if summary.by_type %}
+    <div class="dash-section-label">Par type</div>
+    <table style="width:100%; border-collapse:collapse;" id="divers-tbody-right-wrap">
+        <tbody id="divers-tbody">
+        {% for asset_type, assets in summary.by_type.items() %}
+        {% set type_value = assets | selectattr('fully_sold', 'equalto', false) | sum(attribute='current_value') %}
+        {% if type_value > 0 %}
+        <tr style="border-bottom:1px solid #0a1428;">
+            <td style="padding:0.35rem 0; font-size:0.72rem;">
+                <span class="badge {{ 'badge-etf' if asset_type == 'ETF'
+                                  else 'badge-action' if asset_type == 'Action'
+                                  else 'badge-crypto' if asset_type == 'Crypto'
+                                  else 'badge-other' }}">{{ asset_type }}</span>
             </td>
-            <td class="env-col-actifs" style="text-align:right; color:rgba(232,240,255,0.45); font-size:0.85rem;">{{ env_data.count }}</td>
-            <td style="text-align:right; font-weight:600; color:rgba(232,240,255,0.75);">{{ env_data.total_invested }} €</td>
-            <td style="text-align:right; font-weight:700; color:#e8f0ff;">{{ env_data.total_value }} €</td>
-            <td class="env-col-plafond" style="text-align:right; font-size:0.82rem;">
-                {% if env_data.plafond_restant is not none %}
-                    {% if env_data.plafond_restant == 0 %}
-                    <span style="color:#F87171; font-weight:700;">Plafond atteint</span>
-                    {% elif env_data.plafond_restant < env_data.plafond * 0.1 %}
-                    <span style="color:#4a7a9b; font-weight:600;">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
-                    {% else %}
-                    <span style="color:rgba(232,240,255,0.40);">{{ "{:,.0f}".format(env_data.plafond_restant).replace(",", " ") }} €</span>
-                    {% endif %}
-                {% else %}
-                <span style="color:rgba(232,240,255,0.18);">—</span>
-                {% endif %}
+            <td style="text-align:right; font-size:0.72rem; font-weight:600; color:#e8f0ff; padding:0.35rem 0;">
+                {% if summary.total_value > 0 %}
+                {% set pct = ((type_value / summary.total_value) * 100)|round(1) %}
+                <span class="alloc-bar-fill" data-width="{{ pct }}" style="display:inline;">{{ pct }}%</span>
+                {% else %}—{% endif %}
             </td>
         </tr>
+        {% endif %}
         {% endfor %}
         </tbody>
     </table>
-    <div style="margin-top:0.85rem; font-size:0.72rem; color:rgba(74,122,155,0.22); line-height:1.5;">
-        Plafonds indicatifs (PEA : 150 000 €, PEA-PME : 225 000 €, Livret A : 22 950 €, LDDS : 12 000 €, LEP : 10 000 €) calculés sur le montant investi.
-        Rechargez la page pour mettre à jour ce tableau après avoir modifié une enveloppe.
-    </div>
-</div>
-{% endif %}
+    {% endif %}
 
-{% endif %}
+</div><!-- /dash-right -->
 
-<!-- ── Modal modification enveloppe ── -->
+</div><!-- /dash-wrapper -->
+
+{# ── Modal modification enveloppe (hors panels) ── #}
 <div class="env-modal-overlay" id="env-modal" onclick="if(event.target===this)closeEnvModal()">
     <div class="env-modal-box">
         <div class="env-modal-title">Modifier l'enveloppe fiscale</div>
@@ -1093,7 +1069,6 @@ var PLAFONDS_MAP = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,
 
 var currentEnvFilter = 'all';
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function fmt2(n)  { return n.toFixed(2); }
 function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
 function sign(n)  { return n >= 0 ? '+' : ''; }
@@ -1101,65 +1076,95 @@ function sign(n)  { return n >= 0 ? '+' : ''; }
 function riskBadgeHTML(score) {
     if (score === null || score === undefined) return '';
     var lbl;
-    if      (score <= 20) { lbl='Très faible'; }
-    else if (score <= 40) { lbl='Faible';      }
-    else if (score <= 60) { lbl='Modéré';      }
-    else if (score <= 80) { lbl='Élevé';       }
-    else                  { lbl='Très élevé';  }
-    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#4a7a9b;border:1px solid #222;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
+    if      (score <= 20) lbl = 'Très faible';
+    else if (score <= 40) lbl = 'Faible';
+    else if (score <= 60) lbl = 'Modéré';
+    else if (score <= 80) lbl = 'Élevé';
+    else                  lbl = 'Très élevé';
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#6a9bbf;border:1px solid #1a2a3a;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
-    if (!env) return '<span style="color:rgba(232,240,255,0.25);font-size:0.8rem;">—</span>';
+    if (!env) return '<span style="color:#3d6b8f;font-size:0.8rem;">—</span>';
     var map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av',
                'PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
     var cls = map[env] || 'env-autre';
     return '<span class="env-badge '+cls+'">'+env+'</span>';
 }
 
-// ── Mise à jour donut + tableau diversification ────────────────────────────
-function updateAllocCharts(visible) {
-    var pieEl = document.getElementById('pie-chart');
+// ── Allocation donut (pie) ─────────────────────────────────────────────────
+{% if summary.allocation %}
+const alloc  = {{ summary.allocation | tojson }};
+const labels = alloc.map(function(a){ return a.ticker; });
+const values = alloc.map(function(a){ return a.value; });
+const PIE_COLORS = ['#e8f0ff','#4a7a9b','#2a4a6a','#1a2a3a','#7ab0cc','#3a6a8a','#6aa0bb','#9ac0d8','#0f1e2e','#5a90aa'];
+const PIE_LAYOUT = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor:  'rgba(0,0,0,0)',
+    height: 160,
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+    showlegend: false,
+    hoverlabel: { bgcolor: '#070d18', bordercolor: 'rgba(74,122,155,0.1)', font: { color: '#e8f0ff', size: 10 } }
+};
+const PIE_CONFIG = { responsive: true, displayModeBar: false };
 
-    // ── 1. Donut Plotly ──
+Plotly.newPlot('pie-chart', [{
+    type: 'pie', labels: labels, values: values, hole: 0.5,
+    marker: { colors: PIE_COLORS },
+    textinfo: 'none',
+    hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
+}], PIE_LAYOUT, PIE_CONFIG);
+
+// ── Allocation bar chart (center) ─────────────────────────────────────────
+var allocSorted = alloc.slice().sort(function(a,b){ return b.value - a.value; });
+var barLabels   = allocSorted.map(function(a){ return a.ticker; });
+var barValues   = allocSorted.map(function(a){ return a.value; });
+Plotly.newPlot('alloc-bar-chart', [{
+    type: 'bar',
+    orientation: 'h',
+    y: barLabels.slice().reverse(),
+    x: barValues.slice().reverse(),
+    marker: { color: PIE_COLORS.slice(0, barLabels.length) },
+    hovertemplate: '%{y}<br>%{x:.2f} €<extra></extra>',
+    text: barValues.slice().reverse().map(function(v){ return v.toFixed(0) + ' €'; }),
+    textposition: 'inside',
+    textfont: { size: 10, color: '#e8f0ff' },
+    insidetextanchor: 'end'
+}], {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor:  'rgba(0,0,0,0)',
+    height: Math.max(60, barLabels.length * 28 + 10),
+    margin: { l: 60, r: 10, t: 5, b: 20 },
+    xaxis: { gridcolor: 'rgba(74,122,155,0.08)', tickfont: { color: '#3d6b8f', size: 9 }, tickformat: '.0f' },
+    yaxis: { tickfont: { color: '#6a9bbf', size: 10 }, tickfont: { family: 'monospace' } },
+    hoverlabel: { bgcolor: '#070d18', bordercolor: 'rgba(74,122,155,0.15)', font: { color: '#e8f0ff', size: 11 } }
+}, { responsive: true, displayModeBar: false });
+{% endif %}
+
+// ── Mise à jour donut + tableau diversification (JS filter) ───────────────
+function updateAllocCharts(visible) {
+    // Donut Plotly
+    var pieEl = document.getElementById('pie-chart');
     if (pieEl && typeof Plotly !== 'undefined') {
         var allocData = visible.filter(function(a){ return a.current_value > 0; });
         allocData.sort(function(a,b){ return b.current_value - a.current_value; });
-
         if (allocData.length > 0) {
-            var pieLabels = allocData.map(function(a){ return a.ticker; });
-            var pieValues = allocData.map(function(a){ return a.current_value; });
             Plotly.react('pie-chart', [{
                 type: 'pie',
-                labels: pieLabels,
-                values: pieValues,
+                labels: allocData.map(function(a){ return a.ticker; }),
+                values: allocData.map(function(a){ return a.current_value; }),
                 hole: 0.5,
                 marker: { colors: PIE_COLORS },
-                textinfo: 'label+percent',
-                textfont: { color: 'rgba(232,240,255,0.85)', size: 11 },
-                hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-            }], PIE_LAYOUT, PIE_CONFIG);
-        } else {
-            // Aucun actif — donut vide symbolique
-            Plotly.react('pie-chart', [{
-                type: 'pie',
-                labels: ['—'],
-                values: [1],
-                hole: 0.5,
-                marker: { colors: ['rgba(74,122,155,0.07)'] },
                 textinfo: 'none',
-                hoverinfo: 'none'
+                hovertemplate: '%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
             }], PIE_LAYOUT, PIE_CONFIG);
         }
     }
 
-    // ── 2. Tableau Diversification par type ──
+    // Tableau diversification (right panel)
     var tbody = document.getElementById('divers-tbody');
     if (!tbody) return;
-
     var totalVal = visible.reduce(function(s,a){ return s + a.current_value; }, 0);
-
-    // Regrouper par type
     var byType = {};
     visible.forEach(function(a) {
         if (a.current_value > 0) {
@@ -1167,39 +1172,22 @@ function updateAllocCharts(visible) {
             byType[a.asset_type] += a.current_value;
         }
     });
-
     var entries = Object.keys(byType).map(function(t){ return [t, byType[t]]; });
     entries.sort(function(a,b){ return b[1] - a[1]; });
-
     tbody.innerHTML = '';
-
     if (entries.length === 0) {
-        var trEmpty = document.createElement('tr');
-        trEmpty.innerHTML = '<td colspan="3" style="text-align:center;color:rgba(232,240,255,0.2);padding:1rem 0;font-size:0.82rem;">Aucun actif dans cette enveloppe</td>';
-        tbody.appendChild(trEmpty);
-        return;
+        var trE = document.createElement('tr');
+        trE.innerHTML = '<td colspan="2" style="color:#3d6b8f;padding:0.5rem 0;font-size:0.7rem;">Aucun actif</td>';
+        tbody.appendChild(trE); return;
     }
-
     entries.forEach(function(entry) {
-        var assetType = entry[0];
-        var typeVal   = entry[1];
-        var pct       = totalVal > 0 ? (typeVal / totalVal * 100).toFixed(1) : '0.0';
-        var badgeCls  = assetType === 'ETF'    ? 'badge-etf'
-                      : assetType === 'Action' ? 'badge-action'
-                      : assetType === 'Crypto' ? 'badge-crypto'
-                      : 'badge-other';
+        var assetType = entry[0]; var typeVal = entry[1];
+        var pct = totalVal > 0 ? (typeVal / totalVal * 100).toFixed(1) : '0.0';
+        var badgeCls = assetType === 'ETF' ? 'badge-etf' : assetType === 'Action' ? 'badge-action' : assetType === 'Crypto' ? 'badge-crypto' : 'badge-other';
         var tr = document.createElement('tr');
-        tr.innerHTML =
-            '<td><span class="badge ' + badgeCls + '">' + assetType + '</span></td>' +
-            '<td style="text-align:right; font-weight:600; color:var(--text);">' + typeVal.toFixed(2) + ' €</td>' +
-            '<td style="text-align:right;">' +
-                '<div style="display:flex; align-items:center; gap:0.5rem; justify-content:flex-end;">' +
-                    '<div style="width:50px; height:4px; background:rgba(74,122,155,0.1); border-radius:99px; overflow:hidden;">' +
-                        '<div style="width:' + pct + '%; height:100%; background:var(--text); border-radius:99px;"></div>' +
-                    '</div>' +
-                    '<span style="color:var(--text); font-weight:600; min-width:35px; text-align:right;">' + pct + '%</span>' +
-                '</div>' +
-            '</td>';
+        tr.style.borderBottom = '1px solid #0a1428';
+        tr.innerHTML = '<td style="padding:0.35rem 0; font-size:0.72rem;"><span class="badge '+badgeCls+'">'+assetType+'</span></td>' +
+                       '<td style="text-align:right;font-size:0.72rem;font-weight:600;color:#e8f0ff;padding:0.35rem 0;">'+pct+'%</td>';
         tbody.appendChild(tr);
     });
 }
@@ -1208,28 +1196,22 @@ function updateAllocCharts(visible) {
 function applyEnvFilter(env) {
     currentEnvFilter = env;
     localStorage.setItem('dashEnvFilter', env);
-
     var sel = document.getElementById('env-filter-select');
     if (sel && sel.value !== env) sel.value = env;
 
-    // 1. Afficher/masquer les cartes et sections
     document.querySelectorAll('.asset-section').forEach(function(section) {
         var hasVisible = false;
         section.querySelectorAll('.asset-card').forEach(function(card) {
             var cardEnv = (card.getAttribute('data-envelope') || '').trim();
-            var show    = (env === 'all') || (cardEnv === env);
+            var show = (env === 'all') || (cardEnv === env);
             card.style.display = show ? 'block' : 'none';
             if (show) hasVisible = true;
         });
         section.style.display = hasVisible ? 'block' : 'none';
     });
 
-    // 2. Actifs filtrés
-    var visible = (env === 'all')
-        ? ALL_ASSETS
-        : ALL_ASSETS.filter(function(a){ return (a.envelope || '') === env; });
+    var visible = (env === 'all') ? ALL_ASSETS : ALL_ASSETS.filter(function(a){ return (a.envelope || '') === env; });
 
-    // 3. Calcul KPIs
     var totalValue    = visible.reduce(function(s,a){ return s + a.current_value; }, 0);
     var totalInvested = visible.reduce(function(s,a){ return s + a.total_invested; }, 0);
     var totalUnreal   = visible.reduce(function(s,a){ return s + a.unrealized_gain; }, 0);
@@ -1240,78 +1222,52 @@ function applyEnvFilter(env) {
     var totalGainPct  = totalInvested > 0 ? (totalGain / totalInvested * 100) : 0;
     var count         = visible.length;
 
-    // 4. Mise à jour KPI DOM
     function el(id){ return document.getElementById(id); }
     if (el('kpi-total-value'))    el('kpi-total-value').textContent    = fmt2(totalValue) + ' €';
-    if (el('kpi-assets-count'))   el('kpi-assets-count').textContent   = count + ' actif(s) suivi(s)';
+    if (el('kpi-assets-count'))   el('kpi-assets-count').textContent   = count + ' actif(s)';
     if (el('kpi-total-invested')) el('kpi-total-invested').textContent = fmt2(totalInvested) + ' €';
+    if (el('left-total-value'))   el('left-total-value').textContent   = fmt2(totalValue) + ' €';
 
     var unrEl = el('kpi-unrealized');
-    if (unrEl) {
-        unrEl.textContent = sign(totalUnreal) + fmt2(totalUnreal) + ' €';
-        unrEl.className   = 'kpi-value ' + (totalUnreal >= 0 ? 'positive' : 'negative');
-    }
+    if (unrEl) { unrEl.textContent = sign(totalUnreal) + fmt2(totalUnreal) + ' €'; unrEl.className = 'kpi-value ' + (totalUnreal >= 0 ? 'positive' : 'negative'); }
     var unrPctEl = el('kpi-unrealized-pct');
-    if (unrPctEl) {
-        unrPctEl.textContent = sign(unrealPct) + unrealPct.toFixed(2) + ' %';
-        unrPctEl.className   = 'kpi-sub ' + (unrealPct >= 0 ? 'positive' : 'negative');
-    }
+    if (unrPctEl) { unrPctEl.textContent = sign(unrealPct) + unrealPct.toFixed(2) + ' %'; unrPctEl.className = 'kpi-sub ' + (unrealPct >= 0 ? 'positive' : 'negative'); }
     var unrCard = el('kpi-unrealized-card');
     if (unrCard) unrCard.className = 'kpi-card ' + (totalUnreal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
-
     var realEl = el('kpi-realized');
-    if (realEl) {
-        realEl.textContent = sign(totalReal) + fmt2(totalReal) + ' €';
-        realEl.className   = 'kpi-value ' + (totalReal >= 0 ? 'positive' : 'negative');
-    }
+    if (realEl) { realEl.textContent = sign(totalReal) + fmt2(totalReal) + ' €'; realEl.className = 'kpi-value ' + (totalReal >= 0 ? 'positive' : 'negative'); }
     var realCard = el('kpi-realized-card');
     if (realCard) realCard.className = 'kpi-card ' + (totalReal >= 0 ? 'kpi-card-green' : 'kpi-card-red');
-
     var divCard = el('kpi-dividends-card');
-    if (divCard) {
-        divCard.style.display = totalDivs > 0 ? 'block' : 'none';
-        var divEl = el('kpi-dividends');
-        if (divEl && totalDivs > 0) divEl.textContent = '+' + fmt2(totalDivs) + ' €';
-    }
-
-    var gainEl    = el('kpi-total-gain');
-    var gainPctEl = el('kpi-total-gain-pct');
-    var gainLine  = el('kpi-total-gain-line');
+    if (divCard) { divCard.style.display = totalDivs > 0 ? 'block' : 'none'; var divEl = el('kpi-dividends'); if (divEl && totalDivs > 0) divEl.textContent = '+' + fmt2(totalDivs) + ' €'; }
+    var gainEl = el('kpi-total-gain'); var gainPctEl = el('kpi-total-gain-pct'); var gainLine = el('kpi-total-gain-line');
     if (gainEl)    gainEl.textContent    = sign(totalGain) + fmt2(Math.abs(totalGain));
     if (gainPctEl) gainPctEl.textContent = '(' + sign(totalGainPct) + totalGainPct.toFixed(2) + '%)';
     if (gainLine)  gainLine.className    = totalGain >= 0 ? 'positive' : 'negative';
 
-    // 5. Donut + tableau diversification
     updateAllocCharts(visible);
 
-    // 6. Score risque + cohérence
     var wSum = 0, wTotal = 0;
     visible.forEach(function(a) {
         if (a.current_value > 0 && a.risk_score !== null && a.risk_score !== undefined) {
-            wSum   += a.risk_score * a.current_value;
-            wTotal += a.current_value;
+            wSum += a.risk_score * a.current_value; wTotal += a.current_value;
         }
     });
-    var portfolioRisk = wTotal > 0 ? Math.round(wSum / wTotal) : null;
-    updateCohBlock(portfolioRisk);
+    updateCohBlock(wTotal > 0 ? Math.round(wSum / wTotal) : null);
 
-    // 7. DCA
     var invMonth = visible.reduce(function(s,a){ return s + (a.invested_this_month || 0); }, 0);
     updateDCABlock(invMonth);
-
-    // 8. Plafond bar
     updatePlafondBar(env, totalInvested);
 }
 
 function updateCohBlock(portfolioRisk) {
-    var scoreEl  = document.getElementById('coh-portfolio-score-num');
-    var badgeEl  = document.getElementById('coh-portfolio-badge-wrap');
-    var gaugeEl  = document.getElementById('coh-gauge-fill');
-    var pctEl    = document.getElementById('coh-pct-badge-el');
-    var msgEl    = document.getElementById('coh-msg-el');
-    var retestEl = document.getElementById('coh-retest-btn');
+    var scoreEl = document.getElementById('coh-portfolio-score-num');
+    var badgeEl = document.getElementById('coh-portfolio-badge-wrap');
+    var gaugeEl = document.getElementById('coh-gauge-fill');
+    var pctEl   = document.getElementById('coh-pct-badge-el');
+    var msgEl   = document.getElementById('coh-msg-el');
+    var retestEl= document.getElementById('coh-retest-btn');
     if (!scoreEl) return;
-
     if (portfolioRisk === null) {
         scoreEl.textContent = '—';
         if (badgeEl) badgeEl.innerHTML = '';
@@ -1320,49 +1276,29 @@ function updateCohBlock(portfolioRisk) {
         if (msgEl)   msgEl.textContent = '';
         return;
     }
-
     scoreEl.textContent = portfolioRisk;
     if (badgeEl) badgeEl.innerHTML = riskBadgeHTML(portfolioRisk);
-
     if (PROFIL_RISK !== null) {
         if (pctEl) pctEl.style.visibility = '';
-        var coherence = Math.max(0, 100 - Math.abs(portfolioRisk - PROFIL_RISK));
-        if (pctEl) {
-            var cls = coherence >= 70 ? 'coh-pct-high' : coherence >= 40 ? 'coh-pct-med' : 'coh-pct-low';
-            pctEl.className   = 'coh-pct-badge ' + cls;
-            pctEl.textContent = coherence + '% cohérent';
-        }
-        if (gaugeEl) {
-            var gcls = coherence >= 70 ? 'coh-gauge-high' : coherence >= 40 ? 'coh-gauge-med' : 'coh-gauge-low';
-            gaugeEl.className   = 'coh-gauge-fill ' + gcls;
-            gaugeEl.style.width = coherence + '%';
-        }
-        if (msgEl) {
-            var mcls = coherence >= 70 ? 'coh-msg-high' : coherence >= 40 ? 'coh-msg-med' : 'coh-msg-low';
-            msgEl.className = mcls;
-            if (coherence >= 70)      msgEl.textContent = '✓ Ton portefeuille est aligné avec ton profil de risque';
-            else if (coherence >= 40) msgEl.textContent = '⚡ Ton portefeuille est légèrement décalé par rapport à ton profil';
-            else                      msgEl.textContent = '⚠️ Attention : ton portefeuille ne correspond pas à ton profil de risque';
-        }
-        if (retestEl) retestEl.style.display = coherence < 40 ? '' : 'none';
+        var coh = Math.max(0, 100 - Math.abs(portfolioRisk - PROFIL_RISK));
+        if (pctEl) { pctEl.className = 'coh-pct-badge ' + (coh>=70?'coh-pct-high':coh>=40?'coh-pct-med':'coh-pct-low'); pctEl.textContent = coh + '% cohérent'; }
+        if (gaugeEl) { gaugeEl.className = 'coh-gauge-fill ' + (coh>=70?'coh-gauge-high':coh>=40?'coh-gauge-med':'coh-gauge-low'); gaugeEl.style.width = coh + '%'; }
+        if (msgEl) { msgEl.className = coh>=70?'coh-msg-high':coh>=40?'coh-msg-med':'coh-msg-low'; msgEl.textContent = coh>=70?'✓ Aligné avec ton profil':coh>=40?'⚡ Légèrement décalé':'⚠️ Ne correspond pas à ton profil'; }
+        if (retestEl) retestEl.style.display = coh < 40 ? '' : 'none';
     }
 }
 
 function updateDCABlock(invMonth) {
     if (DCA_TARGET <= 0) return;
-    var pct     = Math.min(100, Math.round(invMonth / DCA_TARGET * 1000) / 10);
-    var bar     = document.getElementById('dca-progress-bar');
-    var pctEl   = document.getElementById('dca-pct-el');
-    var invEl   = document.getElementById('dca-invested-month');
+    var pct = Math.min(100, Math.round(invMonth / DCA_TARGET * 1000) / 10);
+    var bar = document.getElementById('dca-progress-bar');
+    var pctEl = document.getElementById('dca-pct-el');
+    var invEl = document.getElementById('dca-invested-month');
     var resteEl = document.getElementById('dca-reste');
-    if (bar)    bar.style.width     = Math.min(100, pct) + '%';
-    if (pctEl)  { pctEl.textContent = pct + '%';
-                  pctEl.className   = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
-    if (invEl)  invEl.textContent   = fmt2(invMonth) + ' € investis ce mois';
-    if (resteEl) {
-        if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.78rem;color:#4ade80;font-weight:600;">✓ Objectif atteint !</span>';
-        else resteEl.innerHTML = '<span style="font-size:0.78rem;color:rgba(232,240,255,0.30);">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>';
-    }
+    if (bar)    bar.style.width = Math.min(100, pct) + '%';
+    if (pctEl)  { pctEl.textContent = pct + '%'; pctEl.className = pct >= 100 ? 'dca-pct-done' : 'dca-pct-active'; }
+    if (invEl)  invEl.textContent = fmt2(invMonth) + ' € ce mois';
+    if (resteEl) { if (pct >= 100) resteEl.innerHTML = '<span style="font-size:0.75rem;color:#4ade80;font-weight:600;">✓ Objectif atteint !</span>'; else resteEl.innerHTML = '<span style="font-size:0.75rem;color:#3d6b8f;">Reste ' + fmt2(Math.max(0, DCA_TARGET - invMonth)) + ' €</span>'; }
 }
 
 function updatePlafondBar(env, totalInvested) {
@@ -1370,30 +1306,23 @@ function updatePlafondBar(env, totalInvested) {
     if (!block) return;
     var plafond = PLAFONDS_MAP[env];
     if (!plafond) { block.style.display = 'none'; return; }
-
     var restant = Math.max(0, plafond - totalInvested);
-    var pct     = Math.min(100, totalInvested / plafond * 100);
+    var pct = Math.min(100, totalInvested / plafond * 100);
     block.style.display = 'block';
-
-    var nameEl    = document.getElementById('plafond-env-name');
-    var invEl     = document.getElementById('plafond-invested');
-    var totalEl   = document.getElementById('plafond-total');
+    var nameEl = document.getElementById('plafond-env-name');
+    var invEl  = document.getElementById('plafond-invested');
+    var totalEl = document.getElementById('plafond-total');
     var restantEl = document.getElementById('plafond-restant');
-    var fillEl    = document.getElementById('plafond-bar-fill');
-
-    if (nameEl)    nameEl.textContent    = env;
-    if (invEl)     invEl.textContent     = fmtInt(totalInvested) + ' €';
-    if (totalEl)   totalEl.textContent   = fmtInt(plafond) + ' €';
+    var fillEl = document.getElementById('plafond-bar-fill');
+    if (nameEl)    nameEl.textContent = env;
+    if (invEl)     invEl.textContent  = fmtInt(totalInvested) + ' €';
+    if (totalEl)   totalEl.textContent = fmtInt(plafond) + ' €';
     if (restantEl) restantEl.textContent = fmtInt(restant) + ' €';
-    if (fillEl) {
-        fillEl.style.width = pct + '%';
-        fillEl.style.background = '#fff';
-    }
+    if (fillEl)    fillEl.style.width = pct + '%';
 }
 
 // ── Modal enveloppe ────────────────────────────────────────────────────────
 var _modalAssetId = null;
-
 function openEnvModal(assetId, currentEnv) {
     _modalAssetId = assetId;
     var asset  = ALL_ASSETS.find(function(a){ return a.asset_id === assetId; });
@@ -1404,13 +1333,11 @@ function openEnvModal(assetId, currentEnv) {
     var overlay = document.getElementById('env-modal');
     if (overlay) overlay.classList.add('open');
 }
-
 function closeEnvModal() {
     var overlay = document.getElementById('env-modal');
     if (overlay) overlay.classList.remove('open');
     _modalAssetId = null;
 }
-
 async function submitEnvUpdate() {
     if (!_modalAssetId) return;
     var newEnv = document.getElementById('env-modal-select').value;
@@ -1428,13 +1355,10 @@ async function submitEnvUpdate() {
             var tableBadgeEl = document.getElementById('env-table-badge-' + _modalAssetId);
             if (badgeEl)      badgeEl.innerHTML      = newEnv ? envBadgeHTML(newEnv) : '';
             if (tableBadgeEl) tableBadgeEl.innerHTML = envBadgeHTML(newEnv);
-
             var card = document.querySelector('.asset-card[data-asset-id="' + _modalAssetId + '"]');
             if (card) card.setAttribute('data-envelope', newEnv);
-
             var asset = ALL_ASSETS.find(function(a){ return a.asset_id === _modalAssetId; });
             if (asset) asset.envelope = newEnv;
-
             rebuildFilterDropdown();
             applyEnvFilter(currentEnvFilter);
             closeEnvModal();
@@ -1456,15 +1380,12 @@ function rebuildFilterDropdown() {
     var current = sel.value;
     while (sel.options.length > 1) sel.remove(1);
     unique.forEach(function(e) {
-        var opt = document.createElement('option');
-        opt.value = e; opt.textContent = e;
-        sel.appendChild(opt);
+        var opt = document.createElement('option'); opt.value = e; opt.textContent = e; sel.appendChild(opt);
     });
-    var stillExists = Array.from(sel.options).some(function(o){ return o.value === current; });
-    if (stillExists) sel.value = current;
+    if (Array.from(sel.options).some(function(o){ return o.value === current; })) sel.value = current;
 }
 
-// ── Toggles accordéon ─────────────────────────────────────────────────────
+// ── Accordéon actifs ───────────────────────────────────────────────────────
 function toggleAsset(id) {
     var body    = document.getElementById(id);
     var chevron = document.getElementById('chevron-' + id);
@@ -1474,16 +1395,6 @@ function toggleAsset(id) {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
-    // Jauge cohérence
-    var fill = document.getElementById('coh-gauge-fill');
-    if (fill) setTimeout(function(){ fill.style.width = '{{ coherence if coherence is not none else 0 }}%'; }, 300);
-
-    // Barres allocation statiques (chargement initial avant filtre)
-    document.querySelectorAll('.alloc-bar-fill').forEach(function(el) {
-        setTimeout(function(){ el.style.width = el.dataset.width + '%'; }, 250);
-    });
-
-    // Filtre mémorisé
     var savedFilter = localStorage.getItem('dashEnvFilter') || 'all';
     var allEnvs     = ALL_ASSETS.map(function(a){ return a.envelope; }).filter(function(e){ return e; });
     var validFilter = (savedFilter === 'all' || allEnvs.indexOf(savedFilter) !== -1) ? savedFilter : 'all';
@@ -1492,7 +1403,7 @@ window.addEventListener('load', function() {
 </script>
 
 <script>
-// ── Ticker bar ──
+// ── Ticker bar (cliquable) ─────────────────────────────────────────────────
 (function() {
     function hideTicker() {
         var wrap = document.getElementById('ticker-bar-wrap');
@@ -1503,19 +1414,17 @@ window.addEventListener('load', function() {
         items.forEach(function(it) {
             var chgClass = it.change_pct >= 0 ? 'ticker-chg-pos' : 'ticker-chg-neg';
             var chgSign  = it.change_pct >= 0 ? '+' : '';
-            html += '<span class="ticker-item">' +
+            var href     = '/explorer?ticker=' + encodeURIComponent(it.ticker);
+            html += '<a class="ticker-item" href="' + href + '">' +
                 '<span class="ticker-name">' + it.name + '</span>' +
                 '<span class="ticker-price">' + it.price + '</span>' +
                 '<span class="' + chgClass + '">' + chgSign + it.change_pct.toFixed(2) + '%</span>' +
-            '</span>';
+            '</a>';
         });
         return html + html;
     }
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timer = setTimeout(function() {
-        if (ctrl) ctrl.abort();
-        hideTicker();
-    }, 8000);
+    var timer = setTimeout(function() { if (ctrl) ctrl.abort(); hideTicker(); }, 8000);
     fetch('/api/ticker-bar', ctrl ? { signal: ctrl.signal } : {})
         .then(function(r){ return r.json(); })
         .then(function(data) {

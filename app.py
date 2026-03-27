@@ -4,10 +4,10 @@ load_dotenv()
 import markdown as md_lib
 
 from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify, session
-from flask_login import LoginManager, login_required, login_user, current_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import Config
 from database import (
-    init_db,
+    init_db, populate_asset_catalog,
     add_asset, get_user_assets, get_asset_by_id, delete_asset,
     add_purchase, add_purchases_bulk, get_all_purchases,
     get_purchase_by_id, update_purchase, delete_purchase,
@@ -21,6 +21,8 @@ from database import (
     get_user_by_id, set_onboarding_completed,
     update_asset_envelope,
     get_user_by_email, create_user,
+    add_alternative_asset, get_alternative_assets,
+    update_alternative_asset, delete_alternative_asset,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -346,7 +348,8 @@ def dashboard():
     if not current_user.is_authenticated:
         return render_template('landing.html')
 
-    summary = get_portfolio_summary(current_user.id)
+    active_workspace = session.get('workspace', 'all')
+    summary = get_portfolio_summary(current_user.id, active_workspace)
 
     # Score de risque par actif + score pondéré du portefeuille
     risk_data            = {}
@@ -432,6 +435,7 @@ def dashboard():
                     'dividends_received': float(a.get('dividends_received') or 0),
                     'risk_score':         ri.get('score'),
                     'invested_this_month': round(monthly_by_asset.get(a['asset_id'], 0), 2),
+                    'workspace':          a.get('workspace', 'perso'),
                 })
 
     # Onboarding
@@ -470,6 +474,7 @@ def dashboard():
         all_assets_json=all_assets_json,
         estimated_dividends_year=estimated_dividends_year,
         is_demo=is_demo,
+        active_workspace=active_workspace,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -597,13 +602,14 @@ def add_asset_route():
         currency   = request.form['currency'].strip().upper()
         isin       = request.form.get('isin', '').strip().upper()
         envelope   = request.form.get('envelope', '').strip()
+        workspace  = request.form.get('workspace', 'perso').strip()
 
         price = get_current_price(ticker)
         if price is None:
             flash(f'Ticker "{ticker}" introuvable sur Yahoo Finance.', 'error')
             return redirect(url_for('main.add_asset_route'))
 
-        success = add_asset(current_user.id, ticker, name, asset_type, currency, isin, envelope)
+        success = add_asset(current_user.id, ticker, name, asset_type, currency, isin, envelope, workspace)
         if not success:
             flash('Ce ticker est déjà dans ton portefeuille.', 'error')
             return redirect(url_for('main.add_asset_route'))
@@ -680,10 +686,11 @@ def add_purchase_route():
                                 'CRYPTOCURRENCY': 'Crypto', 'Action': 'Action',
                                 'Crypto': 'Crypto', 'Autre': 'Autre'}
                     mapped_type = type_map.get(asset_type, 'Autre')
+                    workspace_i = request.form.get(f'workspace_{i}', 'perso').strip()
 
                     add_asset(current_user.id, ticker,
                               asset_name or ticker, mapped_type,
-                              currency or 'EUR', '', envelope)
+                              currency or 'EUR', '', envelope, workspace_i)
 
                     from database import get_user_assets as _get_assets
                     all_assets = _get_assets(current_user.id)
@@ -1609,10 +1616,452 @@ def demo():
         return redirect(url_for('main.landing'))
 
 
+@main_bp.route('/demo/logout')
+def demo_logout():
+    logout_user()
+    return redirect(url_for('main.landing'))
+
+
+# ── Workspace ─────────────────────────────────────────────────────────────────
+@main_bp.route('/api/workspace', methods=['POST'])
+@login_required
+def set_workspace():
+    data = request.get_json(silent=True) or {}
+    ws = data.get('workspace', 'all')
+    if ws not in ('all', 'perso', 'pro'):
+        ws = 'all'
+    session['workspace'] = ws
+    return jsonify({'success': True, 'workspace': ws})
+
+
+# ── Coach IA ──────────────────────────────────────────────────────────────────
+@main_bp.route('/coach')
+@login_required
+def coach():
+    if 'coach_messages' not in session:
+        session['coach_messages'] = []
+
+    summary = get_portfolio_summary(current_user.id)
+    last_profil = get_last_profil_investisseur(current_user.id)
+
+    portfolio_ctx = {
+        'total_value': summary.get('total_value', 0),
+        'total_invested': summary.get('total_invested', 0),
+        'total_unrealized': summary.get('total_unrealized', 0),
+        'unrealized_pct': summary.get('unrealized_pct', 0),
+        'nb_assets': len([a for a in summary.get('assets', []) if not a.get('fully_sold')]),
+        'profil': last_profil.get('nom_profil') if last_profil else None,
+        'profil_score': last_profil.get('score_global') if last_profil else None,
+        'assets': [
+            {'ticker': a['ticker'], 'name': a['name'], 'type': a['asset_type'],
+             'value': a.get('current_value', 0), 'gain_pct': a.get('unrealized_pct', 0)}
+            for a in summary.get('assets', []) if not a.get('fully_sold', False)
+        ]
+    }
+
+    return render_template('coach.html',
+                           messages=session.get('coach_messages', []),
+                           portfolio_ctx=portfolio_ctx)
+
+@main_bp.route('/coach/message', methods=['POST'])
+@login_required
+def coach_message():
+    import os, requests as req
+
+    data = request.get_json(silent=True) or {}
+    user_msg = data.get('message', '').strip()
+    if not user_msg:
+        return jsonify({'error': 'Message vide'}), 400
+
+    summary = get_portfolio_summary(current_user.id)
+    last_profil = get_last_profil_investisseur(current_user.id)
+
+    portfolio_ctx = {
+        'total_value': round(summary.get('total_value', 0), 2),
+        'total_invested': round(summary.get('total_invested', 0), 2),
+        'total_unrealized': round(summary.get('total_unrealized', 0), 2),
+        'unrealized_pct': round(summary.get('unrealized_pct', 0), 2),
+        'profil': last_profil.get('nom_profil') if last_profil else 'Non défini',
+        'profil_score': last_profil.get('score_global') if last_profil else None,
+        'assets': [
+            {'ticker': a['ticker'], 'name': a['name'], 'type': a['asset_type'],
+             'value': a.get('current_value', 0), 'gain_pct': a.get('unrealized_pct', 0)}
+            for a in summary.get('assets', []) if not a.get('fully_sold', False)
+        ]
+    }
+
+    system_prompt = (
+        "Tu es un assistant financier pédagogique. Tu analyses le portefeuille de l'utilisateur "
+        "et réponds à ses questions de façon claire et accessible. "
+        "Tu ne donnes pas de conseils en investissement personnalisés au sens réglementaire — "
+        "tu fournis une analyse éducative. "
+        f"Voici les données du portefeuille : {json.dumps(portfolio_ctx, ensure_ascii=False)}. "
+        "Utilise ces données pour contextualiser tes réponses. "
+        "Réponds en français, de façon concise et bienveillante."
+    )
+
+    if 'coach_messages' not in session:
+        session['coach_messages'] = []
+
+    conv = list(session.get('coach_messages', []))
+    conv.append({'role': 'user', 'content': user_msg})
+
+    api_messages = conv[-10:]
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    assistant_reply = ''
+
+    if api_key:
+        try:
+            resp = req.post(
+                'https://api.anthropic.com/v1/messages',
+                headers={
+                    'x-api-key': api_key,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                },
+                json={
+                    'model': 'claude-haiku-4-5-20251001',
+                    'max_tokens': 1000,
+                    'system': system_prompt,
+                    'messages': api_messages,
+                },
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                assistant_reply = resp.json()['content'][0]['text']
+            else:
+                assistant_reply = f"Erreur API ({resp.status_code}). Vérifie ta clé ANTHROPIC_API_KEY."
+        except Exception as e:
+            assistant_reply = f"Erreur de connexion à l'API : {str(e)}"
+    else:
+        assistant_reply = ("Je n'ai pas accès à l'API Anthropic pour le moment. "
+                           "Configure la variable ANTHROPIC_API_KEY pour activer le Coach IA.")
+
+    conv.append({'role': 'assistant', 'content': assistant_reply})
+    session['coach_messages'] = conv[-20:]
+    session.modified = True
+
+    return jsonify({'reply': assistant_reply})
+
+@main_bp.route('/coach/clear', methods=['POST'])
+@login_required
+def coach_clear():
+    session['coach_messages'] = []
+    session.modified = True
+    return jsonify({'success': True})
+
+
+# ── Bilan PDF ─────────────────────────────────────────────────────────────────
+@main_bp.route('/bilan-pdf')
+@login_required
+def bilan_pdf():
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+        import io as _io
+        import datetime as _dt
+    except ImportError:
+        flash('ReportLab non installé. Installe-le avec : pip install reportlab', 'error')
+        return redirect(url_for('main.dashboard'))
+
+    summary = get_portfolio_summary(current_user.id)
+    last_profil = get_last_profil_investisseur(current_user.id)
+
+    risk_data = {}
+    for a in summary.get('assets', []):
+        if not a.get('fully_sold', False):
+            ticker = a.get('ticker', '')
+            if ticker and ticker not in risk_data:
+                risk_data[ticker] = get_risk_score(ticker, a.get('asset_type', 'Autre'))
+
+    portfolio_risk_score = None
+    weighted_risk_sum = 0.0
+    total_risk_weight = 0.0
+    for a in summary.get('assets', []):
+        if not a.get('fully_sold', False):
+            ri = risk_data.get(a.get('ticker', '')) or {}
+            val = float(a.get('current_value') or 0)
+            if val > 0 and ri.get('score') is not None:
+                weighted_risk_sum += ri['score'] * val
+                total_risk_weight += val
+    if total_risk_weight > 0:
+        portfolio_risk_score = round(weighted_risk_sum / total_risk_weight)
+
+    profil_risk_score = last_profil.get('score_global') if last_profil else None
+    coherence = None
+    if portfolio_risk_score is not None and profil_risk_score is not None:
+        coherence = max(0, 100 - abs(portfolio_risk_score - profil_risk_score))
+
+    buf = _io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                             rightMargin=2*cm, leftMargin=2*cm,
+                             topMargin=2*cm, bottomMargin=2.5*cm)
+
+    NAVY   = colors.HexColor('#1a2a3a')
+    BLUE   = colors.HexColor('#4a7a9b')
+    LIGHT  = colors.HexColor('#f0f4f8')
+    GREEN  = colors.HexColor('#16a34a')
+    RED    = colors.HexColor('#dc2626')
+    GRAY   = colors.HexColor('#6b7280')
+    WHITE  = colors.white
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Normal'],
+                                  fontSize=20, textColor=NAVY, spaceAfter=4,
+                                  fontName='Helvetica-Bold')
+    sub_style   = ParagraphStyle('Sub', parent=styles['Normal'],
+                                  fontSize=9, textColor=GRAY, spaceAfter=12)
+    h2_style    = ParagraphStyle('H2', parent=styles['Normal'],
+                                  fontSize=12, textColor=NAVY, spaceBefore=14, spaceAfter=6,
+                                  fontName='Helvetica-Bold')
+    body_style  = ParagraphStyle('Body', parent=styles['Normal'],
+                                  fontSize=8.5, textColor=colors.HexColor('#374151'), leading=13)
+    small_style = ParagraphStyle('Small', parent=styles['Normal'],
+                                  fontSize=7, textColor=GRAY, leading=11)
+    disclaimer  = ParagraphStyle('Disc', parent=styles['Normal'],
+                                  fontSize=7, textColor=GRAY, leading=11, spaceBefore=20,
+                                  borderPad=6, borderWidth=0.5, borderColor=GRAY, borderRadius=4)
+
+    story = []
+    now_str = _dt.datetime.now().strftime('%d/%m/%Y à %H:%M')
+    username = current_user.email.split('@')[0]
+
+    story.append(Paragraph("PortfolioTrack", title_style))
+    story.append(Paragraph(f"Bilan de portefeuille · {username} · Généré le {now_str}", sub_style))
+    story.append(HRFlowable(width='100%', thickness=1, color=BLUE, spaceAfter=14))
+
+    story.append(Paragraph("Résumé", h2_style))
+    total_val = summary.get('total_value', 0)
+    total_inv = summary.get('total_invested', 0)
+    total_unr = summary.get('total_unrealized', 0)
+    unr_pct   = summary.get('unrealized_pct', 0)
+
+    kpi_data = [
+        ['Valeur totale', 'Total investi', 'Plus-value latente', 'Performance'],
+        [f"{total_val:,.2f} €", f"{total_inv:,.2f} €",
+         f"{'+' if total_unr >= 0 else ''}{total_unr:,.2f} €",
+         f"{'+' if unr_pct >= 0 else ''}{unr_pct:.2f}%"],
+    ]
+    kpi_table = Table(kpi_data, colWidths=[4.2*cm]*4)
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('TEXTCOLOR',  (0,0), (-1,0), WHITE),
+        ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE',   (0,0), (-1,0), 8),
+        ('BACKGROUND', (0,1), (-1,1), LIGHT),
+        ('FONTSIZE',   (0,1), (-1,1), 10),
+        ('FONTNAME',   (0,1), (-1,1), 'Helvetica-Bold'),
+        ('ALIGN',      (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN',     (0,0), (-1,-1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [NAVY, LIGHT]),
+        ('GRID',       (0,0), (-1,-1), 0.5, colors.HexColor('#d1d5db')),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+        ('TEXTCOLOR', (0,1), (0,1), NAVY),
+        ('TEXTCOLOR', (1,1), (1,1), NAVY),
+        ('TEXTCOLOR', (2,1), (2,1), GREEN if total_unr >= 0 else RED),
+        ('TEXTCOLOR', (3,1), (3,1), GREEN if unr_pct >= 0 else RED),
+    ]))
+    story.append(kpi_table)
+    story.append(Spacer(1, 0.4*cm))
+
+    story.append(Paragraph("Actifs", h2_style))
+    asset_header = ['Ticker', 'Nom', 'Valeur (€)', 'Perf. (%)', 'Risque', 'Enveloppe']
+    asset_rows = [asset_header]
+    for a in sorted(summary.get('assets', []), key=lambda x: x.get('current_value', 0), reverse=True):
+        if a.get('fully_sold', False):
+            continue
+        ri = risk_data.get(a.get('ticker', '')) or {}
+        score = ri.get('score', '—')
+        pct = a.get('unrealized_pct', 0)
+        asset_rows.append([
+            a.get('ticker', ''),
+            a.get('name', '')[:35],
+            f"{a.get('current_value', 0):,.2f}",
+            f"{'+' if pct >= 0 else ''}{pct:.1f}%",
+            str(score) if score != '—' else '—',
+            a.get('envelope', '') or '—',
+        ])
+
+    col_w = [2.2*cm, 6.5*cm, 2.8*cm, 2.2*cm, 1.8*cm, 2.2*cm]
+    a_table = Table(asset_rows, colWidths=col_w)
+    a_style = [
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('TEXTCOLOR',  (0,0), (-1,0), WHITE),
+        ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE',   (0,0), (-1,-1), 7.5),
+        ('ALIGN',      (2,0), (-1,-1), 'RIGHT'),
+        ('ALIGN',      (0,0), (1,-1), 'LEFT'),
+        ('GRID',       (0,0), (-1,-1), 0.3, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [WHITE, LIGHT]),
+    ]
+    for i, a in enumerate(summary.get('assets', []), start=1):
+        if a.get('fully_sold', False):
+            continue
+        pct = a.get('unrealized_pct', 0)
+        col = GREEN if pct >= 0 else RED
+        a_style.append(('TEXTCOLOR', (3, i), (3, i), col))
+    a_table.setStyle(TableStyle(a_style))
+    story.append(a_table)
+
+    if portfolio_risk_score is not None or coherence is not None:
+        story.append(Paragraph("Cohérence & Risque", h2_style))
+        coh_rows = []
+        if portfolio_risk_score is not None:
+            coh_rows.append(['Score de risque portefeuille', f"{portfolio_risk_score}/100"])
+        if profil_risk_score is not None:
+            coh_rows.append(['Score de risque profil investisseur', f"{profil_risk_score}/100"])
+        if last_profil:
+            coh_rows.append(['Profil investisseur', last_profil.get('nom_profil', '—')])
+        if coherence is not None:
+            coh_rows.append(['Score de cohérence', f"{coherence}/100"])
+        if coh_rows:
+            c_table = Table(coh_rows, colWidths=[8*cm, 4*cm])
+            c_table.setStyle(TableStyle([
+                ('FONTSIZE', (0,0), (-1,-1), 8.5),
+                ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e5e7eb')),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+                ('ROWBACKGROUNDS', (0,0), (-1,-1), [WHITE, LIGHT]),
+            ]))
+            story.append(c_table)
+
+    by_type = {}
+    for a in summary.get('assets', []):
+        if not a.get('fully_sold', False) and a.get('current_value', 0) > 0:
+            t = a.get('asset_type', 'Autre')
+            by_type[t] = by_type.get(t, 0) + a.get('current_value', 0)
+
+    if by_type:
+        story.append(Paragraph("Allocation par type d'actif", h2_style))
+        alloc_rows = [['Type', 'Valeur (€)', '% du portefeuille']]
+        total_v = sum(by_type.values())
+        for t, v in sorted(by_type.items(), key=lambda x: -x[1]):
+            pct_alloc = (v / total_v * 100) if total_v > 0 else 0
+            alloc_rows.append([t, f"{v:,.2f}", f"{pct_alloc:.1f}%"])
+        al_table = Table(alloc_rows, colWidths=[5*cm, 4*cm, 4*cm])
+        al_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), NAVY),
+            ('TEXTCOLOR',  (0,0), (-1,0), WHITE),
+            ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE',   (0,0), (-1,-1), 8.5),
+            ('GRID',       (0,0), (-1,-1), 0.3, colors.HexColor('#e5e7eb')),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [WHITE, LIGHT]),
+            ('ALIGN', (1,0), (-1,-1), 'RIGHT'),
+        ]))
+        story.append(al_table)
+
+    disclaimer_text = (
+        "<b>Avertissement légal :</b> Ce document est généré à titre informatif uniquement. "
+        "Les données proviennent de Yahoo Finance et peuvent comporter un décalage. "
+        "Ce bilan ne constitue pas un conseil en investissement. "
+        "PortfolioTrack ne peut être tenu responsable des décisions prises sur la base de ce document. "
+        "Consultez un conseiller financier agréé pour toute décision d'investissement."
+    )
+    story.append(Paragraph(disclaimer_text, disclaimer))
+
+    doc.build(story)
+    buf.seek(0)
+    filename = f"bilan_portefeuille_{_dt.datetime.now().strftime('%Y%m%d')}.pdf"
+    return Response(
+        buf.getvalue(),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )
+
+
+# ── Actifs Alternatifs ────────────────────────────────────────────────────────
+ALTERNATIVE_CATEGORIES = [
+    ('private_equity', 'Private Equity', 55),
+    ('art', "Oeuvres d'art", 40),
+    ('vehicule', 'Véhicule de collection', 35),
+    ('metaux', 'Métaux précieux physiques', 30),
+    ('foret', 'Forêt / Vignes', 20),
+    ('immobilier', 'Immobilier direct', 25),
+    ('autre', 'Autre', 40),
+]
+
+@main_bp.route('/actifs-alternatifs', methods=['GET', 'POST'])
+@login_required
+def actifs_alternatifs():
+    if request.method == 'POST':
+        action = request.form.get('action', 'add')
+
+        if action == 'add':
+            name             = request.form.get('name', '').strip()
+            category         = request.form.get('category', 'autre')
+            acquisition_value = float(request.form.get('acquisition_value', 0) or 0)
+            current_value    = float(request.form.get('current_value', 0) or 0)
+            acquisition_date = request.form.get('acquisition_date', '') or None
+            notes            = request.form.get('notes', '').strip()
+            workspace        = request.form.get('workspace', 'perso')
+
+            if not name:
+                flash('Le nom est obligatoire.', 'error')
+            else:
+                add_alternative_asset(current_user.id, name, category,
+                                       acquisition_value, current_value,
+                                       acquisition_date, notes, workspace)
+                flash(f'{name} ajouté', 'success')
+
+        elif action == 'delete':
+            asset_id = int(request.form.get('asset_id', 0))
+            delete_alternative_asset(asset_id, current_user.id)
+            flash('Actif supprimé.', 'success')
+
+        elif action == 'update':
+            asset_id         = int(request.form.get('asset_id', 0))
+            name             = request.form.get('name', '').strip()
+            category         = request.form.get('category', 'autre')
+            acquisition_value = float(request.form.get('acquisition_value', 0) or 0)
+            current_value    = float(request.form.get('current_value', 0) or 0)
+            acquisition_date = request.form.get('acquisition_date', '') or None
+            notes            = request.form.get('notes', '').strip()
+            workspace        = request.form.get('workspace', 'perso')
+            update_alternative_asset(asset_id, current_user.id, name, category,
+                                      acquisition_value, current_value,
+                                      acquisition_date, notes, workspace)
+            flash('Actif mis à jour', 'success')
+
+        return redirect(url_for('main.actifs_alternatifs'))
+
+    assets = get_alternative_assets(current_user.id)
+    assets = [dict(a) for a in assets]
+
+    cat_risk = {c[0]: c[2] for c in ALTERNATIVE_CATEGORIES}
+    for a in assets:
+        a['risk_score'] = cat_risk.get(a.get('category', 'autre'), 40)
+        a['gain'] = round(float(a.get('current_value', 0)) - float(a.get('acquisition_value', 0)), 2)
+        av = float(a.get('acquisition_value', 0))
+        a['gain_pct'] = round(a['gain'] / av * 100, 2) if av > 0 else 0
+
+    total_acquisition = round(sum(float(a.get('acquisition_value', 0)) for a in assets), 2)
+    total_current     = round(sum(float(a.get('current_value', 0)) for a in assets), 2)
+    total_gain        = round(total_current - total_acquisition, 2)
+
+    return render_template('actifs_alternatifs.html',
+                            assets=assets,
+                            categories=ALTERNATIVE_CATEGORIES,
+                            total_acquisition=total_acquisition,
+                            total_current=total_current,
+                            total_gain=total_gain,
+                            active_workspace=session.get('workspace', 'all'))
+
+
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
 app.register_blueprint(main_bp)
 
 init_db()
+populate_asset_catalog()
 
 if __name__ == '__main__':
     app.run(debug=True)
