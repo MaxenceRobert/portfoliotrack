@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Coach IA — PortfolioTrack{% endblock %}
+{% block title %}Votre Coach — PortfolioTrack{% endblock %}
 {% block content %}
 <style>
 .chat-wrap {
@@ -128,8 +128,8 @@
 
 <div class="page-header">
     <div>
-        <h1>Coach IA <span style="background:#4ade80;color:#04080f;font-size:0.65rem;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;font-weight:700;">IA</span></h1>
-        <p>Analyse ton portefeuille avec l'intelligence artificielle — propulsé par Claude Haiku.</p>
+        <h1>Votre coach <span style="background:#4ade80;color:#04080f;font-size:0.65rem;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;font-weight:700;">IA</span></h1>
+        <p>Analyse personnalisée de ton portefeuille et de ta gestion du risque.</p>
     </div>
     <button onclick="clearChat()" class="btn btn-ghost btn-sm">Effacer la conversation</button>
 </div>
@@ -138,11 +138,11 @@
     <div class="chat-messages" id="chat-messages">
         {% if not messages %}
         <div class="chat-msg assistant">
-            <div class="chat-avatar">IA</div>
+            <div class="chat-avatar">C</div>
             <div class="chat-bubble">
-Bonjour ! Je suis ton Coach IA basé sur Claude. Je connais les données de ton portefeuille et je suis là pour t'aider à mieux le comprendre.
+Bonjour ! Je suis votre coach financier. Je connais les données de votre portefeuille et suis là pour vous aider à mieux le comprendre et l'optimiser.
 
-Voici quelques questions que tu peux me poser :
+Voici quelques questions que vous pouvez me poser :
             </div>
         </div>
         {% endif %}
@@ -153,7 +153,7 @@ Voici quelques questions que tu peux me poser :
             <div class="chat-avatar">{{ current_user.email[0]|upper }}</div>
             <div class="chat-bubble">{{ msg.content }}</div>
             {% else %}
-            <div class="chat-avatar">IA</div>
+            <div class="chat-avatar">C</div>
             <div class="chat-bubble">{{ msg.content }}</div>
             {% endif %}
         </div>
@@ -163,17 +163,17 @@ Voici quelques questions que tu peux me poser :
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
-            <span style="margin-left:0.3rem;">Claude réfléchit…</span>
+            <span style="margin-left:0.3rem;">Votre coach analyse...</span>
         </div>
     </div>
 
     {% if not messages %}
     <div class="chat-suggestions">
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">Mon niveau de risque correspond-il à mon profil ?</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">Quels actifs déséquilibrent le plus mon portefeuille ?</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">Comment améliorer ma cohérence risque/profil ?</button>
         <button class="chat-suggestion" onclick="sendSuggestion(this)">Mon portefeuille est-il bien diversifié ?</button>
-        <button class="chat-suggestion" onclick="sendSuggestion(this)">Que penses-tu de mon niveau de risque ?</button>
-        <button class="chat-suggestion" onclick="sendSuggestion(this)">Quels actifs devrais-je considérer ?</button>
-        <button class="chat-suggestion" onclick="sendSuggestion(this)">Comment optimiser mon allocation ?</button>
-        <button class="chat-suggestion" onclick="sendSuggestion(this)">Analyse ma performance globale</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">Que devrais-je modifier en priorité ?</button>
     </div>
     {% endif %}
 
@@ -248,7 +248,7 @@ async function sendMessage() {
 function appendMessage(role, content) {
     const div = document.createElement('div');
     div.className = `chat-msg ${role}`;
-    const initial = role === 'user' ? userInitial : 'IA';
+    const initial = role === 'user' ? userInitial : 'C';
     div.innerHTML = `
         <div class="chat-avatar">${initial}</div>
         <div class="chat-bubble">${escapeHtml(content)}</div>

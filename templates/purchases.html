@@ -134,22 +134,22 @@
 <!-- ── Desktop table ── -->
 <div class="purchases-desktop">
     <div class="card" style="padding:0; overflow:hidden;">
-        <div class="table-wrap">
-            <table id="purchases-table">
+        <div class="table-wrap" style="overflow-x:auto;">
+            <table id="purchases-table" style="white-space:nowrap;">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Actif</th>
-                        <th>Type</th>
-                        <th>Enveloppe</th>
-                        <th>Parts</th>
-                        <th>Prix / part</th>
-                        <th>Frais</th>
-                        <th>Total investi</th>
-                        <th>Valeur actuelle</th>
-                        <th>+/- value</th>
-                        <th>Note</th>
-                        <th>Actions</th>
+                        <th style="white-space:nowrap;">Date</th>
+                        <th style="white-space:nowrap;">Actif</th>
+                        <th style="white-space:nowrap;">Type</th>
+                        <th style="white-space:nowrap;">Enveloppe</th>
+                        <th style="white-space:nowrap;">Parts</th>
+                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Prix / part</th>
+                        <th style="white-space:nowrap;">Frais</th>
+                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Total investi</th>
+                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Valeur actuelle</th>
+                        <th style="white-space:nowrap;">+/- value</th>
+                        <th style="white-space:nowrap;">Note</th>
+                        <th style="white-space:nowrap;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -186,12 +186,12 @@
                         </div>
                     </td>
                     <td>{{ p['shares'] }}</td>
-                    <td style="white-space:nowrap;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
-                    <td class="neutral">
+                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
+                    <td class="neutral" style="white-space:nowrap;">
                         {% if p['fees'] and p['fees'] | float > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
                     </td>
-                    <td><strong style="color:#e8f0ff;">{{ p['total_cost'] }} €</strong></td>
-                    <td>
+                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;"><strong style="color:#e8f0ff;">{{ p['total_cost'] }} €</strong></td>
+                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">
                         {% if cv is not none %}
                         <strong style="color:#e8f0ff;">{{ cv }} €</strong>
                         {% else %}
