@@ -779,11 +779,12 @@
 </head>
 <body>
 
+{# ══ LAYOUT: authenticated = sidebar + main-wrap / guest = simple nav ══ #}
+
 {% if current_user.is_authenticated %}
 
-{# ══ SIDEBAR ══ #}
+{# ── Sidebar ── #}
 <aside class="sidebar" id="sidebar">
-
     <a href="{{ url_for('main.landing') }}" class="sidebar-brand">
         <svg width="22" height="22" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
             <rect width="28" height="28" rx="6" fill="#4a7a9b"/>
@@ -794,73 +795,52 @@
             <i data-lucide="chevrons-left"></i>
         </button>
     </a>
-
     <nav class="sidebar-nav">
         <a href="{{ url_for('main.dashboard') }}" class="sidebar-link" data-label="Dashboard">
-            <i data-lucide="bar-chart-2"></i>
-            <span class="sidebar-label">Dashboard</span>
+            <i data-lucide="bar-chart-2"></i><span class="sidebar-label">Dashboard</span>
         </a>
         <a href="{{ url_for('main.charts') }}" class="sidebar-link" data-label="Graphiques">
-            <i data-lucide="trending-up"></i>
-            <span class="sidebar-label">Graphiques</span>
+            <i data-lucide="trending-up"></i><span class="sidebar-label">Graphiques</span>
         </a>
         <a href="{{ url_for('main.simulateur') }}" class="sidebar-link" data-label="Simulateur">
-            <i data-lucide="calculator"></i>
-            <span class="sidebar-label">Simulateur</span>
+            <i data-lucide="calculator"></i><span class="sidebar-label">Simulateur</span>
         </a>
         <a href="{{ url_for('main.explorer') }}" class="sidebar-link" data-label="Explorer">
-            <i data-lucide="search"></i>
-            <span class="sidebar-label">Explorer</span>
+            <i data-lucide="search"></i><span class="sidebar-label">Explorer</span>
         </a>
-
         <div class="sidebar-divider"></div>
         <div class="sidebar-section">Actions</div>
-
         <a href="{{ url_for('main.add_purchase_route') }}" class="sidebar-link" data-label="+ Achat">
-            <i data-lucide="plus-circle"></i>
-            <span class="sidebar-label">+ Achat</span>
+            <i data-lucide="plus-circle"></i><span class="sidebar-label">+ Achat</span>
         </a>
         <a href="{{ url_for('main.add_sale_route') }}" class="sidebar-link" data-label="+ Vente">
-            <i data-lucide="minus-circle"></i>
-            <span class="sidebar-label">+ Vente</span>
+            <i data-lucide="minus-circle"></i><span class="sidebar-label">+ Vente</span>
         </a>
         <a href="{{ url_for('main.add_dividend_route') }}" class="sidebar-link" data-label="+ Dividende">
-            <i data-lucide="dollar-sign"></i>
-            <span class="sidebar-label">+ Dividende</span>
+            <i data-lucide="dollar-sign"></i><span class="sidebar-label">+ Dividende</span>
         </a>
-
         <div class="sidebar-divider"></div>
         <div class="sidebar-section">Historique</div>
-
         <a href="{{ url_for('main.purchases') }}" class="sidebar-link" data-label="Achats">
-            <i data-lucide="clock"></i>
-            <span class="sidebar-label">Achats</span>
+            <i data-lucide="clock"></i><span class="sidebar-label">Achats</span>
         </a>
         <a href="{{ url_for('main.dividends') }}" class="sidebar-link" data-label="Dividendes">
-            <i data-lucide="leaf"></i>
-            <span class="sidebar-label">Dividendes</span>
+            <i data-lucide="leaf"></i><span class="sidebar-label">Dividendes</span>
         </a>
         <a href="{{ url_for('main.import_csv') }}" class="sidebar-link" data-label="Import Excel">
-            <i data-lucide="upload"></i>
-            <span class="sidebar-label">Import Excel</span>
+            <i data-lucide="upload"></i><span class="sidebar-label">Import Excel</span>
         </a>
         <a href="{{ url_for('main.export_csv') }}" class="sidebar-link" data-label="Export CSV">
-            <i data-lucide="download"></i>
-            <span class="sidebar-label">Export CSV</span>
+            <i data-lucide="download"></i><span class="sidebar-label">Export CSV</span>
         </a>
-
         <div class="sidebar-divider"></div>
-
         <a href="{{ url_for('main.test_profil') }}" class="sidebar-link sidebar-link-accent" data-label="Test Profil">
-            <i data-lucide="target"></i>
-            <span class="sidebar-label">Test Profil</span>
+            <i data-lucide="target"></i><span class="sidebar-label">Test Profil</span>
         </a>
         <a href="{{ url_for('main.contact') }}" class="sidebar-link" data-label="Contact">
-            <i data-lucide="mail"></i>
-            <span class="sidebar-label">Contact</span>
+            <i data-lucide="mail"></i><span class="sidebar-label">Contact</span>
         </a>
     </nav>
-
     <div class="sidebar-footer">
         {%- set _nav_username = current_user.email.split('@')[0] -%}
         <a href="{{ url_for('main.profile') }}" class="sidebar-user" title="Mon profil">
@@ -875,12 +855,10 @@
         </a>
     </div>
 </aside>
-
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-{# ══ MAIN WRAP ══ #}
+{# ── Main wrap (authenticated) ── #}
 <div class="main-wrap" id="mainWrap">
-
     <header class="top-header">
         <button class="top-header-toggle" onclick="openMobileSidebar()" title="Menu">
             <i data-lucide="menu"></i>
@@ -888,9 +866,8 @@
         <span class="top-header-title">{% block page_title %}{% endblock %}</span>
         <div class="top-header-actions">{% block header_actions %}{% endblock %}</div>
     </header>
-
     <div class="content-area">
-        <div class="{% block content_wrap %}content-container{% endblock %}">
+        <div class="content-container">
             <div class="alerts">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}
@@ -898,23 +875,10 @@
                     {% endfor %}
                 {% endwith %}
             </div>
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-
-    <footer>
-        PortfolioTrack — Suivez votre portefeuille boursier.
-        Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
-        <span style="display:block; margin-top:0.5rem; font-size:0.7rem; color:var(--text-label); max-width:680px; margin-left:auto; margin-right:auto; line-height:1.6;">
-            Les informations affichées sont fournies à titre indicatif uniquement et ne constituent pas un conseil en investissement.
-            Prix fournis par Yahoo Finance avec un possible décalage. PortfolioTrack ne peut être tenu responsable des décisions prises sur la base des données affichées.
-        </span>
-    </footer>
-</div>
 
 {% else %}
 
-{# ══ NAV INVITÉ ══ #}
+{# ── Guest nav ── #}
 <nav class="guest-nav">
     <a href="{{ url_for('main.landing') }}" class="guest-nav-brand">
         <svg width="24" height="24" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
@@ -928,18 +892,39 @@
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Commencer</a>
     </div>
 </nav>
-
 <div>
-    <div class="alerts" style="padding: 0 1.5rem; max-width: 1200px; margin: 0.75rem auto 0;">
+    <div class="alerts" style="padding:0 1.5rem;max-width:1200px;margin:0.75rem auto 0;">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endwith %}
     </div>
-    {% block content %}{% endblock %}
-</div>
 
+{% endif %}
+
+{# ══ SINGLE content block — valid for both authenticated and guest ══ #}
+{% block content %}{% endblock %}
+
+{# ── Close wrappers ── #}
+{% if current_user.is_authenticated %}
+        </div><!-- /content-container -->
+    </div><!-- /content-area -->
+    <footer>
+        PortfolioTrack — Suivez votre portefeuille boursier.
+        Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
+        <span style="display:block;margin-top:0.5rem;font-size:0.7rem;color:var(--text-label);max-width:680px;margin-left:auto;margin-right:auto;line-height:1.6;">
+            Les informations affichées sont fournies à titre indicatif uniquement et ne constituent pas un conseil en investissement.
+            Prix fournis par Yahoo Finance avec un possible décalage. PortfolioTrack ne peut être tenu responsable des décisions prises sur la base des données affichées.
+        </span>
+    </footer>
+</div><!-- /main-wrap -->
+{% else %}
+</div><!-- /guest wrapper -->
+<footer>
+    PortfolioTrack — Suivez votre portefeuille boursier.
+    Créé par <a href="mailto:maxencerbr@gmail.com">Maxence Robert</a>.
+</footer>
 {% endif %}
 
 <script>
