@@ -53,7 +53,7 @@
 /* ══ ZONE KPIs ══ */
 .dash-kpis {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
     height: 60px;
     flex-shrink: 0;
@@ -154,9 +154,9 @@ table.dash-assets thead th.num { text-align: right; }
     border: 1px solid #0a1428;
     border-radius: 10px;
     padding: 10px;
-    flex: 1;
+    flex: none;
+    height: 160px;
     overflow: hidden;
-    min-height: 0;
     display: flex;
     flex-direction: column;
 }
@@ -331,7 +331,20 @@ table.dash-assets thead th.num { text-align: right; }
         </div>
         <div style="border-top:1px solid #0a1428; margin:8px 0;"></div>
         <div style="color:#4a7a9b; font-size:13px;" id="left-invested-val">{{ summary.total_invested }} € <span style="font-size:10px; opacity:0.7;">investi</span></div>
-        <div style="flex:1;"></div>
+        {# Compact asset list #}
+        <div style="flex:1; overflow-y:auto; min-height:0; margin:6px 0;" id="val-asset-list">
+            {% for assets_list in summary.by_type.values() %}
+                {% for a in assets_list %}
+                    {% if not a.fully_sold %}
+                    <div style="display:flex; align-items:center; gap:4px; padding:2px 0; border-bottom:1px solid #0a1428;">
+                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.55rem; padding:0 4px; flex-shrink:0;">{{ a.ticker }}</span>
+                        <span style="color:#4a7a9b; font-size:9px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.name|truncate(14, true, '') }}</span>
+                        <span style="font-size:9px; font-weight:700; color:{{ '#4ade80' if a.unrealized_pct >= 0 else '#f87171' }}; flex-shrink:0;">{{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
         <select id="env-filter-select"
                 style="background:#020509; border:1px solid #0a1428; border-radius:6px; font-size:11px; padding:4px 8px; width:100%; color:#6a9bbf; outline:none; cursor:pointer;"
                 onchange="applyEnvFilter(this.value)">
@@ -369,12 +382,10 @@ table.dash-assets thead th.num { text-align: right; }
                 <a href="{{ url_for('main.test_profil') }}" style="font-size:9px; color:#4a7a9b; text-decoration:none; white-space:nowrap;">Faire le test →</a>
                 {% endif %}
             </div>
-            {% if coherence is not none %}
             <div style="margin-left:auto; text-align:center; flex-shrink:0;">
-                <div style="font-size:36px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence >= 70 else '#f59e0b' if coherence >= 40 else '#f87171' }};" id="coh-pct-badge-el">{{ coherence }}%</div>
+                <div style="font-size:36px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence is not none and coherence >= 70 else '#f59e0b' if coherence is not none and coherence >= 40 else '#f87171' if coherence is not none else '#3d6b8f' }};" id="coh-pct-badge-el">{{ (coherence|string + '%') if coherence is not none else '—' }}</div>
                 <div style="font-size:9px; color:#2a5a7a; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">cohérence</div>
             </div>
-            {% endif %}
         </div>
         <div class="coh-gauge-outer">
             <div class="coh-gauge-fill {{ 'coh-gauge-high' if coherence is not none and coherence >= 70 else 'coh-gauge-med' if coherence is not none and coherence >= 40 else 'coh-gauge-low' }}"
@@ -461,6 +472,11 @@ table.dash-assets thead th.num { text-align: right; }
     <div class="dash-kpi-card" id="kpi-dividends-card" style="border-top-color:#4ade80; {{ 'display:none;' if estimated_dividends_year <= 0 else '' }}">
         <div class="micro-label">Dividendes estimés</div>
         <div style="font-size:16px; font-weight:600; color:#4ade80;" id="kpi-dividends">+{{ estimated_dividends_year }} €</div>
+    </div>
+    {% set total_gain_kpi = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
+    <div class="dash-kpi-card" id="kpi-gain-card" style="border-top-color:{{ '#4ade80' if total_gain_kpi >= 0 else '#f87171' }};">
+        <div class="micro-label">Gain total</div>
+        <div style="font-size:16px; font-weight:600; color:{{ '#4ade80' if total_gain_kpi >= 0 else '#f87171' }};" id="kpi-gain-val">{{ '+' if total_gain_kpi >= 0 else '' }}{{ total_gain_kpi|round(2) }} €</div>
     </div>
 </div>
 
@@ -681,20 +697,19 @@ Plotly.newPlot('pie-chart', [{
     values:{{ summary.allocation | tojson }}.map(function(a){return a.value;}),
     hole:0.5, marker:{colors:PIE_COLORS}, textinfo:'none',
     hovertemplate:'%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-}], Object.assign({}, _pieLayout, {height: document.getElementById('pie-chart').parentElement.clientHeight - 30 || 130}), PIE_CONFIG);
+}], Object.assign({}, _pieLayout, {height: 130}), PIE_CONFIG);
 {% endif %}
 
 function updateAllocCharts(visible) {
     var data = visible.filter(function(a){return a.current_value>0;}).sort(function(a,b){return b.current_value-a.current_value;});
     var pieEl = document.getElementById('pie-chart');
     if (pieEl && typeof Plotly !== 'undefined' && data.length > 0) {
-        var h = pieEl.parentElement.clientHeight - 30;
         Plotly.react('pie-chart', [{
             type:'pie', labels:data.map(function(a){return a.ticker;}),
             values:data.map(function(a){return a.current_value;}),
             hole:0.5, marker:{colors:PIE_COLORS}, textinfo:'none',
             hovertemplate:'%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-        }], Object.assign({}, _pieLayout, {height: h > 60 ? h : 130}), PIE_CONFIG);
+        }], Object.assign({}, _pieLayout, {height: 130}), PIE_CONFIG);
     }
     var titleEl = document.getElementById('alloc-bar-title');
     if (titleEl) titleEl.textContent = currentEnvFilter==='all' ? 'Allocation portefeuille' : 'Allocation — '+currentEnvFilter;
@@ -747,6 +762,10 @@ function applyEnvFilter(env) {
     if(gpe) gpe.textContent='('+sign(tgpct)+tgpct.toFixed(2)+'%)';
     var gl=el('kpi-total-gain-line');
     if(gl) gl.style.color=tg>=0?'#4ade80':'#f87171';
+    var gaCard=el('kpi-gain-card');
+    if(gaCard) gaCard.style.borderTopColor=tg>=0?'#4ade80':'#f87171';
+    var gaVal=el('kpi-gain-val');
+    if(gaVal){gaVal.textContent=sign(tg)+fmt2(tg)+' €';gaVal.style.color=tg>=0?'#4ade80':'#f87171';}
 
     updateAllocCharts(vis);
 
