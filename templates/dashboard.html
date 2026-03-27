@@ -76,6 +76,7 @@
 .dash-bottom {
     display: grid;
     grid-template-columns: 1fr 240px;
+    grid-template-rows: 1fr;
     gap: 10px;
     flex: 1;
     overflow: hidden;
@@ -91,7 +92,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    flex: 1;
     min-height: 0;
 }
 .dash-table-scroll {
@@ -188,6 +188,7 @@ table.dash-assets thead th.num { text-align: right; }
     display: flex;
     flex-direction: column;
 }
+
 /* Composition par type */
 .dash-type-block {
     background: #070d18;
@@ -316,12 +317,12 @@ table.dash-assets thead th.num { text-align: right; }
     .dash-main { overflow-y: auto; height: auto; }
     .dash-top { grid-template-columns: 1fr; height: auto; }
     .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
-    .dash-bottom { grid-template-columns: 1fr; }
+    .dash-bottom { grid-template-columns: 1fr; grid-template-rows: auto; }
     .dash-right-col { overflow: visible; }
     .dash-table-scroll { overflow: visible; max-height: 400px; }
     .dash-alloc-block { min-height: 180px; flex: none; }
     .dash-gain-block, .dash-dca-block { flex-shrink: 0; }
-    .dash-perf-block { flex: none; height: 200px; }
+    .dash-perf-block { flex: none; }
 }
 @media (max-width: 480px) {
     .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
@@ -658,10 +659,10 @@ table.dash-assets thead th.num { text-align: right; }
             <div id="type-breakdown"></div>
         </div>
 
-        {# Performance par actif — barres horizontales #}
+        {# Performance par actif — barres HTML/CSS pures #}
         <div class="dash-perf-block">
-            <div class="micro-label" style="margin-bottom:4px;">Performance par actif</div>
-            <div id="perf-bar-chart" style="width:100%; height:200px;"></div>
+            <div class="micro-label" style="margin-bottom:6px;">Performance par actif</div>
+            <div id="perf-bar-chart"></div>
         </div>
 
     </div>{# /dash-right-col #}
@@ -702,14 +703,6 @@ var currentEnvFilter = 'all';
 
 const PIE_COLORS = ['#e8f0ff','#4a7a9b','#2a4a6a','#7ab0cc','#3a6a8a','#6aa0bb','#9ac0d8','#1a2a3a','#5a90aa','#0f1e2e'];
 const PIE_CONFIG = { responsive: true, displayModeBar: false };
-
-var _barLayout = {
-    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
-    margin:{l:56,r:44,t:2,b:0},
-    xaxis:{showgrid:false, zeroline:true, zerolinecolor:'#1a2a3a', tickfont:{color:'#4a7a9b',size:8}, ticksuffix:'%', fixedrange:true},
-    yaxis:{showgrid:false, tickfont:{color:'#e8f0ff',size:9}, fixedrange:true},
-    hoverlabel:{bgcolor:'#070d18',bordercolor:'rgba(74,122,155,0.1)',font:{color:'#e8f0ff',size:10}}
-};
 
 function fmt2(n)  { return n.toFixed(2); }
 function fmtInt(n){ return Math.round(n).toLocaleString('fr-FR'); }
@@ -758,37 +751,30 @@ function updateAllocCharts(visible) {
     if (titleEl) titleEl.textContent = currentEnvFilter==='all' ? 'Allocation portefeuille' : 'Allocation — '+currentEnvFilter;
 }
 
-// ── Performance par actif ────────────────────────────────────────────────────
+// ── Performance par actif — barres HTML/CSS pures ────────────────────────────
 function updatePerfChart(visible) {
-    var data = visible.filter(function(a){return parseFloat(a.current_value)>0;});
-    data.sort(function(a,b){return parseFloat(a.unrealized_pct)-parseFloat(b.unrealized_pct);});
     var el = document.getElementById('perf-bar-chart');
-    if (!el || typeof Plotly==='undefined') return;
+    if (!el) return;
+    var data = visible.filter(function(a){return parseFloat(a.current_value) > 0;});
+    data.sort(function(a,b){return parseFloat(a.unrealized_pct) - parseFloat(b.unrealized_pct);});
     if (!data.length) {
-        el.innerHTML='<div style="color:#3d6b8f;font-size:10px;padding-top:8px;">Aucun actif</div>';
+        el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;">Aucun actif</div>';
         return;
     }
-    var traces = [{
-        type:'bar', orientation:'h',
-        y: data.map(function(a){return a.ticker;}),
-        x: data.map(function(a){return parseFloat(a.unrealized_pct);}),
-        marker:{
-            color: data.map(function(a){return parseFloat(a.unrealized_pct)>=0?'rgba(74,222,128,0.45)':'rgba(248,113,113,0.45)';}),
-            line:{color:data.map(function(a){return parseFloat(a.unrealized_pct)>=0?'#4ade80':'#f87171';}),width:1}
-        },
-        text: data.map(function(a){var p=parseFloat(a.unrealized_pct);return (p>=0?'+':'')+p.toFixed(2)+'%';}),
-        textposition:'outside', textfont:{color:'#4a7a9b',size:9},
-        cliponaxis:false,
-        hovertemplate:'%{y} — %{x:+.2f}%<extra></extra>'
-    }];
-    setTimeout(function(){
-        var w = el.offsetWidth || 218;
-        console.log('[perf-chart] offsetHeight:', el.offsetHeight, 'offsetWidth:', w);
-        console.log('[perf-chart] x values:', data.map(function(a){return parseFloat(a.unrealized_pct);}));
-        var layout = Object.assign({},_barLayout,{height:200, width:w, autosize:false});
-        Plotly.purge(el);
-        Plotly.newPlot(el, traces, layout, {displayModeBar:false, responsive:false});
-    }, 150);
+    var maxAbs = Math.max.apply(null, data.map(function(a){return Math.abs(parseFloat(a.unrealized_pct));}));
+    if (maxAbs === 0) maxAbs = 1;
+    el.innerHTML = data.map(function(a){
+        var p = parseFloat(a.unrealized_pct);
+        var w = (Math.abs(p) / maxAbs * 100).toFixed(1);
+        var c = p >= 0 ? '#4ade80' : '#f87171';
+        return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">'
+            + '<span style="font-size:9px;font-family:monospace;color:#e8f0ff;width:60px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.ticker+'</span>'
+            + '<div style="flex:1;background:rgba(74,122,155,0.07);border-radius:3px;height:6px;overflow:hidden;">'
+            + '<div style="height:100%;width:'+w+'%;background:'+c+';border-radius:3px;"></div>'
+            + '</div>'
+            + '<span style="font-size:10px;font-weight:700;color:'+c+';width:52px;text-align:right;flex-shrink:0;">'+(p>=0?'+':'')+p.toFixed(2)+'%</span>'
+            + '</div>';
+    }).join('');
 }
 
 // ── Composition par type ──────────────────────────────────────────────────────
