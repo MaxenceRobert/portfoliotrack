@@ -411,8 +411,9 @@ def dashboard():
     from database import get_all_purchases as _all_purch
     import datetime as _dt2
     _this_month = _dt2.date.today().strftime('%Y-%m')
+    _all_purchases_list = list(_all_purch(current_user.id))
     monthly_by_asset = {}
-    for _p in _all_purch(current_user.id):
+    for _p in _all_purchases_list:
         if str(_p['date']).startswith(_this_month):
             _aid = _p['asset_id']
             monthly_by_asset[_aid] = monthly_by_asset.get(_aid, 0) + float(_p['total_cost'])
@@ -437,6 +438,50 @@ def dashboard():
                     'invested_this_month': round(monthly_by_asset.get(a['asset_id'], 0), 2),
                     'workspace':          a.get('workspace', 'perso'),
                 })
+
+    # Historique cumul capital investi
+    from collections import defaultdict as _defaultdict
+    _hist_by_date = _defaultdict(float)
+    for _p in _all_purchases_list:
+        _d = str(_p.get('date', ''))[:10]
+        if _d:
+            _hist_by_date[_d] += float(_p.get('total_cost') or 0)
+    _hist_dates_sorted = sorted(_hist_by_date.keys())
+    history_dates  = []
+    history_values = []
+    _cumul = 0.0
+    for _d in _hist_dates_sorted:
+        _cumul += _hist_by_date[_d]
+        history_dates.append(_d)
+        history_values.append(round(_cumul, 2))
+
+    # Purchases JSON pour filtre JS évolution (envelope depuis la jointure)
+    purchases_json = [
+        {
+            'date':       str(_p.get('date', ''))[:10],
+            'total_cost': float(_p.get('total_cost') or 0),
+            'envelope':   _p.get('envelope') or '',
+        }
+        for _p in _all_purchases_list
+        if str(_p.get('date', ''))[:10]
+    ]
+
+    # Top 3 actifs par score de risque
+    _risk_candidates = []
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            if not a.get('fully_sold', False) and float(a.get('current_value') or 0) > 0:
+                ri = risk_data.get(a.get('ticker', '')) or {}
+                score = ri.get('score')
+                if score is not None:
+                    _risk_candidates.append({
+                        'ticker':     a['ticker'],
+                        'name':       a['name'],
+                        'risk_score': score,
+                        'envelope':   a.get('envelope') or '',
+                    })
+    _risk_candidates.sort(key=lambda x: x['risk_score'], reverse=True)
+    top_risks = _risk_candidates[:3]
 
     # Onboarding
     user_db              = get_user_by_id(current_user.id)
@@ -475,6 +520,10 @@ def dashboard():
         estimated_dividends_year=estimated_dividends_year,
         is_demo=is_demo,
         active_workspace=active_workspace,
+        history_dates=history_dates,
+        history_values=history_values,
+        purchases_json=purchases_json,
+        top_risks=top_risks,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────

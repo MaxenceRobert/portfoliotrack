@@ -84,6 +84,15 @@
     min-height: 0;
 }
 
+/* Colonne gauche — table + évolution */
+.dash-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    overflow: hidden;
+}
+
 /* Table actifs */
 .dash-table-wrap {
     background: #070d18;
@@ -92,7 +101,20 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-height: 0;
+}
+
+/* Évolution du capital */
+.dash-evolution-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px 10px 4px;
+    flex-shrink: 0;
+    height: 190px;
+    display: flex;
+    flex-direction: column;
 }
 .dash-table-scroll {
     overflow-y: auto;
@@ -318,11 +340,12 @@ table.dash-assets thead th.num { text-align: right; }
     .dash-top { grid-template-columns: 1fr; height: auto; }
     .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
     .dash-bottom { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .dash-left-col { overflow: visible; }
     .dash-right-col { overflow: visible; }
     .dash-table-scroll { overflow: visible; max-height: 400px; }
     .dash-alloc-block { min-height: 180px; flex: none; }
     .dash-gain-block, .dash-dca-block { flex-shrink: 0; }
-    .dash-perf-block { flex: none; }
+    .dash-evolution-block { height: 180px; flex-shrink: 0; }
 }
 @media (max-width: 480px) {
     .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
@@ -516,7 +539,8 @@ table.dash-assets thead th.num { text-align: right; }
 {# ══ ZONE BASSE ══ #}
 <div class="dash-bottom">
 
-    {# Colonne gauche — tableau #}
+    {# Colonne gauche — tableau + évolution #}
+    <div class="dash-left-col">
     <div class="dash-table-wrap">
         <div class="dash-table-scroll">
             <table class="dash-assets">
@@ -605,6 +629,14 @@ table.dash-assets thead th.num { text-align: right; }
         </div>
     </div>{# /dash-table-wrap #}
 
+    {# Évolution du capital investi #}
+    <div class="dash-evolution-block">
+        <div class="micro-label" style="margin-bottom:6px;">Évolution du capital investi</div>
+        <div id="evolution-chart" style="flex:1; min-height:0;"></div>
+    </div>
+
+    </div>{# /dash-left-col #}
+
     {# Colonne droite — blocs #}
     <div class="dash-right-col">
 
@@ -659,10 +691,29 @@ table.dash-assets thead th.num { text-align: right; }
             <div id="type-breakdown"></div>
         </div>
 
-        {# Performance par actif — barres HTML/CSS pures #}
-        <div class="dash-perf-block">
-            <div class="micro-label" style="margin-bottom:6px;">Performance par actif</div>
-            <div id="perf-bar-chart"></div>
+        {# Top Risques #}
+        <div class="dash-type-block">
+            <div class="micro-label" style="margin-bottom:6px;">Top Risques</div>
+            <div id="top-risks-list">
+            {% set top_risk_assets = top_risks %}
+            {% if top_risk_assets %}
+                {% for a in top_risk_assets %}
+                {% set s = a.risk_score %}
+                {% set high = s > 67 %}
+                {% set med = s >= 34 and s <= 67 %}
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0a1428;">
+                    <span style="font-family:monospace;font-size:9px;background:#0a1428;padding:2px 5px;border-radius:3px;color:#e8f0ff;flex-shrink:0;">{{ a.ticker }}</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;
+                        background:{{ '#1a0000' if high else '#1a1200' if med else '#001a00' }};
+                        color:{{ '#f87171' if high else '#f59e0b' if med else '#4ade80' }};
+                        border:1px solid {{ '#f87171' if high else '#f59e0b' if med else '#4ade80' }};">{{ s }}</span>
+                    <span style="font-size:11px;color:#4a7a9b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.name|truncate(20, true, '…') }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="color:#3d6b8f;font-size:10px;">Aucun actif avec score de risque</div>
+            {% endif %}
+            </div>
         </div>
 
     </div>{# /dash-right-col #}
@@ -695,10 +746,11 @@ table.dash-assets thead th.num { text-align: right; }
 </div>
 
 <script>
-var ALL_ASSETS   = {{ all_assets_json | tojson }};
-var PROFIL_RISK  = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
-var DCA_TARGET   = {{ summary.dca_target }};
-var PLAFONDS_MAP = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
+var ALL_ASSETS    = {{ all_assets_json | tojson }};
+var ALL_PURCHASES = {{ purchases_json | tojson }};
+var PROFIL_RISK   = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
+var DCA_TARGET    = {{ summary.dca_target }};
+var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
 var currentEnvFilter = 'all';
 
 const PIE_COLORS = ['#e8f0ff','#4a7a9b','#2a4a6a','#7ab0cc','#3a6a8a','#6aa0bb','#9ac0d8','#1a2a3a','#5a90aa','#0f1e2e'];
@@ -751,28 +803,65 @@ function updateAllocCharts(visible) {
     if (titleEl) titleEl.textContent = currentEnvFilter==='all' ? 'Allocation portefeuille' : 'Allocation — '+currentEnvFilter;
 }
 
-// ── Performance par actif — barres HTML/CSS pures ────────────────────────────
-function updatePerfChart(visible) {
-    var el = document.getElementById('perf-bar-chart');
-    if (!el) return;
-    var data = visible.filter(function(a){return parseFloat(a.current_value) > 0;});
-    data.sort(function(a,b){return parseFloat(a.unrealized_pct) - parseFloat(b.unrealized_pct);});
-    if (!data.length) {
-        el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;">Aucun actif</div>';
+// ── Évolution du capital investi ──────────────────────────────────────────────
+function updateEvolutionChart(env) {
+    var el = document.getElementById('evolution-chart');
+    if (!el || typeof Plotly === 'undefined') return;
+    var filtered = (env === 'all')
+        ? ALL_PURCHASES
+        : ALL_PURCHASES.filter(function(p){ return p.envelope === env; });
+    if (!filtered.length) {
+        el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;padding:20px 0;">Aucun achat</div>';
         return;
     }
-    var maxAbs = Math.max.apply(null, data.map(function(a){return Math.abs(parseFloat(a.unrealized_pct));}));
-    if (maxAbs === 0) maxAbs = 1;
-    el.innerHTML = data.map(function(a){
-        var p = parseFloat(a.unrealized_pct);
-        var w = (Math.abs(p) / maxAbs * 100).toFixed(1);
-        var c = p >= 0 ? '#4ade80' : '#f87171';
-        return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">'
-            + '<span style="font-size:9px;font-family:monospace;color:#e8f0ff;width:60px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.ticker+'</span>'
-            + '<div style="flex:1;background:rgba(74,122,155,0.07);border-radius:3px;height:6px;overflow:hidden;">'
-            + '<div style="height:100%;width:'+w+'%;background:'+c+';border-radius:3px;"></div>'
-            + '</div>'
-            + '<span style="font-size:10px;font-weight:700;color:'+c+';width:52px;text-align:right;flex-shrink:0;">'+(p>=0?'+':'')+p.toFixed(2)+'%</span>'
+    var byDate = {};
+    filtered.forEach(function(p){ byDate[p.date] = (byDate[p.date]||0) + p.total_cost; });
+    var dates = Object.keys(byDate).sort();
+    var values = [];
+    var cumul = 0;
+    dates.forEach(function(d){ cumul += byDate[d]; values.push(Math.round(cumul*100)/100); });
+    var trace = [{
+        x: dates, y: values,
+        type: 'scatter', mode: 'lines+markers',
+        line: { color: '#4ade80', width: 2, shape: 'spline' },
+        marker: { color: '#070d18', size: 6, line: { color: '#4ade80', width: 1.5 } },
+        fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.06)'
+    }];
+    var layout = {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        margin: { t: 0, r: 10, b: 30, l: 50 },
+        xaxis: { showgrid: false, color: '#1a3a5a', tickfont: { size: 8, color: '#1a3a5a' } },
+        yaxis: { showgrid: true, gridcolor: '#0a1428', color: '#1a3a5a',
+                 tickfont: { size: 8, color: '#1a3a5a' }, tickformat: ',.0f', ticksuffix: '€' },
+        showlegend: false
+    };
+    Plotly.react(el, trace, layout, { responsive: true, displayModeBar: false });
+}
+
+// ── Top Risques ───────────────────────────────────────────────────────────────
+function updateTopRisks(visible) {
+    var el = document.getElementById('top-risks-list');
+    if (!el) return;
+    var data = visible.filter(function(a){
+        return parseFloat(a.current_value) > 0 && a.risk_score != null;
+    });
+    data.sort(function(a,b){ return b.risk_score - a.risk_score; });
+    var top3 = data.slice(0, 3);
+    if (!top3.length) {
+        el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;">Aucun actif avec score de risque</div>';
+        return;
+    }
+    el.innerHTML = top3.map(function(a){
+        var s = a.risk_score;
+        var high = s > 67, med = s >= 34 && s <= 67;
+        var bc = high ? '#1a0000' : med ? '#1a1200' : '#001a00';
+        var tc = high ? '#f87171' : med ? '#f59e0b' : '#4ade80';
+        var bd = high ? '#f87171' : med ? '#f59e0b' : '#4ade80';
+        var nm = a.name ? (a.name.length > 20 ? a.name.substring(0,20)+'…' : a.name) : '';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0a1428;">'
+            + '<span style="font-family:monospace;font-size:9px;background:#0a1428;padding:2px 5px;border-radius:3px;color:#e8f0ff;flex-shrink:0;">'+a.ticker+'</span>'
+            + '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+bc+';color:'+tc+';border:1px solid '+bd+';flex-shrink:0;">'+s+'</span>'
+            + '<span style="font-size:11px;color:#4a7a9b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+nm+'</span>'
             + '</div>';
     }).join('');
 }
@@ -865,8 +954,9 @@ function applyEnvFilter(env) {
     if(gaVal){gaVal.textContent=sign(tg)+fmt2(tg)+' €';gaVal.style.color=tg>=0?'#4ade80':'#f87171';}
 
     updateAllocCharts(vis);
-    updatePerfChart(vis);
     updateTypeBlock(vis);
+    updateTopRisks(vis);
+    updateEvolutionChart(env);
 
     var ws=0,wt=0;
     vis.forEach(function(a){if(a.current_value>0&&a.risk_score!=null){ws+=a.risk_score*a.current_value;wt+=a.current_value;}});
@@ -1003,6 +1093,7 @@ window.addEventListener('load', function(){
     var allEnvs=ALL_ASSETS.map(function(a){return a.envelope;}).filter(function(e){return e;});
     var valid=(saved==='all'||allEnvs.indexOf(saved)!==-1)?saved:'all';
     applyEnvFilter(valid);
+    setTimeout(function(){ updateEvolutionChart(valid); }, 200);
 });
 </script>
 {% endblock %}
