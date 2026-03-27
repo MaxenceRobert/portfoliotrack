@@ -781,11 +781,14 @@ function updatePerfChart(visible) {
         cliponaxis:false,
         hovertemplate:'%{y} — %{x:+.2f}%<extra></extra>'
     }];
-    var layout = Object.assign({},_barLayout,{height:200});
     setTimeout(function(){
+        var w = el.offsetWidth || 218;
+        console.log('[perf-chart] offsetHeight:', el.offsetHeight, 'offsetWidth:', w);
+        console.log('[perf-chart] x values:', data.map(function(a){return parseFloat(a.unrealized_pct);}));
+        var layout = Object.assign({},_barLayout,{height:200, width:w, autosize:false});
         Plotly.purge(el);
-        Plotly.newPlot(el, traces, layout, PIE_CONFIG);
-    }, 100);
+        Plotly.newPlot(el, traces, layout, {displayModeBar:false, responsive:false});
+    }, 150);
 }
 
 // ── Composition par type ──────────────────────────────────────────────────────
