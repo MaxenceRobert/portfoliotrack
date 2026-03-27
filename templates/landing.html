@@ -77,14 +77,15 @@
             overflow: hidden;
         }
         .hero-bg {
-            position: fixed; inset: 0;
-            z-index: -1;
-            background-image: url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=80');
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -2;
+            background-image: url('https://images.unsplash.com/photo-1519773483179-fa089c182a4a?q=80&w=1600&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
         }
         .hero-overlay {
-            position: absolute; inset: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
             background: linear-gradient(135deg, rgba(4,8,15,0.88) 0%, rgba(4,8,15,0.65) 50%, rgba(4,8,15,0.82) 100%);
         }
         .hero-content {
@@ -156,6 +157,7 @@
 
         /* ── PRODUCT SECTION ── */
         .section-product {
+            position: relative; z-index: 1;
             background: var(--bg);
             padding: 60px 48px;
         }
@@ -228,6 +230,7 @@
 
         /* ── FEATURES ── */
         .section-features {
+            position: relative; z-index: 1;
             background: var(--bg);
             padding: 0 48px 60px;
         }
@@ -260,6 +263,7 @@
 
         /* ── CTA ── */
         .section-cta {
+            position: relative; z-index: 1;
             background: #020509;
             border-top: 1px solid var(--border);
             padding: 60px 48px;
@@ -269,6 +273,8 @@
 
         /* ── FOOTER ── */
         footer {
+            position: relative; z-index: 1;
+            background: var(--bg);
             border-top: 1px solid var(--border);
             padding: 20px 48px;
             display: flex;

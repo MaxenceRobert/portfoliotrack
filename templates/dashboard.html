@@ -3,8 +3,8 @@
 {% block title %}Dashboard — PortfolioTrack{% endblock %}
 {% block content %}
 <style>
-.content-area { padding: 0 !important; overflow: hidden; }
-.content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+.content-area { padding: 0 !important; overflow: hidden; background: #04080f; }
+.content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; background: #04080f; }
 
 /* ══ Main container ══ */
 .dash-main {
@@ -383,7 +383,7 @@ table.dash-assets thead th.num { text-align: right; }
                 {% endif %}
             </div>
             <div style="margin-left:auto; text-align:center; flex-shrink:0;">
-                <div style="font-size:36px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence is not none and coherence >= 70 else '#f59e0b' if coherence is not none and coherence >= 40 else '#f87171' if coherence is not none else '#3d6b8f' }};" id="coh-pct-badge-el">{{ (coherence|string + '%') if coherence is not none else '—' }}</div>
+                <div style="font-size:48px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence is not none and coherence >= 70 else '#f59e0b' if coherence is not none and coherence >= 40 else '#f87171' if coherence is not none else '#3d6b8f' }};" id="coh-pct-badge-el">{{ (coherence|string + '%') if coherence is not none else '—' }}</div>
                 <div style="font-size:9px; color:#2a5a7a; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">cohérence</div>
             </div>
         </div>
