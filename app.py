@@ -855,7 +855,7 @@ def add_envelope_route():
 # ── Modifier le solde d'une enveloppe (AJAX) ──────────────────────────────────
 @main_bp.route('/update-envelope/<int:env_id>', methods=['POST'])
 @login_required
-def update_envelope_route(env_id):
+def update_savings_envelope_route(env_id):
     data = request.get_json(silent=True) or {}
     try:
         solde = float(data.get('solde', 0))
