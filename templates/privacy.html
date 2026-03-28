@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Politique de confidentialité — PortfolioTrack{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Politique de confidentialité</h1>
+        <p>Dernière mise à jour : mars 2026</p>
+    </div>
+    <a href="{{ url_for('main.landing') }}" class="btn btn-ghost">← Retour</a>
+</div>
+
+<div class="card" style="max-width:780px; line-height:1.75; font-size:0.875rem; color:var(--text-muted);">
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">1. Responsable du traitement</h2>
+        <p>Le responsable du traitement des données personnelles collectées via PortfolioTrack est :</p>
+        <p style="margin-top:0.5rem; color:var(--text);">
+            <strong>Maxence Robert</strong><br>
+            Contact : <a href="mailto:maxence.robert@portfoliotrack.com" style="color:var(--accent-hi); text-decoration:none;">maxence.robert@portfoliotrack.com</a>
+        </p>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">2. Données collectées</h2>
+        <p>PortfolioTrack collecte uniquement les données strictement nécessaires au fonctionnement du service :</p>
+        <ul style="margin-top:0.5rem; padding-left:1.25rem; display:flex; flex-direction:column; gap:0.35rem;">
+            <li><strong style="color:var(--text);">Adresse email</strong> — utilisée pour la création de compte, l'authentification et, le cas échéant, la réinitialisation du mot de passe.</li>
+            <li><strong style="color:var(--text);">Données de portefeuille</strong> — actifs financiers, achats, ventes, dividendes, enveloppes fiscales et épargne saisies volontairement par l'utilisateur. Ces données sont hébergées sur nos serveurs et ne sont accessibles qu'à l'utilisateur connecté.</li>
+            <li><strong style="color:var(--text);">Données techniques</strong> — logs serveur standards (adresse IP, navigateur, date/heure des requêtes) conservés à des fins de sécurité et de diagnostic.</li>
+        </ul>
+        <p style="margin-top:0.75rem;">Aucune donnée de paiement n'est collectée. PortfolioTrack est un service gratuit.</p>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">3. Finalités du traitement</h2>
+        <p>Les données collectées sont traitées exclusivement pour :</p>
+        <ul style="margin-top:0.5rem; padding-left:1.25rem; display:flex; flex-direction:column; gap:0.35rem;">
+            <li>Fournir le service de suivi de portefeuille boursier (base légale : exécution du contrat).</li>
+            <li>Assurer la sécurité et le bon fonctionnement de l'application (base légale : intérêt légitime).</li>
+            <li>Permettre la réinitialisation du mot de passe (base légale : exécution du contrat).</li>
+        </ul>
+        <p style="margin-top:0.75rem;"><strong style="color:var(--text);">Aucune donnée n'est revendue, partagée avec des tiers à des fins commerciales ou utilisée à des fins publicitaires.</strong></p>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">4. Durée de conservation</h2>
+        <ul style="padding-left:1.25rem; display:flex; flex-direction:column; gap:0.35rem;">
+            <li><strong style="color:var(--text);">Données de compte et de portefeuille</strong> — conservées pendant toute la durée d'utilisation du compte.</li>
+            <li><strong style="color:var(--text);">Après suppression du compte</strong> — les données sont supprimées définitivement dans un délai de 30 jours.</li>
+            <li><strong style="color:var(--text);">Logs techniques</strong> — conservés 90 jours maximum.</li>
+        </ul>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">5. Vos droits (RGPD)</h2>
+        <p>Conformément au Règlement Général sur la Protection des Données (RGPD — UE 2016/679), vous disposez des droits suivants :</p>
+        <ul style="margin-top:0.5rem; padding-left:1.25rem; display:flex; flex-direction:column; gap:0.35rem;">
+            <li><strong style="color:var(--text);">Droit d'accès</strong> — obtenir une copie de vos données personnelles.</li>
+            <li><strong style="color:var(--text);">Droit de rectification</strong> — corriger des données inexactes ou incomplètes.</li>
+            <li><strong style="color:var(--text);">Droit à l'effacement</strong> — demander la suppression de votre compte et de toutes vos données.</li>
+            <li><strong style="color:var(--text);">Droit à la portabilité</strong> — exporter vos données (disponible via la fonction Export CSV de l'application).</li>
+            <li><strong style="color:var(--text);">Droit d'opposition</strong> — vous opposer à certains traitements.</li>
+        </ul>
+        <p style="margin-top:0.75rem;">Pour exercer ces droits, contactez-nous par email à <a href="mailto:maxence.robert@portfoliotrack.com" style="color:var(--accent-hi); text-decoration:none;">maxence.robert@portfoliotrack.com</a>. Nous répondons dans un délai de 30 jours.</p>
+        <p style="margin-top:0.5rem;">Vous pouvez également introduire une réclamation auprès de la <a href="https://www.cnil.fr" target="_blank" rel="noopener" style="color:var(--accent-hi); text-decoration:none;">CNIL</a> (Commission Nationale de l'Informatique et des Libertés).</p>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">6. Hébergement et sécurité</h2>
+        <p>L'application est hébergée sur <strong style="color:var(--text);">Railway</strong> (<a href="https://railway.app" target="_blank" rel="noopener" style="color:var(--accent-hi); text-decoration:none;">railway.app</a>), dont les serveurs sont localisés aux États-Unis. Le transfert de données hors UE est encadré par les clauses contractuelles types de la Commission européenne.</p>
+        <p style="margin-top:0.5rem;">Les mots de passe sont stockés sous forme hachée (bcrypt). Les communications sont chiffrées via HTTPS.</p>
+    </section>
+
+    <section style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">7. Cookies</h2>
+        <p>PortfolioTrack utilise uniquement un cookie de session technique, nécessaire au fonctionnement de l'authentification. Aucun cookie publicitaire ou de tracking tiers n'est utilisé.</p>
+        <p style="margin-top:0.5rem;">Des données de navigation anonymes peuvent être collectées via Google Analytics (mesure d'audience). Ces données ne permettent pas de vous identifier personnellement.</p>
+    </section>
+
+    <section>
+        <h2 style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">8. Modifications</h2>
+        <p>Cette politique peut être mise à jour pour refléter des évolutions du service ou de la réglementation. La date de dernière mise à jour est indiquée en haut de page. En cas de modification substantielle, vous en serez informé par email.</p>
+    </section>
+
+</div>
+{% endblock %}
