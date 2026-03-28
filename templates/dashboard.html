@@ -89,8 +89,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    min-height: 0;
     overflow: hidden;
+    height: 100%;
 }
 
 /* Table actifs */
@@ -101,8 +101,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+    flex-shrink: 0;
 }
 
 /* Évolution du capital */
@@ -111,8 +110,8 @@
     border: 1px solid #0a1428;
     border-radius: 10px;
     padding: 10px 10px 4px;
-    flex-shrink: 0;
-    height: 190px;
+    flex: 1;
+    min-height: 80px;
     display: flex;
     flex-direction: column;
 }
@@ -334,23 +333,50 @@ table.dash-assets thead th.num { text-align: right; }
 .env-modal-select option { background: var(--bg-card); }
 .env-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
 
-/* Mobile */
+/* ── Tablette 769–1024 ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .dash-top { grid-template-columns: 1fr 1fr; height: auto; min-height: 160px; }
+    .dash-coh-card { order: -1; grid-column: 1 / -1; }
+    .dash-kpis { grid-template-columns: repeat(3, 1fr); height: auto; }
+    .dash-bottom { grid-template-columns: 1fr 200px; }
+}
+
+/* ── Mobile < 768 ── */
 @media (max-width: 768px) {
     .dash-main { overflow-y: auto; height: auto; }
-    .dash-top { grid-template-columns: 1fr; height: auto; }
-    .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
-    .dash-bottom { grid-template-columns: 1fr; grid-template-rows: auto; }
-    .dash-left-col { overflow: visible; }
-    .dash-right-col { overflow: visible; }
-    .dash-table-scroll { overflow: visible; max-height: 400px; }
-    .dash-alloc-block { min-height: 180px; flex: none; }
-    .dash-gain-block, .dash-dca-block { flex-shrink: 0; }
-    .dash-evolution-block { height: 180px; flex-shrink: 0; }
+
+    /* Zone haute : colonne unique, cohérence en premier */
+    .dash-top { grid-template-columns: 1fr; height: auto; padding: 8px; gap: 8px; }
+    .dash-coh-card { order: -1; }
+    .dash-val-card  { order: 0; }
+    .dash-risk-card { order: 1; }
+
+    /* KPIs : 2 colonnes */
+    .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; padding: 0 8px; }
+
+    /* Zone basse : colonne, droite entre table et évolution */
+    .dash-bottom {
+        display: flex;
+        flex-direction: column;
+        overflow-y: visible;
+        height: auto;
+        padding: 0 8px 8px;
+        gap: 8px;
+    }
+    .dash-left-col { display: contents; }   /* enfants participent au flex de dash-bottom */
+    .dash-table-wrap { order: 1; flex-shrink: 0; overflow-x: auto; }
+    .dash-table-scroll { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+    .dash-right-col { order: 2; overflow: visible; display: flex; flex-direction: column; gap: 8px; }
+    .dash-evolution-block { order: 3; height: 180px; flex: none; }
+
+    .dash-alloc-block { min-height: 180px; flex: none; height: auto; }
+    .dash-gain-block, .dash-dca-block, .dash-type-block { flex-shrink: 0; }
+    table.dash-assets { white-space: nowrap; }
 }
 @media (max-width: 480px) {
-    .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; }
-    .dash-top { padding: 8px; gap: 8px; }
-    .dash-bottom { padding: 0 8px 8px; }
+    .dash-top { padding: 6px; gap: 6px; }
+    .dash-kpis { grid-template-columns: 1fr 1fr; }
+    .dash-bottom { padding: 0 6px 6px; }
 }
 </style>
 
@@ -632,7 +658,7 @@ table.dash-assets thead th.num { text-align: right; }
     {# Évolution du capital investi #}
     <div class="dash-evolution-block">
         <div class="micro-label" style="margin-bottom:6px;">Évolution du capital investi</div>
-        <div id="evolution-chart" style="flex:1; min-height:0;"></div>
+        <div id="evolution-chart" style="flex:1; min-height:0; width:100%;"></div>
     </div>
 
     </div>{# /dash-left-col #}

@@ -738,34 +738,81 @@
     .ticker-loading { font-size: 0.75rem; color: var(--text-label); padding: 0 1.5rem; font-style: italic; }
 
     /* ══════════════════════════════════════════
-       MOBILE
+       TABLETTE 769–1024
+    ══════════════════════════════════════════ */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .content-area { padding: 1rem; }
+        .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ══════════════════════════════════════════
+       MOBILE < 768
     ══════════════════════════════════════════ */
     @media (max-width: 768px) {
+        /* Sidebar : collapsed (icônes seules) par défaut */
         .sidebar {
-            transform: translateX(-100%);
-            width: var(--sidebar-w) !important;
-            transition: transform 0.2s ease, width 0.2s ease;
+            width: var(--sidebar-closed);
+            transform: none;
+            transition: width 0.2s ease;
         }
-        body.sidebar-mobile-open .sidebar {
-            transform: translateX(0);
-        }
+        .sidebar .sidebar-label { display: none; }
+        .sidebar .sidebar-section { display: none; }
+        .sidebar-brand { justify-content: center; padding: 0; }
+        .sidebar-link { justify-content: center; padding: 0.55rem; margin: 0 0.2rem; }
+        .sidebar-footer { flex-direction: column; padding: 0.4rem 0.2rem; }
+        .sidebar-user { justify-content: center; padding: 0.35rem; flex: none; }
+        .sidebar-user-name { display: none; }
+        .sidebar-divider { margin: 0.4rem 0.35rem; }
         .sidebar-collapse-btn { display: none; }
-        .main-wrap { margin-left: 0 !important; }
+        .workspace-toggle { flex-direction: column; padding: 0.3rem 0.2rem; }
+        .ws-btn .sidebar-label { display: none; }
+        .ws-btn .ws-icon { display: inline; }
+
+        /* Ouvert : pleine largeur avec overlay */
+        body.sidebar-mobile-open .sidebar { width: var(--sidebar-w); }
+        body.sidebar-mobile-open .sidebar .sidebar-label { display: inline; }
+        body.sidebar-mobile-open .sidebar .sidebar-section { display: block; }
+        body.sidebar-mobile-open .sidebar-brand { justify-content: flex-start; padding: 0 0.75rem; }
+        body.sidebar-mobile-open .sidebar-link { justify-content: flex-start; padding: 0.55rem 0.75rem; margin: 0 0.35rem; }
+        body.sidebar-mobile-open .sidebar-footer { flex-direction: row; padding: 0.5rem; }
+        body.sidebar-mobile-open .sidebar-user { flex: 1; padding: 0.35rem 0.3rem; }
+        body.sidebar-mobile-open .sidebar-user-name { display: block; }
+        body.sidebar-mobile-open .sidebar-divider { margin: 0.4rem 0.75rem; }
+        body.sidebar-mobile-open .workspace-toggle { flex-direction: row; padding: 0.4rem 0.5rem; }
+        body.sidebar-mobile-open .ws-btn .sidebar-label { display: inline; }
+        body.sidebar-mobile-open .ws-btn .ws-icon { display: none; }
+
+        .main-wrap { margin-left: var(--sidebar-closed) !important; }
         .top-header-toggle { display: flex; }
-        .content-area { padding: 1rem; }
+        .content-area { padding: 0.75rem; }
+
+        /* Cards */
+        .card { padding: 1rem; }
+        .auth-card { padding: 1.25rem; }
+
+        /* Grids */
         .kpi-grid { grid-template-columns: 1fr 1fr; }
         .asset-grid { grid-template-columns: 1fr; }
+
+        /* Forms */
         .form-row { grid-template-columns: 1fr; }
         .form-row-3 { grid-template-columns: 1fr; }
         .page-header { flex-direction: column; align-items: flex-start; }
         .page-header-actions { width: 100%; }
-        .table-wrap { font-size: 0.8rem; }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; }
+        .table-wrap table, .table-wrap thead th, .table-wrap tbody td { white-space: nowrap; }
         thead th { padding: 0.5rem 0.6rem; font-size: 0.65rem; }
         tbody td { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
+
+        /* Font minimum */
+        body { font-size: 12px; }
     }
     @media (max-width: 480px) {
-        .kpi-grid { grid-template-columns: 1fr; }
-        .kpi-value { font-size: 1.4rem; }
+        .kpi-grid { grid-template-columns: 1fr 1fr; }
+        .kpi-value { font-size: 1.3rem; }
+        .content-area { padding: 0.5rem; }
     }
 
     /* ══════════════════════════════════════════

@@ -105,11 +105,28 @@
     transition: opacity 0.2s; margin-left: auto;
 }
 .btn-quiz-next:hover { opacity: 0.88; }
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .quiz-wrap { padding: 0; }
+    .disclaimer-card { padding: 2rem 1rem; }
+    .disclaimer-card h2 { font-size: 1.3rem; }
+    .disclaimer-card p { font-size: 0.9rem; }
     .quiz-card { padding: 1.25rem; }
-    .disclaimer-card { padding: 2rem 1.25rem; }
     .q-text { font-size: 1rem; }
+    .q-subtext { font-size: 0.82rem; }
     .opt-text { font-size: 0.84rem; }
+    .option-card { padding: 0.75rem 0.9rem; }
+    .btn-quiz-next { width: 100%; padding: 0.75rem 1rem; }
+    .quiz-nav { flex-direction: column-reverse; gap: 0.5rem; }
+    .quiz-nav .btn { width: 100%; justify-content: center; }
+    .quiz-numeric-wrap input[type="number"] { max-width: 100%; }
+    .quiz-meta { gap: 0.5rem; }
+    .quiz-meta span { font-size: 0.75rem; padding: 0.25rem 0.65rem; }
+}
+@media (max-width: 480px) {
+    .disclaimer-card h2 { font-size: 1.15rem; }
+    .q-text { font-size: 0.95rem; }
+    .opt-text { font-size: 0.82rem; }
+    .opt-letter { width: 24px; height: 24px; font-size: 0.68rem; }
 }
 </style>
 

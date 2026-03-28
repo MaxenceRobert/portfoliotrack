@@ -47,6 +47,7 @@
             background: #e8f0ff;
             border-radius: 3px;
             flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
         }
         .nav-logo-text {
             font-size: 14px; font-weight: 700; color: var(--text);
@@ -93,7 +94,7 @@
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             text-align: center;
-            padding: 0 24px;
+            padding: 60px 24px 0;
         }
         .hero-badge {
             border: 1px solid rgba(232,240,255,0.15);
@@ -277,31 +278,41 @@
             background: var(--bg);
             border-top: 1px solid var(--border);
             padding: 20px 48px;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
         }
-        .footer-left { font-size: 11px; color: var(--dim); }
-        .footer-right { font-size: 11px; color: var(--dim); }
-        .footer-disclaimer { width: 100%; font-size: 10px; color: var(--dimmer); text-align: center; }
+        .footer-left { font-size: 11px; color: var(--dim); text-align: left; }
+        .footer-disclaimer { font-size: 10px; color: var(--dimmer); text-align: center; }
+        .footer-right { font-size: 11px; color: var(--dim); text-align: right; }
 
-        /* ── MOBILE ── */
+        /* ── TABLETTE 769–1024 ── */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .feature-grid { grid-template-columns: 1fr 1fr; }
+            nav { padding: 0 24px; }
+        }
+
+        /* ── MOBILE < 768 ── */
         @media (max-width: 768px) {
             nav { padding: 0 16px; }
             .nav-links { display: none; }
             .section-product, .section-features, .section-cta { padding: 40px 16px; }
-            footer { padding: 16px; flex-direction: column; align-items: flex-start; }
+            footer { padding: 16px; grid-template-columns: 1fr; }
+            .footer-left, .footer-disclaimer, .footer-right { text-align: center; }
             .mockup-top { grid-template-columns: 1fr; }
             .mockup-bar { grid-template-columns: 1fr 1fr; }
+            .mockup-wrap { transform: none; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
             .feature-grid { grid-template-columns: 1fr; }
             .hero-stats { gap: 20px; }
-        }
-        @media (max-width: 480px) {
-            .hero-h1 { letter-spacing: -1px; }
+            .hero-h1 { font-size: clamp(28px, 8vw, 42px); letter-spacing: -1px; }
             .hero-btns { flex-direction: column; align-items: stretch; }
             .btn-hero-primary, .btn-hero-ghost { text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .hero-h1 { letter-spacing: -0.5px; }
+            .hero-sub { font-size: 15px; }
+            .section-product, .section-features, .section-cta { padding: 32px 12px; }
         }
     </style>
 </head>
@@ -310,7 +321,9 @@
 <!-- ═══ NAVBAR ═══ -->
 <nav>
     <a href="#" class="nav-logo">
-        <div class="nav-logo-box"></div>
+        <div class="nav-logo-box">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><polyline points="1,11 4,6 7,8 10,3 13,5" stroke="#020509" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+        </div>
         <span class="nav-logo-text">PortfolioTrack</span>
     </a>
     <div class="nav-links">
@@ -478,8 +491,8 @@
 <!-- ═══ FOOTER ═══ -->
 <footer>
     <div class="footer-left">PortfolioTrack · Gratuit · Sans pub · Sans revente de données</div>
-    <div class="footer-right">Créé par Maxence Robert</div>
     <div class="footer-disclaimer">Outil pédagogique uniquement — pas un conseil en investissement</div>
+    <div class="footer-right"><a href="mailto:maxence.robert@portfoliotrack.com" style="color:#2a5a7a;text-decoration:none;">Créé par Maxence Robert</a></div>
 </footer>
 
 </body>

@@ -124,6 +124,25 @@
     transition: all 0.15s;
 }
 .chat-suggestion:hover { background: rgba(74,122,155,0.18); color: var(--text); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+    .chat-wrap {
+        height: auto;
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - var(--header-h) - 6rem);
+        min-height: 400px;
+    }
+    .chat-messages { min-height: 200px; }
+    .chat-bubble { max-width: 90%; font-size: 0.82rem; }
+    .chat-suggestion { font-size: 0.72rem; padding: 0.25rem 0.55rem; }
+    .chat-input-wrap { padding: 0.5rem; }
+    .chat-input-wrap textarea { min-height: 40px; font-size: 0.82rem; }
+    .chat-input-wrap .btn { padding: 0.4rem 0.75rem; font-size: 0.82rem; }
+}
 </style>
 
 <div class="page-header">
