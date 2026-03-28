@@ -141,8 +141,8 @@
         <span class="top-header-title">{% block page_title %}{% endblock %}</span>
         <div class="top-header-actions">{% block header_actions %}{% endblock %}</div>
     </header>
-    <div class="content-area">
-        <div class="content-container">
+    <div class="content-area{% block content_area_class %}{% endblock %}">
+        <div class="content-container{% block content_container_class %}{% endblock %}">
             <div class="alerts">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}

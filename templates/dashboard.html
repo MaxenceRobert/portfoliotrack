@@ -1,323 +1,9 @@
 {% extends 'base.html' %}
 {% from 'components/risk_badge.html' import risk_badge %}
 {% block title %}Dashboard — PortfolioTrack{% endblock %}
+{% block content_area_class %} dash-area{% endblock %}
+{% block content_container_class %} dash-container{% endblock %}
 {% block content %}
-<style>
-.content-area { padding: 0 !important; overflow: hidden; background: var(--bg); }
-.content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-
-/* ══ Main ══ */
-.dash-main {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - var(--header-h));
-    overflow: hidden;
-}
-
-/* ══ Zone haute ══ */
-.dash-top {
-    display: grid;
-    grid-template-columns: 200px 1fr 180px;
-    gap: 9px;
-    height: 178px;
-    flex-shrink: 0;
-    padding: 10px 14px;
-}
-.dash-val-card, .dash-coh-card, .dash-risk-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-.dash-val-card  { border: 1px solid var(--border2); }
-.dash-coh-card  { border: 2px solid rgba(74,122,155,0.28); }
-.dash-risk-card { border: 1px solid var(--border2); }
-
-/* ══ Zone KPIs ══ */
-.dash-kpis {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 7px;
-    height: 58px;
-    flex-shrink: 0;
-    padding: 0 14px;
-}
-.dash-kpi-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border2);
-    border-top: 2px solid var(--border2);
-    border-radius: 7px;
-    padding: 7px 11px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 0;
-    transition: border-color 0.15s;
-}
-.dash-kpi-card:hover { border-color: var(--border); }
-
-/* ══ Zone basse ══ */
-.dash-bottom {
-    display: grid;
-    grid-template-columns: 1fr 230px;
-    gap: 9px;
-    flex: 1;
-    overflow: hidden;
-    padding: 7px 14px 11px;
-    min-height: 0;
-}
-.dash-left-col {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    overflow: hidden;
-    height: 100%;
-}
-.dash-table-wrap {
-    background: var(--bg-card);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-.dash-evolution-block {
-    background: var(--bg-card);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 9px 9px 3px;
-    flex: 1;
-    min-height: 70px;
-    display: flex;
-    flex-direction: column;
-}
-.dash-table-scroll {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-}
-.dash-table-scroll::-webkit-scrollbar { width: 3px; }
-.dash-table-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
-
-table.dash-assets { width: 100%; border-collapse: collapse; }
-table.dash-assets thead th {
-    position: sticky;
-    top: 0;
-    font-size: 8px;
-    color: var(--text-label);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 700;
-    white-space: nowrap;
-    padding: 6px 11px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border2);
-    text-align: left;
-    z-index: 2;
-}
-table.dash-assets thead th.num { text-align: right; }
-
-.dash-asset-tr {
-    border-left: 3px solid var(--border);
-    border-bottom: 1px solid var(--bg-card);
-    cursor: pointer;
-    transition: background 0.1s;
-}
-.dash-asset-tr:hover { background: var(--bg-hover); }
-.dash-asset-tr td { white-space: nowrap; padding: 7px 11px; font-size: 0.775rem; }
-.dash-asset-tr td.num { text-align: right; }
-.dash-detail-tr td {
-    padding: 8px 14px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border2);
-    border-left: 3px solid transparent;
-    font-size: 0.73rem;
-}
-
-/* Right col */
-.dash-right-col {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    overflow-y: auto;
-    min-height: 0;
-}
-.dash-right-col::-webkit-scrollbar { width: 3px; }
-.dash-right-col::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
-
-.dash-alloc-block, .dash-dca-block, .dash-gain-block, .dash-perf-block, .dash-type-block {
-    background: var(--bg-card);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 9px 10px;
-    flex-shrink: 0;
-}
-.dash-alloc-block {
-    height: 155px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Labels */
-.micro-label {
-    font-size: 8px;
-    color: var(--text-label);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 700;
-}
-
-/* Env badges */
-.env-badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.6rem;
-    font-weight: 800;
-    padding: 0.06rem 0.35rem;
-    border-radius: 4px;
-    white-space: nowrap;
-    letter-spacing: 0.02em;
-    line-height: 1.6;
-}
-.env-pea,.env-peapme,.env-cto,.env-av,.env-per,.env-livret,.env-autre {
-    background: transparent; color: var(--text-muted); border: 1px solid var(--border);
-}
-
-/* Coherence gauge */
-.coh-gauge-outer {
-    background: rgba(74,122,155,0.07);
-    border-radius: 99px;
-    height: 4px;
-    overflow: hidden;
-    margin-top: 8px;
-}
-.coh-gauge-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-}
-.coh-gauge-high { background: var(--positive); }
-.coh-gauge-med  { background: #f59e0b; }
-.coh-gauge-low  { background: var(--negative); }
-
-/* Plafond bar */
-.plafond-block {
-    padding: 4px 14px;
-    flex-shrink: 0;
-    display: none;
-}
-.plafond-bar-outer {
-    background: rgba(74,122,155,0.06);
-    border-radius: 99px;
-    height: 3px;
-    overflow: hidden;
-    margin-top: 3px;
-}
-.plafond-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: var(--accent);
-    transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
-}
-
-/* Demo banner */
-.demo-banner {
-    background: rgba(74,122,155,0.07);
-    border-bottom: 1px solid rgba(74,122,155,0.18);
-    padding: 0.5rem 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-    flex-shrink: 0;
-}
-
-/* Modal */
-.env-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(4,8,15,0.72);
-    backdrop-filter: blur(5px);
-    z-index: 9000;
-    align-items: center;
-    justify-content: center;
-}
-.env-modal-overlay.open { display: flex; }
-.env-modal-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    width: 100%;
-    max-width: 360px;
-    box-shadow: 0 24px 64px rgba(4,8,15,0.85);
-    animation: fadeup 0.28s cubic-bezier(0.16,1,0.3,1) both;
-}
-.env-modal-title { font-size: 0.92rem; font-weight: 700; color: var(--text); margin-bottom: 0.28rem; }
-.env-modal-sub   { font-size: 0.76rem; color: var(--text-label); margin-bottom: 1rem; }
-.env-modal-select {
-    width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    color: var(--text);
-    font-size: 0.855rem;
-    padding: 0.52rem 0.75rem;
-    margin-bottom: 1rem;
-    outline: none;
-}
-.env-modal-select:focus { border-color: var(--accent); }
-.env-modal-select option { background: var(--bg-card); }
-.env-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
-
-/* ── Tablette ── */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .dash-top  { grid-template-columns: 1fr 1fr; height: auto; min-height: 150px; }
-    .dash-coh-card { order: -1; grid-column: 1 / -1; }
-    .dash-kpis { grid-template-columns: repeat(3, 1fr); height: auto; }
-    .dash-bottom { grid-template-columns: 1fr 195px; }
-}
-
-/* ── Mobile ── */
-@media (max-width: 768px) {
-    .dash-main { overflow-y: auto; height: auto; }
-    .dash-top { grid-template-columns: 1fr; height: auto; padding: 8px; gap: 8px; }
-    .dash-coh-card { order: -1; }
-    .dash-val-card  { order: 0; }
-    .dash-risk-card { order: 1; }
-    .dash-coh-card > div:nth-child(2) { flex-wrap: wrap !important; gap: 8px 12px; align-items: center; }
-    .dash-coh-card > div:nth-child(2) > div:nth-child(1),
-    .dash-coh-card > div:nth-child(2) > div:nth-child(3) { flex: 1; min-width: 0; }
-    .dash-coh-card > div:nth-child(2) > div:last-child {
-        width: 100%; text-align: center !important; margin-left: 0 !important;
-        margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border2);
-    }
-    .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; padding: 0 8px; }
-    .dash-bottom { display: flex; flex-direction: column; overflow-y: visible; height: auto; padding: 0 8px 8px; gap: 8px; }
-    .dash-left-col { display: contents; }
-    .dash-table-wrap { order: 1; flex-shrink: 0; overflow-x: auto; }
-    .dash-table-scroll { overflow-x: auto; max-height: 300px; overflow-y: auto; }
-    .dash-right-col { order: 2; overflow: visible; display: flex; flex-direction: column; gap: 8px; }
-    .dash-evolution-block { order: 3; height: 170px; flex: none; }
-    .dash-alloc-block { min-height: 170px; flex: none; height: auto; }
-    .dash-gain-block, .dash-dca-block, .dash-type-block { flex-shrink: 0; }
-    table.dash-assets { white-space: nowrap; }
-}
-@media (max-width: 480px) {
-    .dash-top { padding: 6px; gap: 6px; }
-    .dash-kpis { grid-template-columns: 1fr 1fr; }
-    .dash-bottom { padding: 0 6px 6px; }
-}
-</style>
 
 {% if is_demo %}
 <div class="demo-banner">
@@ -450,6 +136,32 @@ table.dash-assets thead th.num { text-align: right; }
         {% endif %}
     </div>
 
+    {# Plus-value latente #}
+    <div class="dash-pv-card">
+        <div class="micro-label" style="margin-bottom:4px;">Plus-value latente</div>
+        {% set pv = summary.total_unrealized %}
+        {% set pv_pct = summary.unrealized_pct %}
+        {% set pv_color = '#4ade80' if pv >= 0 else '#f87171' %}
+        <div style="font-size:30px; font-weight:200; color:{{ pv_color }}; line-height:1; margin-top:4px;">
+            {{ '+' if pv >= 0 else '' }}{{ pv }} €
+        </div>
+        <div style="font-size:10px; color:{{ pv_color }}; margin-top:3px; font-weight:600;">
+            {{ '+' if pv_pct >= 0 else '' }}{{ pv_pct }}%
+        </div>
+        <div style="background:var(--border2); border-radius:99px; height:3px; overflow:hidden; margin:6px 0;">
+            <div style="height:100%; width:{{ [pv_pct|abs, 100]|min }}%; background:{{ pv_color }}; border-radius:99px;"></div>
+        </div>
+        <div style="font-size:9px; color:var(--text-label); margin-top:2px;">
+            Investi : <span style="color:var(--accent);">{{ summary.total_invested }} €</span>
+        </div>
+        {% set realized_pv = summary.total_realized %}
+        {% if realized_pv != 0 %}
+        <div style="font-size:9px; color:var(--text-label); margin-top:2px;">
+            Réalisé : <span style="color:{{ '#4ade80' if realized_pv >= 0 else '#f87171' }};">{{ '+' if realized_pv >= 0 else '' }}{{ realized_pv }} €</span>
+        </div>
+        {% endif %}
+    </div>
+
 </div>{# /dash-top #}
 
 {# ══ ZONE KPIs ══ #}
@@ -535,6 +247,7 @@ table.dash-assets thead th.num { text-align: right; }
                     style="border-left-color:{{ risk_color }};"
                     onclick="toggleAssetRow('detail-{{ a.asset_id }}')">
                     <td style="white-space:nowrap;">
+                        <span class="asset-icon-placeholder" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:{{ risk_color }}1a;color:{{ risk_color }};font-size:0.6rem;font-weight:800;vertical-align:middle;margin-right:7px;flex-shrink:0;letter-spacing:0;">{{ (a.ticker[:2] if a.ticker else a.name[:2])|upper }}</span>
                         {% if a.ticker %}
                         <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.62rem;">{{ a.ticker }}</span>
                         {% else %}
@@ -590,7 +303,7 @@ table.dash-assets thead th.num { text-align: right; }
 
     <div class="dash-evolution-block">
         <div class="micro-label" style="margin-bottom:5px;">Évolution du capital investi</div>
-        <div id="evolution-chart" style="flex:1; min-height:0; width:100%;"></div>
+        <div id="evolution-chart" style="height:150px; width:100%;"></div>
     </div>
 
     </div>{# /dash-left-col #}
@@ -794,7 +507,7 @@ function sign(n)  { return n >= 0 ? '+' : ''; }
 function riskBadgeHTML(score) {
     if (score === null || score === undefined) return '';
     var lbl = score<=20?'Très faible':score<=40?'Faible':score<=60?'Modéré':score<=80?'Élevé':'Très élevé';
-    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.65rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:20px;background:transparent;color:#6a9bbf;border:1px solid #1a2a3a;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.65rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:999px;background:transparent;color:#6a9bbf;border:1px solid #1a2a3a;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
@@ -1086,7 +799,7 @@ window.addEventListener('load', function(){
     var allEnvs=ALL_ASSETS.map(function(a){return a.envelope;}).filter(function(e){return e;});
     var valid=(saved==='all'||allEnvs.indexOf(saved)!==-1)?saved:'all';
     applyEnvFilter(valid);
-    setTimeout(function(){updateEvolutionChart(valid);},200);
+    setTimeout(function(){updateEvolutionChart(valid);},300);
 });
 </script>
 {% endblock %}

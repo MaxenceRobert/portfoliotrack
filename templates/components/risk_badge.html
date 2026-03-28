@@ -5,6 +5,6 @@
 {% elif score <= 60 %}{% set lbl = 'Modéré' %}{% set col = '#F6C90E' %}{% set bg = 'rgba(246,201,14,0.10)' %}{% set brd = 'rgba(246,201,14,0.22)' %}
 {% elif score <= 80 %}{% set lbl = 'Élevé' %}{% set col = '#F97316' %}{% set bg = 'rgba(249,115,22,0.10)' %}{% set brd = 'rgba(249,115,22,0.28)' %}
 {% else %}{% set lbl = 'Très élevé' %}{% set col = '#F87171' %}{% set bg = 'rgba(248,113,113,0.10)' %}{% set brd = 'rgba(248,113,113,0.28)' %}
-{% endif %}<span data-tooltip="Score calculé sur la volatilité, le drawdown max et le beta sur 3 ans." style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:{{ bg }};color:{{ col }};border:1px solid {{ brd }};white-space:nowrap;line-height:1.5;letter-spacing:0.01em;cursor:default;">{{ lbl }}&thinsp;·&thinsp;{{ score }}</span>
+{% endif %}<span data-tooltip="Score calculé sur la volatilité, le drawdown max et le beta sur 3 ans." style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.52rem;border-radius:999px;background:{{ bg }};color:{{ col }};border:1px solid {{ brd }};white-space:nowrap;line-height:1.5;letter-spacing:0.01em;cursor:default;">{{ lbl }}&thinsp;·&thinsp;{{ score }}</span>
 {% endif %}
 {% endmacro %}
