@@ -442,7 +442,7 @@ table.dash-assets thead th.num { text-align: right; }
                 {% for a in assets_list %}
                     {% if not a.fully_sold %}
                     <div style="display:flex; align-items:center; gap:4px; padding:2px 0; border-bottom:1px solid #0a1428;">
-                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.55rem; padding:0 4px; flex-shrink:0;">{{ a.ticker }}</span>
+                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.55rem; padding:0 4px; flex-shrink:0;">{{ a.ticker or '—' }}</span>
                         <span style="color:#4a7a9b; font-size:9px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.name|truncate(14, true, '') }}</span>
                         <span style="font-size:9px; font-weight:700; color:{{ '#4ade80' if a.unrealized_pct >= 0 else '#f87171' }}; flex-shrink:0;">{{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%</span>
                     </div>
@@ -528,7 +528,7 @@ table.dash-assets thead th.num { text-align: right; }
         {% for assets_list in summary.by_type.values() %}
             {% for a in assets_list %}
                 {% if not a.fully_sold and a.current_value > 0 %}
-                    {% set ri = risk_data.get(a.ticker) %}
+                    {% set ri = risk_data.get(a.ticker if a.ticker else '__noticker_' ~ a.asset_id) %}
                     {% if ri and ri.volatilite %}
                         {% set wv.s = wv.s + (ri.volatilite | float) * a.current_value %}
                         {% set wv.t = wv.t + a.current_value %}
@@ -621,7 +621,8 @@ table.dash-assets thead th.num { text-align: right; }
                 {% for asset_type, assets in summary.by_type.items() %}
                 {% for a in assets %}
                 {% if not a.fully_sold %}
-                {% set ri = risk_data.get(a.ticker) %}
+                {% set ri_key = a.ticker if a.ticker else '__noticker_' ~ a.asset_id %}
+                {% set ri = risk_data.get(ri_key) %}
                 {% set rs = ri.score if ri else none %}
                 {% set env = a.envelope or '' %}
                 {% if env == 'PEA' %}{% set env_cls = 'env-pea' %}
@@ -638,7 +639,11 @@ table.dash-assets thead th.num { text-align: right; }
                     style="border-left-color:{{ risk_color }};"
                     onclick="toggleAssetRow('detail-{{ a.asset_id }}')">
                     <td style="white-space:nowrap;">
+                        {% if a.ticker %}
                         <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.65rem;">{{ a.ticker }}</span>
+                        {% else %}
+                        <span class="badge badge-other" style="font-size:0.65rem; opacity:0.5;">—</span>
+                        {% endif %}
                         <span style="color:#e8f0ff; font-size:0.78rem; margin-left:6px;">{{ a.name|truncate(24, true, '') }}</span>
                     </td>
                     <td style="white-space:nowrap;">
@@ -669,7 +674,7 @@ table.dash-assets thead th.num { text-align: right; }
                             <div style="margin-left:auto; display:flex; gap:6px; align-items:center; flex-shrink:0;">
                                 <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm" style="font-size:0.65rem; padding:2px 8px;">+ Achat</a>
                                 <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm" style="font-size:0.65rem; padding:2px 8px;">− Vente</a>
-                                <a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}" class="btn btn-ghost btn-sm" style="font-size:0.65rem; padding:2px 8px;">Explorer</a>
+                                {% if a.ticker %}<a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}" class="btn btn-ghost btn-sm" style="font-size:0.65rem; padding:2px 8px;">Explorer</a>{% endif %}
                                 <form method="POST" action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
                                       onsubmit="return confirm('Supprimer {{ a.name }} ?')" style="display:inline;">
                                     <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.65rem; padding:2px 8px;">Supprimer</button>

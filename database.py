@@ -53,10 +53,16 @@ def init_db():
                 asset_type  TEXT    NOT NULL DEFAULT 'ETF',
                 currency    TEXT    NOT NULL DEFAULT 'EUR',
                 workspace   TEXT    DEFAULT 'perso',
+                taux_fixe   REAL    DEFAULT NULL,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE(user_id, ticker)
             )
         ''')
+        # Migration : ajout colonne taux_fixe si absente
+        try:
+            c.execute('ALTER TABLE assets ADD COLUMN IF NOT EXISTS taux_fixe REAL DEFAULT NULL')
+        except Exception:
+            pass
         c.execute('''
             CREATE TABLE IF NOT EXISTS alternative_assets (
                 id                SERIAL PRIMARY KEY,
@@ -197,15 +203,20 @@ def init_db():
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id     INTEGER NOT NULL,
                 isin        TEXT,
-                ticker      TEXT    NOT NULL,
+                ticker      TEXT,
                 name        TEXT    NOT NULL,
                 asset_type  TEXT    NOT NULL DEFAULT 'ETF',
                 currency    TEXT    NOT NULL DEFAULT 'EUR',
                 workspace   TEXT    DEFAULT 'perso',
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                UNIQUE(user_id, ticker)
+                taux_fixe   REAL    DEFAULT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
+        # Migration SQLite : ajout colonne taux_fixe si absente
+        try:
+            c.execute('ALTER TABLE assets ADD COLUMN taux_fixe REAL DEFAULT NULL')
+        except Exception:
+            pass
         c.execute('''
             CREATE TABLE IF NOT EXISTS alternative_assets (
                 id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -575,16 +586,17 @@ def set_onboarding_completed(user_id):
     conn.commit()
     conn.close()
 
-def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope='', workspace='perso'):
+def add_asset(user_id, ticker, name, asset_type, currency, isin='', envelope='', workspace='perso', taux_fixe=None):
     p = placeholder()
     conn = get_db()
     try:
         c = conn.cursor()
+        ticker_val = ticker.upper() if ticker and ticker.strip() else None
         c.execute(
-            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency, envelope, workspace)
-               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})''',
-            (user_id, isin.upper() if isin else '', ticker.upper(), name, asset_type,
-             currency.upper(), envelope or None, workspace or 'perso')
+            f'''INSERT INTO assets (user_id, isin, ticker, name, asset_type, currency, envelope, workspace, taux_fixe)
+               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})''',
+            (user_id, isin.upper() if isin else '', ticker_val, name, asset_type,
+             currency.upper(), envelope or None, workspace or 'perso', taux_fixe)
         )
         conn.commit()
         return True
@@ -1470,6 +1482,11 @@ def populate_asset_catalog():
         ('LTC-USD','Litecoin','Crypto','Monde','Layer 1','Fork Bitcoin rapide','USD'),
         ('BCH-USD','Bitcoin Cash','Crypto','Monde','Layer 1','Fork Bitcoin','USD'),
         ('ATOM-USD','Cosmos','Crypto','Monde','Layer 0','Écosystème de blockchains interopérables','USD'),
+        # ÉPARGNE RÉGLEMENTÉE (sans ticker)
+        ('__LIVRET_A','Livret A','Épargne','France','Livret réglementé','Livret réglementé 3.0%/an — sans ticker','EUR'),
+        ('__LDDS','LDDS — Livret Développement Durable','Épargne','France','Livret réglementé','Livret réglementé 3.0%/an — sans ticker','EUR'),
+        ('__LEP','LEP — Livret Épargne Populaire','Épargne','France','Livret réglementé','Livret réglementé 4.0%/an — sans ticker','EUR'),
+        ('__FONDS_EUROS','Fonds euros assurance vie','Épargne','France','Fonds euros','Fonds euros assurance vie ~2.5%/an — sans ticker','EUR'),
         # INDICES
         ('^GSPC','S&P 500 Index','Indice','USA','Grands indices','Indice S&P 500 des 500 grandes caps US','USD'),
         ('^IXIC','NASDAQ Composite','Indice','USA','Grands indices','Indice composite NASDAQ','USD'),

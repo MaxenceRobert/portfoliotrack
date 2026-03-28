@@ -113,11 +113,13 @@ def calc_asset_stats(asset, purchases, sales):
         return {
             'asset_id':        asset['id'],
             'isin':            asset['isin'],
-            'ticker':          asset['ticker'],
+            'ticker':          asset.get('ticker') or '',
             'name':            asset['name'],
             'currency':        asset['currency'],
             'asset_type':      asset['asset_type'],
             'envelope':        asset.get('envelope') or '',
+            'workspace':       asset.get('workspace') or 'perso',
+            'taux_fixe':       asset.get('taux_fixe'),
             'shares_held':     0,
             'total_invested':  round(total_invested, 2),
             'total_fees':      round(total_fees + total_fees_sales, 2),
@@ -130,7 +132,45 @@ def calc_asset_stats(asset, purchases, sales):
             'fully_sold':      True,
         }
 
-    current_price, price_timestamp = get_current_price_with_timestamp(asset['ticker'])
+    # ── Actifs sans ticker (livrets, fonds euros) ─────────────────────────────
+    ticker = asset.get('ticker') or ''
+    if not ticker.strip():
+        taux = float(asset.get('taux_fixe') or 0)
+        current_value   = invested_held
+        # Performance = taux annuel appliqué au capital (gain théorique annuel)
+        unrealized_gain = round(invested_held * taux / 100, 2)
+        unrealized_pct  = round(taux, 2)
+        divs               = get_dividends_by_asset(asset['id'], asset['user_id'])
+        dividends_received = round(sum(d['amount'] for d in divs), 2)
+        total_return       = round(unrealized_gain + realized_gain + dividends_received, 2)
+        total_return_pct   = round((total_return / total_invested) * 100, 2) if total_invested else 0
+        return {
+            'asset_id':           asset['id'],
+            'isin':               asset.get('isin') or '',
+            'ticker':             '',
+            'name':               asset['name'],
+            'currency':           asset['currency'],
+            'asset_type':         asset['asset_type'],
+            'envelope':           asset.get('envelope') or '',
+            'workspace':          asset.get('workspace') or 'perso',
+            'taux_fixe':          taux,
+            'shares_held':        shares_held,
+            'total_invested':     round(total_invested, 2),
+            'total_fees':         round(total_fees + total_fees_sales, 2),
+            'avg_price':          round(avg_price, 4),
+            'current_price':      None,
+            'price_timestamp':    None,
+            'current_value':      current_value,
+            'unrealized_gain':    unrealized_gain,
+            'unrealized_pct':     unrealized_pct,
+            'realized_gain':      realized_gain,
+            'dividends_received': dividends_received,
+            'total_return':       total_return,
+            'total_return_pct':   total_return_pct,
+            'fully_sold':         False,
+        }
+
+    current_price, price_timestamp = get_current_price_with_timestamp(ticker)
     if current_price is None:
         return None
 
@@ -145,12 +185,14 @@ def calc_asset_stats(asset, purchases, sales):
 
     return {
         'asset_id':           asset['id'],
-        'isin':               asset['isin'],
-        'ticker':             asset['ticker'],
+        'isin':               asset.get('isin') or '',
+        'ticker':             ticker,
         'name':               asset['name'],
         'currency':           asset['currency'],
         'asset_type':         asset['asset_type'],
         'envelope':           asset.get('envelope') or '',
+        'workspace':          asset.get('workspace') or 'perso',
+        'taux_fixe':          asset.get('taux_fixe'),
         'shares_held':        shares_held,
         'total_invested':     round(total_invested, 2),
         'total_fees':         round(total_fees + total_fees_sales, 2),

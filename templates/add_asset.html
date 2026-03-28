@@ -4,16 +4,33 @@
 <div class="page-header">
     <div>
         <h1>Ajouter un actif</h1>
-        <p>ETF, action, crypto — tout actif disponible sur Yahoo Finance.</p>
+        <p>ETF, action, crypto — ou actif sans cours (livret, fonds euros).</p>
     </div>
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">← Retour</a>
 </div>
 
 <div class="card form-card">
-    <form method="POST">
+    <form method="POST" id="add-asset-form">
+        <input type="hidden" name="no_ticker" id="no_ticker_input" value="0">
 
-        <!-- Recherche autocomplete -->
-        <div class="form-group">
+        <!-- Toggle actif sans cours -->
+        <div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(74,122,155,0.06); border:1px solid rgba(74,122,155,0.12); border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+            <div>
+                <div style="font-size:0.85rem; font-weight:600; color:var(--text);">Actif sans cours en temps réel</div>
+                <div style="font-size:0.75rem; color:var(--text-label); margin-top:2px;">Livret A, LDDS, LEP, fonds euros assurance vie…</div>
+            </div>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none;">
+                <div id="toggle-track" onclick="toggleNoTicker()"
+                     style="width:40px; height:22px; background:#1a2a3a; border-radius:99px; position:relative; transition:background 0.2s; cursor:pointer; flex-shrink:0;">
+                    <div id="toggle-thumb"
+                         style="width:16px; height:16px; background:#4a7a9b; border-radius:50%; position:absolute; top:3px; left:3px; transition:left 0.2s, background 0.2s;"></div>
+                </div>
+                <span id="toggle-label" style="font-size:0.8rem; color:var(--text-label);">Désactivé</span>
+            </label>
+        </div>
+
+        <!-- Recherche autocomplete (masquée si no_ticker) -->
+        <div id="search-block" class="form-group">
             <label>Rechercher un actif</label>
             <div style="position:relative;">
                 <input type="text" id="search-input"
@@ -37,7 +54,7 @@
         </div>
 
         <hr style="border:none; border-top:1px solid rgba(74,122,155,0.09); margin:1.25rem 0;">
-        <div style="font-size:0.78rem; color:rgba(232,240,255,0.30); margin-bottom:1rem;">
+        <div style="font-size:0.78rem; color:rgba(232,240,255,0.30); margin-bottom:1rem;" id="manual-label">
             Ou remplis manuellement :
         </div>
 
@@ -47,6 +64,7 @@
                 {% for t in asset_types %}
                 <option value="{{ t }}" {{ 'selected' if t == asset_type_prefill }}>{{ t }}</option>
                 {% endfor %}
+                <option value="Épargne">Épargne réglementée</option>
             </select>
         </div>
 
@@ -54,13 +72,14 @@
             <label for="name">Nom</label>
             <input type="text" id="name" name="name" required
                    value="{{ name_prefill }}"
-                   placeholder="ex: Apple Inc. / iShares Core MSCI World">
+                   placeholder="ex: Livret A — Banque Postale / iShares Core MSCI World">
         </div>
 
-        <div class="form-row">
+        <!-- Ticker Yahoo Finance (masqué si no_ticker) -->
+        <div id="ticker-block" class="form-row">
             <div class="form-group">
                 <label for="ticker">Ticker Yahoo Finance</label>
-                <input type="text" id="ticker" name="ticker" required
+                <input type="text" id="ticker" name="ticker"
                        value="{{ ticker_prefill }}"
                        placeholder="ex: AAPL / IWDA.AS / BTC-USD"
                        style="text-transform:uppercase;">
@@ -74,6 +93,15 @@
                     <option value="CHF" {{ 'selected' if currency_prefill == 'CHF' }}>CHF — Franc suisse</option>
                 </select>
             </div>
+        </div>
+
+        <!-- Taux annuel (visible uniquement si no_ticker) -->
+        <div id="taux-block" style="display:none;" class="form-group">
+            <label for="taux_fixe">Taux annuel (%)</label>
+            <input type="number" id="taux_fixe" name="taux_fixe"
+                   value="3.0" min="0" max="100" step="0.1"
+                   placeholder="ex: 3.0">
+            <div class="form-hint">Rendement annuel brut appliqué au capital investi pour estimer la performance.</div>
         </div>
 
         <div class="form-group">
@@ -115,7 +143,68 @@
     </form>
 </div>
 
+<!-- Présélection rapide pour livrets -->
+<div id="livret-presets" style="display:none; margin-top:1rem;">
+    <div style="font-size:0.75rem; color:var(--text-label); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Présélections rapides</div>
+    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('Livret A', 3.0, 'Livret A')">Livret A (3%)</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('LDDS', 3.0, 'LDDS')">LDDS (3%)</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('LEP', 4.0, 'LEP')">LEP (4%)</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('Fonds euros', 2.5, 'Assurance Vie')">Fonds euros (2.5%)</button>
+    </div>
+</div>
+
 <script>
+let noTickerMode = false;
+
+function toggleNoTicker() {
+    noTickerMode = !noTickerMode;
+    document.getElementById('no_ticker_input').value = noTickerMode ? '1' : '0';
+
+    const track  = document.getElementById('toggle-track');
+    const thumb  = document.getElementById('toggle-thumb');
+    const label  = document.getElementById('toggle-label');
+
+    if (noTickerMode) {
+        track.style.background  = '#4ade80';
+        thumb.style.left        = '21px';
+        thumb.style.background  = '#04080f';
+        label.textContent       = 'Activé';
+        document.getElementById('search-block').style.display   = 'none';
+        document.getElementById('ticker-block').style.display   = 'none';
+        document.getElementById('taux-block').style.display     = '';
+        document.getElementById('livret-presets').style.display = '';
+        document.getElementById('ticker').removeAttribute('required');
+        document.getElementById('manual-label').style.display   = 'none';
+    } else {
+        track.style.background  = '#1a2a3a';
+        thumb.style.left        = '3px';
+        thumb.style.background  = '#4a7a9b';
+        label.textContent       = 'Désactivé';
+        document.getElementById('search-block').style.display   = '';
+        document.getElementById('ticker-block').style.display   = '';
+        document.getElementById('taux-block').style.display     = 'none';
+        document.getElementById('livret-presets').style.display = 'none';
+        document.getElementById('manual-label').style.display   = '';
+    }
+}
+
+function presetLivret(name, taux, envelope) {
+    document.getElementById('name').value    = name;
+    document.getElementById('taux_fixe').value = taux;
+    // Sélectionner l'enveloppe correspondante
+    const envSel = document.getElementById('envelope');
+    for (let opt of envSel.options) {
+        if (opt.value === envelope) { opt.selected = true; break; }
+    }
+    // Sélectionner type Épargne
+    const typeSel = document.getElementById('asset_type');
+    for (let opt of typeSel.options) {
+        if (opt.value === 'Épargne') { opt.selected = true; break; }
+    }
+}
+
+// ── Recherche autocomplete ──────────────────────────────────────────────────
 let searchTimeout = null;
 
 document.getElementById('search-input').addEventListener('input', function() {
@@ -172,8 +261,8 @@ function showSuggestions(results) {
 }
 
 function selectAsset(r) {
-    document.getElementById('ticker').value   = r.ticker;
-    document.getElementById('name').value     = r.name;
+    document.getElementById('ticker').value       = r.ticker;
+    document.getElementById('name').value         = r.name;
     document.getElementById('search-input').value = r.name + ' (' + r.ticker + ')';
 
     const currencyMap = {'EUR': 0, 'USD': 1, 'GBP': 2, 'CHF': 3};

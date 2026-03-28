@@ -61,20 +61,46 @@ def get_risk_score(ticker, asset_type='Autre'):
     Score de risque 0-100 basé sur 5 métriques pondérées.
 
     Métriques et pondérations :
-      - Volatilité annualisée    30%
+      - Volatilité annualisée    35%
       - Max Drawdown 3 ans       25%
       - Beta vs IWDA.AS (hebdo)  20%
-      - Sharpe Ratio inversé     15%
-      - VaR 95% annualisée       10%
+      - Sharpe Ratio inversé      5%
+      - VaR 95% annualisée       15%
 
     Cache DB 24h. Fallback sur score par défaut si données insuffisantes.
+    ETF leviers : scores hardcodés ou multiplicateur 1.8.
     """
     import datetime as _dt
     import re
 
+    # Actifs sans ticker → pas de calcul
+    if not ticker or not ticker.strip():
+        return {'score': 8, 'volatilite': None, 'drawdown': None, 'beta': None,
+                'sharpe': None, 'var_95': None, 'source': 'default_no_ticker'}
+
     cached = get_cached_risk_score(ticker)
     if cached:
         return cached
+
+    # ── ETF Leviers : scores hardcodés ───────────────────────────────────────
+    LEVER_HARDCODED = {
+        'LWLD': 78, 'LQQ': 82, 'CL2': 80, 'UST': 75,
+        '3USL': 88, 'TPXL': 76, '2BTC': 90, 'DBXS': 79, 'LCWD': 78,
+    }
+    ticker_base = ticker.split('.')[0].upper()
+    if ticker_base in LEVER_HARDCODED:
+        result = {
+            'score':      LEVER_HARDCODED[ticker_base],
+            'volatilite': None, 'drawdown': None, 'beta': None,
+            'sharpe':     None, 'var_95':   None,
+            'source':     'hardcoded_leverage',
+        }
+        save_risk_score(ticker, result)
+        return result
+
+    # ── Détection pattern levier ──────────────────────────────────────────────
+    _LEVER_RE = r'(?i)(2x|x2|leverage|levier|lw[a-z]|lqq|cl2|3x|x3|3us[a-z]?)'
+    is_leveraged = bool(re.search(_LEVER_RE, ticker))
 
     # ── Correspondances type d'actif ─────────────────────────────────────────
     TYPE_MAP = {
@@ -169,7 +195,8 @@ def get_risk_score(ticker, asset_type='Autre'):
             progress=False, auto_adjust=True,
         )
 
-        if hist.empty or len(hist) < 60:
+        if hist.empty or len(hist) < 100:
+            print(f"[risk_score] Données insuffisantes pour {ticker}, score par défaut utilisé")
             raise ValueError(f"Données insuffisantes ({len(hist)} jours)")
 
         fallback_period = False
@@ -179,7 +206,8 @@ def get_risk_score(ticker, asset_type='Autre'):
                 ticker, start=start_1y.isoformat(), end=end.isoformat(),
                 progress=False, auto_adjust=True,
             )
-            if hist.empty or len(hist) < 60:
+            if hist.empty or len(hist) < 100:
+                print(f"[risk_score] Données insuffisantes pour {ticker}, score par défaut utilisé")
                 raise ValueError("Données insuffisantes même sur 1 an")
             fallback_period = True
 
@@ -258,6 +286,10 @@ def get_risk_score(ticker, asset_type='Autre'):
             var_score    * 0.15
         )
         score = max(0, min(100, score))
+
+        # ── Multiplicateur levier ─────────────────────────────────────────────
+        if is_leveraged:
+            score = max(70, min(100, round(score * 1.8)))
 
         beta_display = f"{beta:.2f}" if effective_beta == beta else f"{beta:.2f}→eff={effective_beta:.2f}"
         print(
@@ -359,9 +391,18 @@ def dashboard():
     for assets_list in summary.get('by_type', {}).values():
         for a in assets_list:
             if not a.get('fully_sold', False):
-                ticker = a.get('ticker', '')
+                ticker = a.get('ticker', '') or ''
                 if ticker and ticker not in risk_data:
                     risk_data[ticker] = get_risk_score(ticker, a.get('asset_type', 'Autre'))
+                elif not ticker:
+                    # Actif sans ticker : score par défaut selon enveloppe
+                    env = a.get('envelope') or ''
+                    default_s = _NOTICKER_ENV_SCORES.get(env, 8)
+                    risk_data[f'__noticker_{a["asset_id"]}'] = {
+                        'score': default_s, 'volatilite': None, 'drawdown': None,
+                        'beta': None, 'sharpe': None, 'var_95': None, 'source': 'default_no_ticker',
+                    }
+                    ticker = f'__noticker_{a["asset_id"]}'
                 val = float(a.get('current_value') or 0)
                 if val > 0 and ticker in risk_data:
                     weighted_risk_sum += risk_data[ticker]['score'] * val
@@ -422,7 +463,9 @@ def dashboard():
     for assets_list in summary.get('by_type', {}).values():
         for a in assets_list:
             if not a.get('fully_sold', False):
-                ri = risk_data.get(a.get('ticker', '')) or {}
+                _t = a.get('ticker', '') or ''
+                _rk = _t if _t else f'__noticker_{a["asset_id"]}'
+                ri = risk_data.get(_rk) or {}
                 all_assets_json.append({
                     'asset_id':           a['asset_id'],
                     'ticker':             a['ticker'],
@@ -471,7 +514,9 @@ def dashboard():
     for assets_list in summary.get('by_type', {}).values():
         for a in assets_list:
             if not a.get('fully_sold', False) and float(a.get('current_value') or 0) > 0:
-                ri = risk_data.get(a.get('ticker', '')) or {}
+                _t = a.get('ticker', '') or ''
+                _rk = _t if _t else f'__noticker_{a["asset_id"]}'
+                ri = risk_data.get(_rk) or {}
                 score = ri.get('score')
                 if score is not None:
                     _risk_candidates.append({
@@ -640,30 +685,50 @@ def charts():
 
     return render_template('charts.html', charts=charts, portfolio_chart=portfolio_chart)
 
+# ── Score de risque par défaut selon enveloppe (actifs sans ticker) ───────────
+_NOTICKER_ENV_SCORES = {
+    'Livret A': 5, 'LDDS': 5, 'LEP': 4,
+    'Assurance Vie': 7, 'PER': 15,
+}
+
 # ── Ajouter un actif ──────────────────────────────────────────────────────────
 @main_bp.route('/assets/add', methods=['GET', 'POST'])
 @login_required
 def add_asset_route():
     if request.method == 'POST':
-        ticker     = request.form['ticker'].strip().upper()
+        no_ticker  = request.form.get('no_ticker') == '1'
+        ticker     = request.form.get('ticker', '').strip().upper()
         name       = request.form['name'].strip()
         asset_type = request.form['asset_type']
-        currency   = request.form['currency'].strip().upper()
+        currency   = request.form.get('currency', 'EUR').strip().upper()
         isin       = request.form.get('isin', '').strip().upper()
         envelope   = request.form.get('envelope', '').strip()
         workspace  = request.form.get('workspace', 'perso').strip()
+        taux_fixe  = None
+        flash_msg  = None
 
-        price = get_current_price(ticker)
-        if price is None:
-            flash(f'Ticker "{ticker}" introuvable sur Yahoo Finance.', 'error')
-            return redirect(url_for('main.add_asset_route'))
+        if no_ticker or not ticker:
+            # Actif sans cours en temps réel
+            ticker = ''
+            try:
+                taux_fixe = float(request.form.get('taux_fixe', '3.0') or 3.0)
+            except (ValueError, TypeError):
+                taux_fixe = 3.0
+            flash_msg = f'{name} ajouté ✓ (taux fixe : {taux_fixe}%/an)'
+        else:
+            price = get_current_price(ticker)
+            if price is None:
+                flash(f'Ticker "{ticker}" introuvable sur Yahoo Finance.', 'error')
+                return redirect(url_for('main.add_asset_route'))
+            flash_msg = f'{name} ajouté ✓ (prix actuel : {price} {currency})'
 
-        success = add_asset(current_user.id, ticker, name, asset_type, currency, isin, envelope, workspace)
+        success = add_asset(current_user.id, ticker, name, asset_type, currency,
+                            isin, envelope, workspace, taux_fixe=taux_fixe)
         if not success:
-            flash('Ce ticker est déjà dans ton portefeuille.', 'error')
+            flash('Cet actif est déjà dans ton portefeuille.', 'error')
             return redirect(url_for('main.add_asset_route'))
 
-        flash(f'{name} ajouté ✓ (prix actuel : {price} {currency})', 'success')
+        flash(flash_msg, 'success')
         return redirect(url_for('main.dashboard'))
 
     ticker_prefill     = request.args.get('ticker', '')
