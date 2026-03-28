@@ -1,16 +1,423 @@
 {% extends 'base.html' %}
 {% from 'components/risk_badge.html' import risk_badge %}
 {% block title %}Dashboard — PortfolioTrack{% endblock %}
-{% block content_area_class %} dash-area{% endblock %}
-{% block content_container_class %} dash-container{% endblock %}
 {% block content %}
+<style>
+.content-area { padding: 0 !important; overflow: hidden; background: #04080f; }
+.content-container { max-width: none !important; margin: 0 !important; padding: 0 !important; background: #04080f; }
+
+/* ══ Main container ══ */
+.dash-main {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--header-h));
+    overflow: hidden;
+}
+
+/* ══ ZONE HAUTE ══ */
+.dash-top {
+    display: grid;
+    grid-template-columns: 200px 1fr 180px;
+    gap: 10px;
+    height: 180px;
+    flex-shrink: 0;
+    padding: 12px 16px;
+}
+.dash-val-card {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+.dash-coh-card {
+    background: #070d18;
+    border: 2px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 14px;
+    overflow: hidden;
+    min-height: 0;
+}
+.dash-risk-card {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 14px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ══ ZONE KPIs ══ */
+.dash-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    height: 60px;
+    flex-shrink: 0;
+    padding: 0 16px;
+}
+.dash-kpi-card {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-top: 2px solid #0a1428;
+    border-radius: 8px;
+    padding: 8px 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+}
+
+/* ══ ZONE BASSE ══ */
+.dash-bottom {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    grid-template-rows: 1fr;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+    padding: 8px 16px 12px;
+    min-height: 0;
+}
+
+/* Colonne gauche — table + évolution */
+.dash-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Table actifs */
+.dash-table-wrap {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* Évolution du capital */
+.dash-evolution-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px 10px 4px;
+    flex: 1;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+}
+.dash-table-scroll {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+.dash-table-scroll::-webkit-scrollbar { width: 3px; }
+.dash-table-scroll::-webkit-scrollbar-thumb { background: #0a1428; border-radius: 99px; }
+table.dash-assets {
+    width: 100%;
+    border-collapse: collapse;
+}
+table.dash-assets thead th {
+    position: sticky;
+    top: 0;
+    font-size: 8px;
+    color: #2a5a7a;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 7px 12px;
+    background: #020509;
+    border-bottom: 1px solid #0a1428;
+    text-align: left;
+    z-index: 2;
+}
+table.dash-assets thead th.num { text-align: right; }
+.dash-asset-tr {
+    border-left: 3px solid #1a2a3a;
+    border-bottom: 1px solid #070d18;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.dash-asset-tr:hover { background: #0a1428; }
+.dash-asset-tr td {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+}
+.dash-asset-tr td.num { text-align: right; }
+.dash-detail-tr td {
+    padding: 8px 16px;
+    background: #020509;
+    border-bottom: 1px solid #0a1428;
+    border-left: 3px solid transparent;
+    font-size: 0.75rem;
+}
+
+/* Right col */
+.dash-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    min-height: 0;
+}
+.dash-right-col::-webkit-scrollbar { width: 3px; }
+.dash-right-col::-webkit-scrollbar-thumb { background: #0a1428; border-radius: 99px; }
+.dash-alloc-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px;
+    flex: none;
+    height: 160px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.dash-dca-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px;
+    flex-shrink: 0;
+}
+.dash-gain-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px;
+    flex-shrink: 0;
+}
+
+/* Performance chart block */
+.dash-perf-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px 10px 6px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Composition par type */
+.dash-type-block {
+    background: #070d18;
+    border: 1px solid #0a1428;
+    border-radius: 10px;
+    padding: 10px;
+    flex-shrink: 0;
+}
+
+/* Micro label */
+.micro-label {
+    font-size: 8px;
+    color: #2a5a7a;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+}
+
+/* Env badges */
+.env-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 0.08rem 0.38rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+.env-pea,.env-peapme,.env-cto,.env-av,.env-per,.env-livret,.env-autre {
+    background: transparent; color: #6a9bbf; border: 1px solid #1a2a3a;
+}
+
+/* Coherence gauge */
+.coh-gauge-outer {
+    background: rgba(74,122,155,0.07);
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.coh-gauge-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+}
+.coh-gauge-high { background: #4ade80; }
+.coh-gauge-med  { background: #f59e0b; }
+.coh-gauge-low  { background: #f87171; }
+
+/* Plafond bar */
+.plafond-block {
+    padding: 4px 16px;
+    flex-shrink: 0;
+    display: none;
+}
+.plafond-bar-outer {
+    background: rgba(74,122,155,0.06);
+    border-radius: 99px;
+    height: 3px;
+    overflow: hidden;
+    margin-top: 3px;
+}
+.plafond-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #6a9bbf;
+    transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Demo banner */
+.demo-banner {
+    background: rgba(74,122,155,0.08);
+    border-bottom: 1px solid rgba(74,122,155,0.2);
+    padding: 0.55rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+/* Modal */
+.env-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(4,8,15,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+}
+.env-modal-overlay.open { display: flex; }
+.env-modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 24px 64px rgba(4,8,15,0.85);
+}
+.env-modal-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+.env-modal-sub   { font-size: 0.78rem; color: #3d6b8f; margin-bottom: 1.1rem; }
+.env-modal-select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.875rem;
+    padding: 0.55rem 0.75rem;
+    margin-bottom: 1rem;
+    outline: none;
+}
+.env-modal-select:focus { border-color: #3d6b8f; }
+.env-modal-select option { background: var(--bg-card); }
+.env-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+/* ── Tablette 769–1024 ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .dash-top { grid-template-columns: 1fr 1fr; height: auto; min-height: 160px; }
+    .dash-coh-card { order: -1; grid-column: 1 / -1; }
+    .dash-kpis { grid-template-columns: repeat(3, 1fr); height: auto; }
+    .dash-bottom { grid-template-columns: 1fr 200px; }
+}
+
+/* ── Mobile < 768 ── */
+@media (max-width: 768px) {
+    .dash-main { overflow-y: auto; height: auto; }
+
+    /* Zone haute : colonne unique, cohérence en premier */
+    .dash-top { grid-template-columns: 1fr; height: auto; padding: 8px; gap: 8px; }
+    .dash-coh-card { order: -1; }
+    .dash-val-card  { order: 0; }
+    .dash-risk-card { order: 1; }
+
+    /* ── Cohérence card : réorganisation mobile ── */
+    /* Ligne intérieure : wrap pour que le % passe en dessous */
+    .dash-coh-card > div:nth-child(2) {
+        flex-wrap: wrap !important;
+        gap: 8px 12px;
+        align-items: center;
+    }
+    /* Les deux blocs scores se partagent la largeur */
+    .dash-coh-card > div:nth-child(2) > div:nth-child(1),
+    .dash-coh-card > div:nth-child(2) > div:nth-child(3) {
+        flex: 1;
+        min-width: 0;
+    }
+    /* Scores : police réduite */
+    .dash-coh-card > div:nth-child(2) > div:nth-child(1) > div[style*="52px"],
+    .dash-coh-card > div:nth-child(2) > div:nth-child(3) > div[style*="52px"] {
+        font-size: 36px !important;
+    }
+    /* Bloc % cohérence : pleine largeur, centré, en dessous */
+    .dash-coh-card > div:nth-child(2) > div:last-child {
+        width: 100%;
+        text-align: center !important;
+        margin-left: 0 !important;
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px solid #0a1428;
+    }
+    /* Taille du % */
+    .dash-coh-card > div:nth-child(2) > div:last-child > div:first-child {
+        font-size: 32px !important;
+    }
+
+    /* KPIs : 2 colonnes */
+    .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; padding: 0 8px; }
+
+    /* Zone basse : colonne, droite entre table et évolution */
+    .dash-bottom {
+        display: flex;
+        flex-direction: column;
+        overflow-y: visible;
+        height: auto;
+        padding: 0 8px 8px;
+        gap: 8px;
+    }
+    .dash-left-col { display: contents; }   /* enfants participent au flex de dash-bottom */
+    .dash-table-wrap { order: 1; flex-shrink: 0; overflow-x: auto; }
+    .dash-table-scroll { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+    .dash-right-col { order: 2; overflow: visible; display: flex; flex-direction: column; gap: 8px; }
+    .dash-evolution-block { order: 3; height: 180px; flex: none; }
+
+    .dash-alloc-block { min-height: 180px; flex: none; height: auto; }
+    .dash-gain-block, .dash-dca-block, .dash-type-block { flex-shrink: 0; }
+    table.dash-assets { white-space: nowrap; }
+}
+@media (max-width: 480px) {
+    .dash-top { padding: 6px; gap: 6px; }
+    .dash-kpis { grid-template-columns: 1fr 1fr; }
+    .dash-bottom { padding: 0 6px 6px; }
+}
+</style>
 
 {% if is_demo %}
 <div class="demo-banner">
-    <span style="color:var(--text-muted);"><span style="color:var(--text); font-weight:600;">Mode démo</span> — données fictives, aucun vrai portefeuille.</span>
+    <span style="color:#6a9bbf;"><span style="color:#e8f0ff; font-weight:600;">Mode démo</span> — données fictives, aucun vrai portefeuille.</span>
     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-        <a href="{{ url_for('auth.register') }}" class="btn btn-ghost btn-sm">Créer un compte →</a>
-        <a href="{{ url_for('main.demo_logout') }}" style="color:var(--negative); font-weight:600; text-decoration:none; border:1px solid rgba(248,113,113,0.3); border-radius:4px; padding:0.2rem 0.55rem; font-size:0.72rem;">Quitter la démo</a>
+        <a href="{{ url_for('auth.register') }}" style="color:#e8f0ff; font-weight:600; text-decoration:none; border:1px solid #3d6b8f; border-radius:4px; padding:0.22rem 0.6rem; font-size:0.75rem;">Créer un compte →</a>
+        <a href="{{ url_for('main.demo_logout') }}" style="color:#f87171; font-weight:600; text-decoration:none; border:1px solid rgba(248,113,113,0.3); border-radius:4px; padding:0.22rem 0.6rem; font-size:0.75rem;">Quitter la démo</a>
     </div>
 </div>
 {% endif %}
@@ -20,22 +427,23 @@
 {# ══ ZONE HAUTE ══ #}
 <div class="dash-top">
 
-    {# Valeur totale #}
+    {# Colonne gauche — valeur totale + enveloppe #}
     <div class="dash-val-card">
         <div class="micro-label" style="margin-bottom:4px;">Portefeuille</div>
-        <div style="font-size:30px; font-weight:200; color:var(--text); line-height:1;" id="left-total-value">{{ summary.total_value }} €</div>
+        <div style="font-size:32px; font-weight:200; color:#e8f0ff; line-height:1;" id="left-total-value">{{ summary.total_value }} €</div>
         <div style="font-size:11px; font-weight:600; margin-top:4px; color:{{ '#4ade80' if summary.total_unrealized >= 0 else '#f87171' }};" id="left-total-perf">
             {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} € · {{ '+' if summary.unrealized_pct >= 0 else '' }}{{ summary.unrealized_pct }}%
         </div>
-        <div style="border-top:1px solid var(--border2); margin:7px 0;"></div>
-        <div style="color:var(--accent); font-size:12px;" id="left-invested-val">{{ summary.total_invested }} € <span style="font-size:10px; opacity:0.65;">investi</span></div>
-        <div style="flex:1; overflow-y:auto; min-height:0; margin:5px 0;" id="val-asset-list">
+        <div style="border-top:1px solid #0a1428; margin:8px 0;"></div>
+        <div style="color:#4a7a9b; font-size:13px;" id="left-invested-val">{{ summary.total_invested }} € <span style="font-size:10px; opacity:0.7;">investi</span></div>
+        {# Compact asset list #}
+        <div style="flex:1; overflow-y:auto; min-height:0; margin:6px 0;" id="val-asset-list">
             {% for assets_list in summary.by_type.values() %}
                 {% for a in assets_list %}
                     {% if not a.fully_sold %}
-                    <div style="display:flex; align-items:center; gap:4px; padding:2px 0; border-bottom:1px solid var(--border2);">
-                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.52rem; padding:0 3px; flex-shrink:0;">{{ a.ticker or '—' }}</span>
-                        <span style="color:var(--accent); font-size:9px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.name|truncate(14, true, '') }}</span>
+                    <div style="display:flex; align-items:center; gap:4px; padding:2px 0; border-bottom:1px solid #0a1428;">
+                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.55rem; padding:0 4px; flex-shrink:0;">{{ a.ticker or '—' }}</span>
+                        <span style="color:#4a7a9b; font-size:9px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.name|truncate(14, true, '') }}</span>
                         <span style="font-size:9px; font-weight:700; color:{{ '#4ade80' if a.unrealized_pct >= 0 else '#f87171' }}; flex-shrink:0;">{{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%</span>
                     </div>
                     {% endif %}
@@ -43,7 +451,7 @@
             {% endfor %}
         </div>
         <select id="env-filter-select"
-                style="background:var(--bg); border:1px solid var(--border2); border-radius:5px; font-size:11px; padding:3px 7px; width:100%; color:var(--text-muted); outline:none; cursor:pointer;"
+                style="background:#020509; border:1px solid #0a1428; border-radius:6px; font-size:11px; padding:4px 8px; width:100%; color:#6a9bbf; outline:none; cursor:pointer;"
                 onchange="applyEnvFilter(this.value)">
             <option value="all">Tout le portefeuille</option>
             {% set seen_envs = namespace(v=[]) %}
@@ -58,30 +466,30 @@
         </select>
     </div>
 
-    {# Cohérence #}
+    {# Colonne centrale — cohérence #}
     <div class="dash-coh-card">
         <div class="micro-label" style="margin-bottom:6px;">Cohérence Portefeuille / Profil</div>
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:nowrap;">
             <div style="text-align:center; flex-shrink:0;">
                 <div class="micro-label" style="margin-bottom:2px;">Score portefeuille</div>
-                <div style="font-size:50px; font-weight:200; color:var(--text); line-height:1;" id="coh-portfolio-score-num">{{ portfolio_risk_score if portfolio_risk_score is not none else '—' }}</div>
+                <div style="font-size:52px; font-weight:200; color:#e8f0ff; line-height:1;" id="coh-portfolio-score-num">{{ portfolio_risk_score if portfolio_risk_score is not none else '—' }}</div>
                 <div id="coh-portfolio-badge-wrap" style="margin-top:4px;">
                     {% if portfolio_risk_score is not none %}{{ risk_badge(portfolio_risk_score) }}{% endif %}
                 </div>
             </div>
-            <div style="color:var(--border); font-size:1rem; flex-shrink:0;">⇔</div>
+            <div style="color:#1a3a5f; font-size:1.1rem; flex-shrink:0;">⇔</div>
             <div style="text-align:center; flex-shrink:0;">
                 <div class="micro-label" style="margin-bottom:2px;">Score profil</div>
                 {% if last_profil %}
-                <div style="font-size:50px; font-weight:200; color:var(--text); line-height:1;">{{ profil_risk_score }}</div>
+                <div style="font-size:52px; font-weight:200; color:#e8f0ff; line-height:1;">{{ profil_risk_score }}</div>
                 {% else %}
-                <div style="font-size:22px; font-weight:200; color:var(--text-label); line-height:1; margin-bottom:4px;">—</div>
-                <a href="{{ url_for('main.test_profil') }}" style="font-size:9px; color:var(--accent); text-decoration:none; white-space:nowrap;">Faire le test →</a>
+                <div style="font-size:24px; font-weight:200; color:#3d6b8f; line-height:1; margin-bottom:4px;">—</div>
+                <a href="{{ url_for('main.test_profil') }}" style="font-size:9px; color:#4a7a9b; text-decoration:none; white-space:nowrap;">Faire le test →</a>
                 {% endif %}
             </div>
             <div style="margin-left:auto; text-align:center; flex-shrink:0;">
-                <div style="font-size:46px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence is not none and coherence >= 70 else '#f59e0b' if coherence is not none and coherence >= 40 else '#f87171' if coherence is not none else 'var(--text-label)' }};" id="coh-pct-badge-el">{{ (coherence|string + '%') if coherence is not none else '—' }}</div>
-                <div style="font-size:8px; color:var(--text-label); text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">cohérence</div>
+                <div style="font-size:48px; font-weight:700; line-height:1; color:{{ '#4ade80' if coherence is not none and coherence >= 70 else '#f59e0b' if coherence is not none and coherence >= 40 else '#f87171' if coherence is not none else '#3d6b8f' }};" id="coh-pct-badge-el">{{ (coherence|string + '%') if coherence is not none else '—' }}</div>
+                <div style="font-size:9px; color:#2a5a7a; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">cohérence</div>
             </div>
         </div>
         <div class="coh-gauge-outer">
@@ -96,23 +504,24 @@
                 {% else %}Attention — votre portefeuille ne correspond pas à votre profil · Consultez le Coach IA{% endif %}
             {% endif %}
         </div>
-        <div id="coh-retest-btn" style="{{ 'display:none;' if coherence is none or coherence >= 40 else '' }} margin-top:4px;">
-            <a href="{{ url_for('main.test_profil') }}" style="font-size:10px; color:var(--negative); text-decoration:none;">Refaire le test →</a>
+        <div id="coh-retest-btn" style="{{ 'display:none;' if coherence is none or coherence >= 40 else '' }}; margin-top:4px;">
+            <a href="{{ url_for('main.test_profil') }}" style="font-size:10px; color:#f87171; text-decoration:none;">Refaire le test →</a>
         </div>
     </div>
 
-    {# Risque #}
+    {# Colonne droite — risque #}
     <div class="dash-risk-card">
         <div class="micro-label" style="margin-bottom:4px;">Risque Portefeuille</div>
         {% if portfolio_risk_score is not none %}
         {% set rs = portfolio_risk_score %}
         {% set rc = '#4ade80' if rs <= 33 else '#f59e0b' if rs <= 66 else '#f87171' %}
         {% set rl = 'Très faible' if rs <= 20 else 'Faible' if rs <= 40 else 'Modéré' if rs <= 60 else 'Élevé' if rs <= 80 else 'Très élevé' %}
-        <div style="font-size:38px; font-weight:200; color:{{ rc }}; line-height:1; margin-top:4px;">{{ rs }}</div>
+        <div style="font-size:40px; font-weight:200; color:{{ rc }}; line-height:1; margin-top:4px;">{{ rs }}</div>
         <div style="font-size:10px; color:{{ rc }}; margin-top:2px;">{{ rl }}</div>
-        <div style="background:var(--border2); border-radius:99px; height:3px; overflow:hidden; margin:5px 0;">
+        <div style="background:#0a1428; border-radius:99px; height:3px; overflow:hidden; margin:6px 0;">
             <div style="height:100%; width:{{ rs }}%; background:{{ rc }}; border-radius:99px;"></div>
         </div>
+        {# Weighted averages for vol/dd/beta #}
         {% set wv = namespace(s=0,t=0) %}
         {% set wd = namespace(s=0,t=0) %}
         {% set wb = namespace(s=0,t=0) %}
@@ -120,45 +529,28 @@
             {% for a in assets_list %}
                 {% if not a.fully_sold and a.current_value > 0 %}
                     {% set ri = risk_data.get(a.ticker if a.ticker else '__noticker_' ~ a.asset_id) %}
-                    {% if ri and ri.volatilite %}{% set wv.s = wv.s + (ri.volatilite | float) * a.current_value %}{% set wv.t = wv.t + a.current_value %}{% endif %}
-                    {% if ri and ri.drawdown %}{% set wd.s = wd.s + (ri.drawdown | float) * a.current_value %}{% set wd.t = wd.t + a.current_value %}{% endif %}
-                    {% if ri and ri.beta %}{% set wb.s = wb.s + (ri.beta | float) * a.current_value %}{% set wb.t = wb.t + a.current_value %}{% endif %}
+                    {% if ri and ri.volatilite %}
+                        {% set wv.s = wv.s + (ri.volatilite | float) * a.current_value %}
+                        {% set wv.t = wv.t + a.current_value %}
+                    {% endif %}
+                    {% if ri and ri.drawdown %}
+                        {% set wd.s = wd.s + (ri.drawdown | float) * a.current_value %}
+                        {% set wd.t = wd.t + a.current_value %}
+                    {% endif %}
+                    {% if ri and ri.beta %}
+                        {% set wb.s = wb.s + (ri.beta | float) * a.current_value %}
+                        {% set wb.t = wb.t + a.current_value %}
+                    {% endif %}
                 {% endif %}
             {% endfor %}
         {% endfor %}
         <div style="display:flex; gap:3px; flex-wrap:wrap;">
-            <span style="background:var(--border2); color:var(--accent); font-size:8px; padding:2px 5px; border-radius:3px;">Vol {{ (wv.s/wv.t)|round(1) if wv.t > 0 else '—' }}%</span>
-            <span style="background:var(--border2); color:var(--accent); font-size:8px; padding:2px 5px; border-radius:3px;">DD -{{ (wd.s/wd.t)|round(1) if wd.t > 0 else '—' }}%</span>
-            <span style="background:var(--border2); color:var(--accent); font-size:8px; padding:2px 5px; border-radius:3px;">β {{ (wb.s/wb.t)|round(2) if wb.t > 0 else '—' }}</span>
+            <span style="background:#0a1428; color:#4a7a9b; font-size:8px; padding:2px 5px; border-radius:4px;">Vol {{ (wv.s/wv.t)|round(1) if wv.t > 0 else '—' }}%</span>
+            <span style="background:#0a1428; color:#4a7a9b; font-size:8px; padding:2px 5px; border-radius:4px;">DD -{{ (wd.s/wd.t)|round(1) if wd.t > 0 else '—' }}%</span>
+            <span style="background:#0a1428; color:#4a7a9b; font-size:8px; padding:2px 5px; border-radius:4px;">β {{ (wb.s/wb.t)|round(2) if wb.t > 0 else '—' }}</span>
         </div>
         {% else %}
-        <div style="color:var(--text-label); font-size:12px; margin-top:8px;">Aucun actif</div>
-        {% endif %}
-    </div>
-
-    {# Plus-value latente #}
-    <div class="dash-pv-card">
-        <div class="micro-label" style="margin-bottom:4px;">Plus-value latente</div>
-        {% set pv = summary.total_unrealized %}
-        {% set pv_pct = summary.unrealized_pct %}
-        {% set pv_color = '#4ade80' if pv >= 0 else '#f87171' %}
-        <div style="font-size:30px; font-weight:200; color:{{ pv_color }}; line-height:1; margin-top:4px;">
-            {{ '+' if pv >= 0 else '' }}{{ pv }} €
-        </div>
-        <div style="font-size:10px; color:{{ pv_color }}; margin-top:3px; font-weight:600;">
-            {{ '+' if pv_pct >= 0 else '' }}{{ pv_pct }}%
-        </div>
-        <div style="background:var(--border2); border-radius:99px; height:3px; overflow:hidden; margin:6px 0;">
-            <div style="height:100%; width:{{ [pv_pct|abs, 100]|min }}%; background:{{ pv_color }}; border-radius:99px;"></div>
-        </div>
-        <div style="font-size:9px; color:var(--text-label); margin-top:2px;">
-            Investi : <span style="color:var(--accent);">{{ summary.total_invested }} €</span>
-        </div>
-        {% set realized_pv = summary.total_realized %}
-        {% if realized_pv != 0 %}
-        <div style="font-size:9px; color:var(--text-label); margin-top:2px;">
-            Réalisé : <span style="color:{{ '#4ade80' if realized_pv >= 0 else '#f87171' }};">{{ '+' if realized_pv >= 0 else '' }}{{ realized_pv }} €</span>
-        </div>
+        <div style="color:#3d6b8f; font-size:12px; margin-top:8px;">Aucun actif</div>
         {% endif %}
     </div>
 
@@ -168,36 +560,36 @@
 <div class="dash-kpis">
     <div class="dash-kpi-card" id="kpi-unrealized-card" style="border-top-color:{{ '#4ade80' if summary.total_unrealized >= 0 else '#f87171' }};">
         <div class="micro-label">Plus-value latente</div>
-        <div style="font-size:15px; font-weight:600; color:{{ '#4ade80' if summary.total_unrealized >= 0 else '#f87171' }};" id="kpi-unrealized">
+        <div style="font-size:16px; font-weight:600; color:{{ '#4ade80' if summary.total_unrealized >= 0 else '#f87171' }};" id="kpi-unrealized">
             {{ '+' if summary.total_unrealized >= 0 else '' }}{{ summary.total_unrealized }} €
         </div>
     </div>
     <div class="dash-kpi-card" id="kpi-realized-card" style="border-top-color:{{ '#4ade80' if summary.total_realized >= 0 else '#f87171' }};">
         <div class="micro-label">Plus-value réalisée</div>
-        <div style="font-size:15px; font-weight:600; color:{{ '#4ade80' if summary.total_realized >= 0 else '#f87171' }};" id="kpi-realized">
+        <div style="font-size:16px; font-weight:600; color:{{ '#4ade80' if summary.total_realized >= 0 else '#f87171' }};" id="kpi-realized">
             {{ '+' if summary.total_realized >= 0 else '' }}{{ summary.total_realized }} €
         </div>
     </div>
-    <div class="dash-kpi-card" style="border-top-color:var(--border2);">
+    <div class="dash-kpi-card" style="border-top-color:#0a1428;">
         <div class="micro-label">Valeur actuelle</div>
-        <div style="font-size:15px; font-weight:600; color:var(--text);" id="kpi-total-value">{{ summary.total_value }} €</div>
+        <div style="font-size:16px; font-weight:600; color:#e8f0ff;" id="kpi-total-value">{{ summary.total_value }} €</div>
     </div>
     <div class="dash-kpi-card" id="kpi-dividends-card" style="border-top-color:#4ade80; {{ 'display:none;' if estimated_dividends_year <= 0 else '' }}">
         <div class="micro-label">Dividendes estimés</div>
-        <div style="font-size:15px; font-weight:600; color:#4ade80;" id="kpi-dividends">+{{ estimated_dividends_year }} €</div>
+        <div style="font-size:16px; font-weight:600; color:#4ade80;" id="kpi-dividends">+{{ estimated_dividends_year }} €</div>
     </div>
     {% set total_gain_kpi = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
     <div class="dash-kpi-card" id="kpi-gain-card" style="border-top-color:{{ '#4ade80' if total_gain_kpi >= 0 else '#f87171' }};">
         <div class="micro-label">Gain total</div>
-        <div style="font-size:15px; font-weight:600; color:{{ '#4ade80' if total_gain_kpi >= 0 else '#f87171' }};" id="kpi-gain-val">{{ '+' if total_gain_kpi >= 0 else '' }}{{ total_gain_kpi|round(2) }} €</div>
+        <div style="font-size:16px; font-weight:600; color:{{ '#4ade80' if total_gain_kpi >= 0 else '#f87171' }};" id="kpi-gain-val">{{ '+' if total_gain_kpi >= 0 else '' }}{{ total_gain_kpi|round(2) }} €</div>
     </div>
 </div>
 
 {# ── Plafond bar ── #}
 <div class="plafond-block" id="plafond-bar-block">
-    <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--text-label);">
+    <div style="display:flex; justify-content:space-between; font-size:9px; color:#3d6b8f;">
         <span>Plafond <span id="plafond-env-name"></span></span>
-        <span><span id="plafond-invested"></span> / <span id="plafond-total"></span> — <strong id="plafond-restant" style="color:var(--text);"></strong> disponibles</span>
+        <span><span id="plafond-invested"></span> / <span id="plafond-total"></span> — <strong id="plafond-restant" style="color:#e8f0ff;"></strong> disponibles</span>
     </div>
     <div class="plafond-bar-outer"><div class="plafond-bar-fill" id="plafond-bar-fill" style="width:0%;"></div></div>
 </div>
@@ -205,8 +597,8 @@
 {# ══ ZONE BASSE ══ #}
 <div class="dash-bottom">
 
+    {# Colonne gauche — tableau + évolution #}
     <div class="dash-left-col">
-
     <div class="dash-table-wrap">
         <div class="dash-table-scroll">
             <table class="dash-assets">
@@ -222,8 +614,8 @@
                 </thead>
                 <tbody>
                 {% if not summary.assets %}
-                <tr><td colspan="6" style="padding:22px; text-align:center; color:var(--text-label); font-size:0.82rem;">
-                    Aucun actif — <a href="{{ url_for('main.add_purchase_route') }}" style="color:var(--text-muted);">Enregistrer un achat →</a>
+                <tr><td colspan="6" style="padding:24px; text-align:center; color:#3d6b8f; font-size:0.85rem;">
+                    Aucun actif — <a href="{{ url_for('main.add_purchase_route') }}" style="color:#6a9bbf;">Enregistrer un achat →</a>
                 </td></tr>
                 {% else %}
                 {% for asset_type, assets in summary.by_type.items() %}
@@ -242,51 +634,50 @@
                 {% elif env == 'Autre' %}{% set env_cls = 'env-autre' %}
                 {% else %}{% set env_cls = '' %}
                 {% endif %}
-                {% set risk_color = '#4ade80' if rs is not none and rs < 34 else '#f59e0b' if rs is not none and rs <= 67 else '#f87171' if rs is not none else 'var(--border)' %}
+                {% set risk_color = '#4ade80' if rs is not none and rs < 34 else '#f59e0b' if rs is not none and rs <= 67 else '#f87171' if rs is not none else '#1a2a3a' %}
                 <tr class="dash-asset-tr" data-asset-id="{{ a.asset_id }}" data-envelope="{{ env }}"
                     style="border-left-color:{{ risk_color }};"
                     onclick="toggleAssetRow('detail-{{ a.asset_id }}')">
                     <td style="white-space:nowrap;">
-                        <span class="asset-icon-placeholder" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:{{ risk_color }}1a;color:{{ risk_color }};font-size:0.6rem;font-weight:800;vertical-align:middle;margin-right:7px;flex-shrink:0;letter-spacing:0;">{{ (a.ticker[:2] if a.ticker else a.name[:2])|upper }}</span>
                         {% if a.ticker %}
-                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.62rem;">{{ a.ticker }}</span>
+                        <span class="badge {{ 'badge-etf' if a.asset_type == 'ETF' else 'badge-action' if a.asset_type == 'Action' else 'badge-crypto' if a.asset_type == 'Crypto' else 'badge-other' }}" style="font-size:0.65rem;">{{ a.ticker }}</span>
                         {% else %}
-                        <span class="badge badge-other" style="font-size:0.62rem; opacity:0.45;">—</span>
+                        <span class="badge badge-other" style="font-size:0.65rem; opacity:0.5;">—</span>
                         {% endif %}
-                        <span style="color:var(--text); font-size:0.775rem; margin-left:5px;">{{ a.name|truncate(24, true, '') }}</span>
+                        <span style="color:#e8f0ff; font-size:0.78rem; margin-left:6px;">{{ a.name|truncate(24, true, '') }}</span>
                     </td>
                     <td style="white-space:nowrap;">
                         <span id="env-badge-{{ a.asset_id }}">
                             {% if env and env_cls %}<span class="env-badge {{ env_cls }}">{{ env }}</span>
-                            {% else %}<span style="color:var(--text-label); font-size:0.72rem;">—</span>{% endif %}
+                            {% else %}<span style="color:#3d6b8f; font-size:0.75rem;">—</span>{% endif %}
                         </span>
                         <button onclick="event.stopPropagation(); openEnvModal({{ a.asset_id }}, '{{ env }}')"
-                                style="background:none; border:none; cursor:pointer; color:var(--text-label); font-size:0.62rem; padding:0 3px; transition:color 0.14s;"
-                                onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-label)'">✎</button>
+                                style="background:none; border:none; cursor:pointer; color:#3d6b8f; font-size:0.65rem; padding:0 3px; transition:color 0.15s;"
+                                onmouseover="this.style.color='#e8f0ff'" onmouseout="this.style.color='#3d6b8f'">✎</button>
                     </td>
-                    <td class="num" style="white-space:nowrap; color:var(--text); font-weight:600;">{{ a.current_value }} €</td>
-                    <td class="num" style="white-space:nowrap;">{% if ri %}{{ risk_badge(ri.score) }}{% else %}<span style="color:var(--text-label);">—</span>{% endif %}</td>
-                    <td class="num" style="white-space:nowrap; color:var(--text-label); font-size:0.7rem;">—</td>
+                    <td class="num" style="white-space:nowrap; color:#e8f0ff; font-weight:600;">{{ a.current_value }} €</td>
+                    <td class="num" style="white-space:nowrap;">{% if ri %}{{ risk_badge(ri.score) }}{% else %}<span style="color:#3d6b8f;">—</span>{% endif %}</td>
+                    <td class="num" style="white-space:nowrap; color:#3d6b8f; font-size:0.72rem;">—</td>
                     <td class="num" style="white-space:nowrap; color:{{ '#4ade80' if a.unrealized_pct >= 0 else '#f87171' }}; font-weight:700;">
                         {{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%
-                        <span style="font-weight:400; font-size:0.66rem; opacity:0.65;">({{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }}€)</span>
+                        <span style="font-weight:400; font-size:0.68rem; opacity:0.7;">({{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }}€)</span>
                     </td>
                 </tr>
                 <tr id="detail-{{ a.asset_id }}" style="display:none;">
-                    <td colspan="6" style="padding:9px 14px; background:var(--bg); border-bottom:1px solid var(--border2); border-left:3px solid {{ risk_color }};">
-                        <div style="display:flex; gap:18px; flex-wrap:wrap; font-size:0.73rem; align-items:center;">
-                            <div><span style="color:var(--text-label);">Parts:</span> <span style="color:var(--text);">{{ a.shares_held }}</span></div>
-                            <div><span style="color:var(--text-label);">Prix moy.:</span> <span style="color:var(--text);">{{ a.avg_price }} {{ a.currency }}</span></div>
-                            <div><span style="color:var(--text-label);">Actuel:</span> <span style="color:var(--text);">{{ a.current_price }} {{ a.currency }}</span></div>
-                            <div><span style="color:var(--text-label);">Investi:</span> <span style="color:var(--text);">{{ a.total_invested }} €</span></div>
-                            {% if ri and ri.source == 'yahoo' %}<div><span style="color:var(--text-label);">Vol {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · β {{ ri.beta }}</span></div>{% endif %}
-                            <div style="margin-left:auto; display:flex; gap:5px; align-items:center; flex-shrink:0;">
-                                <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm" style="font-size:0.62rem; padding:2px 7px;">+ Achat</a>
-                                <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-ghost btn-sm" style="font-size:0.62rem; padding:2px 7px;">− Vente</a>
-                                {% if a.ticker %}<a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}" class="btn btn-ghost btn-sm" style="font-size:0.62rem; padding:2px 7px;">Explorer</a>{% endif %}
+                    <td colspan="6" style="padding:10px 16px; background:#020509; border-bottom:1px solid #0a1428; border-left:3px solid {{ risk_color }};">
+                        <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:0.75rem; align-items:center;">
+                            <div><span style="color:#3d6b8f;">Parts:</span> <span style="color:#e8f0ff;">{{ a.shares_held }}</span></div>
+                            <div><span style="color:#3d6b8f;">Prix moy.:</span> <span style="color:#e8f0ff;">{{ a.avg_price }} {{ a.currency }}</span></div>
+                            <div><span style="color:#3d6b8f;">Actuel:</span> <span style="color:#e8f0ff;">{{ a.current_price }} {{ a.currency }}</span></div>
+                            <div><span style="color:#3d6b8f;">Investi:</span> <span style="color:#e8f0ff;">{{ a.total_invested }} €</span></div>
+                            {% if ri and ri.source == 'yahoo' %}<div><span style="color:#3d6b8f;">Vol {{ ri.volatilite }}% · DD {{ ri.drawdown }}% · β {{ ri.beta }}</span></div>{% endif %}
+                            <div style="margin-left:auto; display:flex; gap:6px; align-items:center; flex-shrink:0;">
+                                <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-ghost btn-sm" style="font-size:0.65rem; padding:2px 8px;">+ Achat</a>
+                                <a href="{{ url_for('main.add_sale_route') }}" class="btn btn-warning btn-sm" style="font-size:0.65rem; padding:2px 8px;">− Vente</a>
+                                {% if a.ticker %}<a href="{{ url_for('main.explorer') }}?ticker={{ a.ticker }}" class="btn btn-ghost btn-sm" style="font-size:0.65rem; padding:2px 8px;">Explorer</a>{% endif %}
                                 <form method="POST" action="{{ url_for('main.delete_asset_route', asset_id=a.asset_id) }}"
                                       onsubmit="return confirm('Supprimer {{ a.name }} ?')" style="display:inline;">
-                                    <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.62rem; padding:2px 7px;">Supprimer</button>
+                                    <button type="submit" class="btn btn-danger btn-sm" style="font-size:0.65rem; padding:2px 8px;">Supprimer</button>
                                 </form>
                             </div>
                         </div>
@@ -299,24 +690,26 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </div>{# /dash-table-wrap #}
 
+    {# Évolution du capital investi #}
     <div class="dash-evolution-block">
-        <div class="micro-label" style="margin-bottom:5px;">Évolution du capital investi</div>
-        <div id="evolution-chart" style="height:150px; width:100%;"></div>
+        <div class="micro-label" style="margin-bottom:6px;">Évolution du capital investi</div>
+        <div id="evolution-chart" style="flex:1; min-height:0; width:100%;"></div>
     </div>
 
     </div>{# /dash-left-col #}
 
+    {# Colonne droite — blocs #}
     <div class="dash-right-col">
 
         {# Allocation donut #}
         <div class="dash-alloc-block">
-            <div class="micro-label" id="alloc-bar-title" style="margin-bottom:5px;">Allocation portefeuille</div>
+            <div class="micro-label" id="alloc-bar-title" style="margin-bottom:6px;">Allocation portefeuille</div>
             {% if summary.allocation %}
             <div id="pie-chart" style="flex:1; min-height:0;"></div>
             {% else %}
-            <div style="color:var(--text-label); font-size:11px; margin-top:8px;">Aucun actif</div>
+            <div style="color:#3d6b8f; font-size:11px; margin-top:8px;">Aucun actif</div>
             {% endif %}
         </div>
 
@@ -325,19 +718,19 @@
             <div class="micro-label" style="margin-bottom:4px;">DCA{% if summary.dca_target > 0 %} · {{ summary.dca_target }} €/mois{% endif %}</div>
             {% if summary.dca_target > 0 %}
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                <span id="dca-pct-el" style="font-size:13px; font-weight:700; color:{{ '#4ade80' if summary.dca_progress >= 100 else 'var(--text)' }};">{{ summary.dca_progress }}%</span>
-                <span id="dca-reste" style="font-size:10px; color:var(--text-label);">
+                <span id="dca-pct-el" style="font-size:13px; font-weight:700; color:{{ '#4ade80' if summary.dca_progress >= 100 else '#e8f0ff' }};">{{ summary.dca_progress }}%</span>
+                <span id="dca-reste" style="font-size:10px; color:#3d6b8f;">
                     {% if summary.dca_progress >= 100 %}<span style="color:#4ade80;">✓ Atteint</span>
                     {% else %}Reste {{ (summary.dca_target - summary.invested_month)|round(2) }} €{% endif %}
                 </span>
             </div>
             <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:3px; overflow:hidden;">
                 <div id="dca-progress-bar" data-width="{{ [summary.dca_progress, 100]|min }}"
-                     style="height:100%; border-radius:99px; width:0%; background:{{ '#4ade80' if summary.dca_progress >= 100 else 'var(--accent)' }}; transition:width 0.8s ease;"></div>
+                     style="height:100%; border-radius:99px; width:0%; background:{{ '#4ade80' if summary.dca_progress >= 100 else '#6a9bbf' }}; transition:width 0.8s ease;"></div>
             </div>
-            <div id="dca-invested-month" style="font-size:10px; color:var(--text-label); margin-top:3px;">{{ summary.invested_month }} € ce mois</div>
+            <div id="dca-invested-month" style="font-size:10px; color:#3d6b8f; margin-top:3px;">{{ summary.invested_month }} € ce mois</div>
             {% else %}
-            <a href="{{ url_for('main.settings') }}" style="font-size:10px; color:var(--text-label); text-decoration:none;">＋ Définir un objectif →</a>
+            <a href="{{ url_for('main.settings') }}" style="font-size:10px; color:#3d6b8f; text-decoration:none;">＋ Définir un objectif →</a>
             {% endif %}
         </div>
 
@@ -346,24 +739,24 @@
         {% set total_gain_pct = ((total_gain / summary.total_invested) * 100)|round(2) if summary.total_invested > 0 else 0 %}
         <div class="dash-gain-block">
             <div class="micro-label" style="margin-bottom:4px;">Gain total</div>
-            <div id="kpi-total-gain-line" style="font-size:15px; font-weight:700; color:{{ '#4ade80' if total_gain >= 0 else '#f87171' }};">
+            <div id="kpi-total-gain-line" style="font-size:16px; font-weight:700; color:{{ '#4ade80' if total_gain >= 0 else '#f87171' }};">
                 <span id="kpi-total-gain">{{ '+' if total_gain >= 0 else '' }}{{ total_gain|round(2) }}</span> €
-                <span id="kpi-total-gain-pct" style="font-size:11px; font-weight:400; opacity:0.65;">({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)</span>
+                <span id="kpi-total-gain-pct" style="font-size:11px; font-weight:400; opacity:0.7;">({{ '+' if total_gain_pct >= 0 else '' }}{{ total_gain_pct }}%)</span>
             </div>
-            <div style="font-size:9px; color:var(--text-label); margin-top:2px;">Latent + réalisé + dividendes</div>
-            <a href="{{ url_for('main.charts') }}" style="font-size:10px; color:var(--text-label); text-decoration:none; margin-top:4px; display:block; transition:color 0.14s;"
-               onmouseover="this.style.color='var(--text-muted)'" onmouseout="this.style.color='var(--text-label)'">Graphiques →</a>
+            <div style="font-size:9px; color:#3d6b8f; margin-top:2px;">Latent + réalisé + dividendes</div>
+            <a href="{{ url_for('main.charts') }}" style="font-size:10px; color:#3d6b8f; text-decoration:none; margin-top:4px; display:block; transition:color 0.15s;"
+               onmouseover="this.style.color='#6a9bbf'" onmouseout="this.style.color='#3d6b8f'">Graphiques →</a>
         </div>
 
-        {# Composition #}
+        {# Composition par type d'actif #}
         <div class="dash-type-block">
-            <div class="micro-label" style="margin-bottom:5px;">Composition</div>
+            <div class="micro-label" style="margin-bottom:6px;">Composition</div>
             <div id="type-breakdown"></div>
         </div>
 
         {# Top Risques #}
         <div class="dash-type-block">
-            <div class="micro-label" style="margin-bottom:5px;">Top Risques</div>
+            <div class="micro-label" style="margin-bottom:6px;">Top Risques</div>
             <div id="top-risks-list">
             {% set top_risk_assets = top_risks %}
             {% if top_risk_assets %}
@@ -371,17 +764,17 @@
                 {% set s = a.risk_score %}
                 {% set high = s > 67 %}
                 {% set med = s >= 34 and s <= 67 %}
-                <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border2);">
-                    <span style="font-family:monospace;font-size:9px;background:var(--border2);padding:2px 5px;border-radius:3px;color:var(--text);flex-shrink:0;">{{ a.ticker }}</span>
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0a1428;">
+                    <span style="font-family:monospace;font-size:9px;background:#0a1428;padding:2px 5px;border-radius:3px;color:#e8f0ff;flex-shrink:0;">{{ a.ticker }}</span>
                     <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;
                         background:{{ '#1a0000' if high else '#1a1200' if med else '#001a00' }};
                         color:{{ '#f87171' if high else '#f59e0b' if med else '#4ade80' }};
                         border:1px solid {{ '#f87171' if high else '#f59e0b' if med else '#4ade80' }};">{{ s }}</span>
-                    <span style="font-size:10px;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.name|truncate(20, true, '…') }}</span>
+                    <span style="font-size:11px;color:#4a7a9b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.name|truncate(20, true, '…') }}</span>
                 </div>
                 {% endfor %}
             {% else %}
-                <div style="color:var(--text-label);font-size:10px;">Aucun actif avec score de risque</div>
+                <div style="color:#3d6b8f;font-size:10px;">Aucun actif avec score de risque</div>
             {% endif %}
             </div>
         </div>
@@ -391,19 +784,19 @@
         <div class="dash-type-block" id="savings-block">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
                 <div class="micro-label">Épargne garantie</div>
-                <span style="font-size:8px; color:var(--text-label); background:var(--border2); padding:1px 5px; border-radius:3px;">inflation {{ inflation_rate }}%</span>
+                <span style="font-size:8px; color:#3d6b8f; background:#0a1428; padding:1px 5px; border-radius:3px;">inflation {{ inflation_rate }}%</span>
             </div>
             {% for senv in savings_envelopes %}
             {% set reel_neg = senv.pct_reel <= 0 %}
-            <div style="border-bottom:1px solid var(--border2); padding:6px 0; {% if loop.last %}border-bottom:none;{% endif %}">
+            <div style="border-bottom:1px solid #0a1428; padding:7px 0; {% if loop.last %}border-bottom:none;{% endif %}">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
                     <div>
-                        <span style="font-size:10px; font-weight:700; color:var(--text);">{{ senv.nom }}</span>
-                        <span style="font-size:8px; color:var(--text-label); margin-left:4px;">{{ senv.taux_annuel }}%/an</span>
+                        <span style="font-size:10px; font-weight:700; color:#e8f0ff;">{{ senv.nom }}</span>
+                        <span style="font-size:8px; color:#3d6b8f; margin-left:4px;">{{ senv.taux_annuel }}%/an</span>
                     </div>
-                    <span style="font-size:11px; font-weight:700; color:var(--text);">{{ senv.solde }} €</span>
+                    <span style="font-size:11px; font-weight:700; color:#e8f0ff;">{{ senv.solde }} €</span>
                 </div>
-                <div style="font-size:9px; color:var(--text); margin-bottom:1px;">
+                <div style="font-size:9px; color:#e8f0ff; margin-bottom:1px;">
                     Brut : <span style="color:#4ade80;">+{{ senv.rendement_brut }} € (+{{ senv.pct_brut }}%)</span>
                 </div>
                 <div style="font-size:9px; margin-bottom:4px; color:{{ '#f87171' if reel_neg else '#f59e0b' }};">
@@ -412,36 +805,36 @@
                 </div>
                 {% if senv.plafond %}
                 <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:3px; overflow:hidden; margin-bottom:4px;">
-                    <div style="height:100%; width:{{ [senv.plafond_pct, 100]|min }}%; background:{{ '#f59e0b' if senv.plafond_pct and senv.plafond_pct > 80 else 'var(--accent)' }}; border-radius:99px;"></div>
+                    <div style="height:100%; width:{{ [senv.plafond_pct, 100]|min }}%; background:{{ '#f59e0b' if senv.plafond_pct and senv.plafond_pct > 80 else '#4a7a9b' }}; border-radius:99px;"></div>
                 </div>
-                <div style="font-size:8px; color:var(--text-label);">{{ senv.solde }} / {{ senv.plafond }} € plafond</div>
+                <div style="font-size:8px; color:#3d6b8f;">{{ senv.solde }} / {{ senv.plafond }} € plafond</div>
                 {% endif %}
                 <div style="margin-top:4px;">
                     <button onclick="openSoldeModal({{ senv.id }}, '{{ senv.nom }}', {{ senv.solde }})"
-                            style="background:none; border:1px solid var(--border2); border-radius:4px; color:var(--text-label); font-size:8px; padding:2px 7px; cursor:pointer; transition:all 0.14s;"
-                            onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text-muted)'"
-                            onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-label)'">
+                            style="background:none; border:1px solid #0a1428; border-radius:4px; color:#3d6b8f; font-size:8px; padding:2px 7px; cursor:pointer; transition:all 0.15s;"
+                            onmouseover="this.style.borderColor='#4a7a9b';this.style.color='#6a9bbf'"
+                            onmouseout="this.style.borderColor='#0a1428';this.style.color='#3d6b8f'">
                         Modifier le solde
                     </button>
                     <form method="POST" action="{{ url_for('main.delete_envelope_route', env_id=senv.id) }}"
                           onsubmit="return confirm('Supprimer {{ senv.nom }} ?')" style="display:inline; margin-left:4px;">
                         <button type="submit"
-                                style="background:none; border:none; color:var(--text-label); font-size:8px; cursor:pointer; padding:2px 4px; transition:color 0.14s;"
-                                onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='var(--text-label)'">✕</button>
+                                style="background:none; border:none; color:#3d6b8f; font-size:8px; cursor:pointer; padding:2px 4px; transition:color 0.15s;"
+                                onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#3d6b8f'">✕</button>
                     </form>
                 </div>
             </div>
             {% endfor %}
-            <div style="margin-top:5px; padding-top:5px; border-top:1px solid var(--border2); display:flex; justify-content:space-between;">
-                <span style="font-size:9px; color:var(--text-label);">Total épargne</span>
-                <span style="font-size:10px; font-weight:700; color:var(--text);">{{ savings_total_solde }} €</span>
+            <div style="margin-top:6px; padding-top:6px; border-top:1px solid #0a1428; display:flex; justify-content:space-between;">
+                <span style="font-size:9px; color:#3d6b8f;">Total épargne</span>
+                <span style="font-size:10px; font-weight:700; color:#e8f0ff;">{{ savings_total_solde }} €</span>
             </div>
         </div>
         {% endif %}
-        <div style="padding:3px 0;">
+        <div style="padding:4px 0;">
             <a href="{{ url_for('main.add_envelope_route') }}"
-               style="font-size:9px; color:var(--text-label); text-decoration:none; display:flex; align-items:center; gap:4px; transition:color 0.14s;"
-               onmouseover="this.style.color='var(--text-muted)'" onmouseout="this.style.color='var(--text-label)'">
+               style="font-size:9px; color:#3d6b8f; text-decoration:none; display:flex; align-items:center; gap:4px; transition:color 0.15s;"
+               onmouseover="this.style.color='#6a9bbf'" onmouseout="this.style.color='#3d6b8f'">
                 + Ajouter une enveloppe épargne →
             </a>
         </div>
@@ -456,8 +849,11 @@
     <div class="env-modal-box">
         <div class="env-modal-title">Modifier le solde</div>
         <div class="env-modal-sub" id="solde-modal-name">—</div>
-        <label>Solde actuel (€)</label>
-        <input type="number" id="solde-modal-input" min="0" step="0.01" style="margin-bottom:1rem;">
+        <label style="font-size:0.78rem; color:#3d6b8f; margin-bottom:0.3rem; display:block;">Solde actuel (€)</label>
+        <input type="number" id="solde-modal-input" min="0" step="0.01"
+               style="width:100%; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;
+                      color:var(--text); font-size:0.95rem; padding:0.55rem 0.75rem; margin-bottom:1rem; outline:none;"
+               onfocus="this.style.borderColor='#3d6b8f'" onblur="this.style.borderColor='var(--border)'">
         <div class="env-modal-actions">
             <button class="btn btn-ghost btn-sm" onclick="closeSoldeModal()">Annuler</button>
             <button class="btn btn-primary btn-sm" id="solde-modal-confirm" onclick="submitSoldeUpdate()">Confirmer</button>
@@ -507,16 +903,16 @@ function sign(n)  { return n >= 0 ? '+' : ''; }
 function riskBadgeHTML(score) {
     if (score === null || score === undefined) return '';
     var lbl = score<=20?'Très faible':score<=40?'Faible':score<=60?'Modéré':score<=80?'Élevé':'Très élevé';
-    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.65rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:999px;background:transparent;color:#6a9bbf;border:1px solid #1a2a3a;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.67rem;font-weight:700;padding:0.12rem 0.48rem;border-radius:20px;background:transparent;color:#6a9bbf;border:1px solid #1a2a3a;white-space:nowrap;line-height:1.5;">'+lbl+'&thinsp;·&thinsp;'+score+'</span>';
 }
 
 function envBadgeHTML(env) {
-    if (!env) return '<span style="color:#3d6b8f;font-size:0.72rem;">—</span>';
+    if (!env) return '<span style="color:#3d6b8f;font-size:0.75rem;">—</span>';
     var map = {'PEA':'env-pea','PEA-PME':'env-peapme','CTO':'env-cto','Assurance Vie':'env-av','PER':'env-per','Livret A':'env-livret','LDDS':'env-livret','LEP':'env-livret','Autre':'env-autre'};
     return '<span class="env-badge '+(map[env]||'env-autre')+'">'+env+'</span>';
 }
 
-// ── Donut ─────────────────────────────────────────────────────────────────────
+// ── Donut ────────────────────────────────────────────────────────────────────
 {% if summary.allocation %}
 var _pieLayout = {
     paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
@@ -529,7 +925,7 @@ Plotly.newPlot('pie-chart', [{
     values:{{ summary.allocation | tojson }}.map(function(a){return a.value;}),
     hole:0.5, marker:{colors:PIE_COLORS}, textinfo:'none',
     hovertemplate:'%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-}], Object.assign({}, _pieLayout, {height: 125}), PIE_CONFIG);
+}], Object.assign({}, _pieLayout, {height: 130}), PIE_CONFIG);
 {% endif %}
 
 function updateAllocCharts(visible) {
@@ -541,17 +937,19 @@ function updateAllocCharts(visible) {
             values:data.map(function(a){return a.current_value;}),
             hole:0.5, marker:{colors:PIE_COLORS}, textinfo:'none',
             hovertemplate:'%{label}<br>%{value:.2f} €<br>%{percent}<extra></extra>'
-        }], Object.assign({}, _pieLayout, {height: 125}), PIE_CONFIG);
+        }], Object.assign({}, _pieLayout, {height: 130}), PIE_CONFIG);
     }
     var titleEl = document.getElementById('alloc-bar-title');
     if (titleEl) titleEl.textContent = currentEnvFilter==='all' ? 'Allocation portefeuille' : 'Allocation — '+currentEnvFilter;
 }
 
-// ── Évolution ─────────────────────────────────────────────────────────────────
+// ── Évolution du capital investi ──────────────────────────────────────────────
 function updateEvolutionChart(env) {
     var el = document.getElementById('evolution-chart');
     if (!el || typeof Plotly === 'undefined') return;
-    var filtered = (env === 'all') ? ALL_PURCHASES : ALL_PURCHASES.filter(function(p){ return p.envelope === env; });
+    var filtered = (env === 'all')
+        ? ALL_PURCHASES
+        : ALL_PURCHASES.filter(function(p){ return p.envelope === env; });
     if (!filtered.length) {
         el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;padding:20px 0;">Aucun achat</div>';
         return;
@@ -559,18 +957,19 @@ function updateEvolutionChart(env) {
     var byDate = {};
     filtered.forEach(function(p){ byDate[p.date] = (byDate[p.date]||0) + p.total_cost; });
     var dates = Object.keys(byDate).sort();
-    var values = []; var cumul = 0;
+    var values = [];
+    var cumul = 0;
     dates.forEach(function(d){ cumul += byDate[d]; values.push(Math.round(cumul*100)/100); });
     var trace = [{
         x: dates, y: values,
         type: 'scatter', mode: 'lines+markers',
-        line: { color: '#4ade80', width: 1.5, shape: 'spline' },
-        marker: { color: '#070d18', size: 5, line: { color: '#4ade80', width: 1.5 } },
-        fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.05)'
+        line: { color: '#4ade80', width: 2, shape: 'spline' },
+        marker: { color: '#070d18', size: 6, line: { color: '#4ade80', width: 1.5 } },
+        fill: 'tozeroy', fillcolor: 'rgba(74,222,128,0.06)'
     }];
     var layout = {
         paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-        margin: { t: 0, r: 8, b: 28, l: 46 },
+        margin: { t: 0, r: 10, b: 30, l: 50 },
         xaxis: { showgrid: false, color: '#1a3a5a', tickfont: { size: 8, color: '#1a3a5a' } },
         yaxis: { showgrid: true, gridcolor: '#0a1428', color: '#1a3a5a',
                  tickfont: { size: 8, color: '#1a3a5a' }, tickformat: ',.0f', ticksuffix: '€' },
@@ -583,36 +982,53 @@ function updateEvolutionChart(env) {
 function updateTopRisks(visible) {
     var el = document.getElementById('top-risks-list');
     if (!el) return;
-    var data = visible.filter(function(a){ return parseFloat(a.current_value) > 0 && a.risk_score != null; });
+    var data = visible.filter(function(a){
+        return parseFloat(a.current_value) > 0 && a.risk_score != null;
+    });
     data.sort(function(a,b){ return b.risk_score - a.risk_score; });
     var top3 = data.slice(0, 3);
-    if (!top3.length) { el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;">Aucun actif avec score de risque</div>'; return; }
+    if (!top3.length) {
+        el.innerHTML = '<div style="color:#3d6b8f;font-size:10px;">Aucun actif avec score de risque</div>';
+        return;
+    }
     el.innerHTML = top3.map(function(a){
-        var s=a.risk_score, high=s>67, med=s>=34&&s<=67;
-        var bc=high?'#1a0000':med?'#1a1200':'#001a00';
-        var tc=high?'#f87171':med?'#f59e0b':'#4ade80';
-        var bd=high?'#f87171':med?'#f59e0b':'#4ade80';
-        var nm=a.name?(a.name.length>20?a.name.substring(0,20)+'…':a.name):'';
-        return '<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #0a1428;">'
-            +'<span style="font-family:monospace;font-size:9px;background:#0a1428;padding:2px 5px;border-radius:3px;color:#e8f0ff;flex-shrink:0;">'+a.ticker+'</span>'
-            +'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+bc+';color:'+tc+';border:1px solid '+bd+';flex-shrink:0;">'+s+'</span>'
-            +'<span style="font-size:10px;color:#4a7a9b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+nm+'</span>'
-            +'</div>';
+        var s = a.risk_score;
+        var high = s > 67, med = s >= 34 && s <= 67;
+        var bc = high ? '#1a0000' : med ? '#1a1200' : '#001a00';
+        var tc = high ? '#f87171' : med ? '#f59e0b' : '#4ade80';
+        var bd = high ? '#f87171' : med ? '#f59e0b' : '#4ade80';
+        var nm = a.name ? (a.name.length > 20 ? a.name.substring(0,20)+'…' : a.name) : '';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0a1428;">'
+            + '<span style="font-family:monospace;font-size:9px;background:#0a1428;padding:2px 5px;border-radius:3px;color:#e8f0ff;flex-shrink:0;">'+a.ticker+'</span>'
+            + '<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+bc+';color:'+tc+';border:1px solid '+bd+';flex-shrink:0;">'+s+'</span>'
+            + '<span style="font-size:11px;color:#4a7a9b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+nm+'</span>'
+            + '</div>';
     }).join('');
 }
 
-// ── Composition ───────────────────────────────────────────────────────────────
+// ── Composition par type ──────────────────────────────────────────────────────
 function updateTypeBlock(visible) {
     var el = document.getElementById('type-breakdown');
     if (!el) return;
-    var types = {}, total = 0;
-    visible.forEach(function(a){ var v=parseFloat(a.current_value)||0; if(!v)return; var t=a.asset_type||'Autre'; types[t]=(types[t]||0)+v; total+=v; });
-    if (!total) { el.innerHTML='<span style="color:#3d6b8f;font-size:9px;">Aucun actif</span>'; return; }
+    var types = {};
+    var total = 0;
+    visible.forEach(function(a){
+        var v = parseFloat(a.current_value) || 0;
+        if (!v) return;
+        var t = a.asset_type || 'Autre';
+        types[t] = (types[t] || 0) + v;
+        total += v;
+    });
+    if (!total) {
+        el.innerHTML='<span style="color:#3d6b8f;font-size:9px;">Aucun actif</span>';
+        return;
+    }
     var tc={'ETF':'#4a7a9b','Action':'#4ade80','Crypto':'#f59e0b','Obligation':'#6aa0bb','Autre':'#3a6a8a'};
     var entries=Object.keys(types).map(function(t){return{type:t,pct:types[t]/total*100};});
     entries.sort(function(a,b){return b.pct-a.pct;});
     el.innerHTML=entries.map(function(e){
-        var c=tc[e.type]||'#3a6a8a', w=Math.min(100,e.pct);
+        var c=tc[e.type]||'#3a6a8a';
+        var w=Math.min(100,e.pct);
         return '<div style="margin-bottom:5px;">'
             +'<div style="display:flex;justify-content:space-between;margin-bottom:2px;">'
             +'<span style="font-size:9px;color:#6a9bbf;">'+e.type+'</span>'
@@ -620,48 +1036,73 @@ function updateTypeBlock(visible) {
             +'</div>'
             +'<div style="background:rgba(74,122,155,0.07);border-radius:99px;height:3px;overflow:hidden;">'
             +'<div style="height:100%;width:'+w.toFixed(1)+'%;background:'+c+';border-radius:99px;"></div>'
-            +'</div></div>';
+            +'</div>'
+            +'</div>';
     }).join('');
 }
 
-// ── Filtre enveloppe ──────────────────────────────────────────────────────────
+// ── Filtre enveloppe ─────────────────────────────────────────────────────────
 function applyEnvFilter(env) {
     currentEnvFilter = env;
     localStorage.setItem('dashEnvFilter', env);
     var sel = document.getElementById('env-filter-select');
     if (sel && sel.value !== env) sel.value = env;
+
     document.querySelectorAll('.dash-asset-tr').forEach(function(row) {
         var rowEnv = (row.getAttribute('data-envelope')||'').trim();
         var show = env==='all' || rowEnv===env;
         row.style.display = show ? 'table-row' : 'none';
-        if (!show) { var det=document.getElementById('detail-'+row.getAttribute('data-asset-id')); if(det)det.style.display='none'; }
+        if (!show) {
+            var detId = 'detail-'+row.getAttribute('data-asset-id');
+            var det = document.getElementById(detId);
+            if (det) det.style.display = 'none';
+        }
     });
-    var vis=env==='all'?ALL_ASSETS:ALL_ASSETS.filter(function(a){return(a.envelope||'')===env;});
+
+    var vis = env==='all' ? ALL_ASSETS : ALL_ASSETS.filter(function(a){return (a.envelope||'')===env;});
     var tv=0,ti=0,tu=0,tr=0,td=0;
     vis.forEach(function(a){tv+=a.current_value;ti+=a.total_invested;tu+=a.unrealized_gain;tr+=a.realized_gain;td+=a.dividends_received;});
-    var upct=ti>0?tu/ti*100:0, tg=tu+tr+td, tgpct=ti>0?tg/ti*100:0;
+    var upct = ti>0 ? tu/ti*100 : 0;
+    var tg = tu+tr+td;
+    var tgpct = ti>0 ? tg/ti*100 : 0;
+
     function el(id){return document.getElementById(id);}
-    if(el('left-total-value')) el('left-total-value').textContent=fmt2(tv)+' €';
-    if(el('left-invested-val')) el('left-invested-val').innerHTML=fmt2(ti)+' € <span style="font-size:10px;opacity:0.65;">investi</span>';
-    if(el('left-total-perf')){el('left-total-perf').style.color=tu>=0?'#4ade80':'#f87171';el('left-total-perf').textContent=sign(tu)+fmt2(tu)+' € · '+sign(upct)+upct.toFixed(2)+'%';}
-    if(el('kpi-total-value')) el('kpi-total-value').textContent=fmt2(tv)+' €';
-    var ue=el('kpi-unrealized'); if(ue){ue.textContent=sign(tu)+fmt2(tu)+' €';ue.style.color=tu>=0?'#4ade80':'#f87171';}
-    var uc=el('kpi-unrealized-card'); if(uc)uc.style.borderTopColor=tu>=0?'#4ade80':'#f87171';
-    var re=el('kpi-realized'); if(re){re.textContent=sign(tr)+fmt2(tr)+' €';re.style.color=tr>=0?'#4ade80':'#f87171';}
-    var rc=el('kpi-realized-card'); if(rc)rc.style.borderTopColor=tr>=0?'#4ade80':'#f87171';
-    var ge=el('kpi-total-gain'); if(ge)ge.textContent=sign(tg)+fmt2(Math.abs(tg));
-    var gpe=el('kpi-total-gain-pct'); if(gpe)gpe.textContent='('+sign(tgpct)+tgpct.toFixed(2)+'%)';
-    var gl=el('kpi-total-gain-line'); if(gl)gl.style.color=tg>=0?'#4ade80':'#f87171';
-    var gaCard=el('kpi-gain-card'); if(gaCard)gaCard.style.borderTopColor=tg>=0?'#4ade80':'#f87171';
-    var gaVal=el('kpi-gain-val'); if(gaVal){gaVal.textContent=sign(tg)+fmt2(tg)+' €';gaVal.style.color=tg>=0?'#4ade80':'#f87171';}
+    if(el('left-total-value')) el('left-total-value').textContent = fmt2(tv)+' €';
+    if(el('left-invested-val')) el('left-invested-val').innerHTML = fmt2(ti)+' € <span style="font-size:10px;opacity:0.7;">investi</span>';
+    if(el('left-total-perf')){
+        el('left-total-perf').style.color = tu>=0?'#4ade80':'#f87171';
+        el('left-total-perf').textContent = sign(tu)+fmt2(tu)+' € · '+sign(upct)+upct.toFixed(2)+'%';
+    }
+    if(el('kpi-total-value')) el('kpi-total-value').textContent = fmt2(tv)+' €';
+    var ue=el('kpi-unrealized');
+    if(ue){ue.textContent=sign(tu)+fmt2(tu)+' €';ue.style.color=tu>=0?'#4ade80':'#f87171';}
+    var uc=el('kpi-unrealized-card');
+    if(uc) uc.style.borderTopColor=tu>=0?'#4ade80':'#f87171';
+    var re=el('kpi-realized');
+    if(re){re.textContent=sign(tr)+fmt2(tr)+' €';re.style.color=tr>=0?'#4ade80':'#f87171';}
+    var rc=el('kpi-realized-card');
+    if(rc) rc.style.borderTopColor=tr>=0?'#4ade80':'#f87171';
+    var ge=el('kpi-total-gain');
+    if(ge) ge.textContent=sign(tg)+fmt2(Math.abs(tg));
+    var gpe=el('kpi-total-gain-pct');
+    if(gpe) gpe.textContent='('+sign(tgpct)+tgpct.toFixed(2)+'%)';
+    var gl=el('kpi-total-gain-line');
+    if(gl) gl.style.color=tg>=0?'#4ade80':'#f87171';
+    var gaCard=el('kpi-gain-card');
+    if(gaCard) gaCard.style.borderTopColor=tg>=0?'#4ade80':'#f87171';
+    var gaVal=el('kpi-gain-val');
+    if(gaVal){gaVal.textContent=sign(tg)+fmt2(tg)+' €';gaVal.style.color=tg>=0?'#4ade80':'#f87171';}
+
     updateAllocCharts(vis);
     updateTypeBlock(vis);
     updateTopRisks(vis);
     updateEvolutionChart(env);
+
     var ws=0,wt=0;
     vis.forEach(function(a){if(a.current_value>0&&a.risk_score!=null){ws+=a.risk_score*a.current_value;wt+=a.current_value;}});
     updateCohBlock(wt>0?Math.round(ws/wt):null);
-    var im=vis.reduce(function(s,a){return s+(a.invested_this_month||0);},0);
+
+    var im = vis.reduce(function(s,a){return s+(a.invested_this_month||0);},0);
     updateDCABlock(im);
     updatePlafondBar(env, ti);
 }
@@ -674,7 +1115,14 @@ function updateCohBlock(pRisk) {
     var mEl=document.getElementById('coh-msg-el');
     var rEl=document.getElementById('coh-retest-btn');
     if(!sEl) return;
-    if(pRisk===null){sEl.textContent='—';if(bEl)bEl.innerHTML='';if(gEl)gEl.style.width='0%';if(pEl)pEl.style.visibility='hidden';if(mEl)mEl.textContent='';return;}
+    if(pRisk===null){
+        sEl.textContent='—';
+        if(bEl) bEl.innerHTML='';
+        if(gEl) gEl.style.width='0%';
+        if(pEl) pEl.style.visibility='hidden';
+        if(mEl) mEl.textContent='';
+        return;
+    }
     sEl.textContent=pRisk;
     if(bEl) bEl.innerHTML=riskBadgeHTML(pRisk);
     if(PROFIL_RISK!==null){
@@ -708,11 +1156,19 @@ function updatePlafondBar(env, ti) {
     if(!p){block.style.display='none';return;}
     block.style.display='block';
     var r=Math.max(0,p-ti), pct=Math.min(100,ti/p*100);
-    var ne=document.getElementById('plafond-env-name'),ie=document.getElementById('plafond-invested'),te=document.getElementById('plafond-total'),re=document.getElementById('plafond-restant'),fe=document.getElementById('plafond-bar-fill');
-    if(ne)ne.textContent=env;if(ie)ie.textContent=fmtInt(ti)+' €';if(te)te.textContent=fmtInt(p)+' €';if(re)re.textContent=fmtInt(r)+' €';if(fe)fe.style.width=pct+'%';
+    var ne=document.getElementById('plafond-env-name');
+    var ie=document.getElementById('plafond-invested');
+    var te=document.getElementById('plafond-total');
+    var re=document.getElementById('plafond-restant');
+    var fe=document.getElementById('plafond-bar-fill');
+    if(ne) ne.textContent=env;
+    if(ie) ie.textContent=fmtInt(ti)+' €';
+    if(te) te.textContent=fmtInt(p)+' €';
+    if(re) re.textContent=fmtInt(r)+' €';
+    if(fe) fe.style.width=pct+'%';
 }
 
-// ── Modal env ─────────────────────────────────────────────────────────────────
+// ── Modal env ────────────────────────────────────────────────────────────────
 var _mId=null;
 function openEnvModal(id,cur){
     _mId=id;
@@ -724,7 +1180,11 @@ function openEnvModal(id,cur){
     var o=document.getElementById('env-modal');
     if(o) o.classList.add('open');
 }
-function closeEnvModal(){var o=document.getElementById('env-modal');if(o)o.classList.remove('open');_mId=null;}
+function closeEnvModal(){
+    var o=document.getElementById('env-modal');
+    if(o) o.classList.remove('open');
+    _mId=null;
+}
 async function submitEnvUpdate(){
     if(!_mId) return;
     var nv=document.getElementById('env-modal-select').value;
@@ -765,30 +1225,43 @@ function toggleAssetRow(detId){
     det.style.display = det.style.display==='table-row' ? 'none' : 'table-row';
 }
 
-// ── Modal solde ───────────────────────────────────────────────────────────────
+// ── Modal solde épargne ───────────────────────────────────────────────────────
 var _soldeEnvId = null;
 function openSoldeModal(id, nom, solde) {
     _soldeEnvId = id;
-    var n=document.getElementById('solde-modal-name'); if(n) n.textContent=nom;
-    var inp=document.getElementById('solde-modal-input'); if(inp) inp.value=solde;
-    var o=document.getElementById('solde-modal'); if(o) o.classList.add('open');
+    var n = document.getElementById('solde-modal-name');
+    if (n) n.textContent = nom;
+    var inp = document.getElementById('solde-modal-input');
+    if (inp) inp.value = solde;
+    var o = document.getElementById('solde-modal');
+    if (o) o.classList.add('open');
     setTimeout(function(){ if(inp) inp.focus(); }, 80);
 }
-function closeSoldeModal(){var o=document.getElementById('solde-modal');if(o)o.classList.remove('open');_soldeEnvId=null;}
-async function submitSoldeUpdate(){
-    if(!_soldeEnvId) return;
-    var inp=document.getElementById('solde-modal-input');
-    var btn=document.getElementById('solde-modal-confirm');
-    var solde=parseFloat(inp?inp.value:0);
-    if(isNaN(solde)||solde<0){alert('Solde invalide');return;}
-    btn.disabled=true;btn.textContent='…';
-    try{
-        var res=await fetch('/update-envelope/'+_soldeEnvId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({solde:solde})});
-        var data=await res.json();
-        if(data.success){closeSoldeModal();location.reload();}
-        else{alert('Erreur: '+(data.error||'Mise à jour échouée'));}
-    }catch(e){alert('Erreur réseau');}
-    finally{btn.disabled=false;btn.textContent='Confirmer';}
+function closeSoldeModal() {
+    var o = document.getElementById('solde-modal');
+    if (o) o.classList.remove('open');
+    _soldeEnvId = null;
+}
+async function submitSoldeUpdate() {
+    if (!_soldeEnvId) return;
+    var inp = document.getElementById('solde-modal-input');
+    var btn = document.getElementById('solde-modal-confirm');
+    var solde = parseFloat(inp ? inp.value : 0);
+    if (isNaN(solde) || solde < 0) { alert('Solde invalide'); return; }
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        var res = await fetch('/update-envelope/' + _soldeEnvId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ solde: solde })
+        });
+        var data = await res.json();
+        if (data.success) {
+            closeSoldeModal();
+            location.reload();
+        } else { alert('Erreur: ' + (data.error || 'Mise à jour échouée')); }
+    } catch(e) { alert('Erreur réseau'); }
+    finally { btn.disabled = false; btn.textContent = 'Confirmer'; }
 }
 
 window.addEventListener('load', function(){
@@ -799,7 +1272,7 @@ window.addEventListener('load', function(){
     var allEnvs=ALL_ASSETS.map(function(a){return a.envelope;}).filter(function(e){return e;});
     var valid=(saved==='all'||allEnvs.indexOf(saved)!==-1)?saved:'all';
     applyEnvFilter(valid);
-    setTimeout(function(){updateEvolutionChart(valid);},300);
+    setTimeout(function(){ updateEvolutionChart(valid); }, 200);
 });
 </script>
 {% endblock %}
