@@ -351,6 +351,38 @@ table.dash-assets thead th.num { text-align: right; }
     .dash-val-card  { order: 0; }
     .dash-risk-card { order: 1; }
 
+    /* ── Cohérence card : réorganisation mobile ── */
+    /* Ligne intérieure : wrap pour que le % passe en dessous */
+    .dash-coh-card > div:nth-child(2) {
+        flex-wrap: wrap !important;
+        gap: 8px 12px;
+        align-items: center;
+    }
+    /* Les deux blocs scores se partagent la largeur */
+    .dash-coh-card > div:nth-child(2) > div:nth-child(1),
+    .dash-coh-card > div:nth-child(2) > div:nth-child(3) {
+        flex: 1;
+        min-width: 0;
+    }
+    /* Scores : police réduite */
+    .dash-coh-card > div:nth-child(2) > div:nth-child(1) > div[style*="52px"],
+    .dash-coh-card > div:nth-child(2) > div:nth-child(3) > div[style*="52px"] {
+        font-size: 36px !important;
+    }
+    /* Bloc % cohérence : pleine largeur, centré, en dessous */
+    .dash-coh-card > div:nth-child(2) > div:last-child {
+        width: 100%;
+        text-align: center !important;
+        margin-left: 0 !important;
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px solid #0a1428;
+    }
+    /* Taille du % */
+    .dash-coh-card > div:nth-child(2) > div:last-child > div:first-child {
+        font-size: 32px !important;
+    }
+
     /* KPIs : 2 colonnes */
     .dash-kpis { grid-template-columns: 1fr 1fr; height: auto; padding: 0 8px; }
 
