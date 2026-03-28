@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Profil {{ profil }} — Test investisseur — PortfolioTrack{% endblock %}
+{% block page_title %}Résultat profil{% endblock %}
 {% block content %}
-
 <style>
 .result-wrap { max-width: 820px; margin: 0 auto; }
 
@@ -9,250 +9,154 @@
 .score-hero {
     text-align: center;
     padding: 2.5rem 1.5rem 2rem;
-    background: #070d18;
-    border: 1px solid #1a2a3a;
-    border-radius: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     margin-bottom: 1.25rem;
     position: relative;
     overflow: hidden;
 }
-.score-emoji { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
+.score-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(74,122,155,0.07) 0%, transparent 65%);
+    pointer-events: none;
+}
+.score-emoji { font-size: 2.75rem; margin-bottom: 0.75rem; display: block; }
 .score-profil-name {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #e8f0ff;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.4rem;
+    font-size: 1.85rem; font-weight: 800; color: var(--text);
+    letter-spacing: -0.03em; margin-bottom: 0.4rem;
 }
 .score-number {
-    font-size: 3.5rem;
-    font-weight: 900;
-    color: {{ '#4ade80' if global_score <= 40 else ('#f87171' if global_score > 80 else '#fff') }};
-    line-height: 1;
-    letter-spacing: -0.04em;
+    font-size: 3.5rem; font-weight: 900;
+    color: {{ '#4ade80' if global_score <= 40 else ('#f87171' if global_score > 80 else 'var(--text)') }};
+    line-height: 1; letter-spacing: -0.04em;
 }
-.score-suffix { font-size: 1.2rem; color: rgba(232,240,255,0.30); font-weight: 600; }
+.score-suffix { font-size: 1.2rem; color: var(--text-label); font-weight: 600; }
 .score-alloc {
     margin-top: 0.75rem;
     display: inline-block;
-    font-size: 0.82rem;
-    color: rgba(232,240,255,0.50);
-    background: rgba(74,122,155,0.07);
-    border: 1px solid rgba(74,122,155,0.10);
-    border-radius: 20px;
+    font-size: 0.82rem; color: var(--text-muted);
+    background: rgba(74,122,155,0.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     padding: 0.3rem 1rem;
 }
 
-/* ── Score gauge ── */
+/* ── Gauge ── */
 .gauge-wrap { margin-bottom: 1.25rem; }
 .gauge-bar-outer {
-    background: rgba(74,122,155,0.08);
-    border-radius: 99px;
-    height: 12px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
+    background: var(--border2);
+    border-radius: 99px; height: 10px;
+    position: relative; overflow: hidden; margin-bottom: 0.5rem;
 }
-.gauge-segments {
-    position: absolute; inset: 0;
-    display: flex;
-    border-radius: 99px;
-    overflow: hidden;
-}
-.gauge-seg { flex: 1; }
 .gauge-fill {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    border-radius: 99px;
-    background: #fff;
+    position: absolute; left: 0; top: 0; bottom: 0;
+    border-radius: 99px; background: var(--text);
     transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
 }
 .gauge-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.65rem;
-    color: rgba(74,122,155,0.22);
-    font-weight: 600;
-    padding: 0 2px;
+    display: flex; justify-content: space-between;
+    font-size: 0.63rem; color: var(--text-label);
+    font-weight: 600; padding: 0 2px;
 }
 
 /* ── Axes ── */
-.axes-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.5rem; }
+.axes-grid { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.5rem; }
 .axis-row { display: flex; align-items: center; gap: 1rem; }
 .axis-name {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.50);
-    font-weight: 600;
-    min-width: 175px;
-    flex-shrink: 0;
+    font-size: 0.77rem; color: var(--text-muted);
+    font-weight: 600; min-width: 175px; flex-shrink: 0;
 }
 .axis-bar-outer {
-    flex: 1;
-    background: rgba(74,122,155,0.07);
-    border-radius: 99px;
-    height: 7px;
-    overflow: hidden;
+    flex: 1; background: var(--border2);
+    border-radius: 99px; height: 6px; overflow: hidden;
 }
 .axis-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: #fff;
-    transition: width 1s ease;
+    height: 100%; border-radius: 99px;
+    background: var(--text); transition: width 1s ease;
 }
 .axis-score-val {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.55);
-    font-weight: 700;
-    min-width: 34px;
-    text-align: right;
+    font-size: 0.75rem; color: var(--text-muted);
+    font-weight: 700; min-width: 40px; text-align: right;
 }
 
 /* ── Recommendation ── */
-.rec-card { padding: 2rem; }
-.rec-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-.rec-body { color: rgba(232,240,255,0.72); font-size: 0.9rem; line-height: 1.75; }
+.rec-card { padding: 1.75rem 2rem; }
+.rec-card h3 { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.rec-body { color: var(--text-muted); font-size: 0.875rem; line-height: 1.75; }
 .rec-body p { margin-bottom: 1rem; }
 .rec-body p:last-child { margin-bottom: 0; }
 .rec-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    background: rgba(74,122,155,0.06);
-    color: #4a7a9b;
-    border: 1px solid #222;
-    border-radius: 20px;
-    padding: 0.22rem 0.7rem;
-    margin-bottom: 1rem;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.7rem; font-weight: 700;
+    background: rgba(74,122,155,0.06); color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill); padding: 0.22rem 0.7rem; margin-bottom: 1rem;
 }
 
-/* ── DCA simulator ── */
-.dca-card { padding: 2rem; }
-.dca-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+/* ── DCA ── */
+.dca-card { padding: 1.75rem 2rem; }
+.dca-card h3 { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .dca-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
 .dca-inputs .form-group { margin: 0; }
-.dca-hint {
-    font-size: 0.72rem;
-    color: rgba(232,240,255,0.25);
-    margin-top: 0.25rem;
-}
+.dca-hint { font-size: 0.71rem; color: var(--text-label); margin-top: 0.25rem; }
 .dca-rate-badge {
-    display: inline-block;
-    font-size: 0.72rem;
-    background: rgba(74,122,155,0.06);
-    color: #4a7a9b;
-    border-radius: 20px;
-    padding: 0.15rem 0.55rem;
-    margin-left: 0.4rem;
-    font-weight: 700;
+    display: inline-block; font-size: 0.7rem;
+    background: rgba(74,122,155,0.06); color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill); padding: 0.15rem 0.55rem; font-weight: 700;
 }
 
 /* ── Asset suggestions ── */
 .suggestions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.9rem;
-    margin-top: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 0.85rem; margin-top: 1.25rem;
 }
 .suggestion-card {
-    background: #070d18;
-    border: 1px solid #1a2a3a;
-    border-radius: 14px;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     padding: 1.1rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    transition: border-color 0.18s;
+    display: flex; flex-direction: column; gap: 0.55rem;
+    transition: border-color 0.15s;
 }
-.suggestion-card:hover {
-    border-color: #2a4a6a;
-}
-.suggestion-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-.suggestion-ticker {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #e8f0ff;
-    letter-spacing: -0.02em;
-}
-.suggestion-name {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.50);
-    margin-top: 0.15rem;
-    line-height: 1.35;
-}
-.suggestion-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    align-items: center;
-}
+.suggestion-card:hover { border-color: var(--accent); }
+.suggestion-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.suggestion-ticker { font-size: 1rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+.suggestion-name { font-size: 0.77rem; color: var(--text-label); margin-top: 0.15rem; line-height: 1.35; }
+.suggestion-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 .suggestion-type {
-    font-size: 0.68rem;
-    font-weight: 700;
-    background: rgba(74,122,155,0.08);
-    color: rgba(232,240,255,0.45);
-    border-radius: 6px;
-    padding: 0.18rem 0.55rem;
+    font-size: 0.67rem; font-weight: 700;
+    background: rgba(74,122,155,0.07); color: var(--text-muted);
+    border-radius: var(--radius-sm); padding: 0.18rem 0.55rem;
 }
 .suggestion-alloc {
-    font-size: 0.68rem;
-    font-weight: 700;
-    background: rgba(74,122,155,0.06);
-    color: #4a7a9b;
-    border: 1px solid #222;
-    border-radius: 6px;
-    padding: 0.18rem 0.55rem;
+    font-size: 0.67rem; font-weight: 700;
+    background: rgba(74,122,155,0.06); color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.18rem 0.55rem;
 }
-.suggestion-risk {
-    font-size: 0.68rem;
-    font-weight: 700;
-    border-radius: 6px;
-    padding: 0.18rem 0.55rem;
-}
-.suggestion-explication {
-    font-size: 0.82rem;
-    color: rgba(232,240,255,0.55);
-    line-height: 1.55;
-    flex: 1;
-}
-.suggestion-action {
-    margin-top: 0.25rem;
-}
+.suggestion-risk { font-size: 0.67rem; font-weight: 700; border-radius: var(--radius-sm); padding: 0.18rem 0.55rem; }
+.suggestion-explication { font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; flex: 1; }
 .suggestion-action a {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #4a7a9b;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    opacity: 0.85;
-    transition: opacity 0.15s;
+    font-size: 0.77rem; font-weight: 700; color: var(--accent);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
+    opacity: 0.85; transition: opacity 0.15s;
 }
-.suggestion-action a:hover { opacity: 1; color: #e8f0ff; }
+.suggestion-action a:hover { opacity: 1; color: var(--text); }
 
-/* ── Actions ── */
-.result-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-top: 1.5rem;
-}
+.result-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
 
 @media (max-width: 600px) {
-    .axis-name { min-width: 130px; font-size: 0.72rem; }
+    .axis-name { min-width: 120px; font-size: 0.71rem; }
     .score-number { font-size: 2.8rem; }
-    .score-profil-name { font-size: 1.6rem; }
+    .score-profil-name { font-size: 1.5rem; }
     .rec-card, .dca-card { padding: 1.25rem; }
     .suggestions-grid { grid-template-columns: 1fr; }
     .result-actions { flex-direction: column; }
-    .result-actions .btn { text-align: center; }
 }
 </style>
 
@@ -273,21 +177,13 @@
     <div class="card gauge-wrap" style="padding:1.5rem;">
         <div class="section-title" style="margin-top:0;">Score global</div>
         <div class="gauge-bar-outer">
-            <div class="gauge-segments">
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
-            </div>
             <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
         </div>
         <div class="gauge-labels">
             <span>0 — Prudent</span>
-            <span>20</span>
-            <span>40 — Équilibré</span>
-            <span>60</span>
-            <span>80</span>
+            <span>25</span>
+            <span>50 — Équilibré</span>
+            <span>75</span>
             <span>100 — Agressif</span>
         </div>
     </div>
@@ -308,13 +204,13 @@
         </div>
     </div>
 
-    <!-- Claude recommendation -->
+    <!-- Recommendation -->
     <div class="card rec-card" style="margin-bottom:1.25rem;">
         <h3>
-            <span style="color:#4a7a9b;">✦</span>
+            <i data-lucide="sparkles" style="width:16px;height:16px;color:var(--accent);"></i>
             Recommandation personnalisée
         </h3>
-        <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
+        <div class="rec-badge">Généré par IA · à titre éducatif uniquement</div>
         <div class="rec-body">
             {{ recommendation_html | safe }}
         </div>
@@ -323,11 +219,11 @@
     <!-- Asset suggestions -->
     {% if asset_suggestions %}
     <div class="card" style="padding:1.75rem 2rem; margin-bottom:1.25rem;">
-        <h3 style="font-size:1rem; font-weight:800; color:#e8f0ff; margin-bottom:0.35rem; display:flex; align-items:center; gap:0.5rem;">
-            <span style="color:#4a7a9b;">◈</span>
+        <h3 style="font-size:1rem; font-weight:800; color:var(--text); margin-bottom:0.3rem; display:flex; align-items:center; gap:0.5rem;">
+            <i data-lucide="layers" style="width:16px;height:16px;color:var(--accent);"></i>
             Actifs suggérés pour ton profil
         </h3>
-        <p style="font-size:0.82rem; color:rgba(232,240,255,0.40); margin-bottom:0; line-height:1.5;">
+        <p style="font-size:0.8rem; color:var(--text-label); margin-bottom:0; line-height:1.5;">
             Sélection indicative générée par IA · pas un conseil d'investissement
         </p>
         <div class="suggestions-grid">
@@ -337,7 +233,7 @@
                 {% set risk_color = '#4ade80' %}
                 {% set risk_bg = 'rgba(74,222,128,0.08)' %}
             {% elif risk < 67 %}
-                {% set risk_color = '#888' %}
+                {% set risk_color = 'var(--text-label)' %}
                 {% set risk_bg = 'rgba(74,122,155,0.06)' %}
             {% else %}
                 {% set risk_color = '#f87171' %}
@@ -380,7 +276,8 @@
     <!-- DCA Simulator -->
     <div class="card dca-card" style="margin-bottom:1.25rem;">
         <h3>
-            🧮 Simulateur DCA
+            <i data-lucide="calculator" style="width:16px;height:16px;color:var(--accent);"></i>
+            Simulateur DCA
             <span class="dca-rate-badge">Taux pré-rempli : {{ dca_rate }}%/an</span>
         </h3>
         <div class="dca-inputs">
@@ -419,58 +316,52 @@
             </div>
         </div>
 
-        <div class="card" id="dca-chart-wrap" style="display:none; margin-top:1.25rem; padding:0; border:none; background:none;">
+        <div id="dca-chart-wrap" style="display:none; margin-top:1.25rem;">
             <div id="dca-chart"></div>
         </div>
     </div>
 
     <!-- CTA non-auth -->
     {% if not current_user.is_authenticated %}
-    <div class="card" style="border-top:1px solid #222; padding:2rem; margin-bottom:1.25rem; text-align:center;">
-        <div style="font-size:2rem; margin-bottom:0.75rem;">🔒</div>
-        <h3 style="font-size:1.1rem; font-weight:800; color:#e8f0ff; margin-bottom:0.5rem;">
+    <div class="card" style="padding:2rem; margin-bottom:1.25rem; text-align:center;">
+        <i data-lucide="lock" style="width:32px;height:32px;color:var(--accent);margin:0 auto 0.75rem;display:block;"></i>
+        <h3 style="font-size:1.05rem; font-weight:800; color:var(--text); margin-bottom:0.5rem;">
             Sauvegarde ton profil et suis tes investissements
         </h3>
-        <p style="color:rgba(232,240,255,0.50); font-size:0.875rem; line-height:1.6; margin-bottom:1.5rem; max-width:380px; margin-left:auto; margin-right:auto;">
+        <p style="color:var(--text-muted); font-size:0.875rem; line-height:1.6; margin-bottom:1.5rem; max-width:380px; margin-left:auto; margin-right:auto;">
             Crée un compte gratuit pour sauvegarder ce résultat, suivre ton portefeuille et accéder à toutes les analyses.
         </p>
         <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:0.95rem; padding:0.7rem 1.75rem;">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:0.9rem; padding:0.7rem 1.75rem;">
                 Créer un compte gratuit →
             </a>
-            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">
-                J'ai déjà un compte
-            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">J'ai déjà un compte</a>
         </div>
     </div>
     {% endif %}
 
     <!-- Actions -->
     <div class="result-actions">
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">
-            ↺ Refaire le test
-        </a>
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">↺ Refaire le test</a>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-            Suivre mon portefeuille →
-        </a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Suivre mon portefeuille →</a>
         {% endif %}
     </div>
 
 </div>
 
 <script>
-// Animate gauge fill
 window.addEventListener('load', function() {
     setTimeout(function() {
         document.getElementById('gauge-fill').style.width = '{{ global_score }}%';
     }, 200);
-    // Animate axis bars
     document.querySelectorAll('.axis-bar-anim').forEach(function(el) {
         setTimeout(function() {
             el.style.width = el.dataset.target + '%';
         }, 350);
     });
+    setTimeout(runDCA, 450);
+    lucide.createIcons();
 });
 
 function fmtEur(n) {
@@ -508,30 +399,27 @@ function runDCA() {
         {
             x: labels, y: invested, name: 'Total investi (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: 'rgba(232,240,255,0.25)', dash: 'dot', width: 2 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.05)'
+            line: { color: 'rgba(232,240,255,0.2)', dash: 'dot', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.04)'
         },
         {
             x: labels, y: value, name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: '#fff', width: 1.5 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
+            line: { color: '#e8f0ff', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.07)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor:  'rgba(0,0,0,0)',
-        height: 320,
-        margin: { l: 60, r: 20, t: 20, b: 40 },
-        legend: { orientation: 'h', y: -0.18, font: { color: 'rgba(232,240,255,0.50)' }, bgcolor: 'rgba(0,0,0,0)' },
+        height: 300,
+        margin: { l: 60, r: 20, t: 16, b: 40 },
+        legend: { orientation: 'h', y: -0.2, font: { color: 'rgba(232,240,255,0.45)', size: 11 }, bgcolor: 'rgba(0,0,0,0)' },
         hovermode: 'x unified',
-        hoverlabel: { bgcolor: '#16161F', bordercolor: 'rgba(74,122,155,0.12)', font: { color: 'rgba(232,240,255,0.85)' } },
-        xaxis: { gridcolor: 'rgba(74,122,155,0.07)', tickfont: { color: 'rgba(232,240,255,0.40)' }, linecolor: 'rgba(74,122,155,0.09)' },
-        yaxis: { gridcolor: 'rgba(74,122,155,0.07)', tickfont: { color: 'rgba(232,240,255,0.40)' }, linecolor: 'rgba(74,122,155,0.09)', tickformat: ',.0f', ticksuffix: ' €' }
+        hoverlabel: { bgcolor: 'var(--bg-card2)', bordercolor: 'rgba(74,122,155,0.12)', font: { color: 'rgba(232,240,255,0.85)', size: 12 } },
+        xaxis: { gridcolor: 'rgba(74,122,155,0.07)', tickfont: { color: 'rgba(232,240,255,0.35)', size: 11 }, linecolor: 'rgba(74,122,155,0.07)' },
+        yaxis: { gridcolor: 'rgba(74,122,155,0.07)', tickfont: { color: 'rgba(232,240,255,0.35)', size: 11 }, linecolor: 'rgba(74,122,155,0.07)', tickformat: ',.0f', ticksuffix: ' €' }
     }, { responsive: true, displayModeBar: false });
 }
-
-// Auto-run DCA on load
-window.addEventListener('load', function() { setTimeout(runDCA, 400); });
 </script>
 
 {% endblock %}

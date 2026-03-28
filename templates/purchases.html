@@ -1,109 +1,87 @@
 {% extends 'base.html' %}
 {% block title %}Historique des achats{% endblock %}
+{% block page_title %}Achats{% endblock %}
 {% block content %}
-
 <style>
 @media (max-width: 768px) {
     .purchases-desktop { display: none; }
     .purchases-mobile  { display: block; }
-    /* Filtre buttons : wrap compact */
-    .btn-sm { min-height: 34px; font-size: 0.75rem; }
-    /* KPI grid override (base already sets 1fr 1fr) */
     .kpi-grid { grid-template-columns: 1fr 1fr; }
     .kpi-card { padding: 0.75rem 1rem; }
-    .kpi-value { font-size: 1.2rem; }
-    /* Page header */
-    .page-header-actions .btn { flex: 1; justify-content: center; }
+    .kpi-value { font-size: 1.15rem; }
 }
 @media (min-width: 769px) {
     .purchases-desktop { display: block; }
     .purchases-mobile  { display: none; }
 }
+
+/* Mobile cards */
 .purchase-mobile-card {
-    background: rgba(74,122,155,0.05);
-    border: 1px solid rgba(74,122,155,0.09);
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     padding: 1rem;
-    margin-bottom: 0.75rem;
-    transition: border-color 0.2s;
+    margin-bottom: 0.65rem;
+    transition: border-color 0.15s;
 }
-.purchase-mobile-card:hover { border-color: rgba(74,122,155,0.14); }
+.purchase-mobile-card:hover { border-color: var(--accent); }
 .pm-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.2rem 0;
-    font-size: 0.82rem;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.2rem 0; font-size: 0.8rem;
 }
-.pm-label { color: rgba(232,240,255,0.3); }
-.pm-value { color: rgba(232,240,255,0.75); font-weight: 500; }
+.pm-label { color: var(--text-label); }
+.pm-value { color: var(--text-muted); font-weight: 500; }
 
-/* ── Envelope badges ── */
+/* Envelope badges */
 .env-badge {
-    display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 5px;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
+    display: inline-block; font-size: 0.67rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: 0.03em; white-space: nowrap;
 }
-.env-pea    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-peapme { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-cto    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-av     { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-per    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-livret { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-autre  { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-pea, .env-peapme, .env-cto, .env-av,
+.env-per, .env-livret, .env-autre {
+    background: transparent; color: var(--accent); border: 1px solid var(--border2);
+}
 
-/* ── Envelope edit button ── */
+/* Envelope edit button */
 .env-edit-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(232,240,255,0.25);
-    font-size: 0.8rem;
-    padding: 2px 4px;
-    border-radius: 4px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-label); font-size: 0.78rem;
+    padding: 2px 4px; border-radius: 4px;
     transition: color 0.15s, background 0.15s;
-    line-height: 1;
-    vertical-align: middle;
-    margin-left: 2px;
+    line-height: 1; vertical-align: middle; margin-left: 2px;
 }
-.env-edit-btn:hover { color: #e8f0ff; background: rgba(74,122,155,0.07); }
+.env-edit-btn:hover { color: var(--text); background: rgba(74,122,155,0.08); }
 
-/* ── Modal ── */
+/* Modal */
 .env-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(4,8,15,0.6);
+    display: none; position: fixed; inset: 0;
+    background: rgba(4,8,15,0.65);
     backdrop-filter: blur(4px);
-    z-index: 9000;
-    align-items: center;
-    justify-content: center;
+    z-index: 9000; align-items: center; justify-content: center;
 }
 .env-modal-overlay.active { display: flex; }
 .env-modal-box {
-    background: #070d18;
-    border: 1px solid #1a2a3a;
-    border-radius: 16px;
-    padding: 1.75rem;
-    width: 340px;
-    max-width: 90vw;
-    box-shadow: 0 30px 80px rgba(4,8,15,0.6);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.75rem; width: 340px; max-width: 90vw;
+    box-shadow: 0 24px 60px rgba(4,8,15,0.55);
+    animation: fadeup 0.22s cubic-bezier(0.16,1,0.3,1) both;
 }
-.env-modal-box h3 {
-    margin: 0 0 1.25rem;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #e8f0ff;
-}
-.env-modal-box select {
-    width: 100%;
-    margin-bottom: 1.25rem;
-}
+.env-modal-box h3 { margin: 0 0 1.25rem; font-size: 1rem; font-weight: 700; color: var(--text); }
+.env-modal-box select { width: 100%; margin-bottom: 1.25rem; }
 .env-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+/* Filter bar */
+.filter-bar {
+    margin-bottom: 1.25rem;
+    display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;
+}
+.filter-bar-label {
+    font-size: 0.72rem; color: var(--text-label); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-right: 0.15rem;
+}
 </style>
 
 <div class="page-header">
@@ -119,7 +97,7 @@
 
 {% if not purchases %}
 <div class="card empty-state">
-    <div style="font-size:2.5rem; margin-bottom:1rem;">📋</div>
+    <i data-lucide="inbox" style="width:36px;height:36px;color:var(--text-label);margin:0 auto 1rem;display:block;"></i>
     <h3>Aucun achat enregistré</h3>
     <p>Commence par saisir ton premier achat DCA.</p>
     <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter des achats</a>
@@ -127,10 +105,9 @@
 
 {% else %}
 
-<!-- Filtre -->
-<div style="margin-bottom:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:0.75rem; color:rgba(232,240,255,0.25); font-weight:700;
-                 text-transform:uppercase; letter-spacing:0.08em;">Filtrer :</span>
+<!-- Filter -->
+<div class="filter-bar">
+    <span class="filter-bar-label">Filtrer :</span>
     <button class="btn btn-sm btn-primary filter-btn" onclick="filterAsset('all', this)">Tous</button>
     {% for a in assets %}
     <button class="btn btn-sm btn-ghost filter-btn" onclick="filterAsset('{{ a['ticker'] }}', this)">
@@ -139,25 +116,25 @@
     {% endfor %}
 </div>
 
-<!-- ── Desktop table ── -->
+<!-- Desktop table -->
 <div class="purchases-desktop">
     <div class="card" style="padding:0; overflow:hidden;">
         <div class="table-wrap" style="overflow-x:auto;">
             <table id="purchases-table" style="white-space:nowrap;">
                 <thead>
                     <tr>
-                        <th style="white-space:nowrap;">Date</th>
-                        <th style="white-space:nowrap;">Actif</th>
-                        <th style="white-space:nowrap;">Type</th>
-                        <th style="white-space:nowrap;">Enveloppe</th>
-                        <th style="white-space:nowrap;">Parts</th>
-                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Prix / part</th>
-                        <th style="white-space:nowrap;">Frais</th>
-                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Total investi</th>
-                        <th style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">Valeur actuelle</th>
-                        <th style="white-space:nowrap;">+/- value</th>
-                        <th style="white-space:nowrap;">Note</th>
-                        <th style="white-space:nowrap;">Actions</th>
+                        <th>Date</th>
+                        <th>Actif</th>
+                        <th>Type</th>
+                        <th>Enveloppe</th>
+                        <th>Parts</th>
+                        <th style="text-align:right; min-width:110px; padding:8px 14px;">Prix / part</th>
+                        <th>Frais</th>
+                        <th style="text-align:right; min-width:110px; padding:8px 14px;">Total investi</th>
+                        <th style="text-align:right; min-width:110px; padding:8px 14px;">Valeur actuelle</th>
+                        <th>+/- value</th>
+                        <th>Note</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -167,16 +144,16 @@
                 {% set gain = (cv - p['total_cost']) | round(2) if cv is not none else none %}
                 {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
                 {% set env = p.get('envelope') or '' %}
-                <tr data-ticker="{{ p['ticker'] }}"
+                <tr class="hover-row" data-ticker="{{ p['ticker'] }}"
                     data-asset-id="{{ p['asset_id'] }}"
                     data-cost="{{ p['total_cost'] | float }}"
                     data-fees="{{ p['fees'] | float if p['fees'] else 0 }}"
                     data-gain="{{ gain | float if gain is not none else 0 }}">
-                    <td style="white-space:nowrap; color:rgba(232,240,255,0.5); font-size:0.82rem;">{{ p['date'] }}</td>
+                    <td style="color:var(--text-label); font-size:0.8rem;">{{ p['date'] }}</td>
                     <td>
                         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
                             <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                            <span style="font-size:0.82rem; color:rgba(232,240,255,0.4);">{{ p['name'] }}</span>
+                            <span style="font-size:0.8rem; color:var(--text-label);">{{ p['name'] }}</span>
                         </div>
                     </td>
                     <td>
@@ -188,22 +165,24 @@
                     <td>
                         <div style="display:flex; align-items:center; gap:0.25rem;">
                             <span class="env-badge-row-{{ p['asset_id'] }} {% if env == 'PEA' %}env-badge env-pea{% elif env == 'PEA-PME' %}env-badge env-peapme{% elif env == 'CTO' %}env-badge env-cto{% elif env == 'Assurance Vie' %}env-badge env-av{% elif env == 'PER' %}env-badge env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-badge env-livret{% elif env %}env-badge env-autre{% else %}env-badge{% endif %}"
-                                  style="{% if not env %}color:rgba(232,240,255,0.15); font-size:0.72rem;{% endif %}">{{ env or '—' }}</span>
+                                  style="{% if not env %}color:var(--text-label); font-size:0.72rem;{% endif %}">{{ env or '—' }}</span>
                             <button class="env-edit-btn" title="Modifier l'enveloppe"
-                                    onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
+                                    onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">
+                                <i data-lucide="pencil" style="width:11px;height:11px;"></i>
+                            </button>
                         </div>
                     </td>
                     <td>{{ p['shares'] }}</td>
-                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
-                    <td class="neutral" style="white-space:nowrap;">
+                    <td style="text-align:right; min-width:110px; padding:8px 14px;">{{ p['price_per_share'] }} {{ p['currency'] }}</td>
+                    <td class="neutral">
                         {% if p['fees'] and p['fees'] | float > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
                     </td>
-                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;"><strong style="color:#e8f0ff;">{{ p['total_cost'] }} €</strong></td>
-                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">
+                    <td style="text-align:right; min-width:110px; padding:8px 14px;"><strong style="color:var(--text);">{{ p['total_cost'] }} €</strong></td>
+                    <td style="text-align:right; min-width:110px; padding:8px 14px;">
                         {% if cv is not none %}
-                        <strong style="color:#e8f0ff;">{{ cv }} €</strong>
+                        <strong style="color:var(--text);">{{ cv }} €</strong>
                         {% else %}
-                        <span style="color:rgba(232,240,255,0.2);">—</span>
+                        <span style="color:var(--text-label);">—</span>
                         {% endif %}
                     </td>
                     <td>
@@ -211,14 +190,14 @@
                         <span style="font-weight:700; color:{{ '#4ade80' if gain >= 0 else '#f87171' }};">
                             {{ '+' if gain >= 0 else '' }}{{ gain }} €
                         </span>
-                        <div style="font-size:0.72rem; color:{{ '#4ade80' if gain >= 0 else '#f87171' }}; opacity:0.7;">
+                        <div style="font-size:0.7rem; color:{{ '#4ade80' if gain >= 0 else '#f87171' }}; opacity:0.7;">
                             {{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%
                         </div>
                         {% else %}
-                        <span style="color:rgba(232,240,255,0.2);">—</span>
+                        <span style="color:var(--text-label);">—</span>
                         {% endif %}
                     </td>
-                    <td style="font-size:0.82rem; color:rgba(232,240,255,0.38); max-width:120px;">
+                    <td style="font-size:0.8rem; color:var(--text-label); max-width:120px;">
                         {{ p['notes'] or '—' }}
                     </td>
                     <td>
@@ -240,7 +219,7 @@
     </div>
 </div>
 
-<!-- ── Mobile cards ── -->
+<!-- Mobile cards -->
 <div class="purchases-mobile" id="purchases-mobile">
     {% for p in purchases %}
     {% set cp = p.get('current_price') | float(0) %}
@@ -249,19 +228,21 @@
     {% set gain_pct = ((gain / p['total_cost']) * 100) | round(2) if (gain is not none and p['total_cost'] > 0) else none %}
     {% set env = p.get('envelope') or '' %}
     <div class="purchase-mobile-card" data-ticker="{{ p['ticker'] }}" data-asset-id="{{ p['asset_id'] }}">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.65rem;">
+            <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
                 <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                <span style="font-size:0.85rem; color:#e8f0ff; font-weight:600;">{{ p['name'] }}</span>
+                <span style="font-size:0.85rem; color:var(--text); font-weight:600;">{{ p['name'] }}</span>
                 {% if env %}
                 <span class="env-badge-row-{{ p['asset_id'] }} env-badge {% if env == 'PEA' %}env-pea{% elif env == 'PEA-PME' %}env-peapme{% elif env == 'CTO' %}env-cto{% elif env == 'Assurance Vie' %}env-av{% elif env == 'PER' %}env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-livret{% else %}env-autre{% endif %}">{{ env }}</span>
                 {% else %}
-                <span class="env-badge-row-{{ p['asset_id'] }}" style="font-size:0.68rem; color:rgba(232,240,255,0.15);">—</span>
+                <span class="env-badge-row-{{ p['asset_id'] }}" style="font-size:0.67rem; color:var(--text-label);">—</span>
                 {% endif %}
                 <button class="env-edit-btn" title="Modifier l'enveloppe"
-                        onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">✎</button>
+                        onclick="openEnvModal({{ p['asset_id'] }}, '{{ env }}')">
+                    <i data-lucide="pencil" style="width:11px;height:11px;"></i>
+                </button>
             </div>
-            <span style="font-size:0.75rem; color:rgba(232,240,255,0.3);">{{ p['date'] }}</span>
+            <span style="font-size:0.74rem; color:var(--text-label);">{{ p['date'] }}</span>
         </div>
 
         <div class="pm-row">
@@ -270,21 +251,19 @@
         </div>
         <div class="pm-row">
             <span class="pm-label">Total investi</span>
-            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ p['total_cost'] }} €</span>
+            <span class="pm-value" style="color:var(--text); font-weight:700;">{{ p['total_cost'] }} €</span>
         </div>
         {% if cv is not none %}
         <div class="pm-row">
             <span class="pm-label">Valeur actuelle</span>
-            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ cv }} €</span>
+            <span class="pm-value" style="color:var(--text); font-weight:700;">{{ cv }} €</span>
         </div>
         {% endif %}
         {% if gain is not none %}
         <div class="pm-row">
             <span class="pm-label">+/- value</span>
-            <span style="font-weight:700; font-size:0.85rem;
-                         color:{{ '#4ade80' if gain >= 0 else '#f87171' }};">
-                {{ '+' if gain >= 0 else '' }}{{ gain }} €
-                ({{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%)
+            <span style="font-weight:700; font-size:0.84rem; color:{{ '#4ade80' if gain >= 0 else '#f87171' }};">
+                {{ '+' if gain >= 0 else '' }}{{ gain }} € ({{ '+' if gain_pct >= 0 else '' }}{{ gain_pct }}%)
             </span>
         </div>
         {% endif %}
@@ -295,8 +274,7 @@
         </div>
         {% endif %}
 
-        <div style="display:flex; gap:0.4rem; margin-top:0.75rem; padding-top:0.75rem;
-                    border-top:1px solid rgba(74,122,155,0.07);">
+        <div style="display:flex; gap:0.4rem; margin-top:0.7rem; padding-top:0.7rem; border-top:1px solid var(--border);">
             <a href="{{ url_for('main.edit_purchase', purchase_id=p['id']) }}"
                class="btn btn-ghost btn-sm">Éditer</a>
             <form method="POST"
@@ -329,7 +307,7 @@
     </div>
 </div>
 
-<!-- ── Envelope edit modal ── -->
+<!-- Envelope modal -->
 <div class="env-modal-overlay" id="env-modal" onclick="if(event.target===this)closeEnvModal()">
     <div class="env-modal-box">
         <h3>Modifier l'enveloppe fiscale</h3>
@@ -356,9 +334,7 @@
 
 <script>
 function filterAsset(ticker, btn) {
-    // Desktop
-    const rows = document.querySelectorAll('#purchases-table tbody tr');
-    // Mobile
+    const rows  = document.querySelectorAll('#purchases-table tbody tr');
     const cards = document.querySelectorAll('.purchase-mobile-card');
 
     let count = 0, total = 0, fees = 0, gain = 0, hasGain = false;
@@ -386,8 +362,8 @@ function filterAsset(ticker, btn) {
 
     const gainEl = document.getElementById('kpi-gain');
     if (hasGain) {
-        gainEl.textContent = (gain >= 0 ? '+' : '') + gain.toFixed(2) + ' €';
-        gainEl.style.color = gain >= 0 ? '#4ade80' : '#f87171';
+        gainEl.textContent  = (gain >= 0 ? '+' : '') + gain.toFixed(2) + ' €';
+        gainEl.style.color  = gain >= 0 ? '#4ade80' : '#f87171';
     } else {
         gainEl.textContent = '—';
         gainEl.style.color = '';
@@ -401,7 +377,6 @@ function filterAsset(ticker, btn) {
     btn.classList.add('btn-primary');
 }
 
-// ── Envelope modal ──
 let _envModalAssetId = null;
 
 function envBadgeClass(env) {
@@ -411,7 +386,7 @@ function envBadgeClass(env) {
     if (env === 'Assurance Vie') return 'env-badge env-av';
     if (env === 'PER')           return 'env-badge env-per';
     if (['Livret A','LDDS','LEP'].includes(env)) return 'env-badge env-livret';
-    if (env)                     return 'env-badge env-autre';
+    if (env) return 'env-badge env-autre';
     return 'env-badge';
 }
 
@@ -428,9 +403,9 @@ function closeEnvModal() {
 
 async function submitEnvUpdate() {
     if (!_envModalAssetId) return;
-    const env     = document.getElementById('env-modal-select').value;
-    const btn     = document.getElementById('env-modal-confirm');
-    btn.disabled  = true;
+    const env    = document.getElementById('env-modal-select').value;
+    const btn    = document.getElementById('env-modal-confirm');
+    btn.disabled = true;
     btn.textContent = '…';
 
     try {
@@ -441,16 +416,11 @@ async function submitEnvUpdate() {
         });
         const data = await res.json();
         if (data.success) {
-            // Update all rows/cards sharing the same asset_id
             document.querySelectorAll(`[data-asset-id="${_envModalAssetId}"] .env-badge-row-${_envModalAssetId}`)
                 .forEach(el => {
-                    el.className  = envBadgeClass(env);
+                    el.className   = envBadgeClass(env);
                     el.textContent = env || '—';
-                    if (!env) {
-                        el.style.cssText = 'font-size:0.68rem; color:rgba(232,240,255,0.15);';
-                    } else {
-                        el.style.cssText = '';
-                    }
+                    el.style.cssText = !env ? 'font-size:0.67rem; color:var(--text-label);' : '';
                 });
             closeEnvModal();
         } else {
@@ -466,6 +436,7 @@ async function submitEnvUpdate() {
 
 window.addEventListener('load', () => {
     filterAsset('all', document.querySelector('.filter-btn.btn-primary'));
+    lucide.createIcons();
 });
 </script>
 

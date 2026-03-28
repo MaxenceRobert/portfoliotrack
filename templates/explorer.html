@@ -1,38 +1,39 @@
 {% extends 'base.html' %}
 {% from 'components/risk_badge.html' import risk_badge %}
 {% block title %}Explorer un actif — PortfolioTrack{% endblock %}
+{% block page_title %}Explorer{% endblock %}
 {% block content %}
-
 <style>
+/* ── Search autocomplete ── */
 .explorer-search-wrap { position: relative; flex: 1; min-width: 200px; }
 .explorer-suggestions {
     display: none;
     position: absolute;
     top: calc(100% + 4px);
     left: 0; right: 0;
-    background: #070d18;
-    border: 1px solid #1a2a3a;
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     z-index: 1000;
     max-height: 280px;
     overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(4,8,15,0.5);
+    box-shadow: 0 8px 24px rgba(4,8,15,0.55);
 }
 .explorer-suggestion-item {
     padding: 0.7rem 1rem;
     cursor: pointer;
-    border-bottom: 1px solid rgba(74,122,155,0.06);
+    border-bottom: 1px solid var(--border);
     transition: background 0.12s;
 }
 .explorer-suggestion-item:last-child { border-bottom: none; }
-.explorer-suggestion-item:hover { background: #1a2a3a; }
+.explorer-suggestion-item:hover { background: var(--bg-hover); }
 
-/* Bloc risque prominent */
+/* ── Risk block ── */
 .risk-block {
     margin-bottom: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid #1a2a3a;
-    background: #070d18;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
     padding: 1.5rem;
     display: flex;
     gap: 2rem;
@@ -53,22 +54,22 @@
     color: var(--risk-color);
 }
 .risk-block-score-label {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
     margin-top: 0.3rem;
     color: var(--risk-color);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 .risk-block-score-sub {
-    font-size: 0.7rem;
-    color: rgba(232,240,255,0.3);
+    font-size: 0.68rem;
+    color: var(--text-label);
     margin-top: 0.2rem;
 }
 .risk-block-divider {
     width: 1px;
     align-self: stretch;
-    background: var(--risk-border);
+    background: var(--border2);
     min-height: 60px;
 }
 .risk-block-metrics {
@@ -84,45 +85,40 @@
     min-width: 120px;
 }
 .risk-metric-name {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: rgba(74,122,155,0.45);
+    color: var(--text-label);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
 }
 .risk-metric-value {
     font-size: 1.35rem;
     font-weight: 800;
-    color: #e8f0ff;
+    color: var(--text);
     letter-spacing: -0.02em;
 }
 .risk-metric-desc {
-    font-size: 0.72rem;
-    color: rgba(74,122,155,0.28);
-    line-height: 1.4;
+    font-size: 0.7rem;
+    color: var(--text-label);
+    line-height: 1.45;
 }
 .risk-block-source {
     font-size: 0.68rem;
-    color: rgba(74,122,155,0.2);
+    color: var(--text-label);
     margin-top: 0.75rem;
     text-align: center;
     width: 100%;
-}
-@media (max-width: 600px) {
-    .risk-block { flex-direction: column; gap: 1.2rem; }
-    .risk-block-divider { display: none; }
-    .risk-block-metrics { gap: 1rem; }
 }
 
 /* ── Ticker bar ── */
 .ticker-bar-wrap {
     width: 100%;
     overflow: hidden;
-    background: rgba(74,122,155,0.05);
-    border: 1px solid rgba(74,122,155,0.06);
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    padding: 0.55rem 0;
+    background: rgba(74,122,155,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0;
     position: relative;
 }
 .ticker-bar-wrap::before,
@@ -134,8 +130,8 @@
     z-index: 2;
     pointer-events: none;
 }
-.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, #070d18 0%, transparent 100%); }
-.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, #070d18 0%, transparent 100%); }
+.ticker-bar-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg) 0%, transparent 100%); }
+.ticker-bar-wrap::after  { right: 0; background: linear-gradient(270deg, var(--bg) 0%, transparent 100%); }
 .ticker-track {
     display: flex;
     white-space: nowrap;
@@ -151,22 +147,37 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.35rem 1.25rem;
-    font-size: 0.78rem;
+    padding: 0.3rem 1.2rem;
+    font-size: 0.77rem;
     font-weight: 600;
-    border-right: 1px solid rgba(74,122,155,0.06);
+    border-right: 1px solid var(--border);
     white-space: nowrap;
     text-decoration: none;
     color: inherit;
     cursor: pointer;
     transition: background 0.12s;
 }
-.ticker-item:hover { background: rgba(10,20,40,0.7); }
-.ticker-name { color: rgba(74,122,155,0.45); font-size: 0.72rem; }
-.ticker-price { color: rgba(232,240,255,0.8); }
-.ticker-chg-pos { color: #4ade80; font-size: 0.72rem; font-weight: 700; }
-.ticker-chg-neg { color: #F87171; font-size: 0.72rem; font-weight: 700; }
-.ticker-loading { font-size: 0.75rem; color: rgba(232,240,255,0.25); padding: 0 1.5rem; font-style: italic; }
+.ticker-item:hover { background: var(--bg-hover); }
+.ticker-name  { color: var(--text-label); font-size: 0.71rem; }
+.ticker-price { color: var(--text-muted); }
+.ticker-chg-pos { color: var(--green); font-size: 0.71rem; font-weight: 700; }
+.ticker-chg-neg { color: var(--red); font-size: 0.71rem; font-weight: 700; }
+.ticker-loading { font-size: 0.74rem; color: var(--text-label); padding: 0 1.5rem; font-style: italic; }
+
+/* ── KPIs inline ── */
+.explorer-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 600px) {
+    .risk-block { flex-direction: column; gap: 1.2rem; }
+    .risk-block-divider { display: none; }
+    .risk-block-metrics { gap: 1rem; }
+    .explorer-kpi-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>
 
 <div class="page-header">
@@ -176,41 +187,42 @@
     </div>
 </div>
 
-<!-- ── Ticker bar ── -->
+<!-- Ticker bar -->
 <div class="ticker-bar-wrap" id="ticker-bar-wrap">
     <div class="ticker-track" id="ticker-track">
         <span class="ticker-loading">Chargement des marchés…</span>
     </div>
 </div>
 
-<div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:#070d18; border:1px solid #1a2a3a; border-radius:12px; font-size:0.875rem; color:rgba(232,240,255,0.55); display:flex; align-items:center; gap:0.6rem;">
-    <span style="color:#4a7a9b;">📊</span>
-    Chaque actif affiche son niveau de risque historique. Compare-les avant d'investir pour rester cohérent avec ton profil.
+<!-- Info banner -->
+<div class="card" style="margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; font-size:0.82rem; color:var(--text-muted);">
+    <i data-lucide="bar-chart-2" style="width:16px;height:16px;color:var(--accent);flex-shrink:0;"></i>
+    <span>Chaque actif affiche son niveau de risque historique. Compare-les avant d'investir pour rester cohérent avec ton profil.</span>
     {% if current_user.is_authenticated %}
-    <a href="{{ url_for('main.dashboard') }}" style="color:#4a7a9b; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Voir ma cohérence →</a>
+    <a href="{{ url_for('main.dashboard') }}" style="color:var(--accent);font-weight:600;text-decoration:none;margin-left:auto;white-space:nowrap;font-size:0.78rem;">Voir ma cohérence →</a>
     {% else %}
-    <a href="{{ url_for('main.test_profil') }}" style="color:#4a7a9b; font-weight:600; text-decoration:none; margin-left:auto; white-space:nowrap; font-size:0.8rem;">Découvrir mon profil →</a>
+    <a href="{{ url_for('main.test_profil') }}" style="color:var(--accent);font-weight:600;text-decoration:none;margin-left:auto;white-space:nowrap;font-size:0.78rem;">Découvrir mon profil →</a>
     {% endif %}
 </div>
 
-<!-- Barre de recherche avec autocomplete -->
+<!-- Search -->
 <div class="card" style="margin-bottom:1.5rem;">
     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
         <div class="explorer-search-wrap">
             <input type="text" id="explorer-input"
                    value="{{ ticker }}"
-                   placeholder="Ex: Apple, MSCI World, S&P500, Bitcoin..."
+                   placeholder="Ex: Apple, MSCI World, S&P500, Bitcoin…"
                    autocomplete="off">
             <div class="explorer-suggestions" id="explorer-suggestions"></div>
         </div>
         <button class="btn btn-primary" onclick="goToTicker()">Rechercher</button>
     </div>
-    <div style="margin-top:0.75rem; font-size:0.78rem; color:rgba(232,240,255,0.25);">
-        Tape le nom ou le ticker — ex:
-        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('AAPL')">AAPL</span>,
-        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('IWDA.AS')">IWDA.AS</span>,
-        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('BTC-USD')">BTC-USD</span>,
-        <span style="color:#4a7a9b; cursor:pointer;" onclick="setTicker('ESE.PA')">ESE.PA</span>
+    <div style="margin-top:0.6rem; font-size:0.77rem; color:var(--text-label);">
+        Exemples :
+        <span style="color:var(--accent); cursor:pointer;" onclick="setTicker('AAPL')">AAPL</span>,
+        <span style="color:var(--accent); cursor:pointer;" onclick="setTicker('IWDA.AS')">IWDA.AS</span>,
+        <span style="color:var(--accent); cursor:pointer;" onclick="setTicker('BTC-USD')">BTC-USD</span>,
+        <span style="color:var(--accent); cursor:pointer;" onclick="setTicker('ESE.PA')">ESE.PA</span>
     </div>
 </div>
 
@@ -220,33 +232,32 @@
 
 {% if info %}
 
-<!-- Header actif -->
-<div class="card" style="margin-bottom:1.5rem;">
+<!-- Asset header -->
+<div class="card" style="margin-bottom:1.25rem;">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
-                <h2 style="color:#e8f0ff; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em;">{{ info.name }}</h2>
-                <span class="badge badge-etf">{{ info.ticker }}</span>
+            <div style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap; margin-bottom:0.35rem;">
+                <h2 style="font-size:1.35rem; font-weight:800; letter-spacing:-0.025em; color:var(--text);">{{ info.name }}</h2>
+                <span class="pill" style="font-size:0.7rem; font-weight:700; padding:2px 8px;">{{ info.ticker }}</span>
                 {% if info.exchange %}
-                <span style="font-size:0.75rem; color:rgba(232,240,255,0.25); border:1px solid rgba(74,122,155,0.12); padding:2px 8px; border-radius:20px;">{{ info.exchange }}</span>
+                <span class="pill" style="font-size:0.7rem; padding:2px 8px; background:transparent; color:var(--text-label); border-color:var(--border2);">{{ info.exchange }}</span>
                 {% endif %}
                 {% if info.asset_type %}
-                <span style="font-size:0.75rem; color:rgba(232,240,255,0.25);">{{ info.asset_type }}</span>
+                <span style="font-size:0.72rem; color:var(--text-label);">{{ info.asset_type }}</span>
                 {% endif %}
             </div>
             {% if info.sector and info.sector != '—' %}
-            <div style="font-size:0.82rem; color:rgba(232,240,255,0.35);">{{ info.sector }}</div>
+            <div style="font-size:0.8rem; color:var(--text-label);">{{ info.sector }}</div>
             {% endif %}
         </div>
         <div style="text-align:right;">
-            <div style="font-size:2.2rem; font-weight:800; color:#e8f0ff; letter-spacing:-0.02em;">
-                {{ info.current_price }} <span style="font-size:1rem; font-weight:500; color:rgba(74,122,155,0.4);">{{ info.currency }}</span>
+            <div style="font-size:2.1rem; font-weight:800; color:var(--text); letter-spacing:-0.025em; line-height:1.1;">
+                {{ info.current_price }}<span style="font-size:0.95rem; font-weight:500; color:var(--text-label); margin-left:4px;">{{ info.currency }}</span>
             </div>
             {% if info.previous_close %}
             {% set change = ((info.current_price - info.previous_close) / info.previous_close * 100)|round(2) %}
             {% set change_abs = (info.current_price - info.previous_close)|round(4) %}
-            <div class="{{ 'positive' if change >= 0 else 'negative' }}"
-                 style="font-size:0.9rem; font-weight:600;">
+            <div class="{{ 'positive' if change >= 0 else 'negative' }}" style="font-size:0.875rem; font-weight:600;">
                 {{ '+' if change >= 0 else '' }}{{ change_abs }} {{ info.currency }}
                 ({{ '+' if change >= 0 else '' }}{{ change }}%) aujourd'hui
             </div>
@@ -256,11 +267,11 @@
 </div>
 
 <!-- KPIs -->
-<div class="kpi-grid" style="margin-bottom:1.5rem;">
+<div class="explorer-kpi-grid">
     {% if info.market_cap %}
-    <div class="kpi-card">
-        <div class="kpi-label">Market Cap</div>
-        <div class="kpi-value" style="font-size:1.3rem; color:#e8f0ff;">
+    <div class="metric-card">
+        <div class="metric-label">Market Cap</div>
+        <div class="metric-value">
             {% if info.market_cap >= 1000000000000 %}{{ (info.market_cap / 1000000000000)|round(2) }} T
             {% elif info.market_cap >= 1000000000 %}{{ (info.market_cap / 1000000000)|round(2) }} Md
             {% else %}{{ (info.market_cap / 1000000)|round(2) }} M
@@ -270,40 +281,40 @@
     </div>
     {% endif %}
     {% if info.pe_ratio %}
-    <div class="kpi-card">
-        <div class="kpi-label">P/E Ratio</div>
-        <div class="kpi-value" style="font-size:1.3rem;">{{ info.pe_ratio|round(2) }}</div>
-        <div class="kpi-sub">Price / Earnings</div>
+    <div class="metric-card">
+        <div class="metric-label">P/E Ratio</div>
+        <div class="metric-value">{{ info.pe_ratio|round(2) }}</div>
+        <div class="metric-sub">Price / Earnings</div>
     </div>
     {% endif %}
     {% if info.dividend_yield %}
-    <div class="kpi-card">
-        <div class="kpi-label">Rendement dividende</div>
-        <div class="kpi-value positive" style="font-size:1.3rem;">{{ (info.dividend_yield * 100)|round(2) }}%</div>
-        <div class="kpi-sub">Annualisé</div>
+    <div class="metric-card">
+        <div class="metric-label">Rendement dividende</div>
+        <div class="metric-value positive">{{ (info.dividend_yield * 100)|round(2) }}%</div>
+        <div class="metric-sub">Annualisé</div>
     </div>
     {% endif %}
     {% if info.fifty_two_week_high and info.fifty_two_week_low %}
-    <div class="kpi-card">
-        <div class="kpi-label">Range 52 semaines</div>
-        <div style="margin-top:0.4rem;">
-            <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:rgba(232,240,255,0.35); margin-bottom:0.3rem;">
+    <div class="metric-card">
+        <div class="metric-label">Range 52 semaines</div>
+        <div style="margin-top:0.5rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-label); margin-bottom:0.3rem;">
                 <span class="negative">{{ info.fifty_two_week_low }}</span>
                 <span class="positive">{{ info.fifty_two_week_high }}</span>
             </div>
             {% set range_pct = ((info.current_price - info.fifty_two_week_low) / (info.fifty_two_week_high - info.fifty_two_week_low) * 100)|round(1) if (info.fifty_two_week_high - info.fifty_two_week_low) > 0 else 50 %}
-            <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:5px; overflow:hidden;">
-                <div class="range-bar-fill" data-width="{{ range_pct }}" style="width:0%; height:100%; background:#e8f0ff; border-radius:99px;"></div>
+            <div style="background:var(--border2); border-radius:99px; height:4px; overflow:hidden;">
+                <div class="range-bar-fill" data-width="{{ range_pct }}" style="width:0%; height:100%; background:var(--text-muted); border-radius:99px; transition:width 0.6s ease;"></div>
             </div>
-            <div style="font-size:0.72rem; color:rgba(232,240,255,0.3); margin-top:0.25rem; text-align:center;">
-                Position actuelle : {{ range_pct }}% du range
+            <div style="font-size:0.7rem; color:var(--text-label); margin-top:0.25rem; text-align:center;">
+                {{ range_pct }}% du range
             </div>
         </div>
     </div>
     {% endif %}
 </div>
 
-<!-- Bloc risque prominent -->
+<!-- Risk block -->
 {% if risk_info %}
 {% if risk_info.score < 34 %}
   {% set r_col = '#4ade80' %}{% set r_lbl = 'Faible' %}
@@ -328,21 +339,21 @@
         <div class="risk-metric">
             <div class="risk-metric-name">Volatilité annualisée</div>
             <div class="risk-metric-value">{{ risk_info.volatilite }}%</div>
-            <div class="risk-metric-desc">Amplitude moyenne des variations de cours sur 1 an. Plus c'est élevé, plus le prix fluctue.</div>
+            <div class="risk-metric-desc">Amplitude moyenne des variations de cours sur 1 an.</div>
         </div>
         {% endif %}
         {% if risk_info.drawdown is defined and risk_info.drawdown is not none %}
         <div class="risk-metric">
             <div class="risk-metric-name">Drawdown max</div>
             <div class="risk-metric-value">−{{ risk_info.drawdown }}%</div>
-            <div class="risk-metric-desc">La plus grosse chute subie depuis un sommet historique sur 3 ans. Simule le pire scénario de perte.</div>
+            <div class="risk-metric-desc">Plus grosse chute depuis un sommet sur 3 ans.</div>
         </div>
         {% endif %}
         {% if risk_info.beta is defined and risk_info.beta is not none %}
         <div class="risk-metric">
             <div class="risk-metric-name">Beta (ACWI)</div>
             <div class="risk-metric-value">{{ risk_info.beta }}</div>
-            <div class="risk-metric-desc">Sensibilité par rapport au marché mondial. Beta &gt; 1 = amplifie les mouvements du marché.</div>
+            <div class="risk-metric-desc">Beta &gt; 1 = amplifie les mouvements du marché.</div>
         </div>
         {% endif %}
     </div>
@@ -352,11 +363,11 @@
 </div>
 {% endif %}
 
-<!-- Graphique -->
+<!-- Chart -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <strong style="color:#e8f0ff;">Cours historique</strong>
-        <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.85rem; flex-wrap:wrap; gap:0.5rem;">
+        <strong style="color:var(--text);">Cours historique</strong>
+        <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
             {% for p, label in [('1mo','1M'), ('3mo','3M'), ('6mo','6M'), ('1y','1A'), ('2y','2A'), ('5y','5A')] %}
             <a href="{{ url_for('main.explorer') }}?ticker={{ info.ticker }}&period={{ p }}"
                class="btn btn-sm {{ 'btn-primary' if period == p else 'btn-ghost' }}">{{ label }}</a>
@@ -366,23 +377,21 @@
     <div id="price-chart"></div>
 </div>
 
-<!-- CTA achat -->
+<!-- CTA buy -->
 {% if current_user.is_authenticated %}
-<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-color:#1a2a3a;">
+<div class="card" style="margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
     <div>
-        <div style="font-weight:700; color:#e8f0ff; margin-bottom:0.25rem;">Investir dans {{ info.ticker }}</div>
-        <div style="font-size:0.82rem; color:rgba(232,240,255,0.35);">
-            Enregistre un achat — l'actif sera ajouté automatiquement à ton portefeuille.
-        </div>
+        <div style="font-weight:700; color:var(--text); margin-bottom:0.2rem;">Investir dans {{ info.ticker }}</div>
+        <div style="font-size:0.8rem; color:var(--text-label);">Enregistre un achat — l'actif sera ajouté à ton portefeuille.</div>
     </div>
     <a href="{{ url_for('main.add_purchase_route') }}?ticker={{ info.ticker }}&name={{ info.name | urlencode }}&currency={{ info.currency }}"
        class="btn btn-primary">+ Enregistrer un achat</a>
 </div>
 {% else %}
-<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:2rem; border-color:#1a2a3a;">
-    <div style="font-size:1.5rem; margin-bottom:0.75rem;">📈</div>
-    <div style="font-weight:700; color:#e8f0ff; margin-bottom:0.5rem;">Suivre cet actif</div>
-    <p style="color:rgba(232,240,255,0.35); margin-bottom:1.25rem; font-size:0.875rem;">
+<div class="card" style="margin-bottom:1.5rem; text-align:center; padding:2rem;">
+    <i data-lucide="trending-up" style="width:32px;height:32px;color:var(--accent);margin:0 auto 0.75rem;display:block;"></i>
+    <div style="font-weight:700; color:var(--text); margin-bottom:0.5rem;">Suivre cet actif</div>
+    <p style="color:var(--text-muted); margin-bottom:1.25rem; font-size:0.875rem;">
         Crée un compte gratuit pour enregistrer tes achats et suivre ta performance.
     </p>
     <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit →</a>
@@ -394,40 +403,39 @@ const dates  = {{ info.dates | tojson }};
 const closes = {{ info.closes | tojson }};
 const isMobile = window.innerWidth < 768;
 
-// Couleur selon perf
 const firstClose = closes[0] || 0;
 const lastClose  = closes[closes.length - 1] || 0;
 const isPositive = lastClose >= firstClose;
 const lineColor  = isPositive ? '#4ade80' : '#f87171';
-const fillColor  = isPositive ? 'rgba(74,222,128,0.07)' : 'rgba(248,113,113,0.07)';
+const fillColor  = isPositive ? 'rgba(74,222,128,0.06)' : 'rgba(248,113,113,0.06)';
 
 Plotly.newPlot('price-chart', [{
     x: dates, y: closes,
     type: 'scatter', mode: 'lines',
     name: '{{ info.ticker }}',
-    line: { color: lineColor, width: 2 },
+    line: { color: lineColor, width: 1.8 },
     fill: 'tozeroy',
     fillcolor: fillColor
 }], {
-    paper_bgcolor: 'rgba(4,8,15,0)',
-    plot_bgcolor: 'rgba(4,8,15,0)',
-    height: isMobile ? 240 : 360,
-    margin: isMobile ? { l: 45, r: 10, t: 10, b: 40 } : { l: 20, r: 20, t: 10, b: 40 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    height: isMobile ? 240 : 340,
+    margin: isMobile ? { l: 45, r: 10, t: 8, b: 36 } : { l: 20, r: 20, t: 8, b: 36 },
     hoverlabel: {
-        bgcolor: '#0f1e2e',
-        bordercolor: 'rgba(74,122,155,0.12)',
-        font: { color: '#e8f0ff' }
+        bgcolor: 'var(--bg-card2)',
+        bordercolor: 'rgba(74,122,155,0.15)',
+        font: { color: '#e8f0ff', size: 12 }
     },
     hovermode: 'x unified',
     xaxis: {
-        gridcolor: 'rgba(74,122,155,0.07)',
-        tickfont: { color: 'rgba(232,240,255,0.35)' },
-        linecolor: 'rgba(74,122,155,0.07)'
+        gridcolor: 'rgba(74,122,155,0.06)',
+        tickfont: { color: 'rgba(232,240,255,0.3)', size: 11 },
+        linecolor: 'rgba(74,122,155,0.06)'
     },
     yaxis: {
-        gridcolor: 'rgba(74,122,155,0.07)',
-        tickfont: { color: 'rgba(232,240,255,0.35)' },
-        linecolor: 'rgba(74,122,155,0.07)',
+        gridcolor: 'rgba(74,122,155,0.06)',
+        tickfont: { color: 'rgba(232,240,255,0.3)', size: 11 },
+        linecolor: 'rgba(74,122,155,0.06)',
         ticksuffix: ' {{ info.currency }}'
     }
 }, { responsive: true, displayModeBar: false });
@@ -440,10 +448,10 @@ window.addEventListener('load', function() {
     document.querySelectorAll('.range-bar-fill').forEach(function(el) {
         setTimeout(function() { el.style.width = el.dataset.width + '%'; }, 200);
     });
+    lucide.createIcons();
 });
 
 let searchTimer = null;
-
 const input = document.getElementById('explorer-input');
 const suggestionsBox = document.getElementById('explorer-suggestions');
 
@@ -475,11 +483,11 @@ function showSuggestions(results) {
     suggestionsBox.innerHTML = results.map(r => `
         <div class="explorer-suggestion-item" onclick="pickSuggestion('${r.ticker}')">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="background:rgba(74,122,155,0.07); color:#4a7a9b; font-size:0.72rem;
-                             font-weight:700; padding:2px 7px; border-radius:5px;">${r.ticker}</span>
-                <span style="color:#e8f0ff; font-size:0.875rem; font-weight:500;">${r.name}</span>
+                <span style="background:rgba(74,122,155,0.08); color:var(--accent); font-size:0.7rem;
+                             font-weight:700; padding:2px 7px; border-radius:4px;">${r.ticker}</span>
+                <span style="color:var(--text); font-size:0.875rem; font-weight:500;">${r.name}</span>
             </div>
-            <div style="font-size:0.72rem; color:rgba(232,240,255,0.3); margin-top:2px;">
+            <div style="font-size:0.71rem; color:var(--text-label); margin-top:2px;">
                 ${r.exchange} · ${r.type} · ${r.currency}
             </div>
         </div>
@@ -525,10 +533,7 @@ function goToTicker() {
         return html + html;
     }
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timer = setTimeout(function() {
-        if (ctrl) ctrl.abort();
-        hideTicker();
-    }, 8000);
+    var timer = setTimeout(function() { if (ctrl) ctrl.abort(); hideTicker(); }, 8000);
     fetch('/api/ticker-bar', ctrl ? { signal: ctrl.signal } : {})
         .then(function(r){ return r.json(); })
         .then(function(data) {

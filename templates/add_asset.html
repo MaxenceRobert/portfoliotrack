@@ -1,6 +1,65 @@
 {% extends 'base.html' %}
 {% block title %}Ajouter un actif{% endblock %}
+{% block page_title %}Ajouter un actif{% endblock %}
 {% block content %}
+<style>
+/* Toggle switch */
+.toggle-track {
+    width: 38px; height: 21px;
+    background: var(--border2);
+    border-radius: 99px; position: relative;
+    transition: background 0.2s; cursor: pointer; flex-shrink: 0;
+}
+.toggle-thumb {
+    width: 15px; height: 15px;
+    background: var(--text-label);
+    border-radius: 50%; position: absolute;
+    top: 3px; left: 3px;
+    transition: left 0.2s, background 0.2s;
+}
+.toggle-track.on { background: #4ade80; }
+.toggle-track.on .toggle-thumb { left: 20px; background: #04080f; }
+
+/* Autocomplete suggestions */
+#suggestions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    z-index: 1000;
+    max-height: 280px; overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(4,8,15,0.5);
+}
+.suggest-item {
+    padding: 0.7rem 1rem; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+.suggest-item:last-child { border-bottom: none; }
+.suggest-item:hover { background: var(--bg-hover); }
+
+/* No-ticker toggle banner */
+.noticker-banner {
+    margin-bottom: 1.25rem; padding: 0.75rem 1rem;
+    background: rgba(74,122,155,0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+}
+
+/* Presets */
+.livret-presets {
+    display: none; margin-top: 1rem;
+}
+.livret-presets-label {
+    font-size: 0.72rem; color: var(--text-label); margin-bottom: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+}
+</style>
+
 <div class="page-header">
     <div>
         <h1>Ajouter un actif</h1>
@@ -13,48 +72,34 @@
     <form method="POST" id="add-asset-form">
         <input type="hidden" name="no_ticker" id="no_ticker_input" value="0">
 
-        <!-- Toggle actif sans cours -->
-        <div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(74,122,155,0.06); border:1px solid rgba(74,122,155,0.12); border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <!-- Toggle no-ticker -->
+        <div class="noticker-banner">
             <div>
-                <div style="font-size:0.85rem; font-weight:600; color:var(--text);">Actif sans cours en temps réel</div>
+                <div style="font-size:0.875rem; font-weight:600; color:var(--text);">Actif sans cours en temps réel</div>
                 <div style="font-size:0.75rem; color:var(--text-label); margin-top:2px;">Livret A, LDDS, LEP, fonds euros assurance vie…</div>
             </div>
             <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none;">
-                <div id="toggle-track" onclick="toggleNoTicker()"
-                     style="width:40px; height:22px; background:#1a2a3a; border-radius:99px; position:relative; transition:background 0.2s; cursor:pointer; flex-shrink:0;">
-                    <div id="toggle-thumb"
-                         style="width:16px; height:16px; background:#4a7a9b; border-radius:50%; position:absolute; top:3px; left:3px; transition:left 0.2s, background 0.2s;"></div>
+                <div id="toggle-track" class="toggle-track" onclick="toggleNoTicker()">
+                    <div id="toggle-thumb" class="toggle-thumb"></div>
                 </div>
                 <span id="toggle-label" style="font-size:0.8rem; color:var(--text-label);">Désactivé</span>
             </label>
         </div>
 
-        <!-- Recherche autocomplete (masquée si no_ticker) -->
+        <!-- Search autocomplete -->
         <div id="search-block" class="form-group">
             <label>Rechercher un actif</label>
             <div style="position:relative;">
                 <input type="text" id="search-input"
-                       placeholder="Ex: Apple, MSCI World, Bitcoin, S&P500..."
+                       placeholder="Ex: Apple, MSCI World, Bitcoin, S&P500…"
                        autocomplete="off">
-                <div id="suggestions" style="
-                    display:none;
-                    position:absolute;
-                    top:100%;
-                    left:0; right:0;
-                    background:#16161F;
-                    border:1px solid rgba(74,122,155,0.1);
-                    border-radius:10px;
-                    z-index:1000;
-                    max-height:280px;
-                    overflow-y:auto;
-                    margin-top:4px;
-                "></div>
+                <div id="suggestions"></div>
             </div>
             <div class="form-hint">Tape le nom ou le ticker — les résultats Yahoo Finance apparaissent automatiquement.</div>
         </div>
 
-        <hr style="border:none; border-top:1px solid rgba(74,122,155,0.09); margin:1.25rem 0;">
-        <div style="font-size:0.78rem; color:rgba(232,240,255,0.30); margin-bottom:1rem;" id="manual-label">
+        <hr style="border:none; border-top:1px solid var(--border); margin:1.25rem 0;">
+        <div style="font-size:0.77rem; color:var(--text-label); margin-bottom:1rem;" id="manual-label">
             Ou remplis manuellement :
         </div>
 
@@ -75,7 +120,7 @@
                    placeholder="ex: Livret A — Banque Postale / iShares Core MSCI World">
         </div>
 
-        <!-- Ticker Yahoo Finance (masqué si no_ticker) -->
+        <!-- Ticker block (hidden in no-ticker mode) -->
         <div id="ticker-block" class="form-row">
             <div class="form-group">
                 <label for="ticker">Ticker Yahoo Finance</label>
@@ -95,7 +140,7 @@
             </div>
         </div>
 
-        <!-- Taux annuel (visible uniquement si no_ticker) -->
+        <!-- Fixed rate (visible in no-ticker mode) -->
         <div id="taux-block" style="display:none;" class="form-group">
             <label for="taux_fixe">Taux annuel (%)</label>
             <input type="number" id="taux_fixe" name="taux_fixe"
@@ -105,7 +150,7 @@
         </div>
 
         <div class="form-group">
-            <label for="isin">ISIN <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+            <label for="isin">ISIN <span style="font-weight:400; color:var(--text-label);">(optionnel)</span></label>
             <input type="text" id="isin" name="isin"
                    placeholder="ex: IE00B4L5Y983"
                    maxlength="12"
@@ -113,7 +158,7 @@
         </div>
 
         <div class="form-group">
-            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:var(--text-label);">(optionnel)</span></label>
             <select id="envelope" name="envelope">
                 <option value="">— Non spécifié —</option>
                 <option value="PEA">PEA — Plan d'Épargne en Actions</option>
@@ -136,16 +181,16 @@
             </select>
         </div>
 
-        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem; flex-wrap:wrap;">
             <button type="submit" class="btn btn-primary">Vérifier et ajouter</button>
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
         </div>
     </form>
 </div>
 
-<!-- Présélection rapide pour livrets -->
-<div id="livret-presets" style="display:none; margin-top:1rem;">
-    <div style="font-size:0.75rem; color:var(--text-label); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Présélections rapides</div>
+<!-- Livret presets -->
+<div id="livret-presets" class="livret-presets">
+    <div class="livret-presets-label">Présélections rapides</div>
     <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
         <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('Livret A', 3.0, 'Livret A')">Livret A (3%)</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('LDDS', 3.0, 'LDDS')">LDDS (3%)</button>
@@ -161,15 +206,12 @@ function toggleNoTicker() {
     noTickerMode = !noTickerMode;
     document.getElementById('no_ticker_input').value = noTickerMode ? '1' : '0';
 
-    const track  = document.getElementById('toggle-track');
-    const thumb  = document.getElementById('toggle-thumb');
-    const label  = document.getElementById('toggle-label');
+    const track = document.getElementById('toggle-track');
+    const label = document.getElementById('toggle-label');
 
     if (noTickerMode) {
-        track.style.background  = '#4ade80';
-        thumb.style.left        = '21px';
-        thumb.style.background  = '#04080f';
-        label.textContent       = 'Activé';
+        track.classList.add('on');
+        label.textContent = 'Activé';
         document.getElementById('search-block').style.display   = 'none';
         document.getElementById('ticker-block').style.display   = 'none';
         document.getElementById('taux-block').style.display     = '';
@@ -177,10 +219,8 @@ function toggleNoTicker() {
         document.getElementById('ticker').removeAttribute('required');
         document.getElementById('manual-label').style.display   = 'none';
     } else {
-        track.style.background  = '#1a2a3a';
-        thumb.style.left        = '3px';
-        thumb.style.background  = '#4a7a9b';
-        label.textContent       = 'Désactivé';
+        track.classList.remove('on');
+        label.textContent = 'Désactivé';
         document.getElementById('search-block').style.display   = '';
         document.getElementById('ticker-block').style.display   = '';
         document.getElementById('taux-block').style.display     = 'none';
@@ -190,37 +230,30 @@ function toggleNoTicker() {
 }
 
 function presetLivret(name, taux, envelope) {
-    document.getElementById('name').value    = name;
+    document.getElementById('name').value      = name;
     document.getElementById('taux_fixe').value = taux;
-    // Sélectionner l'enveloppe correspondante
     const envSel = document.getElementById('envelope');
     for (let opt of envSel.options) {
         if (opt.value === envelope) { opt.selected = true; break; }
     }
-    // Sélectionner type Épargne
     const typeSel = document.getElementById('asset_type');
     for (let opt of typeSel.options) {
         if (opt.value === 'Épargne') { opt.selected = true; break; }
     }
 }
 
-// ── Recherche autocomplete ──────────────────────────────────────────────────
+// Autocomplete
 let searchTimeout = null;
 
 document.getElementById('search-input').addEventListener('input', function() {
     clearTimeout(searchTimeout);
     const q = this.value.trim();
-    if (q.length < 2) {
-        document.getElementById('suggestions').style.display = 'none';
-        return;
-    }
+    if (q.length < 2) { document.getElementById('suggestions').style.display = 'none'; return; }
     searchTimeout = setTimeout(() => searchYahoo(q), 300);
 });
 
 document.getElementById('search-input').addEventListener('blur', function() {
-    setTimeout(() => {
-        document.getElementById('suggestions').style.display = 'none';
-    }, 200);
+    setTimeout(() => { document.getElementById('suggestions').style.display = 'none'; }, 200);
 });
 
 async function searchYahoo(q) {
@@ -228,31 +261,20 @@ async function searchYahoo(q) {
         const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
         const data = await res.json();
         showSuggestions(data.results || []);
-    } catch(e) {
-        console.error(e);
-    }
+    } catch(e) { console.error(e); }
 }
 
 function showSuggestions(results) {
     const box = document.getElementById('suggestions');
-    if (!results.length) {
-        box.style.display = 'none';
-        return;
-    }
+    if (!results.length) { box.style.display = 'none'; return; }
     box.innerHTML = results.map(r => `
-        <div onclick="selectAsset(${JSON.stringify(r).replace(/"/g, '&quot;')})"
-             style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.07);
-                    transition:background 0.1s;"
-             onmouseover="this.style.background='rgba(74,122,155,0.08)'"
-             onmouseout="this.style.background='transparent'">
+        <div class="suggest-item" onclick="selectAsset(${JSON.stringify(r).replace(/"/g, '&quot;')})">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="background:rgba(74,122,155,0.08); color:#e8f0ff; font-size:0.72rem;
-                             font-weight:700; padding:2px 6px; border-radius:4px;">
-                    ${r.ticker}
-                </span>
-                <span style="color:#e8f0ff; font-size:0.875rem; font-weight:500;">${r.name}</span>
+                <span style="background:rgba(74,122,155,0.08); color:var(--accent); font-size:0.7rem;
+                             font-weight:700; padding:2px 6px; border-radius:4px;">${r.ticker}</span>
+                <span style="color:var(--text); font-size:0.875rem; font-weight:500;">${r.name}</span>
             </div>
-            <div style="font-size:0.75rem; color:rgba(232,240,255,0.4); margin-top:2px;">
+            <div style="font-size:0.72rem; color:var(--text-label); margin-top:2px;">
                 ${r.exchange} · ${r.type} · ${r.currency}
             </div>
         </div>
@@ -285,9 +307,7 @@ function selectAsset(r) {
 (function() {
     const ws = localStorage.getItem('active-workspace') || 'perso';
     const sel = document.getElementById('workspace');
-    if (sel && (ws === 'perso' || ws === 'pro')) {
-        sel.value = ws;
-    }
+    if (sel && (ws === 'perso' || ws === 'pro')) sel.value = ws;
 })();
 </script>
 {% endblock %}
