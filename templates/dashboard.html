@@ -779,10 +779,87 @@ table.dash-assets thead th.num { text-align: right; }
             </div>
         </div>
 
+        {# Épargne garantie #}
+        {% if savings_envelopes %}
+        <div class="dash-type-block" id="savings-block">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <div class="micro-label">Épargne garantie</div>
+                <span style="font-size:8px; color:#3d6b8f; background:#0a1428; padding:1px 5px; border-radius:3px;">inflation {{ inflation_rate }}%</span>
+            </div>
+            {% for senv in savings_envelopes %}
+            {% set reel_neg = senv.pct_reel <= 0 %}
+            <div style="border-bottom:1px solid #0a1428; padding:7px 0; {% if loop.last %}border-bottom:none;{% endif %}">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+                    <div>
+                        <span style="font-size:10px; font-weight:700; color:#e8f0ff;">{{ senv.nom }}</span>
+                        <span style="font-size:8px; color:#3d6b8f; margin-left:4px;">{{ senv.taux_annuel }}%/an</span>
+                    </div>
+                    <span style="font-size:11px; font-weight:700; color:#e8f0ff;">{{ senv.solde }} €</span>
+                </div>
+                <div style="font-size:9px; color:#e8f0ff; margin-bottom:1px;">
+                    Brut : <span style="color:#4ade80;">+{{ senv.rendement_brut }} € (+{{ senv.pct_brut }}%)</span>
+                </div>
+                <div style="font-size:9px; margin-bottom:4px; color:{{ '#f87171' if reel_neg else '#f59e0b' }};">
+                    Réel : {{ '+' if senv.rendement_reel > 0 else '' }}{{ senv.rendement_reel }} € ({{ '+' if senv.pct_reel > 0 else '' }}{{ senv.pct_reel }}%)
+                    {% if reel_neg %}<span style="font-style:italic;"> — perd de la valeur</span>{% endif %}
+                </div>
+                {% if senv.plafond %}
+                <div style="background:rgba(74,122,155,0.07); border-radius:99px; height:3px; overflow:hidden; margin-bottom:4px;">
+                    <div style="height:100%; width:{{ [senv.plafond_pct, 100]|min }}%; background:{{ '#f59e0b' if senv.plafond_pct and senv.plafond_pct > 80 else '#4a7a9b' }}; border-radius:99px;"></div>
+                </div>
+                <div style="font-size:8px; color:#3d6b8f;">{{ senv.solde }} / {{ senv.plafond }} € plafond</div>
+                {% endif %}
+                <div style="margin-top:4px;">
+                    <button onclick="openSoldeModal({{ senv.id }}, '{{ senv.nom }}', {{ senv.solde }})"
+                            style="background:none; border:1px solid #0a1428; border-radius:4px; color:#3d6b8f; font-size:8px; padding:2px 7px; cursor:pointer; transition:all 0.15s;"
+                            onmouseover="this.style.borderColor='#4a7a9b';this.style.color='#6a9bbf'"
+                            onmouseout="this.style.borderColor='#0a1428';this.style.color='#3d6b8f'">
+                        Modifier le solde
+                    </button>
+                    <form method="POST" action="{{ url_for('main.delete_envelope_route', env_id=senv.id) }}"
+                          onsubmit="return confirm('Supprimer {{ senv.nom }} ?')" style="display:inline; margin-left:4px;">
+                        <button type="submit"
+                                style="background:none; border:none; color:#3d6b8f; font-size:8px; cursor:pointer; padding:2px 4px; transition:color 0.15s;"
+                                onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#3d6b8f'">✕</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            <div style="margin-top:6px; padding-top:6px; border-top:1px solid #0a1428; display:flex; justify-content:space-between;">
+                <span style="font-size:9px; color:#3d6b8f;">Total épargne</span>
+                <span style="font-size:10px; font-weight:700; color:#e8f0ff;">{{ savings_total_solde }} €</span>
+            </div>
+        </div>
+        {% endif %}
+        <div style="padding:4px 0;">
+            <a href="{{ url_for('main.add_envelope_route') }}"
+               style="font-size:9px; color:#3d6b8f; text-decoration:none; display:flex; align-items:center; gap:4px; transition:color 0.15s;"
+               onmouseover="this.style.color='#6a9bbf'" onmouseout="this.style.color='#3d6b8f'">
+                + Ajouter une enveloppe épargne →
+            </a>
+        </div>
+
     </div>{# /dash-right-col #}
 </div>{# /dash-bottom #}
 
 </div>{# /dash-main #}
+
+{# ── Modal solde épargne ── #}
+<div class="env-modal-overlay" id="solde-modal" onclick="if(event.target===this)closeSoldeModal()">
+    <div class="env-modal-box">
+        <div class="env-modal-title">Modifier le solde</div>
+        <div class="env-modal-sub" id="solde-modal-name">—</div>
+        <label style="font-size:0.78rem; color:#3d6b8f; margin-bottom:0.3rem; display:block;">Solde actuel (€)</label>
+        <input type="number" id="solde-modal-input" min="0" step="0.01"
+               style="width:100%; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;
+                      color:var(--text); font-size:0.95rem; padding:0.55rem 0.75rem; margin-bottom:1rem; outline:none;"
+               onfocus="this.style.borderColor='#3d6b8f'" onblur="this.style.borderColor='var(--border)'">
+        <div class="env-modal-actions">
+            <button class="btn btn-ghost btn-sm" onclick="closeSoldeModal()">Annuler</button>
+            <button class="btn btn-primary btn-sm" id="solde-modal-confirm" onclick="submitSoldeUpdate()">Confirmer</button>
+        </div>
+    </div>
+</div>
 
 {# ── Modal enveloppe ── #}
 <div class="env-modal-overlay" id="env-modal" onclick="if(event.target===this)closeEnvModal()">
@@ -1146,6 +1223,45 @@ function toggleAssetRow(detId){
     var det=document.getElementById(detId);
     if(!det) return;
     det.style.display = det.style.display==='table-row' ? 'none' : 'table-row';
+}
+
+// ── Modal solde épargne ───────────────────────────────────────────────────────
+var _soldeEnvId = null;
+function openSoldeModal(id, nom, solde) {
+    _soldeEnvId = id;
+    var n = document.getElementById('solde-modal-name');
+    if (n) n.textContent = nom;
+    var inp = document.getElementById('solde-modal-input');
+    if (inp) inp.value = solde;
+    var o = document.getElementById('solde-modal');
+    if (o) o.classList.add('open');
+    setTimeout(function(){ if(inp) inp.focus(); }, 80);
+}
+function closeSoldeModal() {
+    var o = document.getElementById('solde-modal');
+    if (o) o.classList.remove('open');
+    _soldeEnvId = null;
+}
+async function submitSoldeUpdate() {
+    if (!_soldeEnvId) return;
+    var inp = document.getElementById('solde-modal-input');
+    var btn = document.getElementById('solde-modal-confirm');
+    var solde = parseFloat(inp ? inp.value : 0);
+    if (isNaN(solde) || solde < 0) { alert('Solde invalide'); return; }
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        var res = await fetch('/update-envelope/' + _soldeEnvId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ solde: solde })
+        });
+        var data = await res.json();
+        if (data.success) {
+            closeSoldeModal();
+            location.reload();
+        } else { alert('Erreur: ' + (data.error || 'Mise à jour échouée')); }
+    } catch(e) { alert('Erreur réseau'); }
+    finally { btn.disabled = false; btn.textContent = 'Confirmer'; }
 }
 
 window.addEventListener('load', function(){

@@ -23,6 +23,7 @@ from database import (
     get_user_by_email, create_user,
     add_alternative_asset, get_alternative_assets,
     update_alternative_asset, delete_alternative_asset,
+    add_envelope, get_savings_envelopes, update_envelope_solde, delete_envelope,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -54,6 +55,33 @@ from flask import Blueprint
 main_bp = Blueprint('main', __name__)
 
 ASSET_TYPES = ['ETF', 'Action', 'Crypto', 'Obligation', 'Autre']
+
+# ── Enveloppes épargne garantie ───────────────────────────────────────────────
+INVESTMENT_ENVELOPES = ['PEA', 'PEA-PME', 'CTO', 'Assurance Vie', 'PER', 'Autre']
+
+SAVINGS_ENVELOPE_DEFAULTS = {
+    'Livret A':                  {'taux': 2.4,  'plafond': 22950},
+    'LDDS':                      {'taux': 2.4,  'plafond': 12000},
+    'LEP':                       {'taux': 3.5,  'plafond': 10000},
+    'Livret Jeune':              {'taux': 2.4,  'plafond': 1600},
+    'Livret épargne entreprise': {'taux': 1.0,  'plafond': None},
+    'Fonds euros AV':            {'taux': 2.5,  'plafond': None},
+    'CEL':                       {'taux': 2.0,  'plafond': None},
+    'PEL':                       {'taux': 2.25, 'plafond': None},
+}
+
+SAVINGS_ENVELOPE_RISK = {
+    'Livret A':                  3,
+    'LDDS':                      3,
+    'LEP':                       2,
+    'Livret Jeune':              3,
+    'Livret épargne entreprise': 4,
+    'Fonds euros AV':            6,
+    'CEL':                       3,
+    'PEL':                       4,
+}
+
+INFLATION_RATE = 2.0  # % — taux d'inflation de référence pour rendement réel
 
 # ── Scoring de risque ─────────────────────────────────────────────────────────
 def get_risk_score(ticker, asset_type='Autre'):
@@ -383,6 +411,35 @@ def dashboard():
     active_workspace = session.get('workspace', 'all')
     summary = get_portfolio_summary(current_user.id, active_workspace)
 
+    # Enveloppes épargne garantie
+    savings_envelopes_raw = get_savings_envelopes(current_user.id)
+    savings_envelopes = []
+    savings_total_solde = 0.0
+    for env in savings_envelopes_raw:
+        solde      = float(env.get('solde') or 0)
+        taux       = float(env.get('taux_annuel') or 0)
+        plafond    = env.get('plafond')
+        rendement_brut  = round(solde * taux / 100, 2)
+        rendement_reel  = round(solde * (taux - INFLATION_RATE) / 100, 2)
+        pct_brut        = round(taux, 2)
+        pct_reel        = round(taux - INFLATION_RATE, 2)
+        plafond_pct     = round(solde / plafond * 100, 1) if plafond and plafond > 0 else None
+        savings_envelopes.append({
+            'id':             env['id'],
+            'type':           env['type'],
+            'nom':            env['nom'],
+            'solde':          round(solde, 2),
+            'taux_annuel':    taux,
+            'plafond':        plafond,
+            'plafond_pct':    plafond_pct,
+            'date_ouverture': env.get('date_ouverture'),
+            'rendement_brut': rendement_brut,
+            'rendement_reel': rendement_reel,
+            'pct_brut':       pct_brut,
+            'pct_reel':       pct_reel,
+        })
+        savings_total_solde += solde
+
     # Score de risque par actif + score pondéré du portefeuille
     risk_data            = {}
     weighted_risk_sum    = 0.0
@@ -407,6 +464,14 @@ def dashboard():
                 if val > 0 and ticker in risk_data:
                     weighted_risk_sum += risk_data[ticker]['score'] * val
                     total_risk_weight += val
+
+    # Inclure les enveloppes épargne dans le score de risque pondéré
+    for senv in savings_envelopes:
+        solde = senv['solde']
+        if solde > 0:
+            senv_score = SAVINGS_ENVELOPE_RISK.get(senv['type'], 3)
+            weighted_risk_sum += senv_score * solde
+            total_risk_weight += solde
 
     portfolio_risk_score = (
         round(weighted_risk_sum / total_risk_weight) if total_risk_weight > 0 else None
@@ -569,6 +634,9 @@ def dashboard():
         history_values=history_values,
         purchases_json=purchases_json,
         top_risks=top_risks,
+        savings_envelopes=savings_envelopes,
+        savings_total_solde=round(savings_total_solde, 2),
+        inflation_rate=INFLATION_RATE,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -741,6 +809,70 @@ def add_asset_route():
                            name_prefill=name_prefill,
                            currency_prefill=currency_prefill,
                            asset_type_prefill=asset_type_prefill)
+
+# ── Ajouter une enveloppe ──────────────────────────────────────────────────────
+@main_bp.route('/add-envelope', methods=['GET', 'POST'])
+@login_required
+def add_envelope_route():
+    if request.method == 'POST':
+        env_type   = request.form.get('env_type', '').strip()
+        env_kind   = request.form.get('env_kind', '')   # 'investment' | 'savings'
+        if env_kind == 'investment':
+            flash(f'Enveloppe {env_type} créée — elle est disponible dans le formulaire d\'ajout d\'actifs.', 'success')
+            return redirect(url_for('main.add_asset_route'))
+
+        # Enveloppe épargne garantie
+        nom_custom   = request.form.get('nom', '').strip() or env_type
+        try:
+            solde = float(request.form.get('solde', '0') or 0)
+        except (ValueError, TypeError):
+            solde = 0.0
+        defaults = SAVINGS_ENVELOPE_DEFAULTS.get(env_type, {})
+        try:
+            taux = float(request.form.get('taux_annuel', defaults.get('taux', 0)) or 0)
+        except (ValueError, TypeError):
+            taux = float(defaults.get('taux', 0))
+        plafond_default = defaults.get('plafond')
+        try:
+            plafond = float(request.form.get('plafond', plafond_default) or 0) or None
+        except (ValueError, TypeError):
+            plafond = plafond_default
+        date_ouverture = request.form.get('date_ouverture', '').strip() or None
+
+        ok = add_envelope(current_user.id, env_type, nom_custom, solde, taux, plafond, date_ouverture)
+        if ok:
+            flash(f'{nom_custom} ajouté ✓', 'success')
+        else:
+            flash('Erreur lors de l\'ajout de l\'enveloppe.', 'error')
+        return redirect(url_for('main.dashboard'))
+
+    return render_template(
+        'add_envelope.html',
+        investment_envelopes=INVESTMENT_ENVELOPES,
+        savings_defaults=SAVINGS_ENVELOPE_DEFAULTS,
+    )
+
+# ── Modifier le solde d'une enveloppe (AJAX) ──────────────────────────────────
+@main_bp.route('/update-envelope/<int:env_id>', methods=['POST'])
+@login_required
+def update_envelope_route(env_id):
+    data = request.get_json(silent=True) or {}
+    try:
+        solde = float(data.get('solde', 0))
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Solde invalide'}), 400
+    ok = update_envelope_solde(env_id, current_user.id, solde)
+    if ok:
+        return jsonify({'success': True, 'solde': solde})
+    return jsonify({'success': False, 'error': 'Mise à jour échouée'}), 500
+
+# ── Supprimer une enveloppe ────────────────────────────────────────────────────
+@main_bp.route('/delete-envelope/<int:env_id>', methods=['POST'])
+@login_required
+def delete_envelope_route(env_id):
+    delete_envelope(env_id, current_user.id)
+    flash('Enveloppe supprimée.', 'success')
+    return redirect(url_for('main.dashboard'))
 
 # ── Supprimer un actif ────────────────────────────────────────────────────────
 @main_bp.route('/assets/delete/<int:asset_id>', methods=['POST'])

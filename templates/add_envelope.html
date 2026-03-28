@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter une enveloppe{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Ajouter une enveloppe</h1>
+        <p>Enveloppe d'investissement (PEA, CTO…) ou épargne garantie (Livret A, LEP…).</p>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">← Retour</a>
+</div>
+
+<div class="card form-card" style="max-width:640px;">
+<form method="POST" id="add-envelope-form">
+    <input type="hidden" name="env_type"  id="env_type_input"  value="">
+    <input type="hidden" name="env_kind"  id="env_kind_input"  value="">
+
+    {# ── ÉTAPE 1 : choisir le type ── #}
+    <div id="step1">
+        <div style="font-size:0.78rem; color:var(--text-label); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.07em; font-weight:700;">Étape 1 — Type d'enveloppe</div>
+
+        <div style="margin-bottom:1.5rem;">
+            <div style="font-size:0.8rem; font-weight:600; color:var(--text); margin-bottom:0.6rem;">Enveloppes d'investissement</div>
+            <div style="font-size:0.72rem; color:var(--text-label); margin-bottom:0.75rem;">Contiennent des ETF, actions, crypto — disponibles dans le dropdown lors de l'ajout d'actifs.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                {% for env in investment_envelopes %}
+                <button type="button" class="env-chip"
+                        onclick="selectEnvelope('{{ env }}', 'investment')"
+                        data-type="{{ env }}" data-kind="investment">
+                    {{ env }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border); margin:1.25rem 0;"></div>
+
+        <div>
+            <div style="font-size:0.8rem; font-weight:600; color:var(--text); margin-bottom:0.6rem;">Épargne garantie</div>
+            <div style="font-size:0.72rem; color:var(--text-label); margin-bottom:0.75rem;">Solde + taux fixe. Le rendement réel (après inflation) est calculé automatiquement.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                {% for env_name, defs in savings_defaults.items() %}
+                <button type="button" class="env-chip env-chip-savings"
+                        onclick="selectEnvelope('{{ env_name }}', 'savings')"
+                        data-type="{{ env_name }}" data-kind="savings"
+                        data-taux="{{ defs.taux }}"
+                        data-plafond="{{ defs.plafond if defs.plafond else '' }}">
+                    {{ env_name }}
+                    <span style="font-size:0.65rem; opacity:0.65; margin-left:3px;">{{ defs.taux }}%</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ── ÉTAPE 2a : enveloppe investissement — confirmation ── #}
+    <div id="step2-investment" style="display:none;">
+        <div style="font-size:0.78rem; color:var(--text-label); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.07em; font-weight:700;">Étape 2 — Confirmation</div>
+        <div style="background:rgba(74,222,128,0.06); border:1px solid rgba(74,222,128,0.15); border-radius:8px; padding:1rem 1.25rem; margin-bottom:1.25rem;">
+            <div style="font-size:0.9rem; font-weight:700; color:#4ade80; margin-bottom:0.3rem;" id="inv-confirm-name">—</div>
+            <div style="font-size:0.8rem; color:var(--text-label);">Cette enveloppe sera disponible dans le menu déroulant lors de l'ajout d'actifs. Aucune donnée supplémentaire requise.</div>
+        </div>
+        <div style="display:flex; gap:0.75rem;">
+            <button type="submit" class="btn btn-primary">Confirmer</button>
+            <button type="button" class="btn btn-ghost" onclick="backToStep1()">← Retour</button>
+        </div>
+    </div>
+
+    {# ── ÉTAPE 2b : épargne garantie — formulaire ── #}
+    <div id="step2-savings" style="display:none;">
+        <div style="font-size:0.78rem; color:var(--text-label); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.07em; font-weight:700;">Étape 2 — <span id="savings-type-label">Épargne</span></div>
+
+        <div class="form-group">
+            <label for="nom">Nom <span style="font-weight:400; color:var(--text-label);">(optionnel — pour distinguer plusieurs livrets)</span></label>
+            <input type="text" id="nom" name="nom" placeholder="ex: Livret A — Banque Postale">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="solde">Solde actuel (€)</label>
+                <input type="number" id="solde" name="solde" min="0" step="0.01" placeholder="ex: 5000" required>
+            </div>
+            <div class="form-group">
+                <label for="taux_annuel">Taux annuel (%)</label>
+                <input type="number" id="taux_annuel" name="taux_annuel" min="0" max="20" step="0.01" placeholder="ex: 3.0" required>
+                <div class="form-hint">Pré-rempli avec le taux légal — modifiable.</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="plafond">Plafond (€) <span style="font-weight:400; color:var(--text-label);">(optionnel)</span></label>
+                <input type="number" id="plafond" name="plafond" min="0" step="1" placeholder="ex: 22950">
+            </div>
+            <div class="form-group">
+                <label for="date_ouverture">Date d'ouverture <span style="font-weight:400; color:var(--text-label);">(optionnel)</span></label>
+                <input type="date" id="date_ouverture" name="date_ouverture">
+            </div>
+        </div>
+
+        {# Aperçu rendement #}
+        <div id="rendement-preview" style="display:none; background:rgba(74,122,155,0.06); border:1px solid rgba(74,122,155,0.12); border-radius:8px; padding:0.85rem 1rem; margin-bottom:1.25rem;">
+            <div style="font-size:0.72rem; color:var(--text-label); text-transform:uppercase; letter-spacing:0.07em; font-weight:700; margin-bottom:0.5rem;">Aperçu sur 1 an</div>
+            <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:0.7rem; color:var(--text-label);">Rendement brut</div>
+                    <div id="preview-brut" style="font-size:1rem; font-weight:700; color:#e8f0ff;">—</div>
+                </div>
+                <div>
+                    <div style="font-size:0.7rem; color:var(--text-label);">Rendement réel <span style="opacity:0.6;">(inflation 2%)</span></div>
+                    <div id="preview-reel" style="font-size:1rem; font-weight:700; color:#f59e0b;">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.25rem;">
+            <button type="submit" class="btn btn-primary">Ajouter l'enveloppe</button>
+            <button type="button" class="btn btn-ghost" onclick="backToStep1()">← Retour</button>
+        </div>
+    </div>
+</form>
+</div>
+
+<style>
+.env-chip {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.env-chip:hover { border-color: var(--accent); color: var(--text); background: rgba(74,122,155,0.1); }
+.env-chip.selected { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.08); }
+.env-chip-savings:hover { border-color: #6a9bbf; }
+.env-chip-savings.selected { border-color: #6a9bbf; color: #e8f0ff; background: rgba(74,122,155,0.12); }
+</style>
+
+<script>
+const INFLATION = 2.0;
+
+function selectEnvelope(type, kind) {
+    document.getElementById('env_type_input').value = type;
+    document.getElementById('env_kind_input').value = kind;
+
+    // Highlight chip
+    document.querySelectorAll('.env-chip').forEach(function(c) { c.classList.remove('selected'); });
+    document.querySelectorAll('.env-chip[data-type="'+type+'"]').forEach(function(c) { c.classList.add('selected'); });
+
+    document.getElementById('step1').style.display = 'none';
+
+    if (kind === 'investment') {
+        document.getElementById('inv-confirm-name').textContent = type;
+        document.getElementById('step2-investment').style.display = '';
+        document.getElementById('step2-savings').style.display = 'none';
+    } else {
+        document.getElementById('step2-savings').style.display = '';
+        document.getElementById('step2-investment').style.display = 'none';
+        document.getElementById('savings-type-label').textContent = type;
+
+        // Pré-remplir taux + plafond
+        var chip = document.querySelector('.env-chip[data-type="'+type+'"][data-kind="savings"]');
+        if (chip) {
+            document.getElementById('taux_annuel').value = chip.getAttribute('data-taux') || '';
+            document.getElementById('plafond').value = chip.getAttribute('data-plafond') || '';
+        }
+        document.getElementById('nom').value = type;
+        updatePreview();
+    }
+}
+
+function backToStep1() {
+    document.getElementById('step1').style.display = '';
+    document.getElementById('step2-investment').style.display = 'none';
+    document.getElementById('step2-savings').style.display = 'none';
+}
+
+function updatePreview() {
+    var solde = parseFloat(document.getElementById('solde').value) || 0;
+    var taux  = parseFloat(document.getElementById('taux_annuel').value) || 0;
+    var prev  = document.getElementById('rendement-preview');
+    if (solde <= 0 || taux <= 0) { prev.style.display = 'none'; return; }
+    prev.style.display = '';
+    var brut = (solde * taux / 100).toFixed(2);
+    var reel = (solde * (taux - INFLATION) / 100).toFixed(2);
+    var brutEl = document.getElementById('preview-brut');
+    var reelEl = document.getElementById('preview-reel');
+    brutEl.textContent = '+' + brut + ' € (+' + taux.toFixed(2) + '%)';
+    brutEl.style.color = '#e8f0ff';
+    var reelNum = parseFloat(reel);
+    if (reelNum <= 0) {
+        reelEl.textContent = reel + ' € (' + (taux - INFLATION).toFixed(2) + '%) — Perd de la valeur en termes réels';
+        reelEl.style.color = '#f87171';
+    } else {
+        reelEl.textContent = '+' + reel + ' € (+' + (taux - INFLATION).toFixed(2) + '%)';
+        reelEl.style.color = '#f59e0b';
+    }
+}
+
+document.getElementById('solde').addEventListener('input', updatePreview);
+document.getElementById('taux_annuel').addEventListener('input', updatePreview);
+</script>
+{% endblock %}

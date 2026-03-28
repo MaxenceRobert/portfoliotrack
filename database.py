@@ -189,6 +189,20 @@ def init_db():
                 cached_at TIMESTAMP DEFAULT NOW()
             )
         ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS envelopes (
+                id             SERIAL PRIMARY KEY,
+                user_id        INTEGER NOT NULL,
+                type           TEXT    NOT NULL,
+                nom            TEXT    NOT NULL,
+                solde          REAL    NOT NULL DEFAULT 0,
+                taux_annuel    REAL    NOT NULL DEFAULT 0,
+                plafond        REAL,
+                date_ouverture TEXT,
+                created_at     TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
     else:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -341,6 +355,20 @@ def init_db():
                 ticker    TEXT NOT NULL UNIQUE,
                 data_json TEXT NOT NULL,
                 cached_at TEXT DEFAULT (datetime('now'))
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS envelopes (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id        INTEGER NOT NULL,
+                type           TEXT    NOT NULL,
+                nom            TEXT    NOT NULL,
+                solde          REAL    NOT NULL DEFAULT 0,
+                taux_annuel    REAL    NOT NULL DEFAULT 0,
+                plafond        REAL,
+                date_ouverture TEXT,
+                created_at     TEXT    DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''')
 
@@ -526,6 +554,42 @@ def init_db():
     except Exception as e:
         conn.rollback()
         print(f"Migration scoring warning: {e}")
+
+    # ── Migration : table envelopes (épargne garantie) ───────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS envelopes (
+                    id             SERIAL PRIMARY KEY,
+                    user_id        INTEGER NOT NULL,
+                    type           TEXT    NOT NULL,
+                    nom            TEXT    NOT NULL,
+                    solde          REAL    NOT NULL DEFAULT 0,
+                    taux_annuel    REAL    NOT NULL DEFAULT 0,
+                    plafond        REAL,
+                    date_ouverture TEXT,
+                    created_at     TIMESTAMP DEFAULT NOW(),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS envelopes (
+                    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id        INTEGER NOT NULL,
+                    type           TEXT    NOT NULL,
+                    nom            TEXT    NOT NULL,
+                    solde          REAL    NOT NULL DEFAULT 0,
+                    taux_annuel    REAL    NOT NULL DEFAULT 0,
+                    plafond        REAL,
+                    date_ouverture TEXT,
+                    created_at     TEXT    DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
     conn.close()
     print("Base de données initialisée.")
@@ -1517,5 +1581,68 @@ def populate_asset_catalog():
     except Exception as e:
         conn.rollback()
         print(f"[catalog] Erreur populate_asset_catalog: {e}")
+    finally:
+        conn.close()
+
+# ── Enveloppes épargne garantie ───────────────────────────────────────────────
+
+def add_envelope(user_id, type_, nom, solde, taux_annuel, plafond=None, date_ouverture=None):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'''INSERT INTO envelopes (user_id, type, nom, solde, taux_annuel, plafond, date_ouverture)
+               VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})''',
+            (user_id, type_, nom, float(solde), float(taux_annuel),
+             float(plafond) if plafond is not None else None, date_ouverture or None)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f"[add_envelope] Erreur: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_savings_envelopes(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM envelopes WHERE user_id = {p} ORDER BY created_at ASC', (user_id,))
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return [dict(r) for r in rows]
+
+def update_envelope_solde(envelope_id, user_id, solde):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'UPDATE envelopes SET solde = {p} WHERE id = {p} AND user_id = {p}',
+            (float(solde), envelope_id, user_id)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f"[update_envelope_solde] Erreur: {e}")
+        return False
+    finally:
+        conn.close()
+
+def delete_envelope(envelope_id, user_id):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM envelopes WHERE id = {p} AND user_id = {p}', (envelope_id, user_id))
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        return False
     finally:
         conn.close()
