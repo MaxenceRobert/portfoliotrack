@@ -162,6 +162,22 @@
 
 <div class="content">
 
+  {# Calcul Sharpe portefeuille (pondération par valeur) pour hero strip #}
+  {%- set _ns = namespace(w_sharpe=0,tw_s=0) -%}
+  {%- for _at2, _assets2 in summary.by_type.items() -%}
+    {%- for _a2 in _assets2 -%}
+      {%- if not _a2.fully_sold -%}
+        {%- set _rk2 = _a2.ticker if _a2.ticker else '__noticker_' ~ _a2.asset_id -%}
+        {%- set _ri2 = risk_data.get(_rk2) -%}
+        {%- if _ri2 and _ri2.sharpe is not none -%}
+          {%- set _ns.w_sharpe = _ns.w_sharpe + _ri2.sharpe * _a2.current_value -%}
+          {%- set _ns.tw_s = _ns.tw_s + _a2.current_value -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- set hero_sharpe = (_ns.w_sharpe / _ns.tw_s)|round(2) if _ns.tw_s > 0 else none -%}
+
   {# ══ HERO STRIP ══════════════════════════════════════════════════════════ #}
   <div class="hero-strip">
     <div class="hero-main">
@@ -233,6 +249,18 @@
         <div class="hero-metric-sub" id="hero-dca-sub">{{ summary.invested_month }} € ce mois</div>
       </div>
       {% endif %}
+      {% if hero_sharpe is not none %}
+      <div class="hero-metric">
+        <div class="hero-metric-label">Sharpe (1A)</div>
+        <div class="hero-metric-value"
+             style="color:{{ 'var(--green)' if hero_sharpe >= 1 else 'var(--yellow)' if hero_sharpe >= 0.5 else 'var(--text)' }};">
+          {{ hero_sharpe }}
+        </div>
+        <div class="hero-metric-sub">
+          {% if msci_sharpe is not none %}vs MSCI W: {{ msci_sharpe }}{% else %}ratio annualisé{% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <div class="hero-sparkline" id="hero-sparkline-wrap" style="display:none;">
@@ -246,14 +274,20 @@
 
     {# Performance chart #}
     <div class="panel-head" style="flex-shrink:0;">
-      <div class="panel-title">Évolution du Capital</div>
+      <div class="panel-title">PERFORMANCE</div>
       <div class="panel-badge" id="perf-live-badge">LIVE</div>
+      <span style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">vs MSCI World</span>
       <div style="display:flex;gap:2px;margin-left:auto;" class="chart-controls" id="perf-btns">
+        <button class="chart-btn" data-period="1J">1J</button>
+        <button class="chart-btn" data-period="1S">1S</button>
         <button class="chart-btn" data-period="1M">1M</button>
         <button class="chart-btn" data-period="3M">3M</button>
         <button class="chart-btn" data-period="6M">6M</button>
         <button class="chart-btn active" data-period="1A">1A</button>
         <button class="chart-btn" data-period="MAX">MAX</button>
+      </div>
+      <div style="font-size:8px;color:var(--text-dim);margin-left:8px;white-space:nowrap;flex-shrink:0;">
+        <span style="color:var(--accent);">━</span> Port &nbsp;<span style="color:rgba(255,255,255,0.3);">┅</span> MSCI W
       </div>
     </div>
     <div style="flex:0 0 150px;position:relative;padding:4px 8px 0;">
@@ -619,6 +653,8 @@ var ALL_ASSETS    = {{ all_assets_json | tojson }};
 var ALL_PURCHASES = {{ purchases_json | tojson }};
 var HISTORY_DATES = {{ history_dates | tojson }};
 var HISTORY_VALS  = {{ history_values | tojson }};
+var BENCH_DATES   = {{ benchmark_dates | tojson }};
+var BENCH_VALS    = {{ benchmark_values | tojson }};
 var PROFIL_RISK   = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
 var DCA_TARGET    = {{ summary.dca_target }};
 var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000};
@@ -735,11 +771,19 @@ function renderFeed(purchases) {
 // ── Performance chart (canvas) ────────────────────────────────────────────────
 var _perfPeriod = '1A';
 
+var FR_MONTHS_SHORT = ['JANV','FÉVR','MARS','AVR','MAI','JUIN','JUIL','AOÛT','SEPT','OCT','NOV','DÉC'];
+function fmtDateFr(iso) {
+  var d = new Date(iso + 'T00:00:00');
+  return d.getDate() + ' ' + FR_MONTHS_SHORT[d.getMonth()];
+}
+
 function filterHistory(period) {
   if (!HISTORY_DATES.length) return { dates: [], vals: [] };
   var now = new Date();
   var cutoff = null;
-  if (period === '1M') { cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-1); }
+  if      (period === '1J') { cutoff = new Date(now); cutoff.setDate(cutoff.getDate()-1); }
+  else if (period === '1S') { cutoff = new Date(now); cutoff.setDate(cutoff.getDate()-7); }
+  else if (period === '1M') { cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-1); }
   else if (period === '3M') { cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-3); }
   else if (period === '6M') { cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-6); }
   else if (period === '1A') { cutoff = new Date(now); cutoff.setFullYear(cutoff.getFullYear()-1); }
@@ -753,6 +797,25 @@ function filterHistory(period) {
   return { dates: dates, vals: vals };
 }
 
+function getBenchmarkAligned(portDates) {
+  if (!BENCH_DATES.length || portDates.length < 2) return null;
+  var benchMap = {};
+  for (var i = 0; i < BENCH_DATES.length; i++) benchMap[BENCH_DATES[i]] = BENCH_VALS[i];
+  var result = portDates.map(function(d) {
+    if (benchMap[d] !== undefined) return benchMap[d];
+    // find closest bench date
+    var closest = null, minDiff = Infinity;
+    for (var j = 0; j < BENCH_DATES.length; j++) {
+      var diff = Math.abs(new Date(BENCH_DATES[j]) - new Date(d));
+      if (diff < minDiff) { minDiff = diff; closest = BENCH_VALS[j]; }
+    }
+    return closest;
+  });
+  // check we have at least a valid start value
+  if (result[0] == null) return null;
+  return result;
+}
+
 function drawPerfChart() {
   var canvas = document.getElementById('perfChart');
   if (!canvas) return;
@@ -761,7 +824,7 @@ function drawPerfChart() {
   canvas.height = wrap.offsetHeight;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
-  var pad = { top:8, right:52, bottom:18, left:6 };
+  var pad = { top:10, right:50, bottom:20, left:10 };
 
   var filtered = filterHistory(_perfPeriod);
   var data = filtered.vals;
@@ -769,8 +832,20 @@ function drawPerfChart() {
 
   if (!data.length || w < 20 || h < 20) { ctx.clearRect(0,0,w,h); return; }
 
-  var min = Math.min.apply(null, data) * 0.98;
-  var max = Math.max.apply(null, data) * 1.02;
+  // Benchmark aligned to portfolio dates
+  var benchRaw = getBenchmarkAligned(labels);
+  var benchScaled = null;
+  if (benchRaw && benchRaw[0] != null && data[0] > 0) {
+    var bStart = benchRaw[0];
+    var pStart = data[0];
+    benchScaled = benchRaw.map(function(v) { return v != null ? pStart * v / bStart : null; });
+  }
+
+  // Combined min/max across both series
+  var allVals = data.slice();
+  if (benchScaled) benchScaled.forEach(function(v) { if (v != null) allVals.push(v); });
+  var min = Math.min.apply(null, allVals) * 0.98;
+  var max = Math.max.apply(null, allVals) * 1.02;
   var cw = w - pad.left - pad.right;
   var ch = h - pad.top - pad.bottom;
 
@@ -779,33 +854,49 @@ function drawPerfChart() {
 
   ctx.clearRect(0,0,w,h);
 
-  // Grid lines + labels
+  // Grid lines + Y-axis labels (RIGHT side)
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   var steps = 4;
-  for (var i = 0; i <= steps; i++) {
-    var y = pad.top + (i/steps)*ch;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w-pad.right, y); ctx.stroke();
-    var val = max - (i/steps)*(max-min);
+  for (var gi = 0; gi <= steps; gi++) {
+    var gy = pad.top + (gi/steps)*ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w-pad.right, gy); ctx.stroke();
+    var gval = max - (gi/steps)*(max-min);
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'left';
-    ctx.fillText(fmtInt(val)+'€', w-pad.right+4, y+3);
+    ctx.fillText(fmtInt(gval)+'€', w-pad.right+4, gy+3);
   }
 
-  // Area fill
+  // Benchmark line (dashed gray) — draw first so portfolio is on top
+  if (benchScaled) {
+    ctx.beginPath();
+    var started = false;
+    for (var bi = 0; bi < benchScaled.length; bi++) {
+      if (benchScaled[bi] == null) continue;
+      if (!started) { ctx.moveTo(toX(bi), toY(benchScaled[bi])); started = true; }
+      else ctx.lineTo(toX(bi), toY(benchScaled[bi]));
+    }
+    ctx.setLineDash([4,3]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Area fill (portfolio)
   var grad = ctx.createLinearGradient(0, pad.top, 0, h-pad.bottom);
   grad.addColorStop(0, 'rgba(255,140,0,0.12)');
   grad.addColorStop(1, 'rgba(255,140,0,0)');
   ctx.beginPath();
   ctx.moveTo(toX(0), h-pad.bottom);
-  for (var i = 0; i < data.length; i++) ctx.lineTo(toX(i), toY(data[i]));
+  for (var pi = 0; pi < data.length; pi++) ctx.lineTo(toX(pi), toY(data[pi]));
   ctx.lineTo(toX(data.length-1), h-pad.bottom);
   ctx.fillStyle = grad; ctx.fill();
 
-  // Line
+  // Portfolio line
   ctx.beginPath();
-  for (var i = 0; i < data.length; i++) {
-    i === 0 ? ctx.moveTo(toX(i), toY(data[i])) : ctx.lineTo(toX(i), toY(data[i]));
+  for (var li = 0; li < data.length; li++) {
+    li === 0 ? ctx.moveTo(toX(li), toY(data[li])) : ctx.lineTo(toX(li), toY(data[li]));
   }
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.stroke();
 
@@ -814,13 +905,19 @@ function drawPerfChart() {
   ctx.arc(toX(data.length-1), toY(data[data.length-1]), 3, 0, Math.PI*2);
   ctx.fillStyle = '#FF8C00'; ctx.fill();
 
-  // Date labels (start/end)
+  // French date labels (start, middle, end)
   if (labels.length >= 2) {
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'left';
-    ctx.fillText(labels[0].slice(0,7), pad.left, h-3);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '8px IBM Plex Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(fmtDateFr(labels[0]), pad.left, h-4);
+    if (labels.length >= 4) {
+      var mid = Math.floor(labels.length / 2);
+      ctx.textAlign = 'center';
+      ctx.fillText(fmtDateFr(labels[mid]), toX(mid), h-4);
+    }
     ctx.textAlign = 'right';
-    ctx.fillText(labels[labels.length-1].slice(0,7), w-pad.right, h-3);
+    ctx.fillText(fmtDateFr(labels[labels.length-1]), w-pad.right, h-4);
   }
 }
 

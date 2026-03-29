@@ -626,6 +626,32 @@ def dashboard():
 
     is_demo = current_user.email == DEMO_EMAIL
 
+    # ── Benchmark CW8.PA pour chart + Sharpe MSCI ────────────────────────────
+    benchmark_dates: list = []
+    benchmark_values: list = []
+    _now_ts = _time.time()
+    if _BENCH_HISTORY_CACHE['data'] and _now_ts - _BENCH_HISTORY_CACHE['ts'] < 86400:
+        benchmark_dates  = _BENCH_HISTORY_CACHE['data']['dates']
+        benchmark_values = _BENCH_HISTORY_CACHE['data']['vals']
+    else:
+        try:
+            import yfinance as _yf2
+            _bench = _yf2.download('CW8.PA', period='2y', interval='1d',
+                                   auto_adjust=True, progress=False)
+            if not _bench.empty:
+                _closes = _bench['Close'].dropna()
+                if not _closes.empty:
+                    _first = float(_closes.iloc[0])
+                    benchmark_dates  = [d.strftime('%Y-%m-%d') for d in _closes.index]
+                    benchmark_values = [round(float(v) / _first * 100, 4) for v in _closes]
+                    _BENCH_HISTORY_CACHE['data'] = {'dates': benchmark_dates, 'vals': benchmark_values}
+                    _BENCH_HISTORY_CACHE['ts']   = _now_ts
+        except Exception as _be:
+            print(f'[benchmark] Erreur fetch CW8.PA: {_be}')
+
+    msci_risk   = get_risk_score('CW8.PA', 'ETF')
+    msci_sharpe = round(float(msci_risk.get('sharpe') or 0), 2) if msci_risk and msci_risk.get('sharpe') is not None else None
+
     return render_template(
         'dashboard.html',
         summary=summary,
@@ -647,6 +673,9 @@ def dashboard():
         savings_envelopes=savings_envelopes,
         savings_total_solde=round(savings_total_solde, 2),
         inflation_rate=INFLATION_RATE,
+        benchmark_dates=benchmark_dates,
+        benchmark_values=benchmark_values,
+        msci_sharpe=msci_sharpe,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -1628,6 +1657,9 @@ def mon_profil_investisseur():
 # ── Barre ticker Bloomberg (cache mémoire 15 min) ─────────────────────────────
 import time as _time
 _TICKER_BAR_CACHE = {'data': None, 'ts': 0}
+
+# ── Benchmark CW8.PA history (cache 24h) ─────────────────────────────────────
+_BENCH_HISTORY_CACHE: dict = {'data': None, 'ts': 0}
 
 # ── Watchlist marchés dashboard (cache 5 min) ─────────────────────────────────
 _MARKET_WATCHLIST_CACHE = {'data': None, 'ts': 0}
