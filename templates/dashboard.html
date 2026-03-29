@@ -20,7 +20,8 @@
   grid-row: 2;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--panel);
 }
 .right-col {
@@ -130,7 +131,7 @@
 .risk-bar-seg.active { opacity: 1; }
 
 /* ── KPI section ── */
-#kpi-section > div { min-height: 100px; }
+#kpi-section { flex-shrink: 0; }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
@@ -234,8 +235,8 @@
       {% endif %}
     </div>
 
-    <div class="hero-sparkline">
-      <canvas id="sparkline" width="140" height="36"></canvas>
+    <div class="hero-sparkline" id="hero-sparkline-wrap" style="visibility:hidden;">
+      <canvas id="sparkline" width="140" height="36" style="background:transparent;display:block;"></canvas>
       <div class="hero-sparkline-label" id="sparkline-label">PERF 6M</div>
     </div>
   </div>
@@ -286,7 +287,7 @@
         {% endfor %}
       </select>
     </div>
-    <div class="panel-body" style="flex:1;overflow-y:auto;overflow-x:auto;">
+    <div class="panel-body" style="flex:0 0 auto;overflow-x:auto;">
       {% if not summary.assets %}
       <div style="padding:32px;text-align:center;color:var(--text-dim);">
         Aucun actif —
@@ -825,6 +826,7 @@ function drawPerfChart() {
 
 // Sparkline
 function drawSparkline() {
+  var wrap   = document.getElementById('hero-sparkline-wrap');
   var canvas = document.getElementById('sparkline');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
@@ -833,16 +835,17 @@ function drawSparkline() {
   var lbl = document.getElementById('sparkline-label');
 
   if (!HISTORY_VALS.length) {
-    if (lbl) { lbl.textContent = 'Pas assez de données'; lbl.style.color = 'var(--text-dim)'; }
+    if (wrap) wrap.style.visibility = 'hidden';
     return;
   }
   // Use ~126 trading days ≈ 6 months
   var data = HISTORY_VALS.slice(-126);
   if (data.length < 2) data = HISTORY_VALS.slice(-30);
   if (data.length < 2) {
-    if (lbl) { lbl.textContent = 'Pas assez de données'; lbl.style.color = 'var(--text-dim)'; }
+    if (wrap) wrap.style.visibility = 'hidden';
     return;
   }
+  if (wrap) wrap.style.visibility = 'visible';
   var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
   if (max === min) max = min + 1;
   ctx.clearRect(0,0,w,h);
