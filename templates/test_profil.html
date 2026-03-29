@@ -347,7 +347,7 @@
         <div class="disclaimer-meta">
           <span class="disclaimer-badge">3-5 minutes</span>
           <span class="disclaimer-badge">15 questions</span>
-          <span class="disclaimer-badge">8 axes analysés</span>
+          <span class="disclaimer-badge">5 axes analysés</span>
           <span class="disclaimer-badge">Recommandation IA</span>
         </div>
         <button type="button" class="btn btn-primary"
@@ -397,92 +397,133 @@
 
 <script>
 const QUESTIONS = [
-  {n:1, axis:"AXE 3 — Horizon temporel", text:"Quel est ton âge ?",
-   type:"numeric", unit:"ans", min:16, max:85, placeholder:"Ex: 28"},
-  {n:2, axis:"AXE 3 — Horizon temporel",
-   text:"Dans combien d'années as-tu besoin de récupérer cet argent ?",
-   subtext:"Pense à ton objectif principal — retraite, projet immobilier, liberté financière…",
-   type:"numeric", unit:"ans", min:0, max:50, placeholder:"Ex: 15"},
-  {n:3, axis:"AXE 2 — Capacité financière",
-   text:"Combien de mois de dépenses as-tu en épargne de précaution disponible immédiatement ?",
-   subtext:"Ex: si tu dépenses 2 000 €/mois et as 6 000 € sur ton livret → 3 mois.",
-   type:"numeric", unit:"mois", min:0, max:36, placeholder:"Ex: 6"},
-  {n:4, axis:"AXE 2 — Capacité financière",
-   text:"Quel pourcentage de tes revenus mensuels peux-tu investir sans impact sur ton quotidien ?",
-   type:"slider", min:0, max:60, step:1, unit:"%"},
-  {n:5, axis:"AXE 1 — Tolérance émotionnelle",
-   text:"Si ton portefeuille perdait 30% en un mois, tu ferais quoi ?",
+  {n:1, axis:"Tolérance aux pertes",
+   text:"Quelle perte maximale sur ton portefeuille total pourrais-tu supporter sans vendre ?",
    type:"choice", options:[
-    {v:"A", t:"Je vends tout — je ne supporte pas voir ça"},
-    {v:"B", t:"Je vends une partie pour limiter les dégâts"},
-    {v:"C", t:"Je ne touche à rien, j'attends que ça remonte"},
-    {v:"D", t:"J'achète davantage — c'est une opportunité"},
+    {v:"A", t:"-5% — Au-delà je panique"},
+    {v:"B", t:"-10% — C'est ma limite de confort"},
+    {v:"C", t:"-20% — Ça fait mal mais je tiens"},
+    {v:"D", t:"-30% ou plus — J'ai l'estomac solide"},
   ]},
-  {n:6, axis:"AXE 6 — Objectif financier",
-   text:"Quel est ton objectif principal ?",
+  {n:2, axis:"Tolérance aux pertes",
+   text:"Ton portefeuille perd 35% en 3 mois (type COVID mars 2020). Tu fais quoi ?",
    type:"choice", options:[
-    {v:"A", t:"Protéger mon épargne contre l'inflation"},
-    {v:"B", t:"Constituer un capital à long terme"},
-    {v:"C", t:"Atteindre l'indépendance financière"},
-    {v:"D", t:"Générer des revenus passifs réguliers"},
+    {v:"A", t:"Je vends tout pour stopper l'hémorragie"},
+    {v:"B", t:"Je vends la moitié et j'attends avec le reste"},
+    {v:"C", t:"Je ne touche à rien, je continue mon DCA"},
+    {v:"D", t:"Je renforce — historiquement c'est le meilleur moment"},
   ]},
-  {n:7, axis:"AXE 4 — Connaissances financières",
-   text:"As-tu déjà investi sur les marchés financiers ?",
+  {n:3, axis:"Tolérance aux pertes",
+   text:"As-tu déjà subi une perte significative (> 10%) sur un investissement réel ?",
+   subtext:"On ne parle pas de paper trading — une vraie perte avec ton argent.",
    type:"choice", options:[
-    {v:"A", t:"Jamais — je pars de zéro"},
-    {v:"B", t:"Oui, j'ai quelques bases mais peu d'expérience"},
-    {v:"C", t:"Oui, j'investis régulièrement"},
-    {v:"D", t:"Oui, je suis à l'aise avec des produits complexes"},
+    {v:"A", t:"Non, jamais — je n'ai jamais investi ou jamais perdu"},
+    {v:"B", t:"Oui, et ça m'a marqué négativement"},
+    {v:"C", t:"Oui, c'était désagréable mais j'ai gardé mes positions"},
+    {v:"D", t:"Oui, et j'en ai profité pour renforcer"},
   ]},
-  {n:8, axis:"AXE 8 — Projets futurs",
-   text:"Ta situation professionnelle est-elle stable ?",
+  {n:4, axis:"Tolérance aux pertes",
+   text:"Ton portefeuille baisse de 15% cette semaine. Quel impact sur toi ?",
    type:"choice", options:[
-    {v:"A", t:"Non — situation précaire ou en transition"},
-    {v:"B", t:"Relativement stable mais avec des incertitudes"},
-    {v:"C", t:"Stable, revenus prévisibles"},
-    {v:"D", t:"Stable et revenus en progression"},
+    {v:"A", t:"J'y pense constamment, ça me stresse"},
+    {v:"B", t:"Ça m'embête, je vérifie souvent"},
+    {v:"C", t:"Je note la baisse mais ça ne m'affecte pas au quotidien"},
+    {v:"D", t:"Je ne regarde même pas, ça reviendra"},
   ]},
-  {n:9, axis:"AXE 8 — Projets futurs",
-   text:"As-tu des projets importants qui nécessiteront une somme significative dans les 3 prochaines années ?",
-   subtext:"Ex: achat immobilier, mariage, création d'entreprise…",
+  {n:5, axis:"Horizon & stabilité",
+   text:"Dans combien de temps pourrais-tu avoir besoin de cet argent ?",
+   subtext:"Pense au scénario le plus probable — pas le pire cas.",
    type:"choice", options:[
-    {v:"A", t:"Non — aucun projet prévu"},
-    {v:"B", t:"Peut-être — c'est incertain"},
-    {v:"C", t:"Oui — un projet précis"},
-    {v:"D", t:"Oui — plusieurs projets"},
+    {v:"A", t:"Moins de 2 ans"},
+    {v:"B", t:"2 à 5 ans"},
+    {v:"C", t:"5 à 10 ans"},
+    {v:"D", t:"Plus de 10 ans — je n'en ai pas besoin avant longtemps"},
   ]},
-  {n:10, axis:"AXE 8 — Projets futurs",
-   text:"As-tu des personnes financièrement dépendantes de toi ?",
+  {n:6, axis:"Horizon & stabilité",
+   text:"Comment décrirais-tu la prévisibilité de tes revenus ?",
    type:"choice", options:[
-    {v:"A", t:"Non — je n'ai de charge que pour moi-même"},
-    {v:"B", t:"Partiellement — j'aide ponctuellement des proches"},
-    {v:"C", t:"Oui — enfants, conjoint ou parents à charge"},
+    {v:"A", t:"Très variable — freelance, commissions, missions"},
+    {v:"B", t:"Plutôt stable mais sans garantie à long terme"},
+    {v:"C", t:"Stable — CDI ou équivalent"},
+    {v:"D", t:"Très stable et en progression"},
   ]},
-  {n:11, axis:"AXE 5 — Valeurs et contexte",
-   text:"Décris en quelques mots ta situation financière actuelle et ce que tu cherches à accomplir.",
-   subtext:"Ex: salarié avec 20k€ d'épargne, veux constituer un patrimoine pour ma retraite à 55 ans. Réponse facultative.",
-   type:"open", placeholder:"Ta situation et tes ambitions (facultatif)…"},
-  {n:12, axis:"AXE 5 — Valeurs et contexte",
-   text:"As-tu des convictions sectorielles ou des contraintes éthiques ?",
-   subtext:"Ex: finance islamique (halal), exclusion armement/tabac, ESG, tech uniquement… Réponse facultative.",
-   type:"open", placeholder:"Tes convictions ou contraintes sectorielles (facultatif)…"},
-  {n:13, axis:"AXE 5 — Valeurs et contexte",
-   text:"As-tu des convictions géographiques — zones où tu veux investir ou éviter ?",
-   subtext:"Ex: je crois à l'Inde et aux USA, j'évite la Chine, je préfère l'Europe. Réponse facultative.",
-   type:"open", placeholder:"Tes convictions géographiques (facultatif)…"},
-  {n:14, axis:"AXE 5 — Valeurs et contexte",
-   text:"Y a-t-il des types d'actifs qui t'attirent particulièrement ou que tu veux éviter ?",
-   subtext:"Ex: je veux du dividende, j'aime les ETF indiciels, j'évite la crypto, je veux de l'or. Réponse facultative.",
-   type:"open", placeholder:"Tes préférences de types d'actifs (facultatif)…"},
-  {n:15, axis:"AXE 2 — Capacité financière",
-   text:"Quel montant mensuel envisages-tu d'investir ?",
-   subtext:"Information utilisée pour personnaliser la recommandation. Réponse facultative.",
-   type:"numeric_opt", unit:"€/mois", min:0, max:100000, placeholder:"Ex: 300"},
+  {n:7, axis:"Horizon & stabilité",
+   text:"As-tu des dépenses importantes prévues dans les 3 prochaines années ?",
+   subtext:"Ex: achat immobilier, études, mariage, création d'entreprise...",
+   type:"choice", options:[
+    {v:"A", t:"Oui, un gros projet certain"},
+    {v:"B", t:"Possible mais pas encore décidé"},
+    {v:"C", t:"Rien de prévu pour le moment"},
+  ]},
+  {n:8, axis:"Expérience & connaissance",
+   text:"Depuis combien de temps investis-tu en bourse ?",
+   type:"choice", options:[
+    {v:"A", t:"Jamais commencé"},
+    {v:"B", t:"Moins d'un an"},
+    {v:"C", t:"1 à 3 ans"},
+    {v:"D", t:"Plus de 3 ans"},
+  ]},
+  {n:9, axis:"Expérience & connaissance",
+   text:"Quels produits comprends-tu suffisamment pour investir en confiance ?",
+   subtext:"Sélectionne le niveau le plus avancé que tu maîtrises.",
+   type:"choice", options:[
+    {v:"A", t:"Livrets, fonds euros — je connais surtout l'épargne classique"},
+    {v:"B", t:"ETF indiciels (MSCI World, S&P 500)"},
+    {v:"C", t:"Actions individuelles + ETF, je sais lire un bilan"},
+    {v:"D", t:"Produits dérivés, options, effet de levier — à l'aise avec la complexité"},
+  ]},
+  {n:10, axis:"Expérience & connaissance",
+   text:"Un ETF World baisse de 20%. Le ratio de Sharpe passe de 1.2 à 0.4. Qu'est-ce que ça te dit ?",
+   type:"choice", options:[
+    {v:"A", t:"Rien du tout — je ne comprends pas ces termes"},
+    {v:"B", t:"Je sais que c'est négatif mais je ne saurais pas l'interpréter"},
+    {v:"C", t:"Le rendement ajusté au risque s'est dégradé, mais ça peut être temporaire"},
+    {v:"D", t:"C'est normal en drawdown, le Sharpe se recalcule sur la fenêtre récente — ça ne change pas ma thèse long terme"},
+  ]},
+  {n:11, axis:"Comportement investisseur",
+   text:"À quelle fréquence regardes-tu (ou regarderais-tu) ton portefeuille ?",
+   type:"choice", options:[
+    {v:"A", t:"Plusieurs fois par jour"},
+    {v:"B", t:"Une fois par jour"},
+    {v:"C", t:"Quelques fois par semaine"},
+    {v:"D", t:"Une fois par mois ou moins"},
+  ]},
+  {n:12, axis:"Comportement investisseur",
+   text:"Une action que tu détiens chute de 8% après une mauvaise publication de résultats. Ta réaction ?",
+   type:"choice", options:[
+    {v:"A", t:"Je vends immédiatement pour limiter les pertes"},
+    {v:"B", t:"Je m'inquiète et je surveille de près les prochains jours"},
+    {v:"C", t:"J'analyse les résultats avant de décider"},
+    {v:"D", t:"Si ma thèse n'a pas changé, -8% c'est du bruit"},
+  ]},
+  {n:13, axis:"Comportement investisseur",
+   text:"Tu as une forte conviction sur une action. Quel poids maximum tu lui donnerais dans ton portefeuille ?",
+   type:"choice", options:[
+    {v:"A", t:"5% max — je diversifie au maximum"},
+    {v:"B", t:"10-15% — conviction mesurée"},
+    {v:"C", t:"20-25% — si j'y crois, j'y vais"},
+    {v:"D", t:"30%+ — quand j'ai raison, je mise gros"},
+  ]},
+  {n:14, axis:"Capacité financière",
+   text:"Combien de mois de dépenses as-tu en épargne de précaution (hors investissements) ?",
+   type:"choice", options:[
+    {v:"A", t:"Moins de 2 mois"},
+    {v:"B", t:"2 à 4 mois"},
+    {v:"C", t:"4 à 6 mois"},
+    {v:"D", t:"Plus de 6 mois"},
+  ]},
+  {n:15, axis:"Capacité financière",
+   text:"Quel pourcentage de ton patrimoine total est (ou sera) investi en bourse ?",
+   type:"choice", options:[
+    {v:"A", t:"Moins de 15%"},
+    {v:"B", t:"15-30%"},
+    {v:"C", t:"30-50%"},
+    {v:"D", t:"Plus de 50%"},
+  ]},
 ];
 
 let current = 0;
 const answers = {};
-const answersText = {};
 
 function updateSegmentedProgress(idx, total) {
   var segs = document.getElementById('q-progress-segs');
@@ -507,7 +548,6 @@ function renderQuestion() {
   document.getElementById('q-counter').textContent = 'Q.' + num + '/' + total;
   document.getElementById('q-axis-label').textContent = q.axis;
   updateSegmentedProgress(current, total);
-  document.getElementById('q-progress').style.width = ((current / total) * 100) + '%';
   document.getElementById('q-text').textContent = q.text;
   document.getElementById('q-error').style.display = 'none';
 
@@ -525,50 +565,6 @@ function renderQuestion() {
 function renderOptions(q) {
   const container = document.getElementById('q-options');
   const curVal    = answers[q.n] !== undefined ? answers[q.n] : '';
-  const curText   = answersText[q.n] || '';
-
-  if (q.type === 'open') {
-    container.innerHTML =
-      '<textarea id="open-ta-' + q.n + '" class="quiz-textarea"' +
-      ' placeholder="' + escHtml(q.placeholder || '') + '"' +
-      ' oninput="setOpenAnswer(' + q.n + ', this.value)" rows="5">' +
-      escHtml(curVal) + '</textarea>';
-    return;
-  }
-
-  if (q.type === 'numeric' || q.type === 'numeric_opt') {
-    const opt = q.type === 'numeric_opt' ? ' (facultatif)' : '';
-    container.innerHTML =
-      '<div class="quiz-numeric-wrap">' +
-      '<input type="number" id="num-' + q.n + '"' +
-      ' min="' + (q.min||0) + '" max="' + (q.max||999) + '"' +
-      ' placeholder="' + escHtml(q.placeholder || '') + '"' +
-      ' value="' + escHtml(curVal) + '"' +
-      ' oninput="setNumericAnswer(' + q.n + ', this.value)"' +
-      ' style="appearance:textfield;">' +
-      '<span class="quiz-numeric-unit">' + escHtml(q.unit || '') + opt + '</span>' +
-      '</div>';
-    return;
-  }
-
-  if (q.type === 'slider') {
-    const val = curVal !== '' ? parseFloat(curVal) : 10;
-    container.innerHTML =
-      '<div class="slider-wrap">' +
-      '<input type="range" class="quiz-slider" id="slider-' + q.n + '"' +
-      ' min="' + q.min + '" max="' + q.max + '" step="' + (q.step||1) + '"' +
-      ' value="' + val + '"' +
-      ' oninput="setSlider(' + q.n + ', this.value)">' +
-      '<div class="slider-val" id="slider-val-' + q.n + '">' + val +
-      '<span style="font-size:16px;color:var(--text-dim);font-weight:400;"> ' + escHtml(q.unit||'') + '</span></div>' +
-      '<div class="slider-labels"><span>' + q.min + escHtml(q.unit||'') + '</span><span>' + q.max + escHtml(q.unit||'') + '</span></div>' +
-      '</div>';
-    document.getElementById('ans' + q.n).value = val;
-    answers[q.n] = String(val);
-    return;
-  }
-
-  // choice
   let html = '';
   q.options.forEach(function(opt) {
     const sel = curVal === opt.v ? ' selected' : '';
@@ -577,13 +573,6 @@ function renderOptions(q) {
       '<span class="opt-text">' + escHtml(opt.t) + '</span>' +
       '</div>';
   });
-  const selE = curVal === 'E' ? ' selected' : '';
-  html += '<div class="option-card' + selE + '" onclick="selectOpt(' + q.n + ', \'E\', this)">' +
-    '<span class="opt-letter">E</span><span class="opt-text">Autre — précise</span></div>';
-  html += '<div id="autre-wrap-' + q.n + '" class="autre-wrap" style="display:' + (curVal === 'E' ? 'block' : 'none') + '">' +
-    '<input type="text" class="autre-input" placeholder="Précise ta réponse…"' +
-    ' value="' + escHtml(curText) + '"' +
-    ' oninput="setAutreText(' + q.n + ', this.value)"></div>';
   container.innerHTML = html;
 }
 
@@ -596,34 +585,13 @@ function selectOpt(qn, val, el) {
   document.getElementById('ans' + qn).value = val;
   document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  const w = document.getElementById('autre-wrap-' + qn);
-  if (w) {
-    w.style.display = val === 'E' ? 'block' : 'none';
-    if (val === 'E') setTimeout(() => { const inp = w.querySelector('input'); if (inp) inp.focus(); }, 80);
-  }
   document.getElementById('q-error').style.display = 'none';
-}
-function setAutreText(qn, val)   { answersText[qn] = val; document.getElementById('ans' + qn + 't').value = val; }
-function setOpenAnswer(qn, val)  { answers[qn] = val; document.getElementById('ans' + qn).value = val; }
-function setNumericAnswer(qn, val) { answers[qn] = val; document.getElementById('ans' + qn).value = val; }
-function setSlider(qn, val) {
-  answers[qn] = val;
-  document.getElementById('ans' + qn).value = val;
-  const display = document.getElementById('slider-val-' + qn);
-  const q = QUESTIONS.find(q => q.n === qn);
-  if (display) display.innerHTML = val + '<span style="font-size:16px;color:var(--text-dim);font-weight:400;"> ' + escHtml((q&&q.unit)||'') + '</span>';
 }
 
 function goNext() {
   const q = QUESTIONS[current];
-  if (q.type === 'numeric' && !answers[q.n]) {
+  if (!answers[q.n]) {
     document.getElementById('q-error').style.display = 'block'; return;
-  }
-  if (q.type === 'choice' && !answers[q.n]) {
-    document.getElementById('q-error').style.display = 'block'; return;
-  }
-  if (q.type === 'slider') {
-    if (!answers[q.n]) { answers[q.n] = '10'; document.getElementById('ans' + q.n).value = '10'; }
   }
   if (current === QUESTIONS.length - 1) {
     document.getElementById('quiz-form').submit(); return;
@@ -637,9 +605,7 @@ function goPrev() {
 }
 
 document.getElementById('quiz-form').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    if (e.target.tagName !== 'TEXTAREA') { e.preventDefault(); goNext(); }
-  }
+  if (e.key === 'Enter') { e.preventDefault(); goNext(); }
 });
 </script>
 {% endblock %}

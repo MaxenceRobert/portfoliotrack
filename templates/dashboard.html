@@ -232,7 +232,7 @@
 
     <div class="hero-sparkline">
       <canvas id="sparkline" width="140" height="36"></canvas>
-      <div class="hero-sparkline-label">CAPITAL INVESTI</div>
+      <div class="hero-sparkline-label" id="sparkline-label">PERF 6M</div>
     </div>
   </div>
 
@@ -401,6 +401,61 @@
       <div class="alloc-grid" id="alloc-body"></div>
     </div>
 
+    {# C2.5 — Risque #}
+    {% if portfolio_risk_score is not none %}
+    {% set ns = namespace(w_beta=0,w_vol=0,w_dd=0,w_sharpe=0,tw_b=0,tw_v=0,tw_d=0,tw_s=0) %}
+    {% for _at, _assets in summary.by_type.items() %}{% for a in _assets %}{% if not a.fully_sold %}
+    {% set _rk = a.ticker if a.ticker else '__noticker_' ~ a.asset_id %}
+    {% set _ri = risk_data.get(_rk) %}{% set _v = a.current_value %}
+    {% if _ri and _ri.beta is not none %}{% set ns.w_beta = ns.w_beta + _ri.beta * _v %}{% set ns.tw_b = ns.tw_b + _v %}{% endif %}
+    {% if _ri and _ri.volatilite is not none %}{% set ns.w_vol = ns.w_vol + _ri.volatilite * _v %}{% set ns.tw_v = ns.tw_v + _v %}{% endif %}
+    {% if _ri and _ri.drawdown is not none %}{% set ns.w_dd = ns.w_dd + _ri.drawdown * _v %}{% set ns.tw_d = ns.tw_d + _v %}{% endif %}
+    {% if _ri and _ri.sharpe is not none %}{% set ns.w_sharpe = ns.w_sharpe + _ri.sharpe * _v %}{% set ns.tw_s = ns.tw_s + _v %}{% endif %}
+    {% endif %}{% endfor %}{% endfor %}
+    {% set port_beta   = (ns.w_beta   / ns.tw_b)|round(2) if ns.tw_b > 0 else none %}
+    {% set port_vol    = (ns.w_vol    / ns.tw_v)|round(1) if ns.tw_v > 0 else none %}
+    {% set port_dd     = (ns.w_dd     / ns.tw_d)|round(1) if ns.tw_d > 0 else none %}
+    {% set port_sharpe = (ns.w_sharpe / ns.tw_s)|round(2) if ns.tw_s > 0 else none %}
+    {% set risk_segs = portfolio_risk_score // 10 %}
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Risque</div>
+        <div class="panel-subtitle">Synthèse</div>
+      </div>
+      <div style="padding:10px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:22px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;">{{ portfolio_risk_score }}<span style="font-size:10px;color:var(--text-dim);font-weight:400;">/100</span></span>
+          <span style="font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">{{ last_profil.nom_profil if last_profil else '—' }}</span>
+        </div>
+        <div class="risk-bar-track">
+          {% for i in range(10) %}
+          {% set seg = i + 1 %}
+          {% set seg_bg = 'var(--green)' if seg <= 3 else ('var(--yellow)' if seg <= 5 else ('var(--accent)' if seg <= 7 else 'var(--red)')) %}
+          <div class="risk-bar-seg{% if seg <= risk_segs %} active{% endif %}" style="background:{{ seg_bg }};"></div>
+          {% endfor %}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
+          <div style="background:var(--bg);padding:5px 7px;">
+            <div style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">Bêta</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-bright);font-family:'IBM Plex Mono',monospace;">{{ port_beta if port_beta is not none else '—' }}</div>
+          </div>
+          <div style="background:var(--bg);padding:5px 7px;">
+            <div style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">Volatilité</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-bright);font-family:'IBM Plex Mono',monospace;">{{ port_vol ~ '%' if port_vol is not none else '—' }}</div>
+          </div>
+          <div style="background:var(--bg);padding:5px 7px;">
+            <div style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">Max DD</div>
+            <div style="font-size:11px;font-weight:600;color:var(--red);font-family:'IBM Plex Mono',monospace;">{{ '-' ~ port_dd ~ '%' if port_dd is not none else '—' }}</div>
+          </div>
+          <div style="background:var(--bg);padding:5px 7px;">
+            <div style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">Sharpe</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-bright);font-family:'IBM Plex Mono',monospace;">{{ port_sharpe if port_sharpe is not none else '—' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     {# C3 — Enveloppes fiscales #}
     <div class="panel">
       <div class="panel-head">
@@ -462,48 +517,6 @@
       <div class="panel-body" id="feed-body"></div>
     </div>
 
-    {# Épargne garantie (si présente) #}
-    {% if savings_envelopes %}
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">Épargne Garantie</div>
-        <div class="panel-subtitle">inflation {{ inflation_rate }}%</div>
-      </div>
-      {% for senv in savings_envelopes %}
-      <div class="savings-item">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-          <span style="color:var(--text);font-weight:600;">{{ senv.nom }}</span>
-          <span style="color:var(--text-bright);font-weight:600;font-variant-numeric:tabular-nums;">{{ senv.solde }} €</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;">
-          <span style="color:var(--text-dim);">Brut {{ senv.taux_annuel }}%</span>
-          <span style="color:{{ 'var(--green)' if senv.rendement_reel > 0 else 'var(--red)' }};">Réel {{ '+' if senv.rendement_reel > 0 else '' }}{{ senv.pct_reel }}%</span>
-        </div>
-        {% if senv.plafond_pct %}
-        <div style="background:var(--border);height:2px;overflow:hidden;margin-top:3px;">
-          <div style="height:100%;width:{{ [senv.plafond_pct, 100]|min }}%;background:{{ 'var(--yellow)' if senv.plafond_pct > 80 else 'var(--text-dim)' }};"></div>
-        </div>
-        {% endif %}
-        <div style="margin-top:4px;">
-          <button onclick="openSoldeModal({{ senv.id }}, '{{ senv.nom }}', {{ senv.solde }})"
-                  style="background:none;border:1px solid var(--border-light);color:var(--text-dim);font-family:inherit;font-size:8px;padding:1px 6px;cursor:pointer;transition:all 0.15s;"
-                  onmouseover="this.style.borderColor='var(--text-dim)';this.style.color='var(--text)'"
-                  onmouseout="this.style.borderColor='var(--border-light)';this.style.color='var(--text-dim)'">Modifier</button>
-          <form method="POST" action="{{ url_for('main.delete_envelope_route', env_id=senv.id) }}"
-                onsubmit="return confirm('Supprimer {{ senv.nom }} ?')" style="display:inline;margin-left:4px;">
-            <button type="submit" style="background:none;border:none;color:var(--text-dim);font-size:8px;cursor:pointer;padding:1px 4px;transition:color 0.15s;"
-                    onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</button>
-          </form>
-        </div>
-      </div>
-      {% endfor %}
-      <div style="padding:6px 10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
-        <span style="font-size:9px;color:var(--text-dim);">Total épargne</span>
-        <span style="font-size:10px;font-weight:600;color:var(--text-bright);font-variant-numeric:tabular-nums;">{{ savings_total_solde }} €</span>
-      </div>
-    </div>
-    {% endif %}
-
     <div style="padding:8px 10px;">
       <a href="{{ url_for('main.add_envelope_route') }}" style="font-size:9px;color:var(--text-dim);text-decoration:none;transition:color 0.15s;"
          onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'">+ Ajouter une enveloppe →</a>
@@ -525,9 +538,6 @@
       <option value="CTO">CTO — Compte-Titres Ordinaire</option>
       <option value="Assurance Vie">Assurance Vie</option>
       <option value="PER">PER — Plan d'Épargne Retraite</option>
-      <option value="Livret A">Livret A</option>
-      <option value="LDDS">LDDS</option>
-      <option value="LEP">LEP</option>
       <option value="Autre">Autre</option>
     </select>
     <div class="env-modal-actions">
@@ -562,7 +572,7 @@ var HISTORY_DATES = {{ history_dates | tojson }};
 var HISTORY_VALS  = {{ history_values | tojson }};
 var PROFIL_RISK   = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
 var DCA_TARGET    = {{ summary.dca_target }};
-var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000,'Livret A':22950,'LDDS':12000,'LEP':10000};
+var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000};
 var currentEnvFilter = 'all';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -746,7 +756,9 @@ function drawSparkline() {
   if (!canvas || !HISTORY_VALS.length) return;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
-  var data = HISTORY_VALS.slice(-30);
+  // Use ~126 trading days ≈ 6 months
+  var data = HISTORY_VALS.slice(-126);
+  if (data.length < 2) data = HISTORY_VALS.slice(-30);
   if (data.length < 2) return;
   var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
   if (max === min) max = min + 1;
@@ -770,6 +782,14 @@ function drawSparkline() {
     i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
   });
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.stroke();
+  // Update PERF 6M label
+  var lbl = document.getElementById('sparkline-label');
+  if (lbl && data[0] && data[0] > 0) {
+    var perf = ((data[data.length-1] - data[0]) / data[0]) * 100;
+    var sign = perf >= 0 ? '+' : '';
+    lbl.textContent = 'PERF 6M · ' + sign + perf.toFixed(1) + '%';
+    lbl.style.color = perf >= 0 ? 'var(--green)' : 'var(--red)';
+  }
 }
 
 // Period buttons

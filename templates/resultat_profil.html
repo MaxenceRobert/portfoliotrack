@@ -445,7 +445,7 @@
     <div class="axes-panel">
         <div class="panel-section-label">Scores par axe</div>
         <div>
-            {% for ax_num in range(1, 7) %}
+            {% for ax_num in range(1, 6) %}
             <div class="axis-row">
                 <span class="axis-name">{{ axis_names[ax_num] }}</span>
                 <div class="axis-bar-outer">
@@ -464,9 +464,36 @@
             <span class="rec-ai-badge">IA</span>
         </div>
         <div class="rec-edu-note">À titre éducatif uniquement · Pas un conseil en investissement</div>
-        <div class="rec-body">
+        <div class="rec-body" id="rec-body-content">
             {{ recommendation_html | safe }}
         </div>
+    </div>
+
+    <!-- Affiner recommandations -->
+    <div class="axes-panel" style="border-top:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <div class="panel-section-label" style="margin-bottom:0;">Affiner mes recommandations</div>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); border:1px solid var(--border-light); padding:2px 6px; text-transform:uppercase; letter-spacing:0.5px;">Optionnel</span>
+        </div>
+        <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); line-height:1.7; margin-bottom:14px;">
+            Précise tes convictions pour personnaliser la recommandation IA. Ces réponses ne modifient pas ton score.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+            <div>
+                <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Convictions sectorielles ou contraintes éthiques</label>
+                <textarea id="aff-sectorial" class="quiz-textarea" placeholder="Ex: finance islamique (halal), exclusion armement/tabac, ESG, tech uniquement…" rows="2" style="margin-top:0;"></textarea>
+            </div>
+            <div>
+                <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Convictions géographiques</label>
+                <textarea id="aff-geographic" class="quiz-textarea" placeholder="Ex: je crois à l'Inde et aux USA, j'évite la Chine, je préfère l'Europe…" rows="2" style="margin-top:0;"></textarea>
+            </div>
+            <div>
+                <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Types d'actifs préférés ou à éviter</label>
+                <textarea id="aff-assets" class="quiz-textarea" placeholder="Ex: je veux du dividende, j'aime les ETF indiciels, j'évite la crypto, je veux de l'or…" rows="2" style="margin-top:0;"></textarea>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitAffiner()" id="aff-btn">PERSONNALISER →</button>
+        <div id="affiner-status" style="display:none; margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.3px;"></div>
     </div>
 
     <!-- Asset suggestions -->
@@ -582,6 +609,47 @@ window.addEventListener('load', function() {
     });
     setTimeout(runDCA, 500);
 });
+
+function submitAffiner() {
+    var sectorial  = (document.getElementById('aff-sectorial').value  || '').trim();
+    var geographic = (document.getElementById('aff-geographic').value || '').trim();
+    var assets     = (document.getElementById('aff-assets').value     || '').trim();
+    if (!sectorial && !geographic && !assets) return;
+
+    var status = document.getElementById('affiner-status');
+    var btn    = document.getElementById('aff-btn');
+    status.style.display = 'block';
+    status.style.color   = 'var(--text-dim)';
+    status.textContent   = 'Analyse en cours…';
+    btn.disabled = true;
+
+    fetch('/affiner-recommandation', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            global_score: {{ global_score }},
+            profil_name:  '{{ profil }}',
+            sectorial:    sectorial,
+            geographic:   geographic,
+            asset_types:  assets
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.html) {
+            document.getElementById('rec-body-content').innerHTML = data.html;
+            document.getElementById('rec-body-content').scrollIntoView({behavior:'smooth', block:'start'});
+            status.textContent = '✓ Recommandation personnalisée mise à jour';
+            status.style.color = 'var(--green)';
+        }
+        btn.disabled = false;
+    })
+    .catch(function() {
+        status.textContent = 'Erreur lors de la génération — réessayez.';
+        status.style.color = 'var(--red)';
+        btn.disabled = false;
+    });
+}
 
 function fmtEur(n) {
     return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
