@@ -129,6 +129,9 @@
 .risk-bar-seg   { flex: 1; height: 100%; opacity: 0.2; }
 .risk-bar-seg.active { opacity: 1; }
 
+/* ── KPI section ── */
+#kpi-section > div { min-height: 100px; }
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .content { grid-template-columns: 1fr; }
@@ -142,6 +145,7 @@
   .right-col .panel { flex: none; }
   .hero-strip { flex-wrap: wrap; padding: 8px 12px; gap: 16px; }
   .hero-metrics { gap: 12px; }
+  #kpi-section > div { grid-template-columns: 1fr !important; }
 }
 </style>
 
@@ -378,6 +382,37 @@
       {% endif %}
     </div>
 
+    {# ══ KPI SECTION ═════════════════════════════════════════════════════════ #}
+    <div id="kpi-section" style="flex-shrink:0;border-top:1px solid var(--border);">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);">
+
+        {# Bloc 1 — Fear & Greed #}
+        <div style="background:var(--panel-header);padding:10px 12px;">
+          <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Fear &amp; Greed</div>
+          <div id="kpi-fg-body" style="color:var(--text-dim);font-size:9px;">
+            <span style="color:var(--border-light);">—</span>
+          </div>
+        </div>
+
+        {# Bloc 2 — Macro #}
+        <div style="background:var(--panel-header);padding:10px 12px;">
+          <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Macro</div>
+          <div id="kpi-macro-body" style="color:var(--text-dim);font-size:9px;">
+            <span style="color:var(--border-light);">—</span>
+          </div>
+        </div>
+
+        {# Bloc 3 — Dividendes #}
+        <div style="background:var(--panel-header);padding:10px 12px;">
+          <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Dividendes</div>
+          <div id="kpi-div-body" style="color:var(--text-dim);font-size:9px;">
+            <span style="color:var(--border-light);">—</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>{# /dash-left #}
 
   {# ══ COLONNE DROITE ══════════════════════════════════════════════════════ #}
@@ -401,8 +436,7 @@
       <div class="alloc-grid" id="alloc-body"></div>
     </div>
 
-    {# C2.5 — Risque #}
-    {% if portfolio_risk_score is not none %}
+    {# C2.5 — Risque (profil investisseur + métriques portefeuille) #}
     {% set ns = namespace(w_beta=0,w_vol=0,w_dd=0,w_sharpe=0,tw_b=0,tw_v=0,tw_d=0,tw_s=0) %}
     {% for _at, _assets in summary.by_type.items() %}{% for a in _assets %}{% if not a.fully_sold %}
     {% set _rk = a.ticker if a.ticker else '__noticker_' ~ a.asset_id %}
@@ -416,16 +450,19 @@
     {% set port_vol    = (ns.w_vol    / ns.tw_v)|round(1) if ns.tw_v > 0 else none %}
     {% set port_dd     = (ns.w_dd     / ns.tw_d)|round(1) if ns.tw_d > 0 else none %}
     {% set port_sharpe = (ns.w_sharpe / ns.tw_s)|round(2) if ns.tw_s > 0 else none %}
-    {% set risk_segs = portfolio_risk_score // 10 %}
+    {% set quiz_score  = last_profil.score_global if last_profil else none %}
+    {% set quiz_profil = last_profil.nom_profil if last_profil else none %}
     <div class="panel">
       <div class="panel-head">
         <div class="panel-title">Risque</div>
         <div class="panel-subtitle">Synthèse</div>
       </div>
       <div style="padding:10px;">
+        {% if quiz_score is not none %}
+        {% set risk_segs = quiz_score // 10 %}
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-size:22px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;">{{ portfolio_risk_score }}<span style="font-size:10px;color:var(--text-dim);font-weight:400;">/100</span></span>
-          <span style="font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">{{ last_profil.nom_profil if last_profil else '—' }}</span>
+          <span style="font-size:22px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;">{{ quiz_score }}<span style="font-size:10px;color:var(--text-dim);font-weight:400;">/100</span></span>
+          <span style="font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">{{ quiz_profil }}</span>
         </div>
         <div class="risk-bar-track">
           {% for i in range(10) %}
@@ -434,6 +471,17 @@
           <div class="risk-bar-seg{% if seg <= risk_segs %} active{% endif %}" style="background:{{ seg_bg }};"></div>
           {% endfor %}
         </div>
+        {% else %}
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:22px;font-weight:700;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;">—<span style="font-size:10px;color:var(--text-dim);font-weight:400;">/100</span></span>
+        </div>
+        <div style="margin:8px 0 6px;">
+          <a href="{{ url_for('main.test_profil') }}"
+             style="font-size:9px;color:var(--accent);text-decoration:none;letter-spacing:0.3px;"
+             onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Compléter mon profil →</a>
+        </div>
+        {% endif %}
+        {% if port_beta is not none or port_vol is not none or port_dd is not none or port_sharpe is not none %}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
           <div style="background:var(--bg);padding:5px 7px;">
             <div style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">Bêta</div>
@@ -452,9 +500,9 @@
             <div style="font-size:11px;font-weight:600;color:var(--text-bright);font-family:'IBM Plex Mono',monospace;">{{ port_sharpe if port_sharpe is not none else '—' }}</div>
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
 
     {# C3 — Enveloppes fiscales #}
     <div class="panel">
@@ -580,27 +628,52 @@ function fmt2(n)    { return parseFloat(n).toFixed(2); }
 function fmtInt(n)  { return Math.round(n).toLocaleString('fr-FR'); }
 function sign(n)    { return n >= 0 ? '+' : ''; }
 
-// ── Watchlist ─────────────────────────────────────────────────────────────────
-var WATCHLIST = [
-  { ticker:'CAC 40',  price:'—', change:'—', up:true },
-  { ticker:'S&P 500', price:'—', change:'—', up:true },
-  { ticker:'NASDAQ',  price:'—', change:'—', up:true },
-  { ticker:'EUR/USD', price:'—', change:'—', up:true },
-  { ticker:'Or (oz)', price:'—', change:'—', up:true },
-  { ticker:'Brent',   price:'—', change:'—', up:true },
-];
-(function renderWatchlist() {
+// ── Watchlist marchés ────────────────────────────────────────────────────────
+var WATCHLIST_NAMES = ['CAC 40','S&P 500','NASDAQ','EUR/USD','Or (oz)','Brent'];
+
+function renderWatchlistStatic() {
   var el = document.getElementById('watchlist-body');
   if (!el) return;
-  el.innerHTML = WATCHLIST.map(function(w) {
-    var cls = w.up ? 'pos' : 'neg';
+  el.innerHTML = WATCHLIST_NAMES.map(function(n) {
     return '<div class="watch-row">'
-      + '<div class="watch-ticker">' + w.ticker + '</div>'
-      + '<div class="watch-price">' + w.price + '</div>'
-      + '<div class="watch-change ' + cls + '">' + w.change + '</div>'
+      + '<div class="watch-ticker">' + n + '</div>'
+      + '<div class="watch-price" style="color:var(--text-dim);">—</div>'
+      + '<div class="watch-change">—</div>'
       + '</div>';
   }).join('');
-})();
+}
+
+function fetchMarketWatchlist() {
+  fetch('/api/market-watchlist')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.items) return;
+      var el = document.getElementById('watchlist-body');
+      if (!el) return;
+      el.innerHTML = data.items.map(function(w) {
+        var priceStr = w.price !== null
+          ? w.price.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})
+          : '—';
+        var chgStr = w.change_pct !== null
+          ? (w.change_pct >= 0 ? '+' : '') + w.change_pct.toFixed(2) + '%'
+          : '—';
+        var cls = (w.change_pct !== null && w.change_pct >= 0) ? 'pos' : 'neg';
+        return '<div class="watch-row">'
+          + '<div class="watch-ticker">' + w.name + '</div>'
+          + '<div class="watch-price">' + priceStr + '</div>'
+          + '<div class="watch-change ' + cls + '">' + chgStr + '</div>'
+          + '</div>';
+      }).join('');
+      var status = document.getElementById('watchlist-status');
+      if (status) { status.textContent = 'Temps réel'; status.style.color = 'var(--green)'; }
+    })
+    .catch(function() {
+      var status = document.getElementById('watchlist-status');
+      if (status) { status.textContent = 'Indisponible'; status.style.color = 'var(--red)'; }
+    });
+}
+
+renderWatchlistStatic();
 
 // ── Allocation by type ────────────────────────────────────────────────────────
 var TYPE_COLORS = {
@@ -753,13 +826,23 @@ function drawPerfChart() {
 // Sparkline
 function drawSparkline() {
   var canvas = document.getElementById('sparkline');
-  if (!canvas || !HISTORY_VALS.length) return;
+  if (!canvas) return;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  var lbl = document.getElementById('sparkline-label');
+
+  if (!HISTORY_VALS.length) {
+    if (lbl) { lbl.textContent = 'Pas assez de données'; lbl.style.color = 'var(--text-dim)'; }
+    return;
+  }
   // Use ~126 trading days ≈ 6 months
   var data = HISTORY_VALS.slice(-126);
   if (data.length < 2) data = HISTORY_VALS.slice(-30);
-  if (data.length < 2) return;
+  if (data.length < 2) {
+    if (lbl) { lbl.textContent = 'Pas assez de données'; lbl.style.color = 'var(--text-dim)'; }
+    return;
+  }
   var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
   if (max === min) max = min + 1;
   ctx.clearRect(0,0,w,h);
@@ -783,7 +866,6 @@ function drawSparkline() {
   });
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.stroke();
   // Update PERF 6M label
-  var lbl = document.getElementById('sparkline-label');
   if (lbl && data[0] && data[0] > 0) {
     var perf = ((data[data.length-1] - data[0]) / data[0]) * 100;
     var sign = perf >= 0 ? '+' : '';
@@ -1019,6 +1101,102 @@ async function submitSoldeUpdate() {
   finally { btn.disabled = false; btn.textContent = 'Confirmer'; }
 }
 
+// ── KPI Section ───────────────────────────────────────────────────────────────
+function fmtNum(v, dec) { return parseFloat(v).toFixed(dec !== undefined ? dec : 2); }
+
+function loadFearGreed() {
+  fetch('/api/fear-greed')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('kpi-fg-body');
+      if (!el) return;
+      if (d.score === null) {
+        el.innerHTML = '<span style="color:var(--text-dim);">Indisponible</span>';
+        return;
+      }
+      var sc = d.score;
+      var color = sc <= 25 ? 'var(--red)' : sc <= 45 ? 'var(--accent)' : sc <= 55 ? 'var(--text-bright)' : sc <= 75 ? '#6EE7B7' : 'var(--green)';
+      var pct   = Math.max(0, Math.min(98, sc)) + '%';
+      var src   = d.source === 'vix_proxy'
+        ? '<div style="font-size:7px;color:var(--text-dim);margin-top:4px;">Proxy VIX · ' + (d.vix || '—') + '</div>'
+        : '';
+      el.innerHTML =
+        '<div style="font-size:26px;font-weight:700;color:' + color + ';line-height:1;margin-bottom:2px;">' + sc + '</div>' +
+        '<div style="font-size:9px;color:' + color + ';margin-bottom:8px;letter-spacing:0.3px;">' + d.rating + '</div>' +
+        '<div style="position:relative;height:4px;background:linear-gradient(to right,#FF1744,#FF8C00,#FFD600,#00C853);border-radius:2px;">' +
+          '<div style="position:absolute;top:-4px;left:' + pct + ';transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid ' + color + ';"></div>' +
+        '</div>' + src;
+    })
+    .catch(function() {
+      var el = document.getElementById('kpi-fg-body');
+      if (el) el.innerHTML = '<span style="color:var(--text-dim);">Indisponible</span>';
+    });
+}
+
+function loadMacro() {
+  fetch('/api/macro')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('kpi-macro-body');
+      if (!el) return;
+      function row(label, val, chg, unit) {
+        unit = unit || '';
+        var valStr = val !== null && val !== undefined ? fmtNum(val, 2) + unit : '—';
+        var chgHtml;
+        if (chg !== null && chg !== undefined) {
+          var c = chg >= 0 ? 'var(--green)' : 'var(--red)';
+          chgHtml = '<span style="color:' + c + ';">' + (chg >= 0 ? '+' : '') + fmtNum(chg, 2) + '%</span>';
+        } else {
+          chgHtml = '<span style="color:var(--text-dim);">—</span>';
+        }
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid rgba(255,140,0,0.08);">' +
+          '<span style="color:var(--text-dim);min-width:75px;">' + label + '</span>' +
+          '<span style="color:var(--text-bright);font-weight:600;">' + valStr + '</span>' +
+          chgHtml + '</div>';
+      }
+      var html = '';
+      if (d.vix)          html += row('VIX',         d.vix.value,          d.vix.change_pct);
+      html                      += row('BCE (repo)',  3.65,                 null,             '%');
+      html                      += row('Inflation €', 2.1,                  null,             '%');
+      if (d.us10y)        html += row('US 10Y',       d.us10y.value,        d.us10y.change_pct, '%');
+      if (d.eurusd)       html += row('EUR/USD',      d.eurusd.value,       d.eurusd.change_pct);
+      el.innerHTML = html || '<span style="color:var(--text-dim);">Indisponible</span>';
+    })
+    .catch(function() {
+      var el = document.getElementById('kpi-macro-body');
+      if (el) el.innerHTML = '<span style="color:var(--text-dim);">Indisponible</span>';
+    });
+}
+
+function loadDividendCalendar() {
+  fetch('/api/dividend-calendar')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('kpi-div-body');
+      if (!el) return;
+      if (!d.dividends || !d.dividends.length) {
+        el.innerHTML = '<span style="color:var(--text-dim);">Aucun dividende prévu</span>';
+        return;
+      }
+      var items = d.dividends.slice(0, 5);
+      var html = items.map(function(div) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid rgba(255,140,0,0.08);">' +
+          '<span class="ticker" style="color:var(--accent);font-size:9px;">' + div.ticker + '</span>' +
+          '<span style="color:var(--text-dim);">' + div.ex_date_fmt + '</span>' +
+          '<span style="color:var(--green);font-weight:600;">+' + fmtNum(div.amount, 2) + ' €</span>' +
+          '</div>';
+      }).join('');
+      if (d.dividends.length > 5) {
+        html += '<div style="margin-top:5px;"><a href="/dividends" style="font-size:8px;color:var(--accent);text-decoration:none;" onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'">Voir tout →</a></div>';
+      }
+      el.innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('kpi-div-body');
+      if (el) el.innerHTML = '<span style="color:var(--text-dim);">Indisponible</span>';
+    });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
   // DCA bar animation
@@ -1037,6 +1215,15 @@ window.addEventListener('load', function() {
     drawPerfChart();
     drawSparkline();
   }, 100);
+
+  // Market watchlist (fetch live, refresh every 60s)
+  fetchMarketWatchlist();
+  setInterval(fetchMarketWatchlist, 60000);
+
+  // KPI section
+  loadFearGreed();
+  loadMacro();
+  loadDividendCalendar();
 
   window.addEventListener('resize', drawPerfChart);
 });

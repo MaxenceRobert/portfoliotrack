@@ -1629,6 +1629,62 @@ def mon_profil_investisseur():
 import time as _time
 _TICKER_BAR_CACHE = {'data': None, 'ts': 0}
 
+# ── Watchlist marchés dashboard (cache 5 min) ─────────────────────────────────
+_MARKET_WATCHLIST_CACHE = {'data': None, 'ts': 0}
+
+MARKET_WATCHLIST_ITEMS = [
+    ('CAC 40',  '^FCHI'),
+    ('S&P 500', '^GSPC'),
+    ('NASDAQ',  '^IXIC'),
+    ('EUR/USD', 'EURUSD=X'),
+    ('Or (oz)', 'GC=F'),
+    ('Brent',   'BZ=F'),
+]
+
+@main_bp.route('/api/market-watchlist')
+def market_watchlist_api():
+    import yfinance as _yf
+    import threading
+    now = _time.time()
+    if _MARKET_WATCHLIST_CACHE['data'] and now - _MARKET_WATCHLIST_CACHE['ts'] < 300:
+        return jsonify(_MARKET_WATCHLIST_CACHE['data'])
+
+    results = {}
+    lock = threading.Lock()
+
+    def fetch_one(name, ticker):
+        try:
+            fi    = _yf.Ticker(ticker).fast_info
+            price = float(getattr(fi, 'last_price', None) or getattr(fi, 'regularMarketPrice', None) or 0)
+            prev  = float(getattr(fi, 'previous_close', None) or getattr(fi, 'regularMarketPreviousClose', None) or 0)
+            if price <= 0:
+                return
+            chg = round((price - prev) / prev * 100, 2) if prev > 0 else 0.0
+            with lock:
+                results[name] = {'price': round(price, 2), 'change_pct': chg}
+        except Exception as e:
+            print(f"[market-watchlist] {ticker}: {e}")
+
+    threads = []
+    for name, ticker in MARKET_WATCHLIST_ITEMS:
+        t = threading.Thread(target=fetch_one, args=(name, ticker), daemon=True)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join(timeout=6)
+
+    data = {
+        'items': [
+            {'name': n, 'price': results[n]['price'] if n in results else None,
+             'change_pct': results[n]['change_pct'] if n in results else None}
+            for n, _ in MARKET_WATCHLIST_ITEMS
+        ]
+    }
+    if results:
+        _MARKET_WATCHLIST_CACHE['data'] = data
+        _MARKET_WATCHLIST_CACHE['ts'] = now
+    return jsonify(data)
+
 TICKER_BAR_ITEMS = [
     ('S&P 500',    'SPY'),
     ('NASDAQ',     'QQQ'),
@@ -1694,6 +1750,160 @@ def ticker_bar_api():
     if results:
         _TICKER_BAR_CACHE['data'] = data
         _TICKER_BAR_CACHE['ts']   = now
+    return jsonify(data)
+
+# ── Fear & Greed Index (cache 1h) ─────────────────────────────────────────────
+_FEAR_GREED_CACHE = {'data': None, 'ts': 0}
+
+@main_bp.route('/api/fear-greed')
+def fear_greed_api():
+    import requests as _req
+    import yfinance as _yf
+    now = _time.time()
+    if _FEAR_GREED_CACHE['data'] and now - _FEAR_GREED_CACHE['ts'] < 3600:
+        return jsonify(_FEAR_GREED_CACHE['data'])
+
+    # Tentative 1 : CNN Fear & Greed API
+    try:
+        r = _req.get(
+            'https://production.dataviz.cnn.io/index/fearandgreed/graphdata',
+            timeout=5,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        if r.status_code == 200:
+            d = r.json()
+            fg = d.get('fear_and_greed', {})
+            score  = fg.get('score')
+            rating = fg.get('rating', '')
+            if score is not None:
+                data = {'score': round(float(score)), 'rating': rating, 'source': 'cnn'}
+                _FEAR_GREED_CACHE['data'] = data
+                _FEAR_GREED_CACHE['ts']   = now
+                return jsonify(data)
+    except Exception as e:
+        print(f"[fear-greed] CNN failed: {e}")
+
+    # Tentative 2 : proxy VIX
+    try:
+        fi  = _yf.Ticker('^VIX').fast_info
+        vix = float(getattr(fi, 'last_price', None) or getattr(fi, 'regularMarketPrice', None) or 20)
+        score = max(0, min(100, round(100 - (vix - 12) * 3.5)))
+        if   score <= 25: rating = 'Extreme Fear'
+        elif score <= 45: rating = 'Fear'
+        elif score <= 55: rating = 'Neutral'
+        elif score <= 75: rating = 'Greed'
+        else:             rating = 'Extreme Greed'
+        data = {'score': score, 'rating': rating, 'source': 'vix_proxy', 'vix': round(vix, 2)}
+        _FEAR_GREED_CACHE['data'] = data
+        _FEAR_GREED_CACHE['ts']   = now
+        return jsonify(data)
+    except Exception as e:
+        print(f"[fear-greed] VIX proxy failed: {e}")
+
+    return jsonify({'score': None, 'rating': None, 'source': 'error'})
+
+# ── Macro summary (cache 4h) ──────────────────────────────────────────────────
+_MACRO_CACHE = {'data': None, 'ts': 0}
+
+@main_bp.route('/api/macro')
+def macro_api():
+    import yfinance as _yf
+    import threading
+    now = _time.time()
+    if _MACRO_CACHE['data'] and now - _MACRO_CACHE['ts'] < 14400:
+        return jsonify(_MACRO_CACHE['data'])
+
+    results = {}
+    lock = threading.Lock()
+
+    def fetch_macro(key, ticker):
+        try:
+            fi    = _yf.Ticker(ticker).fast_info
+            price = float(getattr(fi, 'last_price', None) or getattr(fi, 'regularMarketPrice', None) or 0)
+            prev  = float(getattr(fi, 'previous_close', None) or getattr(fi, 'regularMarketPreviousClose', None) or 0)
+            if price <= 0:
+                return
+            chg = round((price - prev) / prev * 100, 2) if prev > 0 else 0.0
+            with lock:
+                results[key] = {'value': round(price, 2), 'change_pct': chg}
+        except Exception as e:
+            print(f"[macro] {ticker}: {e}")
+
+    threads = []
+    for key, ticker in [('vix', '^VIX'), ('eurusd', 'EURUSD=X'), ('us10y', '^TNX')]:
+        t = threading.Thread(target=fetch_macro, args=(key, ticker), daemon=True)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join(timeout=6)
+
+    data = {
+        'vix':          results.get('vix'),
+        'bce_rate':     {'value': 3.65,  'change_pct': None},  # TODO: automatiser BCE
+        'inflation_eur':{'value': 2.1,   'change_pct': None},  # TODO: automatiser Eurostat
+        'us10y':        results.get('us10y'),
+        'eurusd':       results.get('eurusd'),
+    }
+    if results:
+        _MACRO_CACHE['data'] = data
+        _MACRO_CACHE['ts']   = now
+    return jsonify(data)
+
+# ── Dividend calendar (cache 24h, par user) ───────────────────────────────────
+_DIV_CACHE: dict = {}  # {user_id: {'data': ..., 'ts': ...}}
+
+@main_bp.route('/api/dividend-calendar')
+@login_required
+def dividend_calendar_api():
+    import yfinance as _yf
+    import datetime as _dt
+    import threading
+    uid = current_user.id
+    now = _time.time()
+    cached = _DIV_CACHE.get(uid)
+    if cached and now - cached.get('ts', 0) < 86400:
+        return jsonify(cached['data'])
+
+    from portfolio import get_portfolio_summary
+    summary = get_portfolio_summary(uid)
+    assets  = []
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            if not a.get('fully_sold') and a.get('ticker') and float(a.get('shares_held') or 0) > 0:
+                assets.append({'ticker': a['ticker'], 'shares': float(a['shares_held'])})
+
+    results = []
+    lock    = threading.Lock()
+
+    def fetch_div(ticker, shares):
+        try:
+            info     = _yf.Ticker(ticker).info
+            ex_ts    = info.get('exDividendDate')
+            div_rate = info.get('dividendRate')
+            if not ex_ts or not div_rate:
+                return
+            ex_dt = _dt.datetime.fromtimestamp(ex_ts)
+            if ex_dt.date() < _dt.date.today():
+                return  # date passée
+            freq   = info.get('dividendFrequency') or 4  # trimestriel par défaut
+            amount = round(float(div_rate) / int(freq) * float(shares), 2)
+            with lock:
+                results.append({
+                    'ticker':       ticker,
+                    'ex_date':      ex_dt.strftime('%Y-%m-%d'),
+                    'ex_date_fmt':  ex_dt.strftime('%d/%m'),
+                    'amount':       amount,
+                })
+        except Exception as e:
+            print(f"[dividend-calendar] {ticker}: {e}")
+
+    threads = [threading.Thread(target=fetch_div, args=(a['ticker'], a['shares']), daemon=True) for a in assets]
+    for t in threads: t.start()
+    for t in threads: t.join(timeout=8)
+
+    results.sort(key=lambda x: x['ex_date'])
+    data = {'dividends': results}
+    _DIV_CACHE[uid] = {'data': data, 'ts': now}
     return jsonify(data)
 
 # ── API search-assets (Explorer) avec mots-clés français ─────────────────────
