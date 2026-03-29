@@ -1,46 +1,111 @@
 {% extends 'base.html' %}
-{% block title %}Objectif DCA{% endblock %}
+{% block title %}Paramètres — PortfolioTrack{% endblock %}
 {% block content %}
+
 <div class="page-header">
     <div>
-        <h1>Objectif DCA mensuel</h1>
-        <p>Définis le montant que tu souhaites investir chaque mois.</p>
+        <h1>Paramètres</h1>
+        <p>Gérez votre compte, votre mot de passe et vos préférences.</p>
     </div>
 </div>
 
-<div class="card form-card">
-    <form method="POST">
-        <div class="form-group">
-            <label for="monthly_target">Montant cible par mois (€)</label>
-            <input type="number" id="monthly_target" name="monthly_target"
-                   step="1" min="0"
-                   value="{{ goal['monthly_target'] if goal else '' }}"
-                   placeholder="ex: 500"
-                   required>
-            <div class="form-hint">
-                Ce montant sera comparé à ce que tu as effectivement investi
-                chaque mois sur le dashboard.
+<div style="display:flex; flex-direction:column; gap:0; max-width:560px; margin:12px;">
+
+    <!-- ── COMPTE ── -->
+    <div style="background:var(--panel); border:1px solid var(--border); border-bottom:none;">
+        <div class="card-head" style="margin:0; padding:10px 14px 10px;">
+            <span class="card-title">Compte</span>
+        </div>
+        <div style="padding:14px;">
+            <div class="form-group">
+                <label>Email actuel</label>
+                <input type="text" value="{{ current_user.email }}" disabled
+                       style="color:var(--text-dim); cursor:not-allowed;">
+            </div>
+
+            <form method="POST" action="{{ url_for('main.profile') }}">
+                <input type="hidden" name="action" value="email">
+                <div class="form-group">
+                    <label for="new_email">Nouvel email</label>
+                    <input type="email" id="new_email" name="new_email" placeholder="nouveau@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password_email">Confirmez avec votre mot de passe</label>
+                    <input type="password" id="confirm_password_email" name="confirm_password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Mettre à jour l'email</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── MOT DE PASSE ── -->
+    <div style="background:var(--panel); border:1px solid var(--border); border-bottom:none;">
+        <div class="card-head" style="margin:0; padding:10px 14px 10px;">
+            <span class="card-title">Mot de passe</span>
+        </div>
+        <div style="padding:14px;">
+            <form method="POST" action="{{ url_for('main.profile') }}">
+                <input type="hidden" name="action" value="password">
+                <div class="form-group">
+                    <label for="current_password">Mot de passe actuel</label>
+                    <input type="password" id="current_password" name="current_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">Nouveau mot de passe</label>
+                    <input type="password" id="new_password" name="new_password" placeholder="8 caractères minimum" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_new_password">Confirmer le nouveau mot de passe</label>
+                    <input type="password" id="confirm_new_password" name="confirm_new_password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Changer le mot de passe</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── PRÉFÉRENCES ── -->
+    <div style="background:var(--panel); border:1px solid var(--border); border-bottom:none;">
+        <div class="card-head" style="margin:0; padding:10px 14px 10px;">
+            <span class="card-title">Préférences</span>
+        </div>
+        <div style="padding:14px;">
+            <form method="POST" action="{{ url_for('main.settings') }}">
+                <div class="form-group">
+                    <label for="monthly_target">Objectif DCA mensuel (€)</label>
+                    <input type="number" id="monthly_target" name="monthly_target"
+                           step="1" min="0"
+                           value="{{ goal['monthly_target'] if goal else '' }}"
+                           placeholder="ex: 500">
+                    <div class="form-hint">Comparé à vos investissements réels chaque mois sur le dashboard.</div>
+                </div>
+                {% if goal and goal['updated_at'] %}
+                <div style="font-size:9px; color:var(--text-dim); margin-bottom:12px;">
+                    Dernière mise à jour : {{ goal['updated_at']|string|truncate(10, True, '') }}
+                </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary btn-sm">Sauvegarder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── ZONE DANGER ── -->
+    <div style="background:var(--panel); border:1px solid var(--border);">
+        <div class="card-head" style="margin:0; padding:10px 14px 10px; border-bottom:1px solid rgba(255,23,68,0.2);">
+            <span class="card-title" style="color:var(--red);">Zone de danger</span>
+        </div>
+        <div style="padding:14px;">
+            <p style="font-size:9px; color:var(--text-dim); margin-bottom:12px; line-height:1.7;">
+                La suppression de votre compte est définitive et efface toutes vos données (actifs, achats, ventes, dividendes, alertes).
+            </p>
+            <button class="btn btn-danger btn-sm" disabled title="Contactez-nous pour supprimer votre compte">
+                Supprimer mon compte
+            </button>
+            <div style="font-size:9px; color:var(--text-dim); margin-top:8px;">
+                Contactez <a href="mailto:maxencerbr@gmail.com" style="color:var(--text-dim); text-decoration:underline;">maxencerbr@gmail.com</a> pour supprimer votre compte manuellement.
             </div>
         </div>
-        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-            <button type="submit" class="btn btn-primary">Enregistrer l'objectif</button>
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Retour</a>
-        </div>
-    </form>
-</div>
+    </div>
 
-{% if goal %}
-<div class="card" style="margin-top:1.5rem; max-width:560px;">
-    <div class="kpi-label">Objectif actuel</div>
-    <div class="kpi-value" style="margin-top:0.4rem; color:#e8f0ff;">
-        {{ goal['monthly_target'] }} € / mois
-    </div>
-    {% if goal['updated_at'] %}
-    <div class="kpi-sub" style="margin-top:0.4rem;">
-        Mis à jour le {{ goal['updated_at']|string|truncate(10, True, '') }}
-    </div>
-    {% endif %}
 </div>
-{% endif %}
 
 {% endblock %}

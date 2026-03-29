@@ -591,6 +591,44 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Alerts table ──────────────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id            SERIAL PRIMARY KEY,
+                    user_id       INTEGER NOT NULL,
+                    ticker        TEXT    NOT NULL,
+                    ticker_name   TEXT    NOT NULL DEFAULT '',
+                    condition     TEXT    NOT NULL,
+                    target_price  REAL    NOT NULL,
+                    current_price REAL,
+                    status        TEXT    NOT NULL DEFAULT 'active',
+                    created_at    TIMESTAMP DEFAULT NOW(),
+                    triggered_at  TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id       INTEGER NOT NULL,
+                    ticker        TEXT    NOT NULL,
+                    ticker_name   TEXT    NOT NULL DEFAULT '',
+                    condition     TEXT    NOT NULL,
+                    target_price  REAL    NOT NULL,
+                    current_price REAL,
+                    status        TEXT    NOT NULL DEFAULT 'active',
+                    created_at    TEXT    DEFAULT (datetime('now')),
+                    triggered_at  TEXT,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 
@@ -968,6 +1006,115 @@ def get_total_dividends(user_id):
     conn.close()
     return round(row['total'], 2)
 
+# ── Alertes ───────────────────────────────────────────────────────────────────
+def create_alert(user_id, ticker, ticker_name, condition, target_price, current_price=None):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'INSERT INTO alerts (user_id, ticker, ticker_name, condition, target_price, current_price) VALUES ({p},{p},{p},{p},{p},{p})',
+            (user_id, ticker, ticker_name, condition, target_price, current_price)
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_user_alerts(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f"SELECT * FROM alerts WHERE user_id = {p} ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, created_at DESC",
+        (user_id,)
+    )
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+
+def delete_alert(alert_id, user_id):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM alerts WHERE id = {p} AND user_id = {p}', (alert_id, user_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
+
+
+def check_and_update_alerts(user_id):
+    """Fetch current prices for active alerts and update triggered status."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM alerts WHERE user_id = {p} AND status = 'active'", (user_id,))
+    active = fetchall_as_dict(c)
+    if not active:
+        conn.close()
+        return 0
+    try:
+        import yfinance as yf
+    except ImportError:
+        conn.close()
+        return 0
+
+    tickers = list(set(a['ticker'] for a in active))
+    prices = {}
+    for ticker in tickers:
+        try:
+            fi = yf.Ticker(ticker).fast_info
+            price = float(fi.last_price or 0)
+            if price > 0:
+                prices[ticker] = price
+        except Exception:
+            pass
+
+    updated = 0
+    now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    for row in active:
+        ticker = row['ticker']
+        if ticker not in prices:
+            continue
+        price    = prices[ticker]
+        alert_id = row['id']
+        condition = row['condition']
+        target   = float(row['target_price'])
+        triggered = (condition == 'above' and price >= target) or \
+                    (condition == 'below' and price <= target)
+        if triggered:
+            c.execute(
+                f"UPDATE alerts SET current_price={p}, status='triggered', triggered_at={p} WHERE id={p} AND user_id={p}",
+                (price, now_str, alert_id, user_id)
+            )
+            updated += 1
+        else:
+            c.execute(
+                f"UPDATE alerts SET current_price={p} WHERE id={p} AND user_id={p}",
+                (price, alert_id, user_id)
+            )
+    conn.commit()
+    conn.close()
+    return updated
+
+
+def get_triggered_alerts_count(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f"SELECT COUNT(*) as n FROM alerts WHERE user_id={p} AND status='triggered'", (user_id,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    return int(row['n']) if row else 0
+
+
 def update_user_email(user_id, new_email):
     p = placeholder()
     conn = get_db()
@@ -1328,54 +1475,6 @@ def save_auto_div_cache(ticker, data):
     conn.commit()
     conn.close()
 
-# ── Alternative Assets CRUD ───────────────────────────────────────────────────
-
-def add_alternative_asset(user_id, name, category, acquisition_value, current_value, acquisition_date, notes='', workspace='perso'):
-    p = placeholder()
-    conn = get_db()
-    try:
-        c = conn.cursor()
-        c.execute(f'''INSERT INTO alternative_assets (user_id, name, category, acquisition_value, current_value, acquisition_date, notes, workspace)
-           VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})''',
-            (user_id, name, category, acquisition_value, current_value, acquisition_date, notes, workspace))
-        conn.commit()
-        return True
-    except Exception:
-        conn.rollback()
-        return False
-    finally:
-        conn.close()
-
-def get_alternative_assets(user_id, workspace=None):
-    p = placeholder()
-    conn = get_db()
-    c = conn.cursor()
-    if workspace and workspace != 'all':
-        c.execute(f'SELECT * FROM alternative_assets WHERE user_id = {p} AND workspace = {p} ORDER BY name ASC', (user_id, workspace))
-    else:
-        c.execute(f'SELECT * FROM alternative_assets WHERE user_id = {p} ORDER BY name ASC', (user_id,))
-    rows = fetchall_as_dict(c)
-    conn.close()
-    return rows
-
-def update_alternative_asset(asset_id, user_id, name, category, acquisition_value, current_value, acquisition_date, notes='', workspace='perso'):
-    p = placeholder()
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(f'''UPDATE alternative_assets SET name={p}, category={p}, acquisition_value={p},
-       current_value={p}, acquisition_date={p}, notes={p}, workspace={p}
-       WHERE id={p} AND user_id={p}''',
-        (name, category, acquisition_value, current_value, acquisition_date, notes, workspace, asset_id, user_id))
-    conn.commit()
-    conn.close()
-
-def delete_alternative_asset(asset_id, user_id):
-    p = placeholder()
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(f'DELETE FROM alternative_assets WHERE id = {p} AND user_id = {p}', (asset_id, user_id))
-    conn.commit()
-    conn.close()
 
 # ── Asset Catalog ─────────────────────────────────────────────────────────────
 

@@ -1,89 +1,540 @@
 {% extends 'base.html' %}
 {% block title %}Simulateur DCA — PortfolioTrack{% endblock %}
 {% block content %}
+<style>
+.page-content { padding: 0 !important; }
+.sim-outer {
+    padding: 16px 12px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+/* ── Two-column layout ── */
+.sim-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    align-items: start;
+}
+/* ── Panel ── */
+.sim-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+}
+.sim-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #111111;
+    border-bottom: 1px solid var(--border);
+}
+.sim-panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+.sim-panel-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+}
+.sim-panel-body { padding: 16px; }
+/* ── Form fields ── */
+.sim-field { margin-bottom: 14px; }
+.sim-field:last-child { margin-bottom: 0; }
+.sim-field label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.sim-field input[type="number"],
+.sim-field input[type="date"],
+.sim-field input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-bright);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 7px 10px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-bottom-color 0.1s;
+}
+.sim-field input:focus { border-bottom-color: var(--accent); }
+.sim-field input[type="date"] { color-scheme: dark; }
+.sim-field .sim-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+}
+/* ── Autocomplete ── */
+.sim-autocomplete-wrap { position: relative; }
+.sim-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    z-index: 50;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+}
+.sim-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.08s;
+}
+.sim-suggestion-item:last-child { border-bottom: none; }
+.sim-suggestion-item:hover,
+.sim-suggestion-item.active { background: var(--accent-bg); }
+.sim-sug-ticker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 56px;
+}
+.sim-sug-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* ── Simulate button ── */
+.btn-simulate {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    margin-top: 6px;
+}
+.btn-simulate:hover { background: var(--accent); color: #000; }
+/* ── Metrics grid ── */
+.sim-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-bottom: 2px;
+}
+.sim-metric {
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+.sim-metric-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.sim-metric-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-bright);
+    font-variant-numeric: tabular-nums;
+}
+.sim-metric-val.green { color: var(--green); }
+.sim-metric-val.red   { color: var(--red); }
+/* ── Chart area ── */
+.sim-chart-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 8px 4px 4px;
+    margin-bottom: 2px;
+}
+/* ── Annual table ── */
+.sim-table-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.sim-table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.sim-table-wrap::-webkit-scrollbar-thumb { background: var(--border-light); }
+.sim-dtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+.sim-dtable thead tr {
+    background: #111111;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.sim-dtable th {
+    padding: 6px 10px;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.sim-dtable th:first-child { text-align: left; }
+.sim-dtable td {
+    padding: 5px 10px;
+    text-align: right;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.sim-dtable td:first-child { text-align: left; color: var(--text-dim); }
+.sim-dtable tbody tr:hover { background: rgba(255,255,255,0.02); }
+/* ── Empty state ── */
+.sim-empty {
+    padding: 40px 16px;
+    text-align: center;
+}
+.sim-empty-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 24px;
+    color: var(--border-light);
+    letter-spacing: 4px;
+    margin-bottom: 12px;
+}
+.sim-empty-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+/* ── CTA ── */
+.sim-cta {
+    padding: 20px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.sim-cta-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-bright);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.sim-cta-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.6;
+}
+/* ── Table toggle ── */
+.sim-table-toggle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border-light);
+    padding: 3px 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.1s, border-color 0.1s;
+}
+.sim-table-toggle:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 860px) {
+    .sim-grid { grid-template-columns: 1fr; }
+    .sim-metrics { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .sim-metrics { grid-template-columns: 1fr 1fr; }
+}
+</style>
 
-<div class="page-header">
-    <div>
-        <h1>Simulateur DCA</h1>
-        <p>Projette la croissance de ton portefeuille avec un investissement mensuel régulier.</p>
-    </div>
-    {% if not current_user.is_authenticated %}
-    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit</a>
-    {% endif %}
-</div>
+<div class="sim-outer">
 
-<div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
-        <div class="form-group" style="margin:0;">
-            <label for="monthly">Montant mensuel (€)</label>
-            <input type="number" id="monthly" value="300" min="10" max="100000" step="10">
+    <!-- Page header -->
+    <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+        <div>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--text-bright); letter-spacing:2px; text-transform:uppercase;">F7 · SIMULATEUR DCA</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); margin-left:12px; text-transform:uppercase; letter-spacing:1px;">Projection d'investissement mensuel régulier</span>
         </div>
-        <div class="form-group" style="margin:0;">
-            <label for="years">Durée (années)</label>
-            <input type="number" id="years" value="10" min="1" max="40" step="1">
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:9px;">CRÉER UN COMPTE</a>
+        {% endif %}
+    </div>
+
+    <div class="sim-grid">
+
+        <!-- ── LEFT : Paramètres ── -->
+        <div class="sim-panel">
+            <div class="sim-panel-head">
+                <span class="sim-panel-title">Paramètres DCA</span>
+                <span class="sim-panel-meta">Investissement périodique</span>
+            </div>
+            <div class="sim-panel-body">
+
+                <!-- Asset search -->
+                <div class="sim-field">
+                    <label for="asset-input">Actif (optionnel)</label>
+                    <div class="sim-autocomplete-wrap">
+                        <input type="text" id="asset-input" placeholder="Ex : IWDA, SP500, BTC…"
+                               autocomplete="off" oninput="fetchAssetSuggestions(this.value)"
+                               onkeydown="handleAssetKey(event)" onfocus="fetchAssetSuggestions(this.value)">
+                        <div class="sim-suggestions" id="asset-suggestions"></div>
+                    </div>
+                    <div class="sim-hint">Laisser vide pour utiliser le taux manuel ci-dessous</div>
+                </div>
+
+                <!-- Monthly -->
+                <div class="sim-field">
+                    <label for="monthly">Versement mensuel (€)</label>
+                    <input type="number" id="monthly" value="300" min="10" max="100000" step="10">
+                </div>
+
+                <!-- Duration -->
+                <div class="sim-field">
+                    <label for="years">Durée (années)</label>
+                    <input type="number" id="years" value="10" min="1" max="40" step="1">
+                </div>
+
+                <!-- Rate -->
+                <div class="sim-field">
+                    <label for="rate">Rendement annuel moyen (%)</label>
+                    <input type="number" id="rate" value="8" min="0" max="30" step="0.5">
+                    <div class="sim-hint">MSCI World historique ≈ 8-10%/an</div>
+                </div>
+
+                <!-- Start date -->
+                <div class="sim-field">
+                    <label for="start-date">Date de début</label>
+                    <input type="date" id="start-date">
+                </div>
+
+                <button class="btn-simulate" onclick="simulate()">▶ SIMULER</button>
+
+            </div>
         </div>
-        <div class="form-group" style="margin:0;">
-            <label for="rate">Rendement annuel moyen (%)</label>
-            <input type="number" id="rate" value="8" min="0" max="30" step="0.5">
-            <div class="form-hint">MSCI World historique ≈ 8-10%/an</div>
+
+        <!-- ── RIGHT : Résultats ── -->
+        <div class="sim-panel">
+            <div class="sim-panel-head">
+                <span class="sim-panel-title">Résultats</span>
+                <span id="results-meta" class="sim-panel-meta">—</span>
+            </div>
+            <div class="sim-panel-body" style="padding:0;">
+
+                <!-- Empty state -->
+                <div class="sim-empty" id="empty-state">
+                    <div class="sim-empty-icon">[ — ]</div>
+                    <div class="sim-empty-label">Lancez une simulation pour voir les résultats</div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="sim-metrics" id="metrics-section" style="display:none; padding:2px 2px 0;">
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">Total investi</div>
+                        <div class="sim-metric-val" id="kpi-invested">—</div>
+                    </div>
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">Valeur finale</div>
+                        <div class="sim-metric-val green" id="kpi-final">—</div>
+                    </div>
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">P&amp;L €</div>
+                        <div class="sim-metric-val green" id="kpi-gains">—</div>
+                    </div>
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">P&amp;L %</div>
+                        <div class="sim-metric-val green" id="kpi-pct">—</div>
+                    </div>
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">CAGR</div>
+                        <div class="sim-metric-val" id="kpi-cagr">—</div>
+                    </div>
+                    <div class="sim-metric">
+                        <div class="sim-metric-label">Nb versements</div>
+                        <div class="sim-metric-val" id="kpi-count">—</div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="sim-chart-wrap" id="chart-section" style="display:none; margin:2px;">
+                    <div id="dca-chart"></div>
+                </div>
+
+                <!-- Table toggle + table -->
+                <div id="table-toggle-row" style="display:none; padding:8px 10px 4px; display:none; align-items:center; justify-content:space-between;">
+                    <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Détail annuel</span>
+                    <button class="sim-table-toggle" id="toggle-btn" onclick="toggleTable()">AFFICHER</button>
+                </div>
+                <div class="sim-table-wrap" id="table-section" style="display:none; margin:0 2px 2px;">
+                    <table class="sim-dtable">
+                        <thead>
+                            <tr>
+                                <th>Année</th>
+                                <th>Investi</th>
+                                <th>Valeur</th>
+                                <th>P&amp;L €</th>
+                                <th>P&amp;L %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+
+            </div>
         </div>
-    </div>
-    <div style="margin-top:1.5rem;">
-        <button class="btn btn-primary" onclick="simulate()">Simuler</button>
-    </div>
-</div>
 
-<div class="kpi-grid" id="kpi-section" style="display:none;">
-    <div class="kpi-card">
-        <div class="kpi-label">Total investi</div>
-        <div class="kpi-value neutral" id="kpi-invested">—</div>
     </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Valeur finale estimée</div>
-        <div class="kpi-value positive" id="kpi-final">—</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Intérêts composés</div>
-        <div class="kpi-value positive" id="kpi-gains">—</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Multiplicateur</div>
-        <div class="kpi-value positive" id="kpi-mult">—</div>
-    </div>
-</div>
 
-<div class="card" id="chart-section" style="display:none; margin-top:1.5rem;">
-    <div id="dca-chart"></div>
-</div>
+    <!-- CTA -->
+    <div class="sim-cta" id="cta-section" style="display:none;">
+        <div>
+            <div class="sim-cta-text">Prêt à suivre ton vrai portefeuille ?</div>
+            <div class="sim-cta-sub">
+                PortfolioTrack te permet de suivre tes investissements réels,<br>
+                comparer ta performance au MSCI World et visualiser ta progression DCA.
+            </div>
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary" style="font-size:9px; white-space:nowrap;">VOIR MON PORTEFEUILLE →</a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:9px; white-space:nowrap;">CRÉER UN COMPTE GRATUIT →</a>
+        {% endif %}
+    </div>
 
-<div class="card" id="cta-section" style="display:none; margin-top:1.5rem; text-align:center; padding:2rem;">
-    <h3 style="margin-bottom:0.5rem; color:#e8f0ff;">Prêt à suivre ton vrai portefeuille ?</h3>
-    <p style="color:rgba(232,240,255,0.4); margin-bottom:1.5rem;">
-        PortfolioTrack te permet de suivre tes investissements réels,
-        comparer ta performance au MSCI World et visualiser ta progression DCA.
-    </p>
-    {% if current_user.is_authenticated %}
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Voir mon portefeuille →</a>
-    {% else %}
-    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Créer un compte gratuit →</a>
-    {% endif %}
 </div>
 
 <script>
+// ── Autocomplete ──
+let assetAbort = null;
+let assetSuggestIdx = -1;
+
+async function fetchAssetSuggestions(q) {
+    const box = document.getElementById('asset-suggestions');
+    if (!q || q.length < 1) { box.style.display = 'none'; return; }
+    if (assetAbort) assetAbort.abort();
+    assetAbort = new AbortController();
+    try {
+        const res = await fetch('/api/search-ticker?q=' + encodeURIComponent(q), { signal: assetAbort.signal });
+        const data = await res.json();
+        const items = data.results || data || [];
+        if (!items.length) { box.style.display = 'none'; return; }
+        box.innerHTML = items.slice(0, 8).map(function(item) {
+            return '<div class="sim-suggestion-item" onclick="pickAsset(\'' + escQ(item.ticker || item.symbol || '') + '\', \'' + escQ(item.name || item.shortName || '') + '\')">' +
+                '<span class="sim-sug-ticker">' + (item.ticker || item.symbol || '') + '</span>' +
+                '<span class="sim-sug-name">' + (item.name || item.shortName || '') + '</span>' +
+                '</div>';
+        }).join('');
+        box.style.display = 'block';
+        assetSuggestIdx = -1;
+    } catch(e) { if (e.name !== 'AbortError') box.style.display = 'none'; }
+}
+
+function escQ(s) { return s.replace(/'/g, "\\'").replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function pickAsset(ticker, name) {
+    document.getElementById('asset-input').value = ticker + (name ? ' — ' + name : '');
+    document.getElementById('asset-suggestions').style.display = 'none';
+}
+
+function handleAssetKey(e) {
+    const box = document.getElementById('asset-suggestions');
+    const items = box.querySelectorAll('.sim-suggestion-item');
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        assetSuggestIdx = Math.min(assetSuggestIdx + 1, items.length - 1);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === assetSuggestIdx); });
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        assetSuggestIdx = Math.max(assetSuggestIdx - 1, 0);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === assetSuggestIdx); });
+    } else if (e.key === 'Enter' && assetSuggestIdx >= 0) {
+        e.preventDefault();
+        items[assetSuggestIdx] && items[assetSuggestIdx].click();
+    } else if (e.key === 'Escape') {
+        box.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.sim-autocomplete-wrap')) {
+        document.getElementById('asset-suggestions').style.display = 'none';
+    }
+});
+
+// ── Formatting ──
 function fmt(n) {
     return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
+function fmtPct(n) {
+    return (n >= 0 ? '+' : '') + n.toFixed(2) + ' %';
+}
 
+// ── Table toggle ──
+let tableVisible = false;
+function toggleTable() {
+    tableVisible = !tableVisible;
+    document.getElementById('table-section').style.display = tableVisible ? '' : 'none';
+    document.getElementById('toggle-btn').textContent = tableVisible ? 'MASQUER' : 'AFFICHER';
+}
+
+// ── Main simulation ──
 function simulate() {
     const monthly     = parseFloat(document.getElementById('monthly').value) || 300;
     const years       = parseInt(document.getElementById('years').value)     || 10;
     const rate        = parseFloat(document.getElementById('rate').value)    || 8;
+    const startDate   = document.getElementById('start-date').value;
     const months      = years * 12;
     const monthlyRate = rate / 100 / 12;
+
+    // Parse start year
+    let startYear = new Date().getFullYear();
+    if (startDate) startYear = parseInt(startDate.split('-')[0]);
 
     const labels   = [];
     const invested = [];
     const value    = [];
+    const tableRows = [];
 
     let cumInvested = 0;
     let cumValue    = 0;
@@ -92,73 +543,120 @@ function simulate() {
         cumInvested += monthly;
         cumValue     = cumValue * (1 + monthlyRate) + monthly;
         if (m % 12 === 0) {
-            labels.push('An ' + (m / 12));
+            const yr = startYear + (m / 12);
+            labels.push('' + yr);
             invested.push(parseFloat(cumInvested.toFixed(2)));
             value.push(parseFloat(cumValue.toFixed(2)));
+            tableRows.push({
+                year: yr,
+                inv: cumInvested,
+                val: cumValue,
+                pnl: cumValue - cumInvested,
+                pct: ((cumValue - cumInvested) / cumInvested) * 100
+            });
         }
     }
 
     const finalValue    = cumValue;
     const totalInvested = cumInvested;
     const gains         = finalValue - totalInvested;
-    const mult          = finalValue / totalInvested;
+    const gainPct       = (gains / totalInvested) * 100;
+    const cagr          = (Math.pow(finalValue / totalInvested, 1 / years) - 1) * 100;
+    const nbVersements  = months;
 
+    const isPos = gains >= 0;
+
+    // KPIs
     document.getElementById('kpi-invested').textContent = fmt(totalInvested);
+    document.getElementById('kpi-invested').className   = 'sim-metric-val';
     document.getElementById('kpi-final').textContent    = fmt(finalValue);
-    document.getElementById('kpi-gains').textContent    = '+' + fmt(gains);
-    document.getElementById('kpi-mult').textContent     = 'x' + mult.toFixed(2);
+    document.getElementById('kpi-final').className      = 'sim-metric-val ' + (isPos ? 'green' : 'red');
+    document.getElementById('kpi-gains').textContent    = (isPos ? '+' : '') + fmt(gains);
+    document.getElementById('kpi-gains').className      = 'sim-metric-val ' + (isPos ? 'green' : 'red');
+    document.getElementById('kpi-pct').textContent      = fmtPct(gainPct);
+    document.getElementById('kpi-pct').className        = 'sim-metric-val ' + (isPos ? 'green' : 'red');
+    document.getElementById('kpi-cagr').textContent     = fmtPct(cagr).replace(' %', '%/an');
+    document.getElementById('kpi-cagr').className       = 'sim-metric-val ' + (isPos ? 'green' : 'red');
+    document.getElementById('kpi-count').textContent    = nbVersements + ' mois';
+    document.getElementById('kpi-count').className      = 'sim-metric-val';
 
-    document.getElementById('kpi-section').style.display   = '';
-    document.getElementById('chart-section').style.display  = '';
-    document.getElementById('cta-section').style.display    = '';
+    document.getElementById('results-meta').textContent = years + ' ans · ' + rate + '%/an · ' + monthly + '€/mois';
 
+    // Table
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = tableRows.map(function(r) {
+        const cls = r.pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+        return '<tr>' +
+            '<td>' + r.year + '</td>' +
+            '<td>' + fmt(r.inv) + '</td>' +
+            '<td style="color:var(--text-bright);">' + fmt(r.val) + '</td>' +
+            '<td style="' + cls + '">' + (r.pnl >= 0 ? '+' : '') + fmt(r.pnl) + '</td>' +
+            '<td style="' + cls + '">' + fmtPct(r.pct) + '</td>' +
+            '</tr>';
+    }).join('');
+
+    // Show sections
+    document.getElementById('empty-state').style.display     = 'none';
+    document.getElementById('metrics-section').style.display = '';
+    document.getElementById('chart-section').style.display   = '';
+    document.getElementById('table-toggle-row').style.display = 'flex';
+    document.getElementById('cta-section').style.display     = 'flex';
+
+    // Chart — fill between curves
     Plotly.newPlot('dca-chart', [
         {
             x: labels, y: invested,
-            name: 'Total investi (€)',
+            name: 'Total investi',
             type: 'scatter', mode: 'lines',
-            line: { color: 'rgba(232,240,255,0.30)', dash: 'dot', width: 2 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
+            line: { color: 'rgba(255,255,255,0.25)', dash: 'dot', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.01)',
+            hovertemplate: '%{y:,.0f} €<extra>Investi</extra>'
         },
         {
             x: labels, y: value,
-            name: 'Valeur estimée (€)',
+            name: 'Valeur portefeuille',
             type: 'scatter', mode: 'lines',
-            line: { color: '#fff', width: 2.5 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
+            line: { color: '#FF8C00', width: 2 },
+            fill: 'tonexty', fillcolor: 'rgba(255,140,0,0.08)',
+            hovertemplate: '%{y:,.0f} €<extra>Valeur</extra>'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        height: 380,
-        margin: { l: 60, r: 20, t: 20, b: 40 },
+        plot_bgcolor:  'rgba(0,0,0,0)',
+        height: 300,
+        margin: { l: 58, r: 12, t: 12, b: 40 },
+        font: { family: 'IBM Plex Mono, monospace', size: 9, color: 'rgba(255,255,255,0.35)' },
         legend: {
-            orientation: 'h', y: -0.15,
-            font: { color: 'rgba(232,240,255,0.55)' },
+            orientation: 'h', y: -0.20,
+            font: { color: 'rgba(255,255,255,0.40)', family: 'IBM Plex Mono, monospace', size: 9 },
             bgcolor: 'rgba(0,0,0,0)'
         },
         hovermode: 'x unified',
         hoverlabel: {
-            bgcolor: '#16161F',
-            bordercolor: 'rgba(74,122,155,0.12)',
-            font: { color: 'rgba(232,240,255,0.85)' }
+            bgcolor: '#0A0A0A', bordercolor: '#1E1E1E',
+            font: { color: 'rgba(255,255,255,0.85)', family: 'IBM Plex Mono, monospace', size: 10 }
         },
         xaxis: {
-            gridcolor: 'rgba(74,122,155,0.08)',
-            tickfont: { color: 'rgba(232,240,255,0.45)' },
-            linecolor: 'rgba(74,122,155,0.10)'
+            gridcolor: '#1E1E1E',
+            tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 },
+            linecolor: '#1E1E1E', zeroline: false
         },
         yaxis: {
-            gridcolor: 'rgba(74,122,155,0.08)',
-            tickfont: { color: 'rgba(232,240,255,0.45)' },
-            linecolor: 'rgba(74,122,155,0.10)',
-            tickformat: ',.0f',
-            ticksuffix: ' €'
+            gridcolor: '#1E1E1E',
+            tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 },
+            linecolor: '#1E1E1E', zeroline: false,
+            tickformat: ',.0f', ticksuffix: ' €'
         }
     }, { responsive: true, displayModeBar: false });
 }
 
+// Set default start date to today
+(function() {
+    var d = new Date();
+    var iso = d.toISOString().split('T')[0];
+    document.getElementById('start-date').value = iso;
+})();
+
 window.onload = simulate;
 </script>
-
 {% endblock %}

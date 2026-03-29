@@ -1,61 +1,66 @@
 {% extends 'base.html' %}
 {% block title %}Ajouter un actif{% endblock %}
 {% block content %}
+
+<style>
+.suggest-box {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border-light);
+    border-top: none;
+    z-index: 1000;
+    max-height: 280px;
+    overflow-y: auto;
+}
+.suggest-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+.suggest-item:hover { background: var(--accent-bg); }
+.suggest-ticker {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 8px;
+}
+.suggest-name { font-size: 10px; color: var(--text); }
+.suggest-meta { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Ajouter un actif</h1>
-        <p>ETF, action, crypto — ou actif sans cours (livret, fonds euros).</p>
+        <p>ETF, action, ou autre instrument coté en bourse.</p>
     </div>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">← Retour</a>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">← Retour</a>
+    </div>
 </div>
 
 <div class="card form-card">
+    <div class="card-head"><span class="card-title">Rechercher un actif</span></div>
+
     <form method="POST" id="add-asset-form">
-        <input type="hidden" name="no_ticker" id="no_ticker_input" value="0">
 
-        <!-- Toggle actif sans cours -->
-        <div style="margin-bottom:1.25rem; padding:0.75rem 1rem; background:rgba(74,122,155,0.06); border:1px solid rgba(74,122,155,0.12); border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
-            <div>
-                <div style="font-size:0.85rem; font-weight:600; color:var(--text);">Actif sans cours en temps réel</div>
-                <div style="font-size:0.75rem; color:var(--text-label); margin-top:2px;">Livret A, LDDS, LEP, fonds euros assurance vie…</div>
-            </div>
-            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none;">
-                <div id="toggle-track" onclick="toggleNoTicker()"
-                     style="width:40px; height:22px; background:#1a2a3a; border-radius:99px; position:relative; transition:background 0.2s; cursor:pointer; flex-shrink:0;">
-                    <div id="toggle-thumb"
-                         style="width:16px; height:16px; background:#4a7a9b; border-radius:50%; position:absolute; top:3px; left:3px; transition:left 0.2s, background 0.2s;"></div>
-                </div>
-                <span id="toggle-label" style="font-size:0.8rem; color:var(--text-label);">Désactivé</span>
-            </label>
-        </div>
-
-        <!-- Recherche autocomplete (masquée si no_ticker) -->
-        <div id="search-block" class="form-group">
-            <label>Rechercher un actif</label>
+        <!-- Recherche autocomplete -->
+        <div class="form-group">
+            <label>Rechercher sur Yahoo Finance</label>
             <div style="position:relative;">
                 <input type="text" id="search-input"
-                       placeholder="Ex: Apple, MSCI World, Bitcoin, S&P500..."
+                       placeholder="Ex: Apple, MSCI World, S&P500..."
                        autocomplete="off">
-                <div id="suggestions" style="
-                    display:none;
-                    position:absolute;
-                    top:100%;
-                    left:0; right:0;
-                    background:#16161F;
-                    border:1px solid rgba(74,122,155,0.1);
-                    border-radius:10px;
-                    z-index:1000;
-                    max-height:280px;
-                    overflow-y:auto;
-                    margin-top:4px;
-                "></div>
+                <div class="suggest-box" id="suggestions"></div>
             </div>
-            <div class="form-hint">Tape le nom ou le ticker — les résultats Yahoo Finance apparaissent automatiquement.</div>
+            <div class="form-hint">Tapez le nom ou le ticker — les résultats Yahoo Finance apparaissent automatiquement.</div>
         </div>
 
-        <hr style="border:none; border-top:1px solid rgba(74,122,155,0.09); margin:1.25rem 0;">
-        <div style="font-size:0.78rem; color:rgba(232,240,255,0.30); margin-bottom:1rem;" id="manual-label">
-            Ou remplis manuellement :
+        <div style="border-top: 1px solid var(--border); margin: 14px 0;"></div>
+        <div style="font-size:9px; color:var(--text-dim); margin-bottom:12px; letter-spacing:0.5px;">
+            OU REMPLIR MANUELLEMENT :
         </div>
 
         <div class="form-group">
@@ -64,7 +69,6 @@
                 {% for t in asset_types %}
                 <option value="{{ t }}" {{ 'selected' if t == asset_type_prefill }}>{{ t }}</option>
                 {% endfor %}
-                <option value="Épargne">Épargne réglementée</option>
             </select>
         </div>
 
@@ -72,16 +76,15 @@
             <label for="name">Nom</label>
             <input type="text" id="name" name="name" required
                    value="{{ name_prefill }}"
-                   placeholder="ex: Livret A — Banque Postale / iShares Core MSCI World">
+                   placeholder="ex: iShares Core MSCI World">
         </div>
 
-        <!-- Ticker Yahoo Finance (masqué si no_ticker) -->
-        <div id="ticker-block" class="form-row">
+        <div class="form-row">
             <div class="form-group">
                 <label for="ticker">Ticker Yahoo Finance</label>
                 <input type="text" id="ticker" name="ticker"
                        value="{{ ticker_prefill }}"
-                       placeholder="ex: AAPL / IWDA.AS / BTC-USD"
+                       placeholder="ex: AAPL / IWDA.AS"
                        style="text-transform:uppercase;">
             </div>
             <div class="form-group">
@@ -95,17 +98,8 @@
             </div>
         </div>
 
-        <!-- Taux annuel (visible uniquement si no_ticker) -->
-        <div id="taux-block" style="display:none;" class="form-group">
-            <label for="taux_fixe">Taux annuel (%)</label>
-            <input type="number" id="taux_fixe" name="taux_fixe"
-                   value="3.0" min="0" max="100" step="0.1"
-                   placeholder="ex: 3.0">
-            <div class="form-hint">Rendement annuel brut appliqué au capital investi pour estimer la performance.</div>
-        </div>
-
         <div class="form-group">
-            <label for="isin">ISIN <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+            <label for="isin">ISIN <span style="font-weight:400; color:var(--text-dim);">(optionnel)</span></label>
             <input type="text" id="isin" name="isin"
                    placeholder="ex: IE00B4L5Y983"
                    maxlength="12"
@@ -113,7 +107,7 @@
         </div>
 
         <div class="form-group">
-            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:var(--text-dim);">(optionnel)</span></label>
             <select id="envelope" name="envelope">
                 <option value="">— Non spécifié —</option>
                 <option value="PEA">PEA — Plan d'Épargne en Actions</option>
@@ -121,9 +115,6 @@
                 <option value="CTO">CTO — Compte-Titres Ordinaire</option>
                 <option value="Assurance Vie">Assurance Vie</option>
                 <option value="PER">PER — Plan d'Épargne Retraite</option>
-                <option value="Livret A">Livret A</option>
-                <option value="LDDS">LDDS — Livret Développement Durable</option>
-                <option value="LEP">LEP — Livret d'Épargne Populaire</option>
                 <option value="Autre">Autre</option>
             </select>
         </div>
@@ -131,132 +122,59 @@
         <div class="form-group">
             <label for="workspace">Workspace</label>
             <select id="workspace" name="workspace">
-                <option value="perso">👤 Personnel</option>
-                <option value="pro">🏢 Professionnel</option>
+                <option value="perso">Personnel</option>
+                <option value="pro">Professionnel</option>
             </select>
         </div>
 
-        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <!-- Champ caché nécessaire pour le backend -->
+        <input type="hidden" name="no_ticker" value="0">
+
+        <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
             <button type="submit" class="btn btn-primary">Vérifier et ajouter</button>
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
         </div>
+
     </form>
 </div>
 
-<!-- Présélection rapide pour livrets -->
-<div id="livret-presets" style="display:none; margin-top:1rem;">
-    <div style="font-size:0.75rem; color:var(--text-label); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Présélections rapides</div>
-    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('Livret A', 3.0, 'Livret A')">Livret A (3%)</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('LDDS', 3.0, 'LDDS')">LDDS (3%)</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('LEP', 4.0, 'LEP')">LEP (4%)</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="presetLivret('Fonds euros', 2.5, 'Assurance Vie')">Fonds euros (2.5%)</button>
-    </div>
-</div>
-
 <script>
-let noTickerMode = false;
-
-function toggleNoTicker() {
-    noTickerMode = !noTickerMode;
-    document.getElementById('no_ticker_input').value = noTickerMode ? '1' : '0';
-
-    const track  = document.getElementById('toggle-track');
-    const thumb  = document.getElementById('toggle-thumb');
-    const label  = document.getElementById('toggle-label');
-
-    if (noTickerMode) {
-        track.style.background  = '#4ade80';
-        thumb.style.left        = '21px';
-        thumb.style.background  = '#04080f';
-        label.textContent       = 'Activé';
-        document.getElementById('search-block').style.display   = 'none';
-        document.getElementById('ticker-block').style.display   = 'none';
-        document.getElementById('taux-block').style.display     = '';
-        document.getElementById('livret-presets').style.display = '';
-        document.getElementById('ticker').removeAttribute('required');
-        document.getElementById('manual-label').style.display   = 'none';
-    } else {
-        track.style.background  = '#1a2a3a';
-        thumb.style.left        = '3px';
-        thumb.style.background  = '#4a7a9b';
-        label.textContent       = 'Désactivé';
-        document.getElementById('search-block').style.display   = '';
-        document.getElementById('ticker-block').style.display   = '';
-        document.getElementById('taux-block').style.display     = 'none';
-        document.getElementById('livret-presets').style.display = 'none';
-        document.getElementById('manual-label').style.display   = '';
-    }
-}
-
-function presetLivret(name, taux, envelope) {
-    document.getElementById('name').value    = name;
-    document.getElementById('taux_fixe').value = taux;
-    // Sélectionner l'enveloppe correspondante
-    const envSel = document.getElementById('envelope');
-    for (let opt of envSel.options) {
-        if (opt.value === envelope) { opt.selected = true; break; }
-    }
-    // Sélectionner type Épargne
-    const typeSel = document.getElementById('asset_type');
-    for (let opt of typeSel.options) {
-        if (opt.value === 'Épargne') { opt.selected = true; break; }
-    }
-}
-
-// ── Recherche autocomplete ──────────────────────────────────────────────────
-let searchTimeout = null;
+var searchTimeout = null;
 
 document.getElementById('search-input').addEventListener('input', function() {
     clearTimeout(searchTimeout);
-    const q = this.value.trim();
+    var q = this.value.trim();
     if (q.length < 2) {
         document.getElementById('suggestions').style.display = 'none';
         return;
     }
-    searchTimeout = setTimeout(() => searchYahoo(q), 300);
+    searchTimeout = setTimeout(function() { searchYahoo(q); }, 300);
 });
 
 document.getElementById('search-input').addEventListener('blur', function() {
-    setTimeout(() => {
+    setTimeout(function() {
         document.getElementById('suggestions').style.display = 'none';
     }, 200);
 });
 
-async function searchYahoo(q) {
-    try {
-        const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        showSuggestions(data.results || []);
-    } catch(e) {
-        console.error(e);
-    }
+function searchYahoo(q) {
+    fetch('/api/search-ticker?q=' + encodeURIComponent(q))
+        .then(function(r) { return r.json(); })
+        .then(function(data) { showSuggestions(data.results || []); })
+        .catch(function(e) { console.error(e); });
 }
 
 function showSuggestions(results) {
-    const box = document.getElementById('suggestions');
-    if (!results.length) {
-        box.style.display = 'none';
-        return;
-    }
-    box.innerHTML = results.map(r => `
-        <div onclick="selectAsset(${JSON.stringify(r).replace(/"/g, '&quot;')})"
-             style="padding:0.75rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.07);
-                    transition:background 0.1s;"
-             onmouseover="this.style.background='rgba(74,122,155,0.08)'"
-             onmouseout="this.style.background='transparent'">
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="background:rgba(74,122,155,0.08); color:#e8f0ff; font-size:0.72rem;
-                             font-weight:700; padding:2px 6px; border-radius:4px;">
-                    ${r.ticker}
-                </span>
-                <span style="color:#e8f0ff; font-size:0.875rem; font-weight:500;">${r.name}</span>
-            </div>
-            <div style="font-size:0.75rem; color:rgba(232,240,255,0.4); margin-top:2px;">
-                ${r.exchange} · ${r.type} · ${r.currency}
-            </div>
-        </div>
-    `).join('');
+    var box = document.getElementById('suggestions');
+    if (!results.length) { box.style.display = 'none'; return; }
+    box.innerHTML = results.map(function(r) {
+        var d = JSON.stringify(r).replace(/"/g, '&quot;');
+        return '<div class="suggest-item" onclick="selectAsset(' + d + ')">' +
+            '<span class="suggest-ticker">' + r.ticker + '</span>' +
+            '<span class="suggest-name">' + r.name + '</span>' +
+            '<div class="suggest-meta">' + r.exchange + ' · ' + r.type + ' · ' + r.currency + '</div>' +
+            '</div>';
+    }).join('');
     box.style.display = 'block';
 }
 
@@ -265,16 +183,16 @@ function selectAsset(r) {
     document.getElementById('name').value         = r.name;
     document.getElementById('search-input').value = r.name + ' (' + r.ticker + ')';
 
-    const currencyMap = {'EUR': 0, 'USD': 1, 'GBP': 2, 'CHF': 3};
-    const sel = document.getElementById('currency');
+    var currencyMap = {'EUR': 0, 'USD': 1, 'GBP': 2, 'CHF': 3};
+    var sel = document.getElementById('currency');
     if (r.currency && currencyMap[r.currency] !== undefined) {
         sel.selectedIndex = currencyMap[r.currency];
     }
 
-    const typeMap = {'ETF': 'ETF', 'EQUITY': 'Action', 'CRYPTOCURRENCY': 'Crypto'};
-    const assetTypeSel = document.getElementById('asset_type');
-    const mappedType = typeMap[r.type] || 'Autre';
-    for (let opt of assetTypeSel.options) {
+    var typeMap = {'ETF': 'ETF', 'EQUITY': 'Action', 'CRYPTOCURRENCY': 'Crypto'};
+    var assetTypeSel = document.getElementById('asset_type');
+    var mappedType = typeMap[r.type] || 'Autre';
+    for (var opt of assetTypeSel.options) {
         if (opt.value === mappedType) { opt.selected = true; break; }
     }
 
@@ -283,11 +201,10 @@ function selectAsset(r) {
 
 // Pre-select workspace from localStorage
 (function() {
-    const ws = localStorage.getItem('active-workspace') || 'perso';
-    const sel = document.getElementById('workspace');
-    if (sel && (ws === 'perso' || ws === 'pro')) {
-        sel.value = ws;
-    }
+    var ws = localStorage.getItem('active-workspace') || 'perso';
+    var sel = document.getElementById('workspace');
+    if (sel && (ws === 'perso' || ws === 'pro')) sel.value = ws;
 })();
 </script>
+
 {% endblock %}

@@ -5,11 +5,16 @@
 <div class="page-header">
     <div>
         <h1>Ajouter un ETF</h1>
-        <p>L'ETF sera ajouté à ton portefeuille et disponible pour la saisie d'achats.</p>
+        <p>L'ETF sera ajouté à votre portefeuille et disponible pour la saisie d'achats.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">← Retour</a>
     </div>
 </div>
 
 <div class="card form-card">
+    <div class="card-head"><span class="card-title">Informations ETF</span></div>
+
     <form method="POST">
 
         <div class="form-group">
@@ -24,18 +29,14 @@
                 <input type="text" id="isin" name="isin" required
                        placeholder="ex: IE00B4L5Y983"
                        maxlength="12" style="text-transform:uppercase;">
-                <div class="form-hint">12 caractères — visible sur ton broker.</div>
+                <div class="form-hint">12 caractères — visible sur votre broker.</div>
             </div>
             <div class="form-group">
                 <label for="ticker">Ticker Yahoo Finance</label>
                 <input type="text" id="ticker" name="ticker" required
                        placeholder="ex: IWDA.AS"
                        style="text-transform:uppercase;">
-                <div class="form-hint">
-                    Trouve-le sur
-                    <a href="https://finance.yahoo.com" target="_blank"
-                       style="color:#4a7a9b;">finance.yahoo.com</a>
-                </div>
+                <div class="form-hint">Trouvez-le sur <a href="https://finance.yahoo.com" target="_blank" style="color:var(--accent); text-decoration:none;">finance.yahoo.com</a></div>
             </div>
         </div>
 
@@ -47,13 +48,11 @@
                 <option value="GBP">GBP — Livre sterling</option>
                 <option value="CHF">CHF — Franc suisse</option>
             </select>
-            <div class="form-hint">
-                La devise dans laquelle l'ETF est coté sur ton broker.
-            </div>
+            <div class="form-hint">La devise dans laquelle l'ETF est coté sur votre broker.</div>
         </div>
 
         <div class="form-group">
-            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+            <label for="envelope">Enveloppe fiscale <span style="font-weight:400; color:var(--text-dim);">(optionnel)</span></label>
             <select id="envelope" name="envelope">
                 <option value="">— Non spécifié —</option>
                 <option value="PEA">PEA — Plan d'Épargne en Actions</option>
@@ -61,25 +60,16 @@
                 <option value="CTO">CTO — Compte-Titres Ordinaire</option>
                 <option value="Assurance Vie">Assurance Vie</option>
                 <option value="PER">PER — Plan d'Épargne Retraite</option>
-                <option value="Livret A">Livret A</option>
-                <option value="LDDS">LDDS — Livret Développement Durable</option>
-                <option value="LEP">LEP — Livret d'Épargne Populaire</option>
                 <option value="Autre">Autre</option>
             </select>
         </div>
 
-        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-            <button type="submit" class="btn btn-primary">
-                Vérifier et ajouter
-            </button>
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">
-                Annuler
-            </a>
+        <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+            <button type="submit" class="btn btn-primary">Vérifier et ajouter</button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
         </div>
 
-        <p style="margin-top:1rem; font-size:0.82rem; color:rgba(232,240,255,0.30);">
-            Le ticker sera vérifié en temps réel sur Yahoo Finance avant l'ajout.
-        </p>
+        <div class="form-hint" style="margin-top:10px;">Le ticker sera vérifié en temps réel sur Yahoo Finance avant l'ajout.</div>
 
     </form>
 </div>

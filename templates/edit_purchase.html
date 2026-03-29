@@ -5,18 +5,24 @@
 <div class="page-header">
     <div>
         <h1>Éditer un achat</h1>
-        <p>Modifie les informations de cet achat.</p>
+        <p>Modifiez les informations de cet achat.</p>
     </div>
-    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">← Retour</a>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.history') }}" class="btn btn-ghost">← Retour</a>
+    </div>
 </div>
 
 <div class="card form-card">
+    <div class="card-head"><span class="card-title">Modifier l'achat</span></div>
+
     <form method="POST">
 
         <div class="form-group">
             <label>Actif</label>
-            <input type="text" value="{{ purchase['ticker'] }} — {{ purchase['name'] if purchase.get('name') else purchase['ticker'] }}"
-                   disabled style="background:rgba(74,122,155,0.04); color:rgba(232,240,255,0.30); cursor:not-allowed;">
+            <input type="text"
+                   value="{{ purchase['ticker'] }} — {{ purchase['name'] if purchase.get('name') else purchase['ticker'] }}"
+                   disabled
+                   style="color:var(--text-dim); cursor:not-allowed;">
             <div class="form-hint">L'actif ne peut pas être modifié.</div>
         </div>
 
@@ -45,13 +51,13 @@
         <div class="form-group">
             <label>Montant total</label>
             <div id="total-display" style="
-                padding: 0.65rem 0.9rem;
-                background: rgba(74,122,155,0.06);
-                border: 1px solid #1a2a3a;
-                border-radius: 10px;
-                font-size: 1.1rem;
-                font-weight: 700;
-                color: #e8f0ff;
+                padding: 7px 8px;
+                background: var(--bg);
+                border: 1px solid var(--border-light);
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-bright);
+                font-variant-numeric: tabular-nums;
             ">{{ purchase['total_cost'] }} €</div>
             <div class="form-hint">Calculé automatiquement (parts × prix).</div>
         </div>
@@ -65,16 +71,16 @@
                        placeholder="ex: 1.99">
             </div>
             <div class="form-group">
-                <label for="notes">Note <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
+                <label for="notes">Note <span style="font-weight:400; color:var(--text-dim);">(optionnel)</span></label>
                 <input type="text" id="notes" name="notes"
                        value="{{ purchase['notes'] or '' }}"
                        placeholder="ex: Achat mensuel DCA">
             </div>
         </div>
 
-        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
             <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-            <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">Annuler</a>
+            <a href="{{ url_for('main.history') }}" class="btn btn-ghost">Annuler</a>
         </div>
 
     </form>
@@ -82,10 +88,10 @@
 
 <script>
 function calcTotal() {
-    const shares = parseFloat(document.getElementById('shares').value) || 0;
-    const price  = parseFloat(document.getElementById('price_per_share').value) || 0;
-    const el     = document.getElementById('total-display');
-    el.textContent = shares > 0 && price > 0 ? (shares * price).toFixed(4) + ' €' : '—';
+    var shares = parseFloat(document.getElementById('shares').value) || 0;
+    var price  = parseFloat(document.getElementById('price_per_share').value) || 0;
+    var el     = document.getElementById('total-display');
+    el.textContent = (shares > 0 && price > 0) ? (shares * price).toFixed(4) + ' €' : '—';
 }
 </script>
 

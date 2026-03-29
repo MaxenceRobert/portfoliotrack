@@ -2,17 +2,108 @@
 {% block title %}Ajouter des achats{% endblock %}
 {% block content %}
 
+<style>
+.purchase-row {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    padding: 14px;
+    margin-bottom: 8px;
+}
+.row-num {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.remove-row {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    font-size: 9px;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: border-color 0.1s, color 0.1s;
+}
+.remove-row:hover { border-color: var(--red); color: var(--red); }
+.selected-asset {
+    display: none;
+    margin-top: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-left: 2px solid var(--green);
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--text);
+}
+.row-total {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+.row-total-label { font-size: 8px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.row-total-val { font-size: 13px; font-weight: 700; color: var(--text-bright); font-variant-numeric: tabular-nums; }
+.suggest-box {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border-light);
+    border-top: none;
+    z-index: 1000;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.suggest-group-label {
+    padding: 4px 10px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border);
+}
+.suggest-item {
+    padding: 7px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+.suggest-item:hover { background: var(--accent-bg); }
+.suggest-ticker {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 8px;
+    font-variant-numeric: tabular-nums;
+}
+.suggest-name { font-size: 10px; color: var(--text); }
+.suggest-meta { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Ajouter des achats</h1>
-        <p>Saisis plusieurs achats d'un coup — idéal pour rattraper ton historique.</p>
+        <p>Saisissez plusieurs achats d'un coup — idéal pour rattraper votre historique.</p>
     </div>
-    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">Voir l'historique</a>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.history') }}" class="btn btn-ghost">Historique</a>
+    </div>
 </div>
 
 <form method="POST" id="bulk-form">
     <div id="rows-container"></div>
-    <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <div style="display:flex; gap:8px; margin:0 12px 12px; flex-wrap:wrap;">
         <button type="button" class="btn btn-ghost" onclick="addRow()">+ Ajouter une ligne</button>
         <button type="submit" class="btn btn-primary" id="submit-btn">Enregistrer l'achat</button>
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
@@ -25,116 +116,86 @@ let rowCount = 0;
 const today  = new Date().toISOString().split('T')[0];
 
 function addRow() {
-    const i   = rowCount++;
-    const div = document.createElement('div');
+    var i   = rowCount++;
+    var div = document.createElement('div');
     div.className = 'purchase-row';
-    div.id        = `row-${i}`;
+    div.id        = 'row-' + i;
+    div.style.margin = '0 12px 8px';
 
-    div.innerHTML = `
-        <div class="row-num">Achat #${i + 1}</div>
-        <button type="button" class="remove-row" onclick="removeRow(${i})" title="Supprimer">✕</button>
+    div.innerHTML =
+        '<div class="row-num">Achat #' + (i + 1) + '</div>' +
+        '<button type="button" class="remove-row" onclick="removeRow(' + i + ')">✕ Supprimer</button>' +
 
-        <div class="form-group">
-            <label>Actif</label>
-            <div style="position:relative;">
-                <input type="text" id="search-${i}"
-                       placeholder="Rechercher par nom ou ticker..."
-                       autocomplete="off"
-                       oninput="onSearchInput(${i}, this.value)">
-                <div id="suggestions-${i}" style="
-                    display:none;
-                    position:absolute;
-                    top:100%; left:0; right:0;
-                    background:rgba(12,12,20,0.98);
-                    backdrop-filter:blur(20px);
-                    border:1px solid rgba(74,122,155,0.1);
-                    border-radius:12px;
-                    z-index:1000;
-                    max-height:240px;
-                    overflow-y:auto;
-                    margin-top:4px;
-                    box-shadow:0 20px 50px rgba(4,8,15,0.5);
-                "></div>
-            </div>
-            <input type="hidden" id="ticker-${i}" name="ticker_${i}">
-            <input type="hidden" id="asset_name-${i}" name="asset_name_${i}">
-            <input type="hidden" id="asset_currency-${i}" name="asset_currency_${i}">
-            <input type="hidden" id="asset_type-${i}" name="asset_type_${i}">
-            <input type="hidden" id="asset_id-${i}" name="asset_id_${i}">
-            <div id="selected-asset-${i}" style="display:none; margin-top:0.5rem;
-                 background:rgba(74,122,155,0.06); border:1px solid #1a2a3a;
-                 border-radius:8px; padding:0.5rem 0.75rem; font-size:0.82rem;">
-            </div>
-        </div>
+        '<div class="form-group">' +
+            '<label>Actif</label>' +
+            '<div style="position:relative;">' +
+                '<input type="text" id="search-' + i + '"' +
+                       ' placeholder="Rechercher par nom ou ticker..."' +
+                       ' autocomplete="off"' +
+                       ' oninput="onSearchInput(' + i + ', this.value)">' +
+                '<div class="suggest-box" id="suggestions-' + i + '"></div>' +
+            '</div>' +
+            '<input type="hidden" id="ticker-' + i + '" name="ticker_' + i + '">' +
+            '<input type="hidden" id="asset_name-' + i + '" name="asset_name_' + i + '">' +
+            '<input type="hidden" id="asset_currency-' + i + '" name="asset_currency_' + i + '">' +
+            '<input type="hidden" id="asset_type-' + i + '" name="asset_type_' + i + '">' +
+            '<input type="hidden" id="asset_id-' + i + '" name="asset_id_' + i + '">' +
+            '<div class="selected-asset" id="selected-asset-' + i + '"></div>' +
+        '</div>' +
 
-        <div class="form-row-3">
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" name="date_${i}" value="${today}" required>
-            </div>
-            <div class="form-group">
-                <label>Nombre de parts</label>
-                <input type="number" name="shares_${i}"
-                       step="0.000001" min="0.000001"
-                       required placeholder="ex: 3.5"
-                       oninput="calcTotal(${i})">
-            </div>
-            <div class="form-group">
-                <label>Prix par part</label>
-                <input type="number" name="price_per_share_${i}"
-                       step="0.0001" min="0.0001"
-                       required placeholder="ex: 85.42"
-                       oninput="calcTotal(${i})">
-            </div>
-        </div>
+        '<div class="form-row-3">' +
+            '<div class="form-group">' +
+                '<label>Date</label>' +
+                '<input type="date" name="date_' + i + '" value="' + today + '" required>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Nombre de parts</label>' +
+                '<input type="number" name="shares_' + i + '"' +
+                       ' step="0.000001" min="0.000001" required placeholder="ex: 3.5"' +
+                       ' oninput="calcTotal(' + i + ')">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Prix par part</label>' +
+                '<input type="number" name="price_per_share_' + i + '"' +
+                       ' step="0.0001" min="0.0001" required placeholder="ex: 85.42"' +
+                       ' oninput="calcTotal(' + i + ')">' +
+            '</div>' +
+        '</div>' +
 
-        <div class="form-row">
-            <div class="form-group">
-                <label>Frais (€)</label>
-                <input type="number" name="fees_${i}"
-                       step="0.01" min="0" value="0" placeholder="0.00">
-            </div>
-            <div class="form-group">
-                <label>Note <span style="font-weight:400; color:rgba(232,240,255,0.30);">(optionnel)</span></label>
-                <input type="text" name="notes_${i}" placeholder="ex: Achat mensuel DCA">
-            </div>
-        </div>
+        '<div class="form-row">' +
+            '<div class="form-group">' +
+                '<label>Frais (€)</label>' +
+                '<input type="number" name="fees_' + i + '" step="0.01" min="0" value="0" placeholder="0.00">' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label>Note <span style="font-weight:400;color:var(--text-dim);">(optionnel)</span></label>' +
+                '<input type="text" name="notes_' + i + '" placeholder="ex: Achat mensuel DCA">' +
+            '</div>' +
+        '</div>' +
 
-        <div class="form-group" id="envelope-group-${i}">
-            <label style="font-size:0.82rem;">Enveloppe fiscale <span style="font-weight:400; color:rgba(232,240,255,0.30);">(si nouvel actif)</span></label>
-            <select name="envelope_${i}" style="font-size:0.85rem;">
-                <option value="">— Non spécifié —</option>
-                <option value="PEA">PEA</option>
-                <option value="PEA-PME">PEA-PME</option>
-                <option value="CTO">CTO</option>
-                <option value="Assurance Vie">Assurance Vie</option>
-                <option value="PER">PER</option>
-                <option value="Livret A">Livret A</option>
-                <option value="LDDS">LDDS</option>
-                <option value="LEP">LEP</option>
-                <option value="Autre">Autre</option>
-            </select>
-        </div>
+        '<div class="form-group" id="envelope-group-' + i + '">' +
+            '<label>Enveloppe fiscale <span style="font-weight:400;color:var(--text-dim);">(si nouvel actif)</span></label>' +
+            '<select name="envelope_' + i + '">' +
+                '<option value="">— Non spécifié —</option>' +
+                '<option value="PEA">PEA</option>' +
+                '<option value="PEA-PME">PEA-PME</option>' +
+                '<option value="CTO">CTO</option>' +
+                '<option value="Assurance Vie">Assurance Vie</option>' +
+                '<option value="PER">PER</option>' +
+                '<option value="Autre">Autre</option>' +
+            '</select>' +
+        '</div>' +
 
-        <div class="form-group" style="margin-top:0.5rem;">
-            <label>Workspace</label>
-            <select name="workspace_${i}" style="width:auto; min-width:140px;">
-                <option value="perso">👤 Personnel</option>
-                <option value="pro">🏢 Professionnel</option>
-            </select>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:1rem; margin-top:0.25rem;">
-            <div style="font-size:0.82rem; color:rgba(232,240,255,0.4);">Total :</div>
-            <div id="total-${i}" style="font-weight:700; color:#e8f0ff; font-size:1rem;">—</div>
-        </div>
-    `;
+        '<div class="row-total">' +
+            '<span class="row-total-label">Total :</span>' +
+            '<span class="row-total-val" id="total-' + i + '">—</span>' +
+        '</div>';
 
     document.getElementById('rows-container').appendChild(div);
 
-    document.getElementById(`search-${i}`).addEventListener('blur', function() {
-        setTimeout(() => {
-            const s = document.getElementById(`suggestions-${i}`);
+    document.getElementById('search-' + i).addEventListener('blur', function() {
+        setTimeout(function() {
+            var s = document.getElementById('suggestions-' + i);
             if (s) s.style.display = 'none';
         }, 200);
     });
@@ -143,71 +204,54 @@ function addRow() {
     return i;
 }
 
-const searchTimers = {};
+var searchTimers = {};
 
 function onSearchInput(i, val) {
     clearTimeout(searchTimers[i]);
-    const q = val.trim();
+    var q = val.trim();
     if (q.length < 2) {
-        document.getElementById(`suggestions-${i}`).style.display = 'none';
+        document.getElementById('suggestions-' + i).style.display = 'none';
         return;
     }
 
-    const existing = existingAssets.filter(a =>
-        a.ticker.toLowerCase().includes(q.toLowerCase()) ||
-        a.name.toLowerCase().includes(q.toLowerCase())
-    );
+    var existing = existingAssets.filter(function(a) {
+        return a.ticker.toLowerCase().includes(q.toLowerCase()) ||
+               a.name.toLowerCase().includes(q.toLowerCase());
+    });
 
-    searchTimers[i] = setTimeout(async () => {
-        try {
-            const res  = await fetch(`/api/search-ticker?q=${encodeURIComponent(q)}`);
-            const data = await res.json();
-            showSuggestions(i, existing, data.results || []);
-        } catch(e) {
-            showSuggestions(i, existing, []);
-        }
+    searchTimers[i] = setTimeout(function() {
+        fetch('/api/search-ticker?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) { showSuggestions(i, existing, data.results || []); })
+            .catch(function() { showSuggestions(i, existing, []); });
     }, 300);
 }
 
 function showSuggestions(i, existing, yahooResults) {
-    const box = document.getElementById(`suggestions-${i}`);
-    let html = '';
+    var box = document.getElementById('suggestions-' + i);
+    var html = '';
 
     if (existing.length) {
-        html += `<div style="padding:0.4rem 1rem; font-size:0.68rem; font-weight:700;
-                             text-transform:uppercase; letter-spacing:0.1em;
-                             color:rgba(74,122,155,0.2);">Déjà dans ton portefeuille</div>`;
-        html += existing.map(a => `
-            <div onclick="selectExisting(${i}, ${JSON.stringify(a).replace(/"/g, '&quot;')})"
-                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.06); transition:background 0.1s;"
-                 onmouseover="this.style.background='rgba(74,122,155,0.06)'"
-                 onmouseout="this.style.background='transparent'">
-                <span style="background:rgba(74,122,155,0.06); color:#e8f0ff; font-size:0.72rem;
-                             font-weight:700; padding:2px 7px; border-radius:5px;">${a.ticker}</span>
-                <span style="color:#e8f0ff; font-size:0.875rem; margin-left:0.5rem;">${a.name}</span>
-            </div>
-        `).join('');
+        html += '<div class="suggest-group-label">Dans votre portefeuille</div>';
+        html += existing.map(function(a) {
+            var d = JSON.stringify(a).replace(/"/g, '&quot;');
+            return '<div class="suggest-item" onclick="selectExisting(' + i + ', ' + d + ')">' +
+                '<span class="suggest-ticker">' + a.ticker + '</span>' +
+                '<span class="suggest-name">' + a.name + '</span>' +
+                '</div>';
+        }).join('');
     }
 
     if (yahooResults.length) {
-        html += `<div style="padding:0.4rem 1rem; font-size:0.68rem; font-weight:700;
-                             text-transform:uppercase; letter-spacing:0.1em;
-                             color:rgba(74,122,155,0.2);">Yahoo Finance</div>`;
-        html += yahooResults.map(r => `
-            <div onclick="selectYahoo(${i}, ${JSON.stringify(r).replace(/"/g, '&quot;')})"
-                 style="padding:0.65rem 1rem; cursor:pointer; border-bottom:1px solid rgba(74,122,155,0.06); transition:background 0.1s;"
-                 onmouseover="this.style.background='rgba(74,122,155,0.06)'"
-                 onmouseout="this.style.background='transparent'">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <span style="background:rgba(74,122,155,0.06); color:#e8f0ff; font-size:0.72rem;
-                                 font-weight:700; padding:2px 7px; border-radius:5px;">${r.ticker}</span>
-                    <span style="color:#e8f0ff; font-size:0.875rem;">${r.name}</span>
-                </div>
-                <div style="font-size:0.72rem; color:rgba(232,240,255,0.30); margin-top:2px;">
-                    ${r.exchange} · ${r.type} · ${r.currency}
-                </div>
-            </div>
-        `).join('');
+        html += '<div class="suggest-group-label">Yahoo Finance</div>';
+        html += yahooResults.map(function(r) {
+            var d = JSON.stringify(r).replace(/"/g, '&quot;');
+            return '<div class="suggest-item" onclick="selectYahoo(' + i + ', ' + d + ')">' +
+                '<span class="suggest-ticker">' + r.ticker + '</span>' +
+                '<span class="suggest-name">' + r.name + '</span>' +
+                '<div class="suggest-meta">' + r.exchange + ' · ' + r.type + ' · ' + r.currency + '</div>' +
+                '</div>';
+        }).join('');
     }
 
     if (!html) { box.style.display = 'none'; return; }
@@ -216,70 +260,64 @@ function showSuggestions(i, existing, yahooResults) {
 }
 
 function selectExisting(i, asset) {
-    document.getElementById(`search-${i}`).value        = `${asset.ticker} — ${asset.name}`;
-    document.getElementById(`ticker-${i}`).value         = asset.ticker;
-    document.getElementById(`asset_name-${i}`).value     = asset.name;
-    document.getElementById(`asset_currency-${i}`).value = asset.currency;
-    document.getElementById(`asset_type-${i}`).value     = asset.asset_type;
-    document.getElementById(`asset_id-${i}`).value       = asset.id;
-    document.getElementById(`suggestions-${i}`).style.display = 'none';
-
-    const sel = document.getElementById(`selected-asset-${i}`);
-    sel.innerHTML = `✓ <strong style="color:#4ade80;">${asset.ticker}</strong> — ${asset.name} <span style="color:rgba(232,240,255,0.30);">(déjà dans ton portefeuille)</span>`;
+    document.getElementById('search-' + i).value        = asset.ticker + ' — ' + asset.name;
+    document.getElementById('ticker-' + i).value         = asset.ticker;
+    document.getElementById('asset_name-' + i).value     = asset.name;
+    document.getElementById('asset_currency-' + i).value = asset.currency;
+    document.getElementById('asset_type-' + i).value     = asset.asset_type;
+    document.getElementById('asset_id-' + i).value       = asset.id;
+    document.getElementById('suggestions-' + i).style.display = 'none';
+    var sel = document.getElementById('selected-asset-' + i);
+    sel.innerHTML = '✓ <strong style="color:var(--accent);">' + asset.ticker + '</strong> — ' + asset.name +
+                    ' <span style="color:var(--text-dim);">(déjà dans votre portefeuille)</span>';
     sel.style.display = 'block';
 }
 
 function selectYahoo(i, r) {
-    document.getElementById(`search-${i}`).value        = `${r.ticker} — ${r.name}`;
-    document.getElementById(`ticker-${i}`).value         = r.ticker;
-    document.getElementById(`asset_name-${i}`).value     = r.name;
-    document.getElementById(`asset_currency-${i}`).value = r.currency;
-    document.getElementById(`asset_type-${i}`).value     = r.type === 'ETF' ? 'ETF' :
+    document.getElementById('search-' + i).value        = r.ticker + ' — ' + r.name;
+    document.getElementById('ticker-' + i).value         = r.ticker;
+    document.getElementById('asset_name-' + i).value     = r.name;
+    document.getElementById('asset_currency-' + i).value = r.currency;
+    document.getElementById('asset_type-' + i).value     = r.type === 'ETF' ? 'ETF' :
                                                              r.type === 'EQUITY' ? 'Action' :
                                                              r.type === 'CRYPTOCURRENCY' ? 'Crypto' : 'Autre';
-    document.getElementById(`asset_id-${i}`).value       = '';
-    document.getElementById(`suggestions-${i}`).style.display = 'none';
-
-    const sel = document.getElementById(`selected-asset-${i}`);
-    sel.innerHTML = `✓ <strong style="color:#e8f0ff;">${r.ticker}</strong> — ${r.name} <span style="color:rgba(232,240,255,0.30);">(sera ajouté automatiquement)</span>`;
+    document.getElementById('asset_id-' + i).value       = '';
+    document.getElementById('suggestions-' + i).style.display = 'none';
+    var sel = document.getElementById('selected-asset-' + i);
+    sel.innerHTML = '✓ <strong style="color:var(--text-bright);">' + r.ticker + '</strong> — ' + r.name +
+                    ' <span style="color:var(--text-dim);">(sera ajouté automatiquement)</span>';
     sel.style.display = 'block';
 }
 
 function removeRow(i) {
-    const el = document.getElementById(`row-${i}`);
+    var el = document.getElementById('row-' + i);
     if (el) el.remove();
     updateSubmitBtn();
 }
 
 function calcTotal(i) {
-    const shares = parseFloat(document.querySelector(`[name="shares_${i}"]`)?.value) || 0;
-    const price  = parseFloat(document.querySelector(`[name="price_per_share_${i}"]`)?.value) || 0;
-    const el     = document.getElementById(`total-${i}`);
-    if (el) {
-        el.textContent = shares > 0 && price > 0
-            ? (shares * price).toFixed(2) + ' €'
-            : '—';
-    }
+    var shares = parseFloat(document.querySelector('[name="shares_' + i + '"]') && document.querySelector('[name="shares_' + i + '"]').value) || 0;
+    var price  = parseFloat(document.querySelector('[name="price_per_share_' + i + '"]') && document.querySelector('[name="price_per_share_' + i + '"]').value) || 0;
+    var el     = document.getElementById('total-' + i);
+    if (el) el.textContent = (shares > 0 && price > 0) ? (shares * price).toFixed(2) + ' €' : '—';
 }
 
 function updateSubmitBtn() {
-    const count = document.querySelectorAll('.purchase-row').length;
-    const btn   = document.getElementById('submit-btn');
-    btn.textContent = count > 1 ? `Enregistrer ${count} achats` : "Enregistrer l'achat";
+    var count = document.querySelectorAll('.purchase-row').length;
+    var btn   = document.getElementById('submit-btn');
+    btn.textContent = count > 1 ? 'Enregistrer ' + count + ' achats' : "Enregistrer l'achat";
 }
 
-// Lance la première ligne
 addRow();
 
 // Pré-remplissage depuis l'URL (vient d'Explorer)
-const urlParams     = new URLSearchParams(window.location.search);
-const prefillTicker = urlParams.get('ticker');
-const prefillName   = urlParams.get('name');
-const prefillCurr   = urlParams.get('currency');
+var urlParams     = new URLSearchParams(window.location.search);
+var prefillTicker = urlParams.get('ticker');
+var prefillName   = urlParams.get('name');
+var prefillCurr   = urlParams.get('currency');
 
 if (prefillTicker) {
-    // Vérifie d'abord si l'actif est déjà dans le portefeuille
-    const existing = existingAssets.find(a => a.ticker === prefillTicker);
+    var existing = existingAssets.find(function(a) { return a.ticker === prefillTicker; });
     if (existing) {
         selectExisting(0, existing);
     } else {

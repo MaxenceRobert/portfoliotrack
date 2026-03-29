@@ -1,0 +1,676 @@
+{% extends 'base.html' %}
+{% block title %}Alertes de prix — PortfolioTrack{% endblock %}
+{% block content %}
+<style>
+.page-content { padding: 0 !important; }
+.alerts-outer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 12px 40px;
+}
+/* ── 2-col grid ── */
+.alerts-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 2px;
+    align-items: start;
+}
+/* ── Panel ── */
+.al-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+}
+.al-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #111111;
+    border-bottom: 1px solid var(--border);
+}
+.al-panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+.al-panel-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+}
+.al-panel-body { padding: 16px; }
+/* ── Form fields ── */
+.al-field { margin-bottom: 14px; }
+.al-field label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.al-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-bright);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 7px 10px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-bottom-color 0.1s;
+}
+.al-input:focus { border-bottom-color: var(--accent); }
+.al-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+}
+.al-hint.price { color: var(--accent); font-size: 9px; font-weight: 700; }
+/* ── Autocomplete ── */
+.al-autocomplete-wrap { position: relative; }
+.al-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    z-index: 50;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+}
+.al-sug-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.08s;
+}
+.al-sug-item:last-child { border-bottom: none; }
+.al-sug-item:hover, .al-sug-item.active { background: var(--accent-bg); }
+.al-sug-ticker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 56px;
+}
+.al-sug-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* ── Condition toggle ── */
+.al-condition-toggle {
+    display: flex;
+    gap: 0;
+}
+.al-cond-btn {
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+    text-align: center;
+}
+.al-cond-btn:first-child { border-right: none; }
+.al-cond-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+.al-cond-btn:not(.active):hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+/* ── Create button ── */
+.btn-create-alert {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    margin-top: 4px;
+}
+.btn-create-alert:hover { background: var(--accent); color: #000; }
+/* ── Alerts list ── */
+.al-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 10px 16px 6px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.al-count-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    background: var(--border-light);
+    color: var(--text-dim);
+    padding: 1px 6px;
+    letter-spacing: 0.5px;
+}
+.al-count-badge.orange { background: var(--accent); color: #000; }
+/* ── Alert row ── */
+.al-row {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+    transition: background 0.08s;
+}
+.al-row:hover { background: rgba(255,255,255,0.015); }
+.al-row.triggered { opacity: 0.55; }
+.al-row-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.al-ticker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 60px;
+    letter-spacing: 1px;
+}
+.al-ticker-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.al-cond-icon {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.al-cond-icon.above { color: var(--green); }
+.al-cond-icon.below { color: var(--red); }
+.al-prices {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-left: auto;
+}
+.al-price-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+.al-price-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.al-price-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-bright);
+    font-variant-numeric: tabular-nums;
+}
+.al-price-val.target { color: var(--text); }
+.al-gap-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.al-delete-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: border-color 0.1s, color 0.1s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.al-delete-btn:hover { border-color: var(--red); color: var(--red); }
+/* ── Progress bar ── */
+.al-progress-wrap {
+    height: 3px;
+    background: var(--border);
+    overflow: hidden;
+}
+.al-progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+/* ── Triggered tag ── */
+.triggered-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7px;
+    font-weight: 700;
+    background: rgba(0,200,83,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,200,83,0.3);
+    padding: 2px 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.triggered-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+}
+/* ── Empty state ── */
+.al-empty {
+    padding: 40px 20px;
+    text-align: center;
+}
+.al-empty-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    color: var(--border-light);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+}
+.al-empty-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+@media (max-width: 860px) {
+    .alerts-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+{% set active_alerts    = alerts | selectattr('status', 'equalto', 'active')    | list %}
+{% set triggered_alerts = alerts | selectattr('status', 'equalto', 'triggered') | list %}
+
+<div class="alerts-outer">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--text-bright); letter-spacing:2px; text-transform:uppercase;">F9 · ALERTES DE PRIX</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">
+            Surveillance automatique · Vérification à chaque visite
+        </span>
+    </div>
+
+    <div class="alerts-grid">
+
+        <!-- ── LEFT : Formulaire ── -->
+        <div class="al-panel">
+            <div class="al-panel-head">
+                <span class="al-panel-title">Nouvelle alerte</span>
+                <span class="al-panel-meta">{{ active_alerts|length }} active(s)</span>
+            </div>
+            <div class="al-panel-body">
+                <form method="POST" action="{{ url_for('main.add_alert') }}" id="alert-form">
+
+                    <!-- Ticker -->
+                    <div class="al-field">
+                        <label for="alert-ticker-input">Actif (ticker)</label>
+                        <div class="al-autocomplete-wrap">
+                            <input type="text" id="alert-ticker-input" class="al-input"
+                                   placeholder="Ex: AAPL, IWDA, BTC-USD…"
+                                   autocomplete="off"
+                                   oninput="alertFetchSuggestions(this.value)"
+                                   onkeydown="alertHandleKey(event)">
+                            <div class="al-suggestions" id="alert-suggestions"></div>
+                        </div>
+                        <!-- Hidden fields submitted -->
+                        <input type="hidden" id="alert-ticker-val"  name="ticker">
+                        <input type="hidden" id="alert-name-val"    name="ticker_name">
+                        <input type="hidden" id="alert-price-val"   name="current_price">
+                        <div class="al-hint" id="alert-price-hint" style="display:none;">
+                            Prix actuel : <span id="alert-price-display" style="color:var(--accent); font-weight:700;">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Condition -->
+                    <div class="al-field">
+                        <label>Condition</label>
+                        <input type="hidden" name="condition" id="condition-val" value="above">
+                        <div class="al-condition-toggle">
+                            <button type="button" class="al-cond-btn active" id="btn-above"
+                                    onclick="setCondition('above')">▲ AU-DESSUS DE</button>
+                            <button type="button" class="al-cond-btn" id="btn-below"
+                                    onclick="setCondition('below')">▼ EN-DESSOUS DE</button>
+                        </div>
+                    </div>
+
+                    <!-- Target price -->
+                    <div class="al-field">
+                        <label for="target-price">Prix cible</label>
+                        <input type="number" id="target-price" name="target_price"
+                               class="al-input" step="0.01" min="0.01"
+                               placeholder="0.00" required>
+                        <div class="al-hint" id="target-hint" style="display:none;"></div>
+                    </div>
+
+                    <button type="submit" class="btn-create-alert">▶ CRÉER L'ALERTE</button>
+
+                </form>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for cat, msg in messages %}
+                <div style="margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:9px;
+                            padding:6px 10px; border-left:2px solid {{ 'var(--green)' if cat=='success' else 'var(--red)' }};
+                            color:{{ 'var(--green)' if cat=='success' else 'var(--red)' }};">
+                    {{ msg }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- ── RIGHT : Liste des alertes ── -->
+        <div class="al-panel">
+            <div class="al-panel-head">
+                <span class="al-panel-title">Mes alertes</span>
+                <span class="al-panel-meta">{{ alerts|length }} total</span>
+            </div>
+
+            {% if not alerts %}
+            <div class="al-empty">
+                <div class="al-empty-icon">[ — ]</div>
+                <div class="al-empty-label">Aucune alerte configurée</div>
+            </div>
+            {% else %}
+
+            <!-- Section Actives -->
+            <div class="al-section-label">
+                ACTIVES
+                <span class="al-count-badge{% if active_alerts|length > 0 %} orange{% endif %}">{{ active_alerts|length }}</span>
+            </div>
+
+            {% if not active_alerts %}
+            <div style="padding:16px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); text-align:center; text-transform:uppercase; letter-spacing:1px;">
+                Aucune alerte active
+            </div>
+            {% else %}
+            {% for alert in active_alerts %}
+            {% set cp = alert['current_price'] | float(0) %}
+            {% set tp = alert['target_price']  | float %}
+            {% set has_price = cp > 0 %}
+            {% if has_price %}
+                {% set gap_abs = (cp - tp) | abs %}
+                {% set gap_pct = ((cp - tp) / tp * 100) | round(2) %}
+                {# Proximity 0-1: how close current is to target #}
+                {% set dist_pct = (gap_abs / tp * 100) %}
+                {% set prox = [[(100 - dist_pct), 0] | max, 100] | min %}
+                {% if prox >= 90 %}{% set bar_color = '#FF1744' %}
+                {% elif prox >= 70 %}{% set bar_color = '#FF8C00' %}
+                {% elif prox >= 40 %}{% set bar_color = '#FFD600' %}
+                {% else %}{% set bar_color = '#00C853' %}
+                {% endif %}
+            {% else %}
+                {% set gap_pct = 0 %}
+                {% set prox = 0 %}
+                {% set bar_color = '#2A2A2A' %}
+            {% endif %}
+
+            <div class="al-row">
+                <div class="al-row-top">
+                    <span class="al-ticker">{{ alert['ticker'] }}</span>
+                    <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                    <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
+                    <div class="al-prices">
+                        <div class="al-price-cell">
+                            <span class="al-price-label">Cible</span>
+                            <span class="al-price-val target">{{ tp | round(2) }}</span>
+                        </div>
+                        {% if has_price %}
+                        <div class="al-price-cell">
+                            <span class="al-price-label">Actuel</span>
+                            <span class="al-price-val">{{ cp | round(2) }}</span>
+                        </div>
+                        <div class="al-price-cell">
+                            <span class="al-price-label">Écart</span>
+                            <span class="al-gap-val" style="color:{{ '#00C853' if gap_pct >= 0 else '#FF1744' }};">
+                                {{ '+' if gap_pct >= 0 else '' }}{{ gap_pct }}%
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
+                          onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                        <button type="submit" class="al-delete-btn">×</button>
+                    </form>
+                </div>
+                <!-- Progress bar -->
+                <div class="al-progress-wrap">
+                    <div class="al-progress-fill" style="width:{{ prox | round(1) }}%; background:{{ bar_color }};"></div>
+                </div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-dim); display:flex; justify-content:space-between; padding:0 1px;">
+                    <span>0%</span>
+                    <span style="color:{{ bar_color }};">{{ prox | round(0) | int }}% de proximité au déclenchement</span>
+                    <span>100%</span>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Section Déclenchées -->
+            <div class="al-section-label" style="margin-top:2px;">
+                DÉCLENCHÉES
+                <span class="al-count-badge">{{ triggered_alerts|length }}</span>
+            </div>
+
+            {% if not triggered_alerts %}
+            <div style="padding:16px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); text-align:center; text-transform:uppercase; letter-spacing:1px;">
+                Aucune alerte déclenchée
+            </div>
+            {% else %}
+            {% for alert in triggered_alerts %}
+            {% set cp = alert['current_price'] | float(0) %}
+            {% set tp = alert['target_price']  | float %}
+            <div class="al-row triggered">
+                <div class="al-row-top">
+                    <span class="al-ticker">{{ alert['ticker'] }}</span>
+                    <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                    <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
+                    <div class="al-prices">
+                        <div class="al-price-cell">
+                            <span class="al-price-label">Cible</span>
+                            <span class="al-price-val target">{{ tp | round(2) }}</span>
+                        </div>
+                        {% if cp > 0 %}
+                        <div class="al-price-cell">
+                            <span class="al-price-label">Au trigger</span>
+                            <span class="al-price-val">{{ cp | round(2) }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <span class="triggered-tag">TRIGGERED</span>
+                        {% if alert['triggered_at'] %}
+                        <span class="triggered-date">{{ alert['triggered_at'][:10] }}</span>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
+                          onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                        <button type="submit" class="al-delete-btn">×</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ── Autocomplete ──
+var alertAbort = null;
+var alertSugIdx = -1;
+
+async function alertFetchSuggestions(q) {
+    var box = document.getElementById('alert-suggestions');
+    if (!q || q.length < 1) { box.style.display = 'none'; return; }
+    if (alertAbort) alertAbort.abort();
+    alertAbort = new AbortController();
+    try {
+        var res  = await fetch('/api/search-ticker?q=' + encodeURIComponent(q), { signal: alertAbort.signal });
+        var data = await res.json();
+        var items = data.results || data || [];
+        if (!items.length) { box.style.display = 'none'; return; }
+        box.innerHTML = items.slice(0, 8).map(function(item) {
+            var t = item.ticker || item.symbol || '';
+            var n = item.name || item.shortName || '';
+            return '<div class="al-sug-item" onclick="pickAlertAsset(\'' + escQ(t) + '\', \'' + escQ(n) + '\')">' +
+                   '<span class="al-sug-ticker">' + t + '</span>' +
+                   '<span class="al-sug-name">' + n + '</span>' +
+                   '</div>';
+        }).join('');
+        box.style.display = 'block';
+        alertSugIdx = -1;
+    } catch(e) { if (e.name !== 'AbortError') box.style.display = 'none'; }
+}
+
+function escQ(s) { return (s || '').replace(/'/g, "\\'").replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+async function pickAlertAsset(ticker, name) {
+    document.getElementById('alert-ticker-input').value = ticker + (name ? ' — ' + name.substring(0, 30) : '');
+    document.getElementById('alert-ticker-val').value   = ticker;
+    document.getElementById('alert-name-val').value     = name;
+    document.getElementById('alert-suggestions').style.display = 'none';
+
+    // Fetch current price
+    var hint   = document.getElementById('alert-price-hint');
+    var dispEl = document.getElementById('alert-price-display');
+    hint.style.display = '';
+    dispEl.textContent = '…';
+    document.getElementById('alert-price-val').value = '';
+
+    try {
+        var res  = await fetch('/api/price/' + encodeURIComponent(ticker));
+        var data = await res.json();
+        if (data.price) {
+            var p = parseFloat(data.price);
+            dispEl.textContent = p.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('alert-price-val').value = p;
+            // Pre-fill target price with current price if empty
+            var tp = document.getElementById('target-price');
+            if (!tp.value) tp.value = p.toFixed(2);
+            updateTargetHint(p);
+        } else {
+            dispEl.textContent = 'Indisponible';
+        }
+    } catch(e) {
+        dispEl.textContent = 'Erreur';
+    }
+}
+
+function alertHandleKey(e) {
+    var box   = document.getElementById('alert-suggestions');
+    var items = box.querySelectorAll('.al-sug-item');
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        alertSugIdx = Math.min(alertSugIdx + 1, items.length - 1);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === alertSugIdx); });
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        alertSugIdx = Math.max(alertSugIdx - 1, 0);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === alertSugIdx); });
+    } else if (e.key === 'Enter' && alertSugIdx >= 0) {
+        e.preventDefault();
+        items[alertSugIdx] && items[alertSugIdx].click();
+    } else if (e.key === 'Escape') {
+        box.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.al-autocomplete-wrap'))
+        document.getElementById('alert-suggestions').style.display = 'none';
+});
+
+// ── Condition toggle ──
+function setCondition(cond) {
+    document.getElementById('condition-val').value = cond;
+    document.getElementById('btn-above').classList.toggle('active', cond === 'above');
+    document.getElementById('btn-below').classList.toggle('active', cond === 'below');
+    updateTargetHint(parseFloat(document.getElementById('alert-price-val').value) || 0);
+}
+
+// ── Target hint ──
+function updateTargetHint(currentPrice) {
+    var hint   = document.getElementById('target-hint');
+    var target = parseFloat(document.getElementById('target-price').value) || 0;
+    var cond   = document.getElementById('condition-val').value;
+    if (!target || !currentPrice) { hint.style.display = 'none'; return; }
+    var gap    = ((target - currentPrice) / currentPrice * 100);
+    var gapStr = (gap >= 0 ? '+' : '') + gap.toFixed(2) + '%';
+    var dir    = cond === 'above' ? 'hausse' : 'baisse';
+    hint.style.display = '';
+    hint.textContent   = 'Déclenchement si ' + dir + ' de ' + gapStr + ' depuis le prix actuel';
+    hint.style.color   = Math.abs(gap) < 5 ? 'var(--red)' : Math.abs(gap) < 15 ? 'var(--yellow)' : 'var(--text-dim)';
+}
+
+document.getElementById('target-price').addEventListener('input', function() {
+    updateTargetHint(parseFloat(document.getElementById('alert-price-val').value) || 0);
+});
+
+// ── Form validation ──
+document.getElementById('alert-form').addEventListener('submit', function(e) {
+    var ticker = document.getElementById('alert-ticker-val').value;
+    if (!ticker) {
+        e.preventDefault();
+        alert('Sélectionne un actif dans la liste de suggestions.');
+    }
+});
+</script>
+{% endblock %}

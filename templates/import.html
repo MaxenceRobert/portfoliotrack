@@ -2,126 +2,227 @@
 {% block title %}Importer des achats{% endblock %}
 {% block content %}
 
+<style>
+.import-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+}
+.import-step:last-child { border-bottom: none; }
+.step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.step-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+.step-desc { font-size: 9px; color: var(--text-dim); line-height: 1.7; }
+.col-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid rgba(255,140,0,0.2);
+    padding: 1px 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin: 1px 2px;
+}
+.drop-zone {
+    border: 1px dashed var(--border-light);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+.drop-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.drop-icon { font-size: 9px; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+.drop-text { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; }
+.drop-sub  { font-size: 9px; color: var(--text-dim); opacity: 0.6; }
+.drop-selected { font-size: 10px; color: var(--green); font-weight: 700; display: none; margin-top: 8px; }
+.col-row { border-bottom: 1px solid var(--border); }
+.col-row-last { border-bottom: none; }
+.req-yes { color: var(--green); }
+.req-no  { color: var(--text-dim); }
+</style>
+
 <div class="page-header">
     <div>
         <h1>Importer des achats</h1>
         <p>Importez votre historique complet depuis un fichier Excel.</p>
     </div>
-    <a href="{{ url_for('main.purchases') }}" class="btn btn-ghost">← Historique</a>
-</div>
-
-<div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex; gap:2rem; flex-wrap:wrap;">
-        <div style="flex:1; min-width:200px;">
-            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-                <div style="width:2rem; height:2rem; background:#1a2a3a; color:#e8f0ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">1</div>
-                <strong style="color:#e8f0ff;">Téléchargez le template</strong>
-            </div>
-            <p style="font-size:0.875rem; color:rgba(232,240,255,0.45); line-height:1.6;">
-                Téléchargez le fichier Excel modèle et remplissez vos achats en suivant le format des exemples.
-            </p>
-            <a href="{{ url_for('main.download_template') }}" class="btn btn-ghost" style="margin-top:0.75rem;">
-                ↓ Télécharger le template Excel
-            </a>
-        </div>
-
-        <div style="flex:1; min-width:200px;">
-            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-                <div style="width:2rem; height:2rem; background:#1a2a3a; color:#e8f0ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">2</div>
-                <strong style="color:#e8f0ff;">Remplissez vos données</strong>
-            </div>
-            <p style="font-size:0.875rem; color:rgba(232,240,255,0.45); line-height:1.6;">
-                Remplissez le fichier avec vos achats. Les tickers doivent déjà exister dans votre portefeuille.
-            </p>
-            <div style="margin-top:0.75rem; background:rgba(74,122,155,0.06); border:1px solid rgba(74,122,155,0.10); border-radius:8px; padding:0.75rem; font-size:0.78rem; font-family:monospace; color:rgba(232,240,255,0.65); line-height:1.8;">
-                ticker | date | shares | price_per_share | fees | notes<br>
-                ESE.PA | 17/01/2025 | 4 | 28.982 | 0 | DCA<br>
-                PAEEM.PA | 04/02/2025 | 2 | 15.50 | 0 | DCA
-            </div>
-        </div>
-
-        <div style="flex:1; min-width:200px;">
-            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-                <div style="width:2rem; height:2rem; background:#1a2a3a; color:#e8f0ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">3</div>
-                <strong style="color:#e8f0ff;">Importez le fichier</strong>
-            </div>
-            <p style="font-size:0.875rem; color:rgba(232,240,255,0.45); line-height:1.6;">
-                Enregistrez le fichier au format .xlsx et importez-le directement ci-dessous.
-            </p>
-        </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('main.history') }}" class="btn btn-ghost">← Historique</a>
     </div>
 </div>
 
-<div class="card" style="margin-bottom:1.5rem;">
-    <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem; color:#e8f0ff;">Format des colonnes</h3>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Colonne</th>
-                    <th>Obligatoire</th>
-                    <th>Format</th>
-                    <th>Exemple</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">ticker</code></td>
-                    <td><span class="badge badge-action">Oui</span></td>
-                    <td>Ticker Yahoo Finance</td>
-                    <td>ESE.PA</td>
-                </tr>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">date</code></td>
-                    <td><span class="badge badge-action">Oui</span></td>
-                    <td>DD/MM/YYYY ou YYYY-MM-DD</td>
-                    <td>17/01/2025</td>
-                </tr>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">shares</code></td>
-                    <td><span class="badge badge-action">Oui</span></td>
-                    <td>Nombre décimal</td>
-                    <td>4 ou 3.5</td>
-                </tr>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">price_per_share</code></td>
-                    <td><span class="badge badge-action">Oui</span></td>
-                    <td>Nombre décimal</td>
-                    <td>28.982</td>
-                </tr>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">fees</code></td>
-                    <td><span class="badge badge-other">Non</span></td>
-                    <td>Nombre décimal</td>
-                    <td>1.99</td>
-                </tr>
-                <tr>
-                    <td><code style="background:rgba(74,122,155,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem; color:#4a7a9b;">notes</code></td>
-                    <td><span class="badge badge-other">Non</span></td>
-                    <td>Texte libre</td>
-                    <td>Achat DCA janvier</td>
-                </tr>
-            </tbody>
-        </table>
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px; max-width:900px;">
+
+    <!-- Étapes -->
+    <div style="background:var(--panel); border:1px solid var(--border); flex:1; min-width:280px;">
+        <div class="card-head" style="margin:0; padding:10px 14px;">
+            <span class="card-title">Mode d'emploi</span>
+        </div>
+
+        <div class="import-step">
+            <div class="step-num">1</div>
+            <div>
+                <div class="step-title">Téléchargez le template</div>
+                <p class="step-desc">Téléchargez le fichier Excel modèle et remplissez vos achats en suivant le format des exemples.</p>
+                <a href="{{ url_for('main.download_template') }}" class="btn btn-ghost btn-sm" style="margin-top:8px;">
+                    ↓ Template Excel
+                </a>
+            </div>
+        </div>
+
+        <div class="import-step">
+            <div class="step-num">2</div>
+            <div>
+                <div class="step-title">Remplissez vos données</div>
+                <p class="step-desc">Colonnes attendues :</p>
+                <div style="margin-top:6px;">
+                    <span class="col-tag">ticker</span>
+                    <span class="col-tag">date</span>
+                    <span class="col-tag">shares</span>
+                    <span class="col-tag">price_per_share</span>
+                    <span class="col-tag">fees</span>
+                    <span class="col-tag">notes</span>
+                </div>
+                <div style="margin-top:8px; background:var(--bg); border:1px solid var(--border); padding:8px 10px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); line-height:1.9;">
+                    ESE.PA | 17/01/2025 | 4 | 28.982 | 0 | DCA<br>
+                    PAEEM.PA | 04/02/2025 | 2 | 15.50 | 0 | DCA
+                </div>
+            </div>
+        </div>
+
+        <div class="import-step">
+            <div class="step-num">3</div>
+            <div>
+                <div class="step-title">Importez le fichier</div>
+                <p class="step-desc">Enregistrez en .xlsx et importez ci-contre. Les tickers doivent déjà exister dans votre portefeuille.</p>
+            </div>
+        </div>
     </div>
-    <p style="font-size:0.8rem; color:rgba(232,240,255,0.30); margin-top:0.75rem;">
-        ⚠️ Les tickers doivent déjà être ajoutés dans ton portefeuille avant l'import.
-    </p>
+
+    <!-- Formulaire d'import -->
+    <div style="background:var(--panel); border:1px solid var(--border); flex:1; min-width:280px; display:flex; flex-direction:column;">
+        <div class="card-head" style="margin:0; padding:10px 14px;">
+            <span class="card-title">Importer votre fichier</span>
+        </div>
+        <div style="padding:14px; flex:1; display:flex; flex-direction:column;">
+
+            <!-- Format table -->
+            <div style="margin-bottom:14px;">
+                <div style="font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Format des colonnes</div>
+                <div style="border:1px solid var(--border); overflow:hidden;">
+                    <div style="display:grid; grid-template-columns: 1fr 60px 1fr 1fr; background:var(--panel-header); border-bottom:1px solid var(--border);">
+                        <div style="padding:5px 8px; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Colonne</div>
+                        <div style="padding:5px 8px; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Requis</div>
+                        <div style="padding:5px 8px; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Format</div>
+                        <div style="padding:5px 8px; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Exemple</div>
+                    </div>
+                    {% set cols = [
+                        ('ticker', true, 'Ticker Yahoo', 'ESE.PA'),
+                        ('date', true, 'DD/MM/YYYY', '17/01/2025'),
+                        ('shares', true, 'Décimal', '4 ou 3.5'),
+                        ('price_per_share', true, 'Décimal', '28.982'),
+                        ('fees', false, 'Décimal', '1.99'),
+                        ('notes', false, 'Texte', 'Achat DCA'),
+                    ] %}
+                    {% for name, required, fmt, ex in cols %}
+                    <div class="col-row{% if loop.last %} col-row-last{% endif %}" style="display:grid; grid-template-columns: 1fr 60px 1fr 1fr;">
+                        <div style="padding:5px 8px; font-size:9px; font-weight:700; color:var(--accent);">{{ name }}</div>
+                        <div class="{% if required %}req-yes{% else %}req-no{% endif %}" style="padding:5px 8px; font-size:9px;">{% if required %}Oui{% else %}Non{% endif %}</div>
+                        <div style="padding:5px 8px; font-size:9px; color:var(--text-dim);">{{ fmt }}</div>
+                        <div style="padding:5px 8px; font-size:9px; color:var(--text-dim);">{{ ex }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" style="flex:1; display:flex; flex-direction:column;">
+
+                <div class="form-group" style="flex:1;">
+                    <label>Fichier Excel (.xlsx)</label>
+                    <div class="drop-zone" id="drop-zone">
+                        <input type="file" id="csv_file" name="csv_file" accept=".xlsx" required
+                               onchange="onFileChange(this)">
+                        <div class="drop-icon">
+                            <i data-lucide="upload" style="width:20px;height:20px;display:block;margin:0 auto 8px;"></i>
+                        </div>
+                        <div class="drop-text">Glissez votre fichier Excel ici</div>
+                        <div class="drop-sub">ou cliquez pour parcourir — .xlsx uniquement</div>
+                        <div class="drop-selected" id="file-name"></div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-primary">Importer les achats</button>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
+                </div>
+                <div class="form-hint" style="margin-top:8px;">
+                    Les tickers doivent déjà être ajoutés dans votre portefeuille avant l'import.
+                </div>
+            </form>
+
+        </div>
+    </div>
+
 </div>
 
-<div class="card form-card" style="max-width:560px;">
-    <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem; color:#e8f0ff;">Importer votre fichier Excel</h3>
-    <form method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="csv_file">Fichier Excel (.xlsx)</label>
-            <input type="file" id="csv_file" name="csv_file" accept=".xlsx" required>
-            <div class="form-hint">Format accepté : .xlsx — utilise le template fourni ci-dessus.</div>
-        </div>
-        <div style="display:flex; gap:0.75rem; margin-top:1.25rem;">
-            <button type="submit" class="btn btn-primary">Importer les achats</button>
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost">Annuler</a>
-        </div>
-    </form>
-</div>
+<script>
+function onFileChange(input) {
+    var nameEl = document.getElementById('file-name');
+    if (input.files && input.files[0]) {
+        nameEl.textContent = '✓ ' + input.files[0].name;
+        nameEl.style.display = 'block';
+        document.querySelector('.drop-text').style.color = 'var(--text)';
+    }
+}
+
+var dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dz.classList.add('drag-over');
+});
+dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    var files = e.dataTransfer.files;
+    if (files.length) {
+        document.getElementById('csv_file').files = files;
+        onFileChange(document.getElementById('csv_file'));
+    }
+});
+</script>
 
 {% endblock %}

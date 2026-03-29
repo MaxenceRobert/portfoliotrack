@@ -1,231 +1,344 @@
 {% extends 'base.html' %}
 {% block title %}Mon profil {{ profil }} — PortfolioTrack{% endblock %}
 {% block content %}
-
 <style>
-.result-wrap { max-width: 820px; margin: 0 auto; }
-
+.page-content { padding: 0 !important; }
+.profil-outer {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 16px 12px 40px;
+}
 /* ── Score hero ── */
-.score-hero {
-    text-align: center;
-    padding: 2.5rem 1.5rem 2rem;
-    background: rgba(74,122,155,0.05);
-    border: 1px solid rgba(74,122,155,0.09);
-    border-radius: 20px;
-    margin-bottom: 1.25rem;
-    position: relative;
-    overflow: hidden;
-}
-.score-hero::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 200%;
-    background: transparent;
-    pointer-events: none;
-}
-.score-emoji { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
-.score-profil-name {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #e8f0ff;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.4rem;
-}
-.score-number {
-    font-size: 3.5rem;
-    font-weight: 900;
-    color: {% if last_profil.score_global <= 40 %}#4ade80{% elif last_profil.score_global > 80 %}#f87171{% else %}#e8f0ff{% endif %};
-    line-height: 1;
-    letter-spacing: -0.04em;
-}
-.score-suffix { font-size: 1.2rem; color: rgba(232,240,255,0.3); font-weight: 600; }
-.score-alloc {
-    margin-top: 0.75rem;
-    display: inline-block;
-    font-size: 0.82rem;
-    color: rgba(232,240,255,0.45);
-    background: rgba(74,122,155,0.07);
-    border: 1px solid rgba(74,122,155,0.10);
-    border-radius: 20px;
-    padding: 0.3rem 1rem;
-}
-.score-date {
-    margin-top: 0.6rem;
-    font-size: 0.75rem;
-    color: rgba(232,240,255,0.2);
-}
-
-/* ── Score gauge ── */
-.gauge-wrap { margin-bottom: 1.25rem; }
-.gauge-bar-outer {
-    background: rgba(74,122,155,0.06);
-    border-radius: 99px;
-    height: 12px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-}
-.gauge-segments {
-    position: absolute; inset: 0;
+.result-hero {
     display: flex;
-    border-radius: 99px;
-    overflow: hidden;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    margin-bottom: 2px;
 }
-.gauge-seg { flex: 1; }
-.gauge-fill {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    border-radius: 99px;
-    background: #e8f0ff;
-    opacity: 0.85;
-    transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
-    box-shadow: 0 4px 12px rgba(4,8,15,0.4);
+.result-hero-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
 }
-.gauge-labels {
+.result-hero-score sup {
+    font-size: 16px;
+    color: var(--text-dim);
+    font-weight: 400;
+    vertical-align: super;
+    margin-left: 2px;
+}
+.result-hero-info { flex: 1; min-width: 0; }
+.result-profil-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.result-alloc-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border-light);
+    padding: 3px 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-right: 6px;
+}
+.result-hero-emoji {
+    font-size: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+/* ── Segmented bar ── */
+.seg-bar-wrap {
+    padding: 14px 24px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 2px;
+}
+.seg-bar-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.seg-bar {
+    display: flex;
+    gap: 3px;
+    height: 8px;
+    margin-bottom: 6px;
+}
+.seg-bar-seg { flex: 1; background: var(--border-light); }
+.seg-bar-seg.filled-1 { background: #00C853; }
+.seg-bar-seg.filled-2 { background: #00C853; }
+.seg-bar-seg.filled-3 { background: #64DD17; }
+.seg-bar-seg.filled-4 { background: #64DD17; }
+.seg-bar-seg.filled-5 { background: #FFD600; }
+.seg-bar-seg.filled-6 { background: #FFD600; }
+.seg-bar-seg.filled-7 { background: #FF8C00; }
+.seg-bar-seg.filled-8 { background: #FF8C00; }
+.seg-bar-seg.filled-9 { background: #FF1744; }
+.seg-bar-seg.filled-10 { background: #FF1744; }
+.seg-bar-markers {
     display: flex;
     justify-content: space-between;
-    font-size: 0.65rem;
-    color: rgba(232,240,255,0.2);
-    font-weight: 600;
-    padding: 0 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
 }
-
 /* ── Axes ── */
-.axes-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.5rem; }
-.axis-row { display: flex; align-items: center; gap: 1rem; }
+.axes-panel {
+    padding: 16px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 2px;
+}
+.panel-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.axis-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.axis-row:last-child { margin-bottom: 0; }
 .axis-name {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.45);
-    font-weight: 600;
-    min-width: 175px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    min-width: 200px;
     flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 .axis-bar-outer {
     flex: 1;
-    background: rgba(74,122,155,0.07);
-    border-radius: 99px;
-    height: 7px;
+    background: var(--border);
+    height: 4px;
     overflow: hidden;
 }
 .axis-bar-fill {
     height: 100%;
-    border-radius: 99px;
-    background: #e8f0ff;
+    background: var(--accent);
     transition: width 1s ease;
 }
 .axis-score-val {
-    font-size: 0.78rem;
-    color: rgba(232,240,255,0.5);
-    font-weight: 700;
-    min-width: 34px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    min-width: 48px;
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
-
 /* ── Recommendation ── */
-.rec-card { padding: 2rem; }
-.rec-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-.rec-body { color: rgba(232,240,255,0.68); font-size: 0.9rem; line-height: 1.75; }
-.rec-body p { margin-bottom: 1rem; }
-.rec-body p:last-child { margin-bottom: 0; }
-.rec-badge {
-    display: inline-flex;
+.rec-panel {
+    padding: 16px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    margin-bottom: 2px;
+}
+.rec-panel-head {
+    display: flex;
     align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    background: transparent;
-    color: #4a7a9b;
-    border: 1px solid #1a2a3a;
-    border-radius: 20px;
-    padding: 0.22rem 0.7rem;
-    margin-bottom: 1rem;
+    gap: 8px;
+    margin-bottom: 10px;
 }
-
-/* ── DCA simulator ── */
-.dca-card { padding: 2rem; }
-.dca-card h3 { font-size: 1rem; font-weight: 800; color: #e8f0ff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-.dca-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
-.dca-inputs .form-group { margin: 0; }
-.dca-hint { font-size: 0.72rem; color: rgba(232,240,255,0.25); margin-top: 0.25rem; }
-.dca-rate-badge {
-    display: inline-block;
-    font-size: 0.72rem;
-    background: transparent;
-    color: #4a7a9b;
-    border-radius: 20px;
-    border: 1px solid #1a2a3a;
-    padding: 0.15rem 0.55rem;
-    margin-left: 0.4rem;
+.rec-panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
     font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-bright);
+    text-transform: uppercase;
 }
-
+.rec-ai-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #000;
+    padding: 2px 6px;
+    letter-spacing: 1px;
+}
+.rec-edu-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+.rec-body {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.72);
+    line-height: 1.8;
+}
+.rec-body p { margin-bottom: 10px; }
+.rec-body p:last-child { margin-bottom: 0; }
+/* ── DCA ── */
+.dca-outer {
+    padding: 16px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 2px;
+}
+.dca-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.dca-field label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.dca-field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-bright);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    box-sizing: border-box;
+}
+.dca-field input:focus { border-bottom-color: var(--accent); }
+.dca-field .dca-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+.dca-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 14px;
+    margin-bottom: 2px;
+}
+.dca-kpi {
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+.dca-kpi-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.dca-kpi-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-bright);
+    font-variant-numeric: tabular-nums;
+}
+.dca-kpi-val.green { color: var(--green); }
 /* ── Actions ── */
 .result-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-top: 1.5rem;
+    padding-top: 8px;
 }
-
-@media (max-width: 600px) {
-    .axis-name { min-width: 130px; font-size: 0.72rem; }
-    .score-number { font-size: 2.8rem; }
-    .score-profil-name { font-size: 1.6rem; }
-    .rec-card, .dca-card { padding: 1.25rem; }
+@media (max-width: 640px) {
+    .result-hero { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .result-hero-score { font-size: 40px; }
+    .axis-name { min-width: 130px; font-size: 8px; }
+    .dca-kpis { grid-template-columns: repeat(2, 1fr); }
     .result-actions { flex-direction: column; }
-    .result-actions .btn { text-align: center; }
 }
 </style>
 
-<div class="result-wrap">
+<div class="profil-outer">
 
-    <!-- Score hero -->
-    <div class="score-hero">
-        <span class="score-emoji">{{ profil_emoji }}</span>
-        <div class="score-profil-name">Profil {{ profil }}</div>
-        <div>
-            <span class="score-number">{{ last_profil.score_global }}</span>
-            <span class="score-suffix"> / 100</span>
-        </div>
-        <div class="score-alloc">{{ allocation }}</div>
-        {% if last_profil.date_test %}
-        <div class="score-date">
-            Test réalisé le {{ last_profil.date_test | string | truncate(10, True, '') }}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Gauge -->
-    <div class="card gauge-wrap" style="padding:1.5rem;">
-        <div class="section-title" style="margin-top:0;">Score global</div>
-        <div class="gauge-bar-outer">
-            <div class="gauge-segments">
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.05);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
-                <div class="gauge-seg" style="background:rgba(74,122,155,0.06);"></div>
+    <!-- Hero -->
+    <div class="result-hero">
+        <div class="result-hero-emoji">{{ profil_emoji }}</div>
+        <div class="result-hero-info">
+            <div class="result-profil-name">{{ profil }}</div>
+            <div style="margin-bottom:8px;">
+                <span class="result-alloc-badge">{{ allocation }}</span>
+                <span class="result-alloc-badge">Mon profil</span>
             </div>
-            <div class="gauge-fill" id="gauge-fill" style="width:0%;"></div>
+            {% if last_profil.date_test %}
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase;">
+                Test réalisé le {{ last_profil.date_test | string | truncate(10, True, '') }}
+            </div>
+            {% endif %}
         </div>
-        <div class="gauge-labels">
-            <span>0 — Prudent</span>
-            <span>20</span>
-            <span>40 — Équilibré</span>
-            <span>60</span>
-            <span>80</span>
-            <span>100 — Agressif</span>
+        <div class="result-hero-score">{{ last_profil.score_global }}<sup>/100</sup></div>
+    </div>
+
+    <!-- Segmented bar -->
+    <div class="seg-bar-wrap">
+        <div class="seg-bar-label">Spectre de risque · 0 = Prudent → 100 = Agressif</div>
+        <div class="seg-bar">
+            {% for i in range(1, 11) %}
+            {% set threshold = i * 10 %}
+            {% if last_profil.score_global >= threshold %}
+            <div class="seg-bar-seg filled-{{ i }}"></div>
+            {% elif last_profil.score_global >= (threshold - 5) %}
+            <div class="seg-bar-seg filled-{{ i }}" style="opacity:0.5;"></div>
+            {% else %}
+            <div class="seg-bar-seg"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <div class="seg-bar-markers">
+            <span>0 — PRUDENT</span>
+            <span>25</span>
+            <span>50 — ÉQUILIBRÉ</span>
+            <span>75</span>
+            <span>100 — AGRESSIF</span>
         </div>
     </div>
 
-    <!-- Axis scores -->
-    <div class="card" style="padding:1.5rem; margin-bottom:1.25rem;">
-        <div class="section-title" style="margin-top:0;">Scores par axe</div>
-        <div class="axes-grid">
+    <!-- Axes -->
+    <div class="axes-panel">
+        <div class="panel-section-label">Scores par axe</div>
+        <div>
             {% for k, name in axis_names.items() %}
             {% set score = last_profil.scores_axes.get(k, last_profil.scores_axes.get(k | int, 0)) %}
             <div class="axis-row">
@@ -240,89 +353,81 @@
     </div>
 
     <!-- Recommendation -->
-    <div class="card rec-card" style="margin-bottom:1.25rem;">
-        <h3>
-            <span style="color:#4a7a9b;">✦</span>
-            Recommandation personnalisée
-        </h3>
-        <div class="rec-badge">🤖 Généré par IA · à titre éducatif uniquement</div>
+    <div class="rec-panel">
+        <div class="rec-panel-head">
+            <span class="rec-panel-title">Recommandation personnalisée</span>
+            <span class="rec-ai-badge">IA</span>
+        </div>
+        <div class="rec-edu-note">À titre éducatif uniquement · Pas un conseil en investissement</div>
         <div class="rec-body">
             {{ recommendation_html | safe }}
         </div>
     </div>
 
     <!-- DCA Simulator -->
-    <div class="card dca-card" style="margin-bottom:1.25rem;">
-        <h3>
-            🧮 Simulateur DCA
-            <span class="dca-rate-badge">Taux estimé : {{ dca_rate }}%/an</span>
-        </h3>
+    <div class="dca-outer">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <span class="panel-section-label" style="margin-bottom:0;">Simulateur DCA</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); border:1px solid var(--border-light); padding:2px 8px; text-transform:uppercase; letter-spacing:1px;">
+                Taux estimé : {{ dca_rate }}%/an
+            </span>
+        </div>
         <div class="dca-inputs">
-            <div class="form-group">
+            <div class="dca-field">
                 <label for="dca-monthly">Versement mensuel (€)</label>
                 <input type="number" id="dca-monthly" value="300" min="10" max="100000" step="10">
             </div>
-            <div class="form-group">
+            <div class="dca-field">
                 <label for="dca-years">Durée (années)</label>
                 <input type="number" id="dca-years" value="15" min="1" max="40" step="1">
             </div>
-            <div class="form-group">
+            <div class="dca-field">
                 <label for="dca-rate">Rendement annuel (%)</label>
                 <input type="number" id="dca-rate" value="{{ dca_rate }}" min="0" max="30" step="0.5">
                 <div class="dca-hint">Estimé pour un profil {{ profil }}</div>
             </div>
         </div>
-        <button class="btn btn-primary" onclick="runDCA()">Simuler</button>
+        <button class="btn btn-primary" onclick="runDCA()">SIMULER</button>
 
-        <div id="dca-kpis" class="kpi-grid" style="display:none; margin-top:1.5rem;">
-            <div class="kpi-card">
-                <div class="kpi-label">Total investi</div>
-                <div class="kpi-value neutral" id="dca-invested">—</div>
+        <div id="dca-kpis" class="dca-kpis" style="display:none;">
+            <div class="dca-kpi">
+                <div class="dca-kpi-label">Total investi</div>
+                <div class="dca-kpi-val" id="dca-invested">—</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Valeur finale estimée</div>
-                <div class="kpi-value positive" id="dca-final">—</div>
+            <div class="dca-kpi">
+                <div class="dca-kpi-label">Valeur finale</div>
+                <div class="dca-kpi-val green" id="dca-final">—</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Intérêts composés</div>
-                <div class="kpi-value positive" id="dca-gains">—</div>
+            <div class="dca-kpi">
+                <div class="dca-kpi-label">Intérêts composés</div>
+                <div class="dca-kpi-val green" id="dca-gains">—</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Multiplicateur</div>
-                <div class="kpi-value positive" id="dca-mult">—</div>
+            <div class="dca-kpi">
+                <div class="dca-kpi-label">Multiplicateur</div>
+                <div class="dca-kpi-val green" id="dca-mult">—</div>
             </div>
         </div>
 
-        <div class="card" id="dca-chart-wrap" style="display:none; margin-top:1.25rem; padding:0; border:none; background:none;">
+        <div id="dca-chart-wrap" style="display:none; margin-top:8px;">
             <div id="dca-chart"></div>
         </div>
     </div>
 
     <!-- Actions -->
     <div class="result-actions">
-        <a href="{{ url_for('main.profile') }}" class="btn btn-ghost">
-            ← Retour au profil
-        </a>
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">
-            ↺ Refaire le test
-        </a>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-            Suivre mon portefeuille →
-        </a>
+        <a href="{{ url_for('main.profile') }}" class="btn btn-ghost">← RETOUR AU PROFIL</a>
+        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">SUIVRE MON PORTEFEUILLE →</a>
     </div>
 
 </div>
 
 <script>
 window.addEventListener('load', function() {
-    setTimeout(function() {
-        document.getElementById('gauge-fill').style.width = '{{ last_profil.score_global }}%';
-    }, 200);
     document.querySelectorAll('.axis-bar-anim').forEach(function(el) {
-        setTimeout(function() {
-            el.style.width = el.dataset.target + '%';
-        }, 350);
+        setTimeout(function() { el.style.width = el.dataset.target + '%'; }, 300);
     });
+    setTimeout(runDCA, 500);
 });
 
 function fmtEur(n) {
@@ -360,29 +465,27 @@ function runDCA() {
         {
             x: labels, y: invested, name: 'Total investi (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: 'rgba(232,240,255,0.25)', dash: 'dot', width: 2 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.05)'
+            line: { color: 'rgba(255,255,255,0.20)', dash: 'dot', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(255,255,255,0.02)'
         },
         {
             x: labels, y: value, name: 'Valeur estimée (€)',
             type: 'scatter', mode: 'lines',
-            line: { color: '#e8f0ff', width: 2.5 },
-            fill: 'tozeroy', fillcolor: 'rgba(74,122,155,0.06)'
+            line: { color: '#00C853', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(0,200,83,0.06)'
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor:  'rgba(0,0,0,0)',
-        height: 320,
-        margin: { l: 60, r: 20, t: 20, b: 40 },
-        legend: { orientation: 'h', y: -0.18, font: { color: 'rgba(232,240,255,0.45)' }, bgcolor: 'rgba(0,0,0,0)' },
+        height: 260,
+        margin: { l: 60, r: 12, t: 12, b: 40 },
+        font: { family: 'IBM Plex Mono, monospace', size: 9 },
+        legend: { orientation: 'h', y: -0.22, font: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 }, bgcolor: 'rgba(0,0,0,0)' },
         hovermode: 'x unified',
-        hoverlabel: { bgcolor: '#16161F', bordercolor: 'rgba(74,122,155,0.1)', font: { color: 'rgba(232,240,255,0.8)' } },
-        xaxis: { gridcolor: 'rgba(74,122,155,0.1)', tickfont: { color: 'rgba(232,240,255,0.35)' }, linecolor: 'rgba(74,122,155,0.1)' },
-        yaxis: { gridcolor: 'rgba(74,122,155,0.1)', tickfont: { color: 'rgba(232,240,255,0.35)' }, linecolor: 'rgba(74,122,155,0.1)', tickformat: ',.0f', ticksuffix: ' €' }
+        hoverlabel: { bgcolor: '#0A0A0A', bordercolor: '#1E1E1E', font: { color: 'rgba(255,255,255,0.8)', family: 'IBM Plex Mono, monospace', size: 10 } },
+        xaxis: { gridcolor: '#1E1E1E', tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 }, linecolor: '#1E1E1E', zeroline: false },
+        yaxis: { gridcolor: '#1E1E1E', tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 }, linecolor: '#1E1E1E', tickformat: ',.0f', ticksuffix: ' €', zeroline: false }
     }, { responsive: true, displayModeBar: false });
 }
-
-window.addEventListener('load', function() { setTimeout(runDCA, 400); });
 </script>
-
 {% endblock %}

@@ -1,80 +1,107 @@
 {% extends 'base.html' %}
 {% block title %}Contact — PortfolioTrack{% endblock %}
 {% block content %}
+
 <div class="page-header">
     <div>
         <h1>Contact</h1>
-        <p>Une question, un bug, une suggestion ? Écris-moi directement.</p>
+        <p>Une question, un bug, une suggestion ? Écrivez-nous directement.</p>
     </div>
 </div>
 
-<div class="card form-card" style="max-width:600px;">
-    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px; max-width:720px;">
 
-        <div style="display:flex; align-items:flex-start; gap:1rem;">
-            <div style="display:flex; align-items:center; justify-content:center;
-                        width:44px; height:44px; flex-shrink:0;
-                        background:rgba(74,122,155,0.06); border:1px solid #1a2a3a;
-                        border-radius:12px; color:#4a7a9b;">
-                <i data-lucide="mail" style="width:22px;height:22px;"></i>
-            </div>
-            <div>
-                <div style="font-weight:600; margin-bottom:0.25rem; color:#e8f0ff;">Email</div>
-                <a href="mailto:maxencerbr@gmail.com"
-                   style="color:#e8f0ff; text-decoration:none; font-size:0.95rem;">
-                    maxencerbr@gmail.com
-                </a>
-                <div style="font-size:0.82rem; color:rgba(232,240,255,0.35); margin-top:0.25rem;">
-                    Réponse sous 24-48h en général.
-                </div>
-            </div>
+    <!-- Infos contact -->
+    <div style="background:var(--panel); border:1px solid var(--border); padding:14px; flex:1; min-width:260px;">
+        <div class="card-head" style="margin:0 0 12px 0; padding-bottom:8px;">
+            <span class="card-title">Nous contacter</span>
         </div>
 
-        <hr style="border:none; border-top:1px solid rgba(74,122,155,0.07);">
+        <div style="display:flex; flex-direction:column; gap:14px;">
 
-        <div style="display:flex; align-items:flex-start; gap:1rem;">
-            <div style="display:flex; align-items:center; justify-content:center;
-                        width:44px; height:44px; flex-shrink:0;
-                        background:rgba(74,122,155,0.06); border:1px solid #1a2a3a;
-                        border-radius:12px; color:#4a7a9b;">
-                <i data-lucide="bug" style="width:22px;height:22px;"></i>
-            </div>
-            <div>
-                <div style="font-weight:600; margin-bottom:0.25rem; color:#e8f0ff;">Signaler un bug</div>
-                <div style="font-size:0.82rem; color:rgba(232,240,255,0.4); line-height:1.6;">
-                    Décris ce que tu faisais, ce que tu as vu, et ce que tu attendais.
-                    Une capture d'écran est toujours utile.
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex-shrink:0; width:32px; height:32px; background:var(--bg); border:1px solid var(--border-light); display:flex; align-items:center; justify-content:center; color:var(--accent);">
+                    <i data-lucide="mail" style="width:14px;height:14px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:10px; font-weight:700; color:var(--text-bright); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px;">Email</div>
+                    <a href="mailto:maxencerbr@gmail.com" style="font-size:10px; color:var(--accent); text-decoration:none;">maxencerbr@gmail.com</a>
+                    <div style="font-size:9px; color:var(--text-dim); margin-top:3px;">Réponse sous 24–48h en général.</div>
                 </div>
             </div>
-        </div>
 
-        <hr style="border:none; border-top:1px solid rgba(74,122,155,0.07);">
+            <div style="border-top:1px solid var(--border);"></div>
 
-        <div style="display:flex; align-items:flex-start; gap:1rem;">
-            <div style="display:flex; align-items:center; justify-content:center;
-                        width:44px; height:44px; flex-shrink:0;
-                        background:rgba(74,122,155,0.06); border:1px solid #1a2a3a;
-                        border-radius:12px; color:#4a7a9b;">
-                <i data-lucide="lightbulb" style="width:22px;height:22px;"></i>
-            </div>
-            <div>
-                <div style="font-weight:600; margin-bottom:0.25rem; color:#e8f0ff;">Suggérer une fonctionnalité</div>
-                <div style="font-size:0.82rem; color:rgba(232,240,255,0.4); line-height:1.6;">
-                    PortfolioTrack est en développement actif. Toutes les suggestions
-                    sont lues et prises en compte.
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex-shrink:0; width:32px; height:32px; background:var(--bg); border:1px solid var(--border-light); display:flex; align-items:center; justify-content:center; color:var(--text-dim);">
+                    <i data-lucide="bug" style="width:14px;height:14px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:10px; font-weight:700; color:var(--text-bright); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px;">Signaler un bug</div>
+                    <div style="font-size:9px; color:var(--text-dim); line-height:1.7;">Décrivez ce que vous faisiez, ce que vous avez vu, et ce que vous attendiez. Une capture d'écran est toujours utile.</div>
                 </div>
             </div>
+
+            <div style="border-top:1px solid var(--border);"></div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex-shrink:0; width:32px; height:32px; background:var(--bg); border:1px solid var(--border-light); display:flex; align-items:center; justify-content:center; color:var(--text-dim);">
+                    <i data-lucide="lightbulb" style="width:14px;height:14px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:10px; font-weight:700; color:var(--text-bright); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.5px;">Suggérer une fonctionnalité</div>
+                    <div style="font-size:9px; color:var(--text-dim); line-height:1.7;">PortfolioTrack est en développement actif. Toutes les suggestions sont lues et prises en compte.</div>
+                </div>
+            </div>
+
         </div>
 
+        <div style="margin-top:14px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); font-size:9px; color:var(--text-dim); line-height:1.7;">
+            PortfolioTrack est un projet indépendant créé par
+            <span style="color:var(--text);">Maxence Robert</span>.
+            Pas de support automatisé — vous parlez directement au développeur.
+        </div>
     </div>
 
-    <div style="margin-top:2rem; padding:1rem;
-                background:rgba(74,122,155,0.06);
-                border:1px solid rgba(74,122,155,0.10);
-                border-radius:8px; font-size:0.82rem; color:rgba(232,240,255,0.4);">
-        PortfolioTrack est un projet indépendant créé par
-        <strong style="color:rgba(232,240,255,0.7);">Maxence Robert</strong>.
-        Pas de support automatisé, pas de bot — tu parles directement au développeur.
+    <!-- Formulaire rapide -->
+    <div style="background:var(--panel); border:1px solid var(--border); padding:14px; flex:1; min-width:260px;">
+        <div class="card-head" style="margin:0 0 12px 0; padding-bottom:8px;">
+            <span class="card-title">Message rapide</span>
+        </div>
+
+        <form method="POST" action="mailto:maxencerbr@gmail.com" enctype="text/plain">
+            <div class="form-group">
+                <label for="contact_name">Nom</label>
+                <input type="text" id="contact_name" name="name" placeholder="Votre nom">
+            </div>
+            <div class="form-group">
+                <label for="contact_email">Email</label>
+                <input type="email" id="contact_email" name="email" placeholder="votre@email.com">
+            </div>
+            <div class="form-group">
+                <label for="contact_subject">Sujet</label>
+                <select id="contact_subject" name="subject">
+                    <option value="bug">Bug / Problème technique</option>
+                    <option value="feature">Suggestion de fonctionnalité</option>
+                    <option value="account">Problème de compte</option>
+                    <option value="other">Autre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="contact_message">Message</label>
+                <textarea id="contact_message" name="message" rows="5"
+                          placeholder="Décrivez votre demande en détail..."
+                          style="resize:vertical; min-height:100px;"></textarea>
+            </div>
+            <a href="mailto:maxencerbr@gmail.com" class="btn btn-primary" style="display:block; text-align:center; margin-top:4px;">
+                Envoyer par email →
+            </a>
+            <div class="form-hint" style="margin-top:8px; text-align:center;">
+                Ouvre votre client email avec le formulaire pré-rempli.
+            </div>
+        </form>
     </div>
+
 </div>
+
 {% endblock %}

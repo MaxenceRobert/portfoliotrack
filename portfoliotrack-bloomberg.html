@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PortfolioTrack — Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --panel: #0A0A0A;
+    --panel-header: #111111;
+    --border: #1E1E1E;
+    --border-light: #2A2A2A;
+    --text: #C8C8C8;
+    --text-dim: #666666;
+    --text-bright: #FFFFFF;
+    --accent: #FF8C00;
+    --accent-dim: #CC7000;
+    --accent-bg: rgba(255,140,0,0.08);
+    --green: #00C853;
+    --green-dim: rgba(0,200,83,0.12);
+    --red: #FF1744;
+    --red-dim: rgba(255,23,68,0.12);
+    --blue: #448AFF;
+    --yellow: #FFD600;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    overflow: hidden;
+    height: 100vh;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent); color: #000; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 0; }
+
+  /* ═══════════════════ TOP BAR ═══════════════════ */
+  .topbar {
+    height: 32px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    z-index: 100;
+    position: relative;
+  }
+  .topbar-brand {
+    font-weight: 700;
+    font-size: 12px;
+    color: #000;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .topbar-sep {
+    width: 1px;
+    height: 16px;
+    background: rgba(0,0,0,0.3);
+  }
+  .topbar-cmd {
+    flex: 1;
+    background: rgba(0,0,0,0.2);
+    border: none;
+    height: 22px;
+    padding: 0 8px;
+    color: #000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    outline: none;
+    border-radius: 1px;
+  }
+  .topbar-cmd::placeholder { color: rgba(0,0,0,0.45); }
+  .topbar-time {
+    color: #000;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .topbar-user {
+    color: #000;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .topbar-dot {
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+
+  /* ═══════════════════ FUNCTION TABS ═══════════════════ */
+  .fn-tabs {
+    height: 26px;
+    background: #0D0D0D;
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+    padding: 0 4px;
+    gap: 1px;
+  }
+  .fn-tab {
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .fn-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .fn-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .fn-tab .fn-key {
+    font-size: 8px;
+    background: var(--border);
+    padding: 1px 4px;
+    margin-right: 6px;
+    color: var(--text-dim);
+    border-radius: 1px;
+  }
+  .fn-tab.active .fn-key { background: var(--accent-dim); color: #000; }
+
+  /* ═══════════════════ MAIN LAYOUT ═══════════════════ */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    height: calc(100vh - 58px);
+  }
+
+  /* ═══════════════════ SIDE RAIL ═══════════════════ */
+  .side-rail {
+    background: #050505;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 2px;
+  }
+  .rail-icon {
+    width: 40px;
+    height: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    border-radius: 2px;
+    gap: 2px;
+    position: relative;
+  }
+  .rail-icon:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .rail-icon.active { color: var(--accent); background: var(--accent-bg); }
+  .rail-icon svg { width: 16px; height: 16px; }
+  .rail-icon span { font-size: 7px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .rail-spacer { flex: 1; }
+  .rail-icon .notif {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    width: 5px;
+    height: 5px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+
+  /* ═══════════════════ CONTENT AREA ═══════════════════ */
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto 1fr;
+    gap: 1px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  /* ═══════════════════ PANELS ═══════════════════ */
+  .panel {
+    background: var(--panel);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-head {
+    height: 24px;
+    background: var(--panel-header);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .panel-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .panel-subtitle {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .panel-badge {
+    font-size: 8px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: 1px 5px;
+    border: 1px solid rgba(255,140,0,0.2);
+  }
+  .panel-body { flex:1; overflow-y: auto; }
+
+  /* ═══════════════════ HERO METRICS ═══════════════════ */
+  .hero-strip {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 32px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .hero-main {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  .hero-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .hero-value .currency { font-size: 18px; color: var(--text-dim); font-weight: 400; }
+  .hero-change {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-change.up { color: var(--green); }
+  .hero-change.down { color: var(--red); }
+  .hero-change .arrow { font-size: 9px; }
+
+  .hero-metrics {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-metric {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+  }
+  .hero-metric-label {
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .hero-metric-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .hero-metric-sub {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .hero-sparkline {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .hero-sparkline canvas {
+    border: 1px solid var(--border);
+  }
+  .hero-sparkline-label {
+    font-size: 8px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ═══════════════════ DATA TABLE ═══════════════════ */
+  .dtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5px;
+  }
+  .dtable thead { position: sticky; top: 0; z-index: 2; }
+  .dtable th {
+    background: #0F0F0F;
+    padding: 5px 8px;
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dtable th:hover { color: var(--text); }
+  .dtable th.sort-asc::after { content: ' ▲'; color: var(--accent); font-size: 7px; }
+  .dtable th.sort-desc::after { content: ' ▼'; color: var(--accent); font-size: 7px; }
+  .dtable th.right, .dtable td.right { text-align: right; }
+  .dtable td {
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .dtable tr:hover td { background: rgba(255,255,255,0.015); }
+  .dtable tr.selected td { background: var(--accent-bg); }
+  .dtable .ticker {
+    color: var(--text-bright);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .dtable .ticker:hover { color: var(--accent); text-decoration: underline; }
+  .dtable .name { color: var(--text-dim); font-size: 9px; }
+  .dtable .pos { color: var(--green); }
+  .dtable .neg { color: var(--red); }
+  .dtable .tag {
+    font-size: 8px;
+    padding: 1px 4px;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+  }
+  .dtable .tag.etf { border-color: rgba(68,138,255,0.3); color: var(--blue); }
+  .dtable .tag.stock { border-color: rgba(255,140,0,0.3); color: var(--accent); }
+  .dtable .tag.crypto { border-color: rgba(255,214,0,0.3); color: var(--yellow); }
+  .dtable .bar-cell { width: 60px; }
+  .dtable .bar-bg {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+  }
+  .dtable .bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
+
+  /* ═══════════════════ RIGHT COLUMN ═══════════════════ */
+  .right-col {
+    grid-row: 2;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  /* ═══════════════════ WATCHLIST ═══════════════════ */
+  .watch-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .watch-row:hover { background: rgba(255,255,255,0.015); }
+  .watch-ticker {
+    width: 60px;
+    font-weight: 600;
+    color: var(--text-bright);
+    font-size: 10.5px;
+  }
+  .watch-price {
+    flex: 1;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
+  }
+  .watch-change {
+    width: 70px;
+    text-align: right;
+    font-weight: 500;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .watch-mini {
+    width: 50px;
+    height: 16px;
+    margin-left: 8px;
+  }
+
+  /* ═══════════════════ ALLOCATION ═══════════════════ */
+  .alloc-grid {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .alloc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alloc-color {
+    width: 3px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .alloc-label {
+    font-size: 10px;
+    color: var(--text);
+    width: 90px;
+  }
+  .alloc-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--border);
+    position: relative;
+  }
+  .alloc-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    opacity: 0.7;
+  }
+  .alloc-pct {
+    font-size: 10px;
+    font-weight: 600;
+    width: 42px;
+    text-align: right;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ═══════════════════ ACTIVITY FEED ═══════════════════ */
+  .feed-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .feed-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .feed-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .feed-text { font-size: 10px; color: var(--text); }
+  .feed-text strong { color: var(--text-bright); font-weight: 600; }
+  .feed-meta { font-size: 8px; color: var(--text-dim); }
+
+  /* ═══════════════════ STATUS BAR ═══════════════════ */
+  .statusbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: #080808;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    font-size: 9px;
+    color: var(--text-dim);
+    z-index: 100;
+  }
+  .statusbar-item { display: flex; align-items: center; gap: 4px; }
+  .statusbar-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .statusbar-dot.live { background: var(--green); animation: pulse 2s infinite; }
+  .statusbar-spacer { flex: 1; }
+  .statusbar-accent { color: var(--accent); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ═══════════════════ CHART AREA ═══════════════════ */
+  .chart-container {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-controls {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+  .chart-btn {
+    padding: 2px 8px;
+    font-size: 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+  .chart-btn:hover { border-color: var(--text-dim); color: var(--text); }
+  .chart-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+  .chart-canvas-wrap {
+    flex: 1;
+    position: relative;
+    min-height: 180px;
+  }
+  .chart-canvas-wrap canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .chart-gridlabel {
+    position: absolute;
+    right: 4px;
+    font-size: 8px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ═══════════════════ RISK GAUGE ═══════════════════ */
+  .risk-section {
+    padding: 10px;
+  }
+  .risk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .risk-score {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .risk-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .risk-bar-track {
+    height: 6px;
+    background: var(--border);
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+  .risk-bar-seg {
+    flex: 1;
+    height: 100%;
+    opacity: 0.3;
+  }
+  .risk-bar-seg.filled { opacity: 1; }
+  .risk-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .risk-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+  }
+  .risk-stat-label { font-size: 9px; color: var(--text-dim); }
+  .risk-stat-value { font-size: 9px; font-weight: 600; color: var(--text); }
+
+  /* ═══════════════════ FISCAL ENVELOPES ═══════════════════ */
+  .envelope-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+  }
+  .envelope-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+  }
+  .envelope-info { flex: 1; }
+  .envelope-name { font-size: 10px; color: var(--text); font-weight: 500; }
+  .envelope-detail { font-size: 8px; color: var(--text-dim); }
+  .envelope-amount {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-bright);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ═══════════════════ ANIMATIONS ═══════════════════ */
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .panel { animation: fadeSlide 0.3s ease both; }
+  .panel:nth-child(2) { animation-delay: 0.05s; }
+  .panel:nth-child(3) { animation-delay: 0.1s; }
+  .panel:nth-child(4) { animation-delay: 0.15s; }
+  .panel:nth-child(5) { animation-delay: 0.2s; }
+
+  .blink { animation: blink 0.3s ease; }
+  @keyframes blink {
+    0% { background: rgba(255,140,0,0.15); }
+    100% { background: transparent; }
+  }
+
+  /* ═══════════════════ RESPONSIVE ═══════════════════ */
+  @media (max-width: 1100px) {
+    .content { grid-template-columns: 1fr; }
+    .right-col { grid-column: 1; grid-row: auto; }
+    .hero-sparkline { display: none; }
+  }
+  @media (max-width: 700px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .side-rail { flex-direction: row; height: 40px; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 0 4px; }
+    .rail-icon { width: 48px; height: 32px; flex-direction: row; gap: 4px; }
+    .rail-icon span { font-size: 8px; }
+    .rail-spacer { display: none; }
+    .hero-metrics { gap: 12px; }
+    .fn-tabs { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOP BAR ═══════════════════ -->
+<div class="topbar">
+  <div class="topbar-brand">PortfolioTrack</div>
+  <div class="topbar-sep"></div>
+  <input class="topbar-cmd" type="text" placeholder="Recherche: ticker, page, commande..." spellcheck="false">
+  <div class="topbar-sep"></div>
+  <div class="topbar-time" id="topbar-time">SAM 28 MARS 2026 14:32:07</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-user">
+    <div class="topbar-dot"></div>
+    MAX · PRO
+  </div>
+</div>
+
+<!-- ═══════════════════ FUNCTION TABS ═══════════════════ -->
+<div class="fn-tabs">
+  <div class="fn-tab active"><span class="fn-key">F1</span>PORT</div>
+  <div class="fn-tab"><span class="fn-key">F2</span>EXPLORER</div>
+  <div class="fn-tab"><span class="fn-key">F3</span>PROFIL</div>
+  <div class="fn-tab"><span class="fn-key">F4</span>DCA SIM</div>
+  <div class="fn-tab"><span class="fn-key">F5</span>ENVELOPPES</div>
+  <div class="fn-tab"><span class="fn-key">F6</span>ANALYSE</div>
+  <div class="fn-tab"><span class="fn-key">F7</span>ORDRES</div>
+  <div class="fn-tab"><span class="fn-key">F8</span>ALERTES</div>
+</div>
+
+<!-- ═══════════════════ MAIN LAYOUT ═══════════════════ -->
+<div class="main-layout">
+
+  <!-- SIDE RAIL -->
+  <div class="side-rail">
+    <div class="rail-icon active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Board</span>
+    </div>
+    <div class="rail-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 6-6"/></svg>
+      <span>Perf</span>
+    </div>
+    <div class="rail-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+      <span>Alloc</span>
+    </div>
+    <div class="rail-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7-10H1m22 0h-4m-2.3-5.7l2.8-2.8M4.5 19.5l2.8-2.8m0-9.4L4.5 4.5m15 15l-2.8-2.8"/></svg>
+      <span>Risk</span>
+    </div>
+    <div class="rail-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      <span>Feed</span>
+      <div class="notif"></div>
+    </div>
+    <div class="rail-spacer"></div>
+    <div class="rail-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-8.66-2.34l2.83-2.83m11.66-5.66l2.83-2.83M1 12h4m14 0h4M4.34 4.34l2.83 2.83m11.66 5.66l2.83 2.83"/></svg>
+      <span>Config</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HERO STRIP -->
+    <div class="hero-strip">
+      <div class="hero-main">
+        <div class="hero-label">Valeur du portefeuille</div>
+        <div class="hero-value"><span class="currency">€</span>47,832<span style="font-size:18px;color:var(--text-dim)">.14</span></div>
+        <div class="hero-change up">
+          <span class="arrow">▲</span> +1,247.33 (+2.68%) <span style="color:var(--text-dim);font-weight:400;font-size:10px">· 1J</span>
+        </div>
+      </div>
+
+      <div class="hero-metrics">
+        <div class="hero-metric">
+          <div class="hero-metric-label">P&L Total</div>
+          <div class="hero-metric-value pos" style="color:var(--green)">+€7,832.14</div>
+          <div class="hero-metric-sub">+19.58% depuis création</div>
+        </div>
+        <div class="hero-metric">
+          <div class="hero-metric-label">Investi</div>
+          <div class="hero-metric-value">€40,000.00</div>
+          <div class="hero-metric-sub">12 positions</div>
+        </div>
+        <div class="hero-metric">
+          <div class="hero-metric-label">Dividendes YTD</div>
+          <div class="hero-metric-value" style="color:var(--blue)">€342.60</div>
+          <div class="hero-metric-sub">Prochain: 14 avr</div>
+        </div>
+        <div class="hero-metric">
+          <div class="hero-metric-label">Score Risque</div>
+          <div class="hero-metric-value" style="color:var(--accent)">6.2<span style="font-size:9px;color:var(--text-dim)">/10</span></div>
+          <div class="hero-metric-sub">Modéré-Dynamique</div>
+        </div>
+        <div class="hero-metric">
+          <div class="hero-metric-label">Sharpe (1A)</div>
+          <div class="hero-metric-value">1.34</div>
+          <div class="hero-metric-sub">vs MSCI W: 0.91</div>
+        </div>
+      </div>
+
+      <div class="hero-sparkline">
+        <canvas id="sparkline" width="140" height="36"></canvas>
+        <div class="hero-sparkline-label">PERF 6M · +12.4%</div>
+      </div>
+    </div>
+
+    <!-- LEFT: MAIN PANEL (POSITIONS + CHART) -->
+    <div class="panel" style="grid-column:1;grid-row:2;display:flex;flex-direction:column;">
+      <!-- CHART -->
+      <div class="panel-head">
+        <div class="panel-title">Performance</div>
+        <div class="panel-badge">LIVE</div>
+        <div class="panel-subtitle">vs MSCI World</div>
+      </div>
+      <div style="padding:8px 12px 4px;display:flex;justify-content:space-between;align-items:center;">
+        <div class="chart-controls">
+          <button class="chart-btn">1J</button>
+          <button class="chart-btn">1S</button>
+          <button class="chart-btn active">1M</button>
+          <button class="chart-btn">3M</button>
+          <button class="chart-btn">6M</button>
+          <button class="chart-btn">1A</button>
+          <button class="chart-btn">MAX</button>
+        </div>
+        <div style="font-size:9px;color:var(--text-dim);">
+          <span style="color:var(--accent);">━</span> Portfolio &nbsp;
+          <span style="color:var(--text-dim);">┅</span> MSCI World
+        </div>
+      </div>
+      <div class="chart-canvas-wrap" style="flex:0 0 180px;margin:0 12px 8px;">
+        <canvas id="perfChart"></canvas>
+      </div>
+
+      <!-- POSITIONS TABLE -->
+      <div class="panel-head" style="border-top:1px solid var(--border);">
+        <div class="panel-title">Positions</div>
+        <div class="panel-badge">12</div>
+        <div class="panel-subtitle">Trié par: Poids ▼</div>
+      </div>
+      <div class="panel-body">
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th style="width:20px"></th>
+              <th>Ticker</th>
+              <th>Nom</th>
+              <th class="right">Qté</th>
+              <th class="right">PRU</th>
+              <th class="right">Cours</th>
+              <th class="right">P&L</th>
+              <th class="right">P&L %</th>
+              <th class="right">Valeur</th>
+              <th class="right">Poids</th>
+              <th class="bar-cell">Alloc</th>
+            </tr>
+          </thead>
+          <tbody id="positions-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <!-- WATCHLIST / MARCHÉ -->
+      <div class="panel" style="flex:0 0 auto;">
+        <div class="panel-head">
+          <div class="panel-title">Marché</div>
+          <div class="panel-subtitle">Temps réel</div>
+        </div>
+        <div class="panel-body" id="watchlist-body" style="max-height:180px;"></div>
+      </div>
+
+      <!-- ALLOCATION -->
+      <div class="panel" style="flex:0 0 auto;">
+        <div class="panel-head">
+          <div class="panel-title">Allocation</div>
+          <div class="panel-subtitle">Par classe d'actifs</div>
+        </div>
+        <div class="alloc-grid" id="alloc-body"></div>
+      </div>
+
+      <!-- RISK -->
+      <div class="panel" style="flex:0 0 auto;">
+        <div class="panel-head">
+          <div class="panel-title">Risque</div>
+          <div class="panel-subtitle">Synthèse</div>
+        </div>
+        <div class="risk-section">
+          <div class="risk-header">
+            <div>
+              <div class="risk-label">Score global</div>
+              <div class="risk-score">6.2</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="risk-label">Profil</div>
+              <div style="font-size:11px;color:var(--accent);font-weight:600;">DYNAMIQUE</div>
+            </div>
+          </div>
+          <div class="risk-bar-track">
+            <div class="risk-bar-seg filled" style="background:var(--green);"></div>
+            <div class="risk-bar-seg filled" style="background:var(--green);"></div>
+            <div class="risk-bar-seg filled" style="background:var(--yellow);"></div>
+            <div class="risk-bar-seg filled" style="background:var(--yellow);"></div>
+            <div class="risk-bar-seg filled" style="background:var(--accent);"></div>
+            <div class="risk-bar-seg filled" style="background:var(--accent);"></div>
+            <div class="risk-bar-seg" style="background:var(--red);"></div>
+            <div class="risk-bar-seg" style="background:var(--red);"></div>
+            <div class="risk-bar-seg" style="background:var(--red);"></div>
+            <div class="risk-bar-seg" style="background:var(--red);"></div>
+          </div>
+          <div class="risk-stats">
+            <div class="risk-stat"><span class="risk-stat-label">Beta</span><span class="risk-stat-value">1.12</span></div>
+            <div class="risk-stat"><span class="risk-stat-label">Volatilité</span><span class="risk-stat-value">14.3%</span></div>
+            <div class="risk-stat"><span class="risk-stat-label">Max DD</span><span class="risk-stat-value neg" style="color:var(--red)">-8.7%</span></div>
+            <div class="risk-stat"><span class="risk-stat-label">Sortino</span><span class="risk-stat-value">1.67</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENVELOPPES FISCALES -->
+      <div class="panel" style="flex:0 0 auto;">
+        <div class="panel-head">
+          <div class="panel-title">Enveloppes</div>
+        </div>
+        <div id="envelopes-body"></div>
+      </div>
+
+      <!-- ACTIVITY FEED -->
+      <div class="panel" style="flex:1;min-height:0;">
+        <div class="panel-head">
+          <div class="panel-title">Activité</div>
+          <div class="panel-badge">3 NEW</div>
+        </div>
+        <div class="panel-body" id="feed-body"></div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main-layout -->
+
+<!-- ═══════════════════ STATUS BAR ═══════════════════ -->
+<div class="statusbar">
+  <div class="statusbar-item"><div class="statusbar-dot live"></div> Connecté</div>
+  <div class="statusbar-item">Euronext: Ouvert</div>
+  <div class="statusbar-item">NYSE: 15:32 <span class="statusbar-accent">PRE</span></div>
+  <div class="statusbar-item">Latence: 42ms</div>
+  <div class="statusbar-spacer"></div>
+  <div class="statusbar-item">12 positions · 3 enveloppes</div>
+  <div class="statusbar-item statusbar-accent">PortfolioTrack v2.0</div>
+</div>
+
+<script>
+// ═══════════════════ DATA ═══════════════════
+const positions = [
+  { ticker:'IWDA.AS', name:'iShares Core MSCI World', type:'etf', qty:42, pru:82.30, price:88.15, weight:7.74 },
+  { ticker:'AAPL', name:'Apple Inc.', type:'stock', qty:15, pru:178.50, price:198.42, weight:6.22 },
+  { ticker:'MSFT', name:'Microsoft Corp.', type:'stock', qty:10, pru:380.20, price:425.60, weight:8.90 },
+  { ticker:'ASML.AS', name:'ASML Holding NV', type:'stock', qty:4, pru:685.00, price:742.30, weight:6.21 },
+  { ticker:'MC.PA', name:'LVMH Moët Hennessy', type:'stock', qty:3, pru:780.00, price:832.50, weight:5.22 },
+  { ticker:'CW8.PA', name:'Amundi MSCI World', type:'etf', qty:18, pru:420.10, price:448.70, weight:16.88 },
+  { ticker:'BTC-EUR', name:'Bitcoin / Euro', type:'crypto', qty:0.15, pru:38200, price:42680, weight:13.38 },
+  { ticker:'ETH-EUR', name:'Ethereum / Euro', type:'crypto', qty:2.5, pru:2100, price:2340, weight:12.23 },
+  { ticker:'AI.PA', name:'Air Liquide SA', type:'stock', qty:8, pru:168.40, price:182.60, weight:3.05 },
+  { ticker:'TTE.PA', name:'TotalEnergies SE', type:'stock', qty:20, pru:58.20, price:64.80, weight:2.71 },
+  { ticker:'OR.PA', name:"L'Oréal SA", type:'stock', qty:2, pru:410.00, price:438.50, weight:1.83 },
+  { ticker:'VWCE.DE', name:'Vanguard FTSE All-World', type:'etf', qty:25, pru:108.50, price:115.20, weight:6.02 },
+];
+
+const watchlist = [
+  { ticker:'CAC 40', price:'7,892.45', change:'+0.82%', up:true },
+  { ticker:'S&P 500', price:'5,234.18', change:'+0.41%', up:true },
+  { ticker:'NASDAQ', price:'16,428.82', change:'+0.67%', up:true },
+  { ticker:'DAX', price:'18,120.34', change:'-0.12%', up:false },
+  { ticker:'EUR/USD', price:'1.0842', change:'-0.15%', up:false },
+  { ticker:'BTC/EUR', price:'42,680', change:'+3.24%', up:true },
+  { ticker:'ETH/EUR', price:'2,340', change:'+1.87%', up:true },
+  { ticker:'OR (oz)', price:'2,178.50', change:'+0.54%', up:true },
+  { ticker:'Brent', price:'82.34', change:'-0.67%', up:false },
+  { ticker:'OAT 10A', price:'2.92%', change:'+2bp', up:false },
+];
+
+const allocations = [
+  { label:'Actions EUR', pct:18.32, color:'var(--accent)' },
+  { label:'Actions US', pct:15.12, color:'#FF6D00' },
+  { label:'ETF World', pct:30.64, color:'var(--blue)' },
+  { label:'Crypto', pct:25.61, color:'var(--yellow)' },
+  { label:'Cash', pct:10.31, color:'var(--text-dim)' },
+];
+
+const envelopes = [
+  { code:'PEA', name:'Plan Épargne Actions', detail:'Boursorama · €22,430', icon:'P' },
+  { code:'CTO', name:'Compte-Titres', detail:'IBKR · €18,720', icon:'C' },
+  { code:'AV', name:'Assurance Vie', detail:'Linxea · €6,682', icon:'A' },
+];
+
+const feed = [
+  { color:'var(--green)', text:'Dividende <strong>TotalEnergies</strong> crédité: +€18.40', meta:'Aujourd\'hui · 09:12' },
+  { color:'var(--accent)', text:'Alerte prix: <strong>ASML</strong> dépasse €740', meta:'Aujourd\'hui · 10:47' },
+  { color:'var(--blue)', text:'DCA automatique: <strong>CW8.PA</strong> ×2 parts achetées', meta:'Hier · 08:00' },
+  { color:'var(--red)', text:'<strong>BTC</strong> volatilité 24h: 4.2% (> seuil 3%)', meta:'Hier · 14:33' },
+  { color:'var(--green)', text:'Profil investisseur mis à jour → <strong>Dynamique</strong>', meta:'25 mars · 16:20' },
+  { color:'var(--text-dim)', text:'Rapport hebdo généré. <strong>Voir PDF →</strong>', meta:'24 mars · 09:00' },
+];
+
+// ═══════════════════ RENDER ═══════════════════
+function renderPositions() {
+  const tbody = document.getElementById('positions-body');
+  let totalVal = positions.reduce((s,p) => s + p.price * p.qty, 0);
+  tbody.innerHTML = positions.sort((a,b) => b.weight - a.weight).map((p, i) => {
+    const pl = (p.price - p.pru) * p.qty;
+    const plPct = ((p.price - p.pru) / p.pru * 100);
+    const val = p.price * p.qty;
+    const isPos = pl >= 0;
+    const cls = isPos ? 'pos' : 'neg';
+    return `<tr${i===2?' class="selected"':''}>
+      <td><span class="tag ${p.type}">${p.type.toUpperCase()}</span></td>
+      <td><span class="ticker">${p.ticker}</span></td>
+      <td class="name">${p.name}</td>
+      <td class="right">${p.qty}</td>
+      <td class="right">${p.pru.toLocaleString('fr-FR',{minimumFractionDigits:2})}</td>
+      <td class="right" style="color:var(--text-bright);font-weight:500">${p.price.toLocaleString('fr-FR',{minimumFractionDigits:2})}</td>
+      <td class="right ${cls}">${isPos?'+':''}${pl.toLocaleString('fr-FR',{minimumFractionDigits:2})}€</td>
+      <td class="right ${cls}">${isPos?'+':''}${plPct.toFixed(2)}%</td>
+      <td class="right" style="color:var(--text-bright)">${val.toLocaleString('fr-FR',{minimumFractionDigits:2})}€</td>
+      <td class="right">${p.weight.toFixed(2)}%</td>
+      <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${p.weight/30*100}%;background:${isPos?'var(--green)':'var(--red)'};opacity:0.5"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWatchlist() {
+  const el = document.getElementById('watchlist-body');
+  el.innerHTML = watchlist.map(w => {
+    const cls = w.up ? 'pos' : 'neg';
+    return `<div class="watch-row">
+      <div class="watch-ticker">${w.ticker}</div>
+      <div class="watch-price">${w.price}</div>
+      <div class="watch-change ${cls}">${w.change}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAllocations() {
+  const el = document.getElementById('alloc-body');
+  el.innerHTML = allocations.map(a => `
+    <div class="alloc-row">
+      <div class="alloc-color" style="background:${a.color}"></div>
+      <div class="alloc-label">${a.label}</div>
+      <div class="alloc-bar"><div class="alloc-bar-fill" style="width:${a.pct}%;background:${a.color}"></div></div>
+      <div class="alloc-pct">${a.pct.toFixed(1)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderEnvelopes() {
+  const el = document.getElementById('envelopes-body');
+  el.innerHTML = envelopes.map(e => `
+    <div class="envelope-item">
+      <div class="envelope-icon">${e.icon}</div>
+      <div class="envelope-info">
+        <div class="envelope-name">${e.name}</div>
+        <div class="envelope-detail">${e.detail}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFeed() {
+  const el = document.getElementById('feed-body');
+  el.innerHTML = feed.map(f => `
+    <div class="feed-item">
+      <div class="feed-dot" style="background:${f.color}"></div>
+      <div class="feed-content">
+        <div class="feed-text">${f.text}</div>
+        <div class="feed-meta">${f.meta}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════ CHARTS ═══════════════════
+function drawSparkline() {
+  const canvas = document.getElementById('sparkline');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const data = [35,38,36,42,40,45,43,48,46,50,47,52,55,53,58,56,60,62,58,65,63,68,70,72,68,75,78,80,76,82];
+  const min = Math.min(...data), max = Math.max(...data);
+  ctx.clearRect(0,0,w,h);
+
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, 'rgba(255,140,0,0.2)');
+  grad.addColorStop(1, 'rgba(255,140,0,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  data.forEach((d,i) => {
+    const x = (i/(data.length-1))*w;
+    const y = h - ((d-min)/(max-min))*h*0.85 - 2;
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  data.forEach((d,i) => {
+    const x = (i/(data.length-1))*w;
+    const y = h - ((d-min)/(max-min))*h*0.85 - 2;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = '#FF8C00';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawPerfChart() {
+  const canvas = document.getElementById('perfChart');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const pad = { top:10, right:50, bottom:20, left:10 };
+
+  // Generate mock data
+  const days = 30;
+  let port = [100], bench = [100];
+  for(let i=1;i<days;i++){
+    port.push(port[i-1] * (1 + (Math.random()-0.45)*0.02));
+    bench.push(bench[i-1] * (1 + (Math.random()-0.47)*0.015));
+  }
+
+  const allVals = [...port, ...bench];
+  const min = Math.min(...allVals) - 0.5;
+  const max = Math.max(...allVals) + 0.5;
+
+  const chartW = w - pad.left - pad.right;
+  const chartH = h - pad.top - pad.bottom;
+
+  function toX(i) { return pad.left + (i/(days-1))*chartW; }
+  function toY(v) { return pad.top + (1 - (v-min)/(max-min))*chartH; }
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const gridCount = 5;
+  for(let i=0;i<=gridCount;i++){
+    const y = pad.top + (i/gridCount)*chartH;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
+    ctx.stroke();
+
+    const val = max - (i/gridCount)*(max-min);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '9px IBM Plex Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(val.toFixed(1), w - pad.right + 4, y + 3);
+  }
+
+  // Benchmark line (dashed)
+  ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  bench.forEach((v,i) => i===0 ? ctx.moveTo(toX(i),toY(v)) : ctx.lineTo(toX(i),toY(v)));
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Portfolio gradient
+  const grad = ctx.createLinearGradient(0,pad.top,0,h-pad.bottom);
+  grad.addColorStop(0, 'rgba(255,140,0,0.12)');
+  grad.addColorStop(1, 'rgba(255,140,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(toX(0), h-pad.bottom);
+  port.forEach((v,i) => ctx.lineTo(toX(i),toY(v)));
+  ctx.lineTo(toX(days-1), h-pad.bottom);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Portfolio line
+  ctx.beginPath();
+  port.forEach((v,i) => i===0 ? ctx.moveTo(toX(i),toY(v)) : ctx.lineTo(toX(i),toY(v)));
+  ctx.strokeStyle = '#FF8C00';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // End dot
+  const lastX = toX(days-1), lastY = toY(port[days-1]);
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#FF8C00';
+  ctx.fill();
+
+  // Date labels
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.font = '8px IBM Plex Mono';
+  ctx.textAlign = 'center';
+  const dateLabels = ['28 FÉV','07 MAR','14 MAR','21 MAR','28 MAR'];
+  dateLabels.forEach((lbl,i) => {
+    const x = pad.left + (i/(dateLabels.length-1))*chartW;
+    ctx.fillText(lbl, x, h - 4);
+  });
+}
+
+// ═══════════════════ CLOCK ═══════════════════
+function updateClock() {
+  const now = new Date();
+  const days = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+  const months = ['JANV','FÉVR','MARS','AVR','MAI','JUIN','JUIL','AOÛT','SEPT','OCT','NOV','DÉC'];
+  const str = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById('topbar-time').textContent = str;
+}
+
+// ═══════════════════ INTERACTIONS ═══════════════════
+document.querySelectorAll('.fn-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.fn-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.rail-icon').forEach(icon => {
+  if(icon.querySelector('span')?.textContent === 'Config') return;
+  icon.addEventListener('click', () => {
+    document.querySelectorAll('.rail-icon').forEach(i => i.classList.remove('active'));
+    icon.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.chart-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawPerfChart();
+  });
+});
+
+// Simulated price updates
+function simulateUpdate() {
+  const rows = document.querySelectorAll('#positions-body tr');
+  if(rows.length === 0) return;
+  const idx = Math.floor(Math.random() * rows.length);
+  const cells = rows[idx].querySelectorAll('td');
+  if(cells[5]) {
+    cells[5].classList.add('blink');
+    setTimeout(() => cells[5].classList.remove('blink'), 300);
+  }
+}
+
+// ═══════════════════ INIT ═══════════════════
+renderPositions();
+renderWatchlist();
+renderAllocations();
+renderEnvelopes();
+renderFeed();
+drawSparkline();
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(simulateUpdate, 3000);
+
+// Chart needs a small delay for layout
+setTimeout(drawPerfChart, 100);
+window.addEventListener('resize', drawPerfChart);
+</script>
+</body>
+</html>

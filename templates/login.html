@@ -1,53 +1,295 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — PortfolioTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    height: 100%;
+    background: #000000;
+    font-family: 'IBM Plex Mono', monospace;
+    color: #C8C8C8;
+    -webkit-font-smoothing: antialiased;
+}
+/* ── Layout ── */
+.auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 12px;
+}
+/* ── Panel ── */
+.auth-panel {
+    width: 100%;
+    max-width: 380px;
+    background: #0A0A0A;
+    border: 1px solid #1E1E1E;
+}
+/* ── Logo block ── */
+.auth-logo {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid #1E1E1E;
+    text-align: center;
+}
+.auth-brand {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #FF8C00;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 4px;
+}
+.auth-subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #666666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+/* ── Body ── */
+.auth-body { padding: 24px 28px; }
+/* ── Flash messages ── */
+.auth-flash {
+    margin-bottom: 16px;
+}
+.auth-flash-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+}
+.auth-flash-item.success {
+    background: rgba(0, 200, 83, 0.08);
+    border-left: 2px solid #00C853;
+    color: #00C853;
+}
+.auth-flash-item.error,
+.auth-flash-item.danger {
+    background: rgba(255, 23, 68, 0.08);
+    border-left: 2px solid #FF1744;
+    color: #FF1744;
+}
+.auth-flash-item.warning {
+    background: rgba(255, 214, 0, 0.08);
+    border-left: 2px solid #FFD600;
+    color: #FFD600;
+}
+.auth-flash-item.info {
+    background: rgba(68, 138, 255, 0.08);
+    border-left: 2px solid #448AFF;
+    color: #448AFF;
+}
+/* ── Fields ── */
+.auth-field { margin-bottom: 16px; }
+.auth-field:last-of-type { margin-bottom: 0; }
+.auth-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: #666666;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.auth-input {
+    width: 100%;
+    background: #000000;
+    border: 1px solid #1E1E1E;
+    border-bottom: 2px solid #2A2A2A;
+    color: #FFFFFF;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 9px 10px;
+    outline: none;
+    transition: border-bottom-color 0.1s;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+.auth-input:focus { border-bottom-color: #FF8C00; }
+.auth-input::placeholder { color: #333333; }
+/* ── Password row (label + forgot link side by side) ── */
+.auth-pw-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.auth-forgot {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: #666666;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    transition: color 0.1s;
+}
+.auth-forgot:hover { color: #FF8C00; }
+/* ── Submit button ── */
+.auth-btn {
+    display: block;
+    width: 100%;
+    background: #FF8C00;
+    border: none;
+    color: #000000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: opacity 0.1s;
+}
+.auth-btn:hover { opacity: 0.88; }
+/* ── Separator ── */
+.auth-sep {
+    height: 1px;
+    background: #1E1E1E;
+    margin: 20px 0;
+}
+/* ── Footer links ── */
+.auth-footer {
+    text-align: center;
+    padding: 16px 28px 20px;
+    border-top: 1px solid #1E1E1E;
+}
+.auth-footer-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: #666666;
+    letter-spacing: 0.3px;
+}
+.auth-footer-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: #FF8C00;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: opacity 0.1s;
+}
+.auth-footer-link:hover { opacity: 0.8; }
+/* ── Status bar ── */
+.auth-status {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 20px;
+    background: #050505;
+    border-top: 1px solid #1E1E1E;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+}
+.auth-status-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: #333333;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.auth-status-item.green { color: #00C853; }
+</style>
+</head>
+<body>
 
-        <div style="text-align:center; margin-bottom:1.5rem;">
-            <a href="{{ url_for('main.landing') }}" style="display:inline-flex; align-items:center; gap:0.4rem; text-decoration:none;">
-                <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="28" height="28" rx="7" fill="#e8f0ff"/>
-                    <polyline points="4,20 10,8 16,13 22,4" fill="none" stroke="#070d18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="22" cy="4" r="3" fill="#070d18"/>
-                </svg>
-                <span style="font-weight:800; font-size:1rem; color:#e8f0ff;">PortfolioTrack</span>
-            </a>
+<div class="auth-screen">
+    <div class="auth-panel">
+
+        <!-- Logo -->
+        <div class="auth-logo">
+            <a href="{{ url_for('main.landing') }}" class="auth-brand">PortfolioTrack</a>
+            <span class="auth-subtitle">Terminal · Connexion</span>
         </div>
 
-        <h1>Bon retour 👋</h1>
-        <p>Connecte-toi pour accéder à ton portefeuille.</p>
+        <!-- Body -->
+        <div class="auth-body">
 
-        <div class="alerts">
+            <!-- Flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="auth-flash">
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+                <div class="auth-flash-item {{ category }}">{{ message }}</div>
                 {% endfor %}
+            </div>
+            {% endif %}
             {% endwith %}
-        </div>
 
-        <form method="POST">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="ton@email.com">
-            </div>
-            <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.35rem;">
-                    <label for="password" style="margin-bottom:0;">Mot de passe</label>
-                    <a href="{{ url_for('auth.forgot_password') }}"
-                       style="font-size:0.8rem; color:#4a7a9b; text-decoration:none;">
-                        Mot de passe oublié ?
-                    </a>
+            <form method="POST">
+
+                <!-- Email -->
+                <div class="auth-field">
+                    <label class="auth-label" for="email">Email</label>
+                    <input class="auth-input" type="email" id="email" name="email"
+                           required placeholder="terminal@domain.com" autofocus>
                 </div>
-                <input type="password" id="password" name="password" required placeholder="••••••••">
-            </div>
-            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
-                Se connecter
-            </button>
-        </form>
 
-        <div class="auth-link">
-            Pas encore de compte ? <a href="{{ url_for('auth.register') }}">Créer un compte</a>
+                <!-- Password -->
+                <div class="auth-field">
+                    <div class="auth-pw-row">
+                        <label class="auth-label" for="password" style="margin-bottom:0;">Mot de passe</label>
+                        <a class="auth-forgot" href="{{ url_for('auth.forgot_password') }}">Mot de passe oublié ?</a>
+                    </div>
+                    <input class="auth-input" type="password" id="password" name="password"
+                           required placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="auth-btn">Connexion</button>
+
+            </form>
+
+            <div class="auth-sep"></div>
+
+            <div style="text-align:center;">
+                <a href="{{ url_for('auth.register') }}" class="auth-footer-link">
+                    Créer un compte →
+                </a>
+            </div>
+
+        </div><!-- /.auth-body -->
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            <span class="auth-footer-text">Pas encore de compte ? &nbsp;</span>
+            <a href="{{ url_for('auth.register') }}" class="auth-footer-link">S'inscrire</a>
         </div>
-    </div>
+
+    </div><!-- /.auth-panel -->
+</div><!-- /.auth-screen -->
+
+<!-- Status bar -->
+<div class="auth-status">
+    <span class="auth-status-item green">● ONLINE</span>
+    <span class="auth-status-item">PortfolioTrack v1.0</span>
+    <span class="auth-status-item" id="auth-clock"></span>
 </div>
-{% endblock %}
+
+<script>
+(function() {
+    function tick() {
+        var d = new Date();
+        var h = String(d.getHours()).padStart(2, '0');
+        var m = String(d.getMinutes()).padStart(2, '0');
+        var s = String(d.getSeconds()).padStart(2, '0');
+        var el = document.getElementById('auth-clock');
+        if (el) el.textContent = h + ':' + m + ':' + s;
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+
+</body>
+</html>

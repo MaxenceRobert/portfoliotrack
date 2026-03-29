@@ -21,8 +21,6 @@ from database import (
     get_user_by_id, set_onboarding_completed,
     update_asset_envelope,
     get_user_by_email, create_user,
-    add_alternative_asset, get_alternative_assets,
-    update_alternative_asset, delete_alternative_asset,
     add_envelope, get_savings_envelopes, update_envelope_solde, delete_envelope,
 )
 from portfolio import (
@@ -53,6 +51,18 @@ app.register_blueprint(auth_bp)
 
 from flask import Blueprint
 main_bp = Blueprint('main', __name__)
+
+@app.context_processor
+def inject_alerts_state():
+    if current_user.is_authenticated:
+        try:
+            from database import get_triggered_alerts_count
+            n = get_triggered_alerts_count(current_user.id)
+        except Exception:
+            n = 0
+    else:
+        n = 0
+    return {'triggered_alerts_count': n}
 
 ASSET_TYPES = ['ETF', 'Action', 'Crypto', 'Obligation', 'Autre']
 
@@ -1130,6 +1140,40 @@ def delete_dividend_route(dividend_id):
     flash('Dividende supprimé.', 'success')
     return redirect(url_for('main.dividends'))
 
+# ── Historique unifié ─────────────────────────────────────────────────────────
+@main_bp.route('/history')
+@login_required
+def history():
+    from database import get_purchases_by_asset, get_sales_by_asset
+
+    all_p = get_all_purchases(current_user.id)
+    all_s = get_all_sales(current_user.id)
+    all_d = get_all_dividends(current_user.id)
+
+    assets = get_user_assets(current_user.id)
+    auto_divs = []
+    for asset in assets:
+        purch = get_purchases_by_asset(asset['id'], current_user.id)
+        sls   = get_sales_by_asset(asset['id'], current_user.id)
+        for d in get_auto_dividends_for_asset(asset['ticker'], purch, sls):
+            auto_divs.append({
+                'date':             d['date'],
+                'ticker':           asset['ticker'],
+                'name':             asset['name'],
+                'amount':           d['total_amount'],
+                'shares_held':      d['shares_held'],
+                'amount_per_share': d['amount_per_share'],
+                'source':           'auto',
+            })
+    auto_divs.sort(key=lambda x: str(x['date']), reverse=True)
+
+    return render_template('history.html',
+        purchases=all_p,
+        sales=all_s,
+        dividends=all_d,
+        auto_dividends=auto_divs,
+    )
+
 # ── Objectif DCA ──────────────────────────────────────────────────────────────
 @main_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -2060,6 +2104,62 @@ def coach_clear():
     return jsonify({'success': True})
 
 
+# ── Alertes ───────────────────────────────────────────────────────────────────
+@main_bp.route('/alerts')
+@login_required
+def alerts():
+    from database import get_user_alerts, check_and_update_alerts
+    check_and_update_alerts(current_user.id)
+    alerts_list = get_user_alerts(current_user.id)
+    return render_template('alerts.html', alerts=alerts_list)
+
+@main_bp.route('/alerts/add', methods=['POST'])
+@login_required
+def add_alert():
+    from database import create_alert
+    ticker       = request.form.get('ticker', '').strip().upper()
+    ticker_name  = request.form.get('ticker_name', '').strip()
+    condition    = request.form.get('condition', 'above')
+    try:
+        target_price = float(request.form.get('target_price', 0))
+    except (ValueError, TypeError):
+        target_price = 0
+    try:
+        current_price = float(request.form.get('current_price', 0)) or None
+    except (ValueError, TypeError):
+        current_price = None
+    if ticker and target_price > 0 and condition in ('above', 'below'):
+        create_alert(current_user.id, ticker, ticker_name, condition, target_price, current_price)
+        flash('Alerte créée ✓', 'success')
+    else:
+        flash('Données invalides.', 'error')
+    return redirect(url_for('main.alerts'))
+
+@main_bp.route('/alerts/delete/<int:alert_id>', methods=['POST'])
+@login_required
+def delete_alert_route(alert_id):
+    from database import delete_alert
+    delete_alert(alert_id, current_user.id)
+    return redirect(url_for('main.alerts'))
+
+@main_bp.route('/api/alerts/check')
+@login_required
+def check_alerts_api():
+    from database import check_and_update_alerts
+    updated = check_and_update_alerts(current_user.id)
+    return jsonify({'updated': updated})
+
+@main_bp.route('/api/price/<ticker>')
+def get_price_api(ticker):
+    try:
+        price = get_current_price(ticker.upper())
+        if price:
+            return jsonify({'price': price, 'ticker': ticker.upper()})
+        return jsonify({'price': None})
+    except Exception:
+        return jsonify({'price': None})
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required
@@ -2286,83 +2386,6 @@ def bilan_pdf():
         headers={'Content-Disposition': f'attachment; filename={filename}'}
     )
 
-
-# ── Actifs Alternatifs ────────────────────────────────────────────────────────
-ALTERNATIVE_CATEGORIES = [
-    ('private_equity', 'Private Equity', 55),
-    ('art', "Oeuvres d'art", 40),
-    ('vehicule', 'Véhicule de collection', 35),
-    ('metaux', 'Métaux précieux physiques', 30),
-    ('foret', 'Forêt / Vignes', 20),
-    ('immobilier', 'Immobilier direct', 25),
-    ('autre', 'Autre', 40),
-]
-
-@main_bp.route('/actifs-alternatifs', methods=['GET', 'POST'])
-@login_required
-def actifs_alternatifs():
-    if request.method == 'POST':
-        action = request.form.get('action', 'add')
-
-        if action == 'add':
-            name             = request.form.get('name', '').strip()
-            category         = request.form.get('category', 'autre')
-            acquisition_value = float(request.form.get('acquisition_value', 0) or 0)
-            current_value    = float(request.form.get('current_value', 0) or 0)
-            acquisition_date = request.form.get('acquisition_date', '') or None
-            notes            = request.form.get('notes', '').strip()
-            workspace        = request.form.get('workspace', 'perso')
-
-            if not name:
-                flash('Le nom est obligatoire.', 'error')
-            else:
-                add_alternative_asset(current_user.id, name, category,
-                                       acquisition_value, current_value,
-                                       acquisition_date, notes, workspace)
-                flash(f'{name} ajouté', 'success')
-
-        elif action == 'delete':
-            asset_id = int(request.form.get('asset_id', 0))
-            delete_alternative_asset(asset_id, current_user.id)
-            flash('Actif supprimé.', 'success')
-
-        elif action == 'update':
-            asset_id         = int(request.form.get('asset_id', 0))
-            name             = request.form.get('name', '').strip()
-            category         = request.form.get('category', 'autre')
-            acquisition_value = float(request.form.get('acquisition_value', 0) or 0)
-            current_value    = float(request.form.get('current_value', 0) or 0)
-            acquisition_date = request.form.get('acquisition_date', '') or None
-            notes            = request.form.get('notes', '').strip()
-            workspace        = request.form.get('workspace', 'perso')
-            update_alternative_asset(asset_id, current_user.id, name, category,
-                                      acquisition_value, current_value,
-                                      acquisition_date, notes, workspace)
-            flash('Actif mis à jour', 'success')
-
-        return redirect(url_for('main.actifs_alternatifs'))
-
-    assets = get_alternative_assets(current_user.id)
-    assets = [dict(a) for a in assets]
-
-    cat_risk = {c[0]: c[2] for c in ALTERNATIVE_CATEGORIES}
-    for a in assets:
-        a['risk_score'] = cat_risk.get(a.get('category', 'autre'), 40)
-        a['gain'] = round(float(a.get('current_value', 0)) - float(a.get('acquisition_value', 0)), 2)
-        av = float(a.get('acquisition_value', 0))
-        a['gain_pct'] = round(a['gain'] / av * 100, 2) if av > 0 else 0
-
-    total_acquisition = round(sum(float(a.get('acquisition_value', 0)) for a in assets), 2)
-    total_current     = round(sum(float(a.get('current_value', 0)) for a in assets), 2)
-    total_gain        = round(total_current - total_acquisition, 2)
-
-    return render_template('actifs_alternatifs.html',
-                            assets=assets,
-                            categories=ALTERNATIVE_CATEGORIES,
-                            total_acquisition=total_acquisition,
-                            total_current=total_current,
-                            total_gain=total_gain,
-                            active_workspace=session.get('workspace', 'all'))
 
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────
