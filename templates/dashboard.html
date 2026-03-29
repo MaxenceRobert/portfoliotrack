@@ -235,8 +235,8 @@
       {% endif %}
     </div>
 
-    <div class="hero-sparkline" id="hero-sparkline-wrap" style="visibility:hidden;">
-      <canvas id="sparkline" width="140" height="36" style="background:transparent;display:block;"></canvas>
+    <div class="hero-sparkline" id="hero-sparkline-wrap" style="display:none;">
+      <canvas id="sparkline" width="140" height="36"></canvas>
       <div class="hero-sparkline-label" id="sparkline-label">PERF 6M</div>
     </div>
   </div>
@@ -835,17 +835,17 @@ function drawSparkline() {
   var lbl = document.getElementById('sparkline-label');
 
   if (!HISTORY_VALS.length) {
-    if (wrap) wrap.style.visibility = 'hidden';
+    if (wrap) wrap.style.display = 'none';
     return;
   }
   // Use ~126 trading days ≈ 6 months
   var data = HISTORY_VALS.slice(-126);
   if (data.length < 2) data = HISTORY_VALS.slice(-30);
   if (data.length < 2) {
-    if (wrap) wrap.style.visibility = 'hidden';
+    if (wrap) wrap.style.display = 'none';
     return;
   }
-  if (wrap) wrap.style.visibility = 'visible';
+  if (wrap) wrap.style.display = 'flex';
   var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
   if (max === min) max = min + 1;
   ctx.clearRect(0,0,w,h);

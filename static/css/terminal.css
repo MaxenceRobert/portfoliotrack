@@ -340,7 +340,7 @@ body {
 }
 .hero-metric-sub  { font-size: 9px; color: var(--text-dim); margin-top: 1px; }
 .hero-sparkline   { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; }
-.hero-sparkline canvas { border: 1px solid var(--border); }
+.hero-sparkline canvas { border: none; background: transparent; }
 .hero-sparkline-label  { font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.5px; }
 
 /* ══ DATA TABLE ══════════════════════════════════════════════════════════ */
