@@ -339,9 +339,22 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .hero-metric-sub  { font-size: 9px; color: var(--text-dim); margin-top: 1px; }
-.hero-sparkline   { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; }
-.hero-sparkline canvas { border: none; background: transparent; }
-.hero-sparkline-label  { font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.5px; }
+.hero-sparkline {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0 8px;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.hero-sparkline canvas {
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  display: block;
+}
+.hero-sparkline-label { font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.5px; }
 
 /* ══ DATA TABLE ══════════════════════════════════════════════════════════ */
 .dtable { width: 100%; border-collapse: collapse; font-size: 10.5px; }

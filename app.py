@@ -634,23 +634,44 @@ def dashboard():
         benchmark_dates  = _BENCH_HISTORY_CACHE['data']['dates']
         benchmark_values = _BENCH_HISTORY_CACHE['data']['vals']
     else:
-        try:
-            import yfinance as _yf2
-            _bench = _yf2.download('CW8.PA', period='2y', interval='1d',
-                                   auto_adjust=True, progress=False)
-            if not _bench.empty:
-                _closes = _bench['Close'].dropna()
-                if not _closes.empty:
-                    _first = float(_closes.iloc[0])
-                    benchmark_dates  = [d.strftime('%Y-%m-%d') for d in _closes.index]
-                    benchmark_values = [round(float(v) / _first * 100, 4) for v in _closes]
-                    _BENCH_HISTORY_CACHE['data'] = {'dates': benchmark_dates, 'vals': benchmark_values}
-                    _BENCH_HISTORY_CACHE['ts']   = _now_ts
-        except Exception as _be:
-            print(f'[benchmark] Erreur fetch CW8.PA: {_be}')
+        _bench_tickers = ['CW8.PA', 'IWDA.AS', 'URTH']
+        for _bt in _bench_tickers:
+            try:
+                import yfinance as _yf2
+                _bench = _yf2.download(_bt, period='2y', interval='1d',
+                                       auto_adjust=True, progress=False)
+                if _bench.empty:
+                    continue
+                # yfinance 0.2+ peut retourner un DataFrame MultiIndex pour 'Close'
+                _closes = _bench['Close'].squeeze().dropna()
+                if _closes.empty or len(_closes) < 50:
+                    continue
+                _first = float(_closes.iloc[0])
+                if _first == 0:
+                    continue
+                benchmark_dates  = [d.strftime('%Y-%m-%d') for d in _closes.index]
+                benchmark_values = [round(float(v) / _first * 100, 4) for v in _closes]
+                _BENCH_HISTORY_CACHE['data'] = {'dates': benchmark_dates, 'vals': benchmark_values}
+                _BENCH_HISTORY_CACHE['ts']   = _now_ts
+                print(f'[benchmark] OK {_bt}: {len(benchmark_dates)} points')
+                break
+            except Exception as _be:
+                print(f'[benchmark] Erreur {_bt}: {_be}')
 
     msci_risk   = get_risk_score('CW8.PA', 'ETF')
     msci_sharpe = round(float(msci_risk.get('sharpe') or 0), 2) if msci_risk and msci_risk.get('sharpe') is not None else None
+
+    # ── Sparkline 6M ──────────────────────────────────────────────────────────
+    from datetime import date as _date, timedelta as _td
+    _six_months_ago = (_date.today() - _td(days=182)).isoformat()
+    sparkline_data = [v for d, v in zip(history_dates, history_values) if d >= _six_months_ago]
+    if len(sparkline_data) < 2:
+        sparkline_data = list(history_values[-30:]) if history_values else []
+    if len(sparkline_data) >= 2 and sparkline_data[0] > 0:
+        _sp = (sparkline_data[-1] - sparkline_data[0]) / sparkline_data[0] * 100
+        perf_6m_pct = f"PERF 6M · {'+'if _sp >= 0 else ''}{_sp:.1f}%"
+    else:
+        perf_6m_pct = 'PERF 6M'
 
     return render_template(
         'dashboard.html',
@@ -676,6 +697,8 @@ def dashboard():
         benchmark_dates=benchmark_dates,
         benchmark_values=benchmark_values,
         msci_sharpe=msci_sharpe,
+        sparkline_data=sparkline_data,
+        perf_6m_pct=perf_6m_pct,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────

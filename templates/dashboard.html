@@ -263,8 +263,8 @@
       {% endif %}
     </div>
 
-    <div class="hero-sparkline" id="hero-sparkline-wrap" style="display:none;">
-      <canvas id="sparkline" width="140" height="36"></canvas>
+    <div class="hero-sparkline" id="hero-sparkline-wrap">
+      <canvas id="sparkline-canvas" width="180" height="50"></canvas>
       <div class="hero-sparkline-label" id="sparkline-label">PERF 6M</div>
     </div>
   </div>
@@ -272,22 +272,26 @@
   {# ══ COLONNE GAUCHE ══════════════════════════════════════════════════════ #}
   <div class="dash-left">
 
-    {# Performance chart #}
-    <div class="panel-head" style="flex-shrink:0;">
-      <div class="panel-title">PERFORMANCE</div>
-      <div class="panel-badge" id="perf-live-badge">LIVE</div>
-      <span style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">vs MSCI World</span>
-      <div style="display:flex;gap:2px;margin-left:auto;" class="chart-controls" id="perf-btns">
-        <button class="chart-btn" data-period="1J">1J</button>
-        <button class="chart-btn" data-period="1S">1S</button>
-        <button class="chart-btn" data-period="1M">1M</button>
-        <button class="chart-btn" data-period="3M">3M</button>
-        <button class="chart-btn" data-period="6M">6M</button>
-        <button class="chart-btn active" data-period="1A">1A</button>
-        <button class="chart-btn" data-period="MAX">MAX</button>
+    {# Performance chart — header 2 lignes #}
+    <div style="flex-shrink:0;border-bottom:1px solid var(--border);background:var(--panel-header);">
+      <div style="display:flex;align-items:center;padding:5px 12px 3px;gap:8px;">
+        <div class="panel-title" style="margin:0;">PERFORMANCE</div>
+        <div class="panel-badge" id="perf-live-badge">LIVE</div>
+        <span style="font-size:8px;color:var(--text-dim);letter-spacing:0.3px;">vs MSCI World</span>
       </div>
-      <div style="font-size:8px;color:var(--text-dim);margin-left:8px;white-space:nowrap;flex-shrink:0;">
-        <span style="color:var(--accent);">━</span> Port &nbsp;<span style="color:rgba(255,255,255,0.3);">┅</span> MSCI W
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 12px 5px;">
+        <div style="display:flex;gap:2px;" class="chart-controls" id="perf-btns">
+          <button class="chart-btn" data-period="1J">1J</button>
+          <button class="chart-btn" data-period="1S">1S</button>
+          <button class="chart-btn" data-period="1M">1M</button>
+          <button class="chart-btn" data-period="3M">3M</button>
+          <button class="chart-btn" data-period="6M">6M</button>
+          <button class="chart-btn active" data-period="1A">1A</button>
+          <button class="chart-btn" data-period="MAX">MAX</button>
+        </div>
+        <div style="font-size:8px;color:var(--text-dim);white-space:nowrap;">
+          <span style="color:var(--accent);">━</span> Portfolio &nbsp;<span style="color:rgba(255,255,255,0.35);">┅</span> MSCI World
+        </div>
       </div>
     </div>
     <div style="flex:0 0 150px;position:relative;padding:4px 8px 0;">
@@ -649,13 +653,15 @@
 
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────────
-var ALL_ASSETS    = {{ all_assets_json | tojson }};
-var ALL_PURCHASES = {{ purchases_json | tojson }};
-var HISTORY_DATES = {{ history_dates | tojson }};
-var HISTORY_VALS  = {{ history_values | tojson }};
-var BENCH_DATES   = {{ benchmark_dates | tojson }};
-var BENCH_VALS    = {{ benchmark_values | tojson }};
-var PROFIL_RISK   = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
+var ALL_ASSETS     = {{ all_assets_json | tojson }};
+var ALL_PURCHASES  = {{ purchases_json | tojson }};
+var HISTORY_DATES  = {{ history_dates | tojson }};
+var HISTORY_VALS   = {{ history_values | tojson }};
+var BENCH_DATES    = {{ benchmark_dates | tojson }};
+var BENCH_VALS     = {{ benchmark_values | tojson }};
+var SPARKLINE_DATA = {{ sparkline_data | tojson }};
+var PERF_6M_PCT    = {{ perf_6m_pct | tojson }};
+var PROFIL_RISK    = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
 var DCA_TARGET    = {{ summary.dca_target }};
 var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000};
 var currentEnvFilter = 'all';
@@ -797,24 +803,6 @@ function filterHistory(period) {
   return { dates: dates, vals: vals };
 }
 
-function getBenchmarkAligned(portDates) {
-  if (!BENCH_DATES.length || portDates.length < 2) return null;
-  var benchMap = {};
-  for (var i = 0; i < BENCH_DATES.length; i++) benchMap[BENCH_DATES[i]] = BENCH_VALS[i];
-  var result = portDates.map(function(d) {
-    if (benchMap[d] !== undefined) return benchMap[d];
-    // find closest bench date
-    var closest = null, minDiff = Infinity;
-    for (var j = 0; j < BENCH_DATES.length; j++) {
-      var diff = Math.abs(new Date(BENCH_DATES[j]) - new Date(d));
-      if (diff < minDiff) { minDiff = diff; closest = BENCH_VALS[j]; }
-    }
-    return closest;
-  });
-  // check we have at least a valid start value
-  if (result[0] == null) return null;
-  return result;
-}
 
 function drawPerfChart() {
   var canvas = document.getElementById('perfChart');
@@ -824,153 +812,194 @@ function drawPerfChart() {
   canvas.height = wrap.offsetHeight;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
-  var pad = { top:10, right:50, bottom:20, left:10 };
+  var pad = { top:10, right:55, bottom:22, left:10 };
 
   var filtered = filterHistory(_perfPeriod);
-  var data = filtered.vals;
-  var labels = filtered.dates;
+  var portDates = filtered.dates;
+  var portVals  = filtered.vals;
 
-  if (!data.length || w < 20 || h < 20) { ctx.clearRect(0,0,w,h); return; }
+  if (!portVals.length || w < 20 || h < 20) { ctx.clearRect(0,0,w,h); return; }
 
-  // Benchmark aligned to portfolio dates
-  var benchRaw = getBenchmarkAligned(labels);
-  var benchScaled = null;
-  if (benchRaw && benchRaw[0] != null && data[0] > 0) {
-    var bStart = benchRaw[0];
-    var pStart = data[0];
-    benchScaled = benchRaw.map(function(v) { return v != null ? pStart * v / bStart : null; });
+  // ── Plage de dates commune ──────────────────────────────────────────────
+  var startIso = portDates[0];
+  var endIso   = portDates[portDates.length - 1];
+
+  // Benchmark filtré sur la même plage (données journalières continues)
+  var benchDatesInRange = [], benchValsInRange = [];
+  for (var bi = 0; bi < BENCH_DATES.length; bi++) {
+    if (BENCH_DATES[bi] >= startIso && BENCH_DATES[bi] <= endIso) {
+      benchDatesInRange.push(BENCH_DATES[bi]);
+      benchValsInRange.push(BENCH_VALS[bi]);
+    }
   }
 
-  // Combined min/max across both series
-  var allVals = data.slice();
-  if (benchScaled) benchScaled.forEach(function(v) { if (v != null) allVals.push(v); });
-  var min = Math.min.apply(null, allVals) * 0.98;
-  var max = Math.max.apply(null, allVals) * 1.02;
+  // ── Normalisation base 100 ──────────────────────────────────────────────
+  var portBase = portVals[0] > 0 ? portVals[0] : 1;
+  var portNorm = portVals.map(function(v) { return v / portBase * 100; });
+
+  var benchNorm = null;
+  if (benchValsInRange.length >= 2 && benchValsInRange[0] > 0) {
+    var benchBase = benchValsInRange[0];
+    benchNorm = benchValsInRange.map(function(v) { return v / benchBase * 100; });
+  }
+
+  // ── Y min/max combiné ───────────────────────────────────────────────────
+  var allVals = portNorm.slice();
+  if (benchNorm) benchNorm.forEach(function(v) { allVals.push(v); });
+  var minV = Math.min.apply(null, allVals);
+  var maxV = Math.max.apply(null, allVals);
+  var rangeV = maxV - minV; if (rangeV < 0.5) rangeV = 0.5;
+  minV -= rangeV * 0.06; maxV += rangeV * 0.06; rangeV = maxV - minV;
+
   var cw = w - pad.left - pad.right;
   var ch = h - pad.top - pad.bottom;
 
-  function toX(i) { return pad.left + (i / (data.length-1)) * cw; }
-  function toY(v) { return pad.top + (1 - (v-min)/(max-min)) * ch; }
+  // Mapping date → x (axe temporel réel)
+  var tStart = new Date(startIso + 'T00:00:00').getTime();
+  var tEnd   = new Date(endIso   + 'T00:00:00').getTime();
+  var tRange = tEnd - tStart || 1;
+  function dateToX(iso) {
+    return pad.left + ((new Date(iso + 'T00:00:00').getTime() - tStart) / tRange) * cw;
+  }
+  function toY(v) { return pad.top + (1 - (v - minV) / rangeV) * ch; }
 
-  ctx.clearRect(0,0,w,h);
+  ctx.clearRect(0, 0, w, h);
 
-  // Grid lines + Y-axis labels (RIGHT side)
+  // ── Grid + labels Y (côté droit) ────────────────────────────────────────
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   var steps = 4;
   for (var gi = 0; gi <= steps; gi++) {
-    var gy = pad.top + (gi/steps)*ch;
-    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w-pad.right, gy); ctx.stroke();
-    var gval = max - (gi/steps)*(max-min);
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    var gy = pad.top + (gi / steps) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke();
+    var gv = maxV - (gi / steps) * rangeV;
+    var glbl = (gv - 100 >= 0 ? '+' : '') + (gv - 100).toFixed(1) + '%';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'left';
-    ctx.fillText(fmtInt(gval)+'€', w-pad.right+4, gy+3);
+    ctx.fillText(glbl, w - pad.right + 4, gy + 3);
   }
 
-  // Benchmark line (dashed gray) — draw first so portfolio is on top
-  if (benchScaled) {
+  // ── Ligne MSCI World (pointillée grise, continue journalière) ──────────
+  if (benchNorm && benchDatesInRange.length >= 2) {
     ctx.beginPath();
-    var started = false;
-    for (var bi = 0; bi < benchScaled.length; bi++) {
-      if (benchScaled[bi] == null) continue;
-      if (!started) { ctx.moveTo(toX(bi), toY(benchScaled[bi])); started = true; }
-      else ctx.lineTo(toX(bi), toY(benchScaled[bi]));
-    }
-    ctx.setLineDash([4,3]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    benchDatesInRange.forEach(function(d, i) {
+      var bx = dateToX(d), by = toY(benchNorm[i]);
+      i === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
+    });
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // Area fill (portfolio)
-  var grad = ctx.createLinearGradient(0, pad.top, 0, h-pad.bottom);
-  grad.addColorStop(0, 'rgba(255,140,0,0.12)');
+  // ── Zone portfolio (fill) ───────────────────────────────────────────────
+  var grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+  grad.addColorStop(0, 'rgba(255,140,0,0.14)');
   grad.addColorStop(1, 'rgba(255,140,0,0)');
   ctx.beginPath();
-  ctx.moveTo(toX(0), h-pad.bottom);
-  for (var pi = 0; pi < data.length; pi++) ctx.lineTo(toX(pi), toY(data[pi]));
-  ctx.lineTo(toX(data.length-1), h-pad.bottom);
+  ctx.moveTo(dateToX(portDates[0]), h - pad.bottom);
+  portDates.forEach(function(d, i) { ctx.lineTo(dateToX(d), toY(portNorm[i])); });
+  ctx.lineTo(dateToX(portDates[portDates.length - 1]), h - pad.bottom);
   ctx.fillStyle = grad; ctx.fill();
 
-  // Portfolio line
+  // ── Ligne portfolio (orange) ────────────────────────────────────────────
   ctx.beginPath();
-  for (var li = 0; li < data.length; li++) {
-    li === 0 ? ctx.moveTo(toX(li), toY(data[li])) : ctx.lineTo(toX(li), toY(data[li]));
-  }
+  portDates.forEach(function(d, i) {
+    var px = dateToX(d), py = toY(portNorm[i]);
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  });
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.stroke();
 
-  // End dot
-  ctx.beginPath();
-  ctx.arc(toX(data.length-1), toY(data[data.length-1]), 3, 0, Math.PI*2);
+  // Point final orange
+  var lpx = dateToX(portDates[portDates.length - 1]);
+  var lpy = toY(portNorm[portNorm.length - 1]);
+  ctx.beginPath(); ctx.arc(lpx, lpy, 3, 0, Math.PI * 2);
   ctx.fillStyle = '#FF8C00'; ctx.fill();
 
-  // French date labels (start, middle, end)
-  if (labels.length >= 2) {
+  // ── Labels dates en français (début, milieu, fin) ───────────────────────
+  if (portDates.length >= 1) {
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.font = '8px IBM Plex Mono';
     ctx.textAlign = 'left';
-    ctx.fillText(fmtDateFr(labels[0]), pad.left, h-4);
-    if (labels.length >= 4) {
-      var mid = Math.floor(labels.length / 2);
+    ctx.fillText(fmtDateFr(portDates[0]), pad.left, h - 4);
+    if (portDates.length >= 4) {
+      var midI = Math.floor(portDates.length / 2);
       ctx.textAlign = 'center';
-      ctx.fillText(fmtDateFr(labels[mid]), toX(mid), h-4);
+      ctx.fillText(fmtDateFr(portDates[midI]), dateToX(portDates[midI]), h - 4);
     }
     ctx.textAlign = 'right';
-    ctx.fillText(fmtDateFr(labels[labels.length-1]), w-pad.right, h-4);
+    ctx.fillText(fmtDateFr(portDates[portDates.length - 1]), w - pad.right, h - 4);
   }
 }
 
-// Sparkline
+// ── Sparkline (rewrite propre) ────────────────────────────────────────────────
 function drawSparkline() {
-  var wrap   = document.getElementById('hero-sparkline-wrap');
-  var canvas = document.getElementById('sparkline');
+  var canvas = document.getElementById('sparkline-canvas');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  var lbl = document.getElementById('sparkline-label');
 
-  if (!HISTORY_VALS.length) {
-    if (wrap) wrap.style.display = 'none';
-    return;
-  }
-  // Use ~126 trading days ≈ 6 months
-  var data = HISTORY_VALS.slice(-126);
-  if (data.length < 2) data = HISTORY_VALS.slice(-30);
+  // Priorité : données backend 6M, sinon fallback HISTORY_VALS
+  var data = (typeof SPARKLINE_DATA !== 'undefined' && SPARKLINE_DATA.length >= 2)
+    ? SPARKLINE_DATA
+    : HISTORY_VALS.slice(-60);
+
+  var lbl = document.getElementById('sparkline-label');
   if (data.length < 2) {
-    if (wrap) wrap.style.display = 'none';
+    if (lbl) lbl.textContent = PERF_6M_PCT || 'PERF 6M';
     return;
   }
-  if (wrap) wrap.style.display = 'flex';
-  var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
-  if (max === min) max = min + 1;
-  ctx.clearRect(0,0,w,h);
-  var grad = ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,'rgba(255,140,0,0.2)');
-  grad.addColorStop(1,'rgba(255,140,0,0)');
+
+  var min = Math.min.apply(null, data);
+  var max = Math.max.apply(null, data);
+  if (max === min) { max = min + 1; }
+
+  function spY(v) { return h - ((v - min) / (max - min)) * (h - 6) - 3; }
+
+  // Gradient fill
+  var grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(255,140,0,0.22)');
+  grad.addColorStop(1, 'rgba(255,140,0,0)');
   ctx.beginPath();
   ctx.moveTo(0, h);
-  data.forEach(function(d,i) {
-    var x = (i/(data.length-1))*w;
-    var y = h - ((d-min)/(max-min))*h*0.85 - 2;
-    ctx.lineTo(x, y);
+  data.forEach(function(v, i) {
+    ctx.lineTo((i / (data.length - 1)) * w, spY(v));
   });
   ctx.lineTo(w, h);
-  ctx.fillStyle = grad; ctx.fill();
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Ligne orange
   ctx.beginPath();
-  data.forEach(function(d,i) {
-    var x = (i/(data.length-1))*w;
-    var y = h - ((d-min)/(max-min))*h*0.85 - 2;
-    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  data.forEach(function(v, i) {
+    var x = (i / (data.length - 1)) * w;
+    i === 0 ? ctx.moveTo(x, spY(v)) : ctx.lineTo(x, spY(v));
   });
-  ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.stroke();
-  // Update PERF 6M label
-  if (lbl && data[0] && data[0] > 0) {
-    var perf = ((data[data.length-1] - data[0]) / data[0]) * 100;
-    var sign = perf >= 0 ? '+' : '';
-    lbl.textContent = 'PERF 6M · ' + sign + perf.toFixed(1) + '%';
-    lbl.style.color = perf >= 0 ? 'var(--green)' : 'var(--red)';
+  ctx.strokeStyle = '#FF8C00';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.stroke();
+
+  // Point final
+  ctx.beginPath();
+  ctx.arc(w - 2, spY(data[data.length - 1]), 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#FF8C00';
+  ctx.fill();
+
+  // Label PERF 6M
+  if (lbl) {
+    if (typeof PERF_6M_PCT !== 'undefined' && PERF_6M_PCT && PERF_6M_PCT !== 'PERF 6M') {
+      lbl.textContent = PERF_6M_PCT;
+      var isPos = PERF_6M_PCT.indexOf('-') === -1;
+      lbl.style.color = isPos ? 'var(--green)' : 'var(--red)';
+    } else if (data[0] > 0) {
+      var pf = ((data[data.length - 1] - data[0]) / data[0]) * 100;
+      lbl.textContent = 'PERF 6M · ' + (pf >= 0 ? '+' : '') + pf.toFixed(1) + '%';
+      lbl.style.color = pf >= 0 ? 'var(--green)' : 'var(--red)';
+    }
   }
 }
 
