@@ -812,7 +812,8 @@ function drawPerfChart() {
   canvas.height = wrap.offsetHeight;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
-  var pad = { top:10, right:55, bottom:22, left:10 };
+  // pad.left = labels € portfolio, pad.right = labels % MSCI
+  var pad = { top:10, right:52, bottom:22, left:46 };
 
   var filtered = filterHistory(_perfPeriod);
   var portDates = filtered.dates;
@@ -833,23 +834,11 @@ function drawPerfChart() {
     }
   }
 
-  // ── Normalisation base 100 ──────────────────────────────────────────────
-  var portBase = portVals[0] > 0 ? portVals[0] : 1;
-  var portNorm = portVals.map(function(v) { return v / portBase * 100; });
-
-  var benchNorm = null;
-  if (benchValsInRange.length >= 2 && benchValsInRange[0] > 0) {
-    var benchBase = benchValsInRange[0];
-    benchNorm = benchValsInRange.map(function(v) { return v / benchBase * 100; });
-  }
-
-  // ── Y min/max combiné ───────────────────────────────────────────────────
-  var allVals = portNorm.slice();
-  if (benchNorm) benchNorm.forEach(function(v) { allVals.push(v); });
-  var minV = Math.min.apply(null, allVals);
-  var maxV = Math.max.apply(null, allVals);
-  var rangeV = maxV - minV; if (rangeV < 0.5) rangeV = 0.5;
-  minV -= rangeV * 0.06; maxV += rangeV * 0.06; rangeV = maxV - minV;
+  console.log('[drawPerfChart] period=' + _perfPeriod
+    + ' portPoints=' + portVals.length
+    + ' portRange=[' + (portVals[0]||0).toFixed(0) + '€ → ' + (portVals[portVals.length-1]||0).toFixed(0) + '€]'
+    + ' benchPoints=' + benchDatesInRange.length
+    + ' benchRange=' + (benchValsInRange.length >= 2 ? '[' + benchValsInRange[0].toFixed(2) + ' → ' + benchValsInRange[benchValsInRange.length-1].toFixed(2) + ']' : 'none'));
 
   var cw = w - pad.left - pad.right;
   var ch = h - pad.top - pad.bottom;
@@ -861,59 +850,100 @@ function drawPerfChart() {
   function dateToX(iso) {
     return pad.left + ((new Date(iso + 'T00:00:00').getTime() - tStart) / tRange) * cw;
   }
-  function toY(v) { return pad.top + (1 - (v - minV) / rangeV) * ch; }
+
+  // ── Y portfolio : axe indépendant en € ─────────────────────────────────
+  var portMin = Math.min.apply(null, portVals);
+  var portMax = Math.max.apply(null, portVals);
+  var portRange = portMax - portMin; if (portRange < 1) portRange = 1;
+  portMin -= portRange * 0.06; portMax += portRange * 0.06; portRange = portMax - portMin;
+  function toYPort(v) { return pad.top + (1 - (v - portMin) / portRange) * ch; }
+
+  // ── Y MSCI : axe indépendant en % (base 100) ───────────────────────────
+  var benchNorm = null;
+  if (benchDatesInRange.length >= 2 && benchValsInRange[0] > 0) {
+    var benchBase = benchValsInRange[0];
+    benchNorm = benchValsInRange.map(function(v) { return v / benchBase * 100; });
+    var benchMin = Math.min.apply(null, benchNorm);
+    var benchMax = Math.max.apply(null, benchNorm);
+    var benchRange = benchMax - benchMin; if (benchRange < 0.5) benchRange = 0.5;
+    benchMin -= benchRange * 0.06; benchMax += benchRange * 0.06; benchRange = benchMax - benchMin;
+    console.log('[drawPerfChart] MSCI base=' + benchBase.toFixed(2)
+      + ' norm=[' + benchNorm[0].toFixed(1) + ' → ' + benchNorm[benchNorm.length-1].toFixed(1) + ']'
+      + ' displayRange=[' + benchMin.toFixed(1) + ' → ' + benchMax.toFixed(1) + ']');
+  } else {
+    console.log('[drawPerfChart] MSCI non disponible: benchDatesInRange=' + benchDatesInRange.length
+      + ' benchValsInRange[0]=' + (benchValsInRange[0] || 'undef'));
+    var benchMin = 94, benchMax = 106, benchRange = 12;
+  }
+  function toYBench(v) { return pad.top + (1 - (v - benchMin) / benchRange) * ch; }
 
   ctx.clearRect(0, 0, w, h);
 
-  // ── Grid + labels Y (côté droit) ────────────────────────────────────────
+  // ── Grid lines (4 intervalles) ──────────────────────────────────────────
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   var steps = 4;
   for (var gi = 0; gi <= steps; gi++) {
     var gy = pad.top + (gi / steps) * ch;
     ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke();
-    var gv = maxV - (gi / steps) * rangeV;
+  }
+
+  // ── Labels Y gauche : portfolio en € ────────────────────────────────────
+  ctx.font = '8px IBM Plex Mono';
+  for (var gi = 0; gi <= steps; gi++) {
+    var gy = pad.top + (gi / steps) * ch;
+    var gv = portMax - (gi / steps) * portRange;
+    var glbl = gv >= 1000 ? (gv/1000).toFixed(1) + 'k€' : gv.toFixed(0) + '€';
+    ctx.fillStyle = 'rgba(255,140,0,0.5)';
+    ctx.textAlign = 'right';
+    ctx.fillText(glbl, pad.left - 4, gy + 3);
+  }
+
+  // ── Labels Y droite : MSCI en % ─────────────────────────────────────────
+  for (var gi = 0; gi <= steps; gi++) {
+    var gy = pad.top + (gi / steps) * ch;
+    var gv = benchMax - (gi / steps) * benchRange;
     var glbl = (gv - 100 >= 0 ? '+' : '') + (gv - 100).toFixed(1) + '%';
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '8px IBM Plex Mono'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.textAlign = 'left';
     ctx.fillText(glbl, w - pad.right + 4, gy + 3);
   }
 
-  // ── Ligne MSCI World (pointillée grise, continue journalière) ──────────
+  // ── Ligne MSCI World (pointillée blanche, axe indépendant) ─────────────
   if (benchNorm && benchDatesInRange.length >= 2) {
     ctx.beginPath();
     benchDatesInRange.forEach(function(d, i) {
-      var bx = dateToX(d), by = toY(benchNorm[i]);
+      var bx = dateToX(d), by = toYBench(benchNorm[i]);
       i === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
     });
     ctx.setLineDash([4, 3]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // ── Zone portfolio (fill) ───────────────────────────────────────────────
+  // ── Zone portfolio (fill, axe indépendant €) ────────────────────────────
   var grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
   grad.addColorStop(0, 'rgba(255,140,0,0.14)');
   grad.addColorStop(1, 'rgba(255,140,0,0)');
   ctx.beginPath();
   ctx.moveTo(dateToX(portDates[0]), h - pad.bottom);
-  portDates.forEach(function(d, i) { ctx.lineTo(dateToX(d), toY(portNorm[i])); });
+  portDates.forEach(function(d, i) { ctx.lineTo(dateToX(d), toYPort(portVals[i])); });
   ctx.lineTo(dateToX(portDates[portDates.length - 1]), h - pad.bottom);
   ctx.fillStyle = grad; ctx.fill();
 
-  // ── Ligne portfolio (orange) ────────────────────────────────────────────
+  // ── Ligne portfolio (orange, axe indépendant €) ─────────────────────────
   ctx.beginPath();
   portDates.forEach(function(d, i) {
-    var px = dateToX(d), py = toY(portNorm[i]);
+    var px = dateToX(d), py = toYPort(portVals[i]);
     i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
   });
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.stroke();
 
   // Point final orange
   var lpx = dateToX(portDates[portDates.length - 1]);
-  var lpy = toY(portNorm[portNorm.length - 1]);
+  var lpy = toYPort(portVals[portVals.length - 1]);
   ctx.beginPath(); ctx.arc(lpx, lpy, 3, 0, Math.PI * 2);
   ctx.fillStyle = '#FF8C00'; ctx.fill();
 
