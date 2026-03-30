@@ -793,86 +793,141 @@ def landing():
 @main_bp.route('/charts')
 @login_required
 def charts():
-    from database import get_purchases_by_asset, get_sales_by_asset
-    assets = get_user_assets(current_user.id)
-    charts = {}
+    import threading as _th
+    import pandas as _pd
+    from database import get_purchases_by_asset, get_sales_by_asset, get_all_purchases as _all_purch
+    import yfinance as _yf
 
-    dates, invested, market = get_portfolio_chart_data(current_user.id)
-    if dates:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=dates, y=invested,
-            name='Total investi (€)',
-            line=dict(color='#6B7280', dash='dot', width=2),
-            fill='tozeroy', fillcolor='rgba(107,114,128,0.08)'
-        ))
-        fig.add_trace(go.Scatter(
-            x=dates, y=market,
-            name='Valeur marché totale (€)',
-            line=dict(color='#5B5FED', width=2.5),
-            fill='tozeroy', fillcolor='rgba(91,95,237,0.12)'
-        ))
-        from database import get_all_purchases
-        all_p = get_all_purchases(current_user.id)
-        b_dates, b_values = get_benchmark_curve(dates[0], dates[-1],
-                                                 purchases=[dict(p) for p in all_p])
-        if b_dates and b_values:
-            fig.add_trace(go.Scatter(
-                x=b_dates, y=b_values,
-                name='MSCI World (base €)',
-                line=dict(color='#F6C90E', width=1.8, dash='dot'),
-            ))
-        fig.update_layout(
-            title='Portefeuille total — Investi vs Marché vs MSCI World',
-            template='plotly_white', height=380,
-            margin=dict(l=20, r=20, t=40, b=20),
-            legend=dict(orientation='h', y=-0.15),
-            hovermode='x unified'
+    uid = current_user.id
+
+    # ── Portfolio curve (dates, invested, market) ─────────────────────────────
+    port_dates, port_invested, port_market = get_portfolio_chart_data(uid)
+    print(f'[charts] portfolio curve: {len(port_dates)} pts')
+
+    # ── MSCI fictif money-weighted ────────────────────────────────────────────
+    all_purchases_list = list(_all_purch(uid))
+    msci_port_dates:  list = []
+    msci_port_values: list = []
+    if port_dates and all_purchases_list:
+        _bd, _bv = get_benchmark_curve(
+            port_dates[0], port_dates[-1],
+            purchases=[dict(p) for p in all_purchases_list]
         )
-        portfolio_chart = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    else:
-        portfolio_chart = None
+        msci_port_dates, msci_port_values = _bd, _bv
+        print(f'[charts] msci fictif: {len(msci_port_dates)} pts')
 
-    for asset in assets:
-        purchases = get_purchases_by_asset(asset['id'], current_user.id)
-        sales     = get_sales_by_asset(asset['id'], current_user.id)
-        dates, invested, market = get_chart_data(asset, purchases, sales)
-        if not dates:
-            continue
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=dates, y=invested,
-            name='Investi (€)',
-            line=dict(color='#6B7280', dash='dot', width=2),
-            fill='tozeroy', fillcolor='rgba(107,114,128,0.08)'
-        ))
-        fig.add_trace(go.Scatter(
-            x=dates, y=market,
-            name='Valeur marché (€)',
-            line=dict(color='#5B5FED', width=2.5),
-            fill='tozeroy', fillcolor='rgba(91,95,237,0.12)'
-        ))
-        b_dates, b_values = get_benchmark_curve(dates[0], dates[-1],
-                                                 purchases=[dict(p) for p in purchases])
-        if b_dates and b_values:
-            fig.add_trace(go.Scatter(
-                x=b_dates, y=b_values,
-                name='MSCI World (base €)',
-                line=dict(color='#F6C90E', width=1.8, dash='dot'),
-            ))
-        fig.update_layout(
-            title=f'{asset["name"]} ({asset["ticker"]}) — Investi vs Marché vs MSCI World',
-            template='plotly_white', height=360,
-            margin=dict(l=20, r=20, t=40, b=20),
-            legend=dict(orientation='h', y=-0.15),
-            hovermode='x unified'
-        )
-        charts[asset['id']] = {
-            'asset': dict(asset),
-            'plot':  json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        }
+    # ── Per-position data ─────────────────────────────────────────────────────
+    summary     = get_portfolio_summary(uid)
+    total_value = float(summary.get('total_value') or 0)
 
-    return render_template('charts.html', charts=charts, portfolio_chart=portfolio_chart)
+    positions_data: dict = {}
+    corr_raw:       dict = {}
+    _lock = _th.Lock()
+
+    def _process_pos(a):
+        ticker = (a.get('ticker') or '').strip()
+        if not ticker or a.get('fully_sold'):
+            return
+        aid = a['asset_id']
+        try:
+            purch = list(get_purchases_by_asset(aid, uid))
+            sales  = list(get_sales_by_asset(aid, uid))
+        except Exception as e:
+            print(f'[charts] db {ticker}: {e}')
+            return
+        if not purch:
+            return
+
+        pru         = float(a.get('avg_price') or 0)
+        shares_held = float(a.get('shares_held') or 0)
+        invested    = round(shares_held * pru, 2)
+        cur_val     = float(a.get('current_value') or 0)
+        pnl         = float(a.get('unrealized_gain') or 0)
+        pnl_pct     = float(a.get('unrealized_pct') or 0)
+        weight      = round(cur_val / total_value * 100, 2) if total_value > 0 else 0
+
+        # Earliest purchase date
+        earliest = min(str(p['date'])[:10] for p in purch)
+
+        hist_dates:  list = []
+        hist_prices: list = []
+        sparkline:   list = []
+        try:
+            _h = _yf.download(ticker, start=earliest, progress=False, auto_adjust=True)
+            if _h is not None and not _h.empty:
+                _cl = _h['Close'].squeeze().dropna()
+                hist_dates  = [d.strftime('%Y-%m-%d') for d in _cl.index]
+                hist_prices = [round(float(v), 4) for v in _cl]
+                sparkline   = hist_prices[-30:]
+        except Exception as e:
+            print(f'[charts] yf {ticker}: {e}')
+
+        buy_events = sorted([
+            {'date': str(p['date'])[:10], 'price': round(float(p['price_per_share']), 4),
+             'qty': round(float(p['shares']), 6), 'cost': round(float(p['total_cost']), 2)}
+            for p in purch
+        ], key=lambda x: x['date'])
+
+        with _lock:
+            positions_data[ticker] = {
+                'ticker':        ticker,
+                'name':          str(a.get('name', ticker)),
+                'asset_type':    str(a.get('asset_type', '')),
+                'pru':           round(pru, 4),
+                'shares':        round(shares_held, 6),
+                'current_value': round(cur_val, 2),
+                'invested':      invested,
+                'pnl':           round(pnl, 2),
+                'pnl_pct':       round(pnl_pct, 2),
+                'weight':        weight,
+                'hist_dates':    hist_dates,
+                'hist_prices':   hist_prices,
+                'sparkline':     sparkline,
+                'buy_events':    buy_events,
+            }
+            if len(hist_prices) >= 20:
+                corr_raw[ticker] = hist_prices[-126:]
+
+    threads = []
+    for _assets_list in summary.get('by_type', {}).values():
+        for _a in _assets_list:
+            if not _a.get('fully_sold'):
+                _t = _th.Thread(target=_process_pos, args=(_a,), daemon=True)
+                threads.append(_t); _t.start()
+    for _t in threads:
+        _t.join(timeout=15)
+    print(f'[charts] {len(positions_data)} positions OK')
+
+    # ── Correlation matrix ────────────────────────────────────────────────────
+    correlation_data = None
+    if len(corr_raw) >= 2:
+        try:
+            min_len = min(len(v) for v in corr_raw.values())
+            cl      = min(min_len, 126)
+            df      = _pd.DataFrame({k: v[-cl:] for k, v in corr_raw.items()})
+            pct     = df.pct_change().dropna()
+            corr    = pct.corr().round(2)
+            correlation_data = {
+                'tickers': list(corr.columns),
+                'matrix':  [[round(float(v), 2) for v in row] for row in corr.values],
+            }
+            print(f'[charts] corr: {correlation_data["tickers"]}')
+        except Exception as e:
+            print(f'[charts] corr error: {e}')
+
+    chart_page_data = {
+        'portfolio': {
+            'dates':       port_dates,
+            'invested':    port_invested,
+            'market':      port_market,
+            'msci_dates':  msci_port_dates,
+            'msci_values': msci_port_values,
+        },
+        'positions':   positions_data,
+        'correlation': correlation_data,
+    }
+
+    return render_template('charts.html', chart_page_data=chart_page_data)
 
 # ── Score de risque par défaut selon enveloppe (actifs sans ticker) ───────────
 _NOTICKER_ENV_SCORES = {

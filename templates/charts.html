@@ -1,152 +1,870 @@
 {% extends 'base.html' %}
-{% block title %}Graphiques{% endblock %}
+{% block title %}Charts — PortfolioTrack{% endblock %}
 {% block content %}
+<style>
+/* ── Page layout ────────────────────────────────────────────────────────────── */
+.charts-page {
+  padding: 12px 16px;
+  padding-bottom: calc(var(--statusbar-h, 20px) + 16px);
+  max-width: 1400px;
+}
 
-<div class="page-header">
+/* ── Title bar ──────────────────────────────────────────────────────────────── */
+.cp-titlebar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 0 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.cp-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0;
+}
+.cp-subtitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* ── Section dividers ───────────────────────────────────────────────────────── */
+.cp-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 12px;
+}
+.cp-divider-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cp-divider-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ── Chart section ──────────────────────────────────────────────────────────── */
+.cp-chart-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.cp-chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--panel-header);
+}
+.cp-controls-left, .cp-controls-right { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* ── Mode buttons ───────────────────────────────────────────────────────────── */
+.chart-mode-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chart-mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+.chart-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+/* ── Timeframe buttons ──────────────────────────────────────────────────────── */
+.tf-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tf-btn:hover, .tf-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+/* ── Legend bar ─────────────────────────────────────────────────────────────── */
+.cp-legend {
+  display: flex;
+  gap: 16px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-header);
+}
+.cp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+.cp-legend-line {
+  width: 20px;
+  height: 2px;
+}
+
+/* ── Positions grid ─────────────────────────────────────────────────────────── */
+.positions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+.position-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.position-card:hover { border-color: var(--accent); }
+.position-card.selected {
+  border-color: var(--accent);
+  background: rgba(255,140,0,0.04);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.card-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 4px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.card-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-sparkline { display: block; width: 100%; height: 36px; margin: 4px 0; }
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.card-pnl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.card-pnl.pos { color: var(--green); }
+.card-pnl.neg { color: var(--red); }
+.card-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* ── Detail section ─────────────────────────────────────────────────────────── */
+#detail-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 12px;
+  margin-bottom: 4px;
+}
+.detail-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.detail-stat {}
+.stat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: block;
+  margin-bottom: 2px;
+}
+.stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
+}
+.stat-value.pos { color: var(--green); }
+.stat-value.neg { color: var(--red); }
+
+/* ── Correlation section ────────────────────────────────────────────────────── */
+#corr-chart-wrap { overflow-x: auto; }
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
+.cp-empty {
+  padding: 60px 20px;
+  text-align: center;
+}
+.cp-empty-icon {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  color: var(--border-light);
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+.cp-empty-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+  .charts-page { padding: 8px 10px; }
+  .positions-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 7px; }
+  .detail-summary { gap: 14px; }
+  .cp-chart-controls { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<div class="charts-page">
+
+  <!-- Title bar -->
+  <div class="cp-titlebar">
     <div>
-        <h1>Graphiques</h1>
-        <p>Évolution de ton portefeuille — valeur investie vs valeur marché.</p>
+      <div class="cp-title">F5 · CHARTS</div>
+      <div class="cp-subtitle">Analyse graphique de ton portefeuille</div>
     </div>
-</div>
+  </div>
 
-{% if not charts %}
-<div class="card empty-state">
-    <h3>Aucune donnée à afficher</h3>
-    <p>Ajoute des achats pour voir tes graphiques apparaître.</p>
+  {% set has_data = chart_page_data.portfolio.dates | length > 0 or chart_page_data.positions | length > 0 %}
+
+  {% if not has_data %}
+  <div class="cp-empty">
+    <div class="cp-empty-icon">[ — ]</div>
+    <div class="cp-empty-label">Aucune donnée — ajoute des achats pour voir tes graphiques</div>
     <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter un achat</a>
-</div>
+  </div>
 
-{% else %}
+  {% else %}
 
-{% if portfolio_chart %}
-<div class="card" style="margin-bottom:1.5rem; border-top:2px solid #1a2a3a;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <div>
-            <strong style="font-size:1.05rem; color:#e8f0ff;">📊 Portefeuille total</strong>
-            <span style="font-size:0.82rem; color:rgba(232,240,255,0.35); margin-left:0.5rem;">Tous actifs confondus</span>
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-sm btn-primary" onclick="setMode('portfolio', 'eur', this)">Valeur (€)</button>
-            <button class="btn btn-sm btn-ghost" onclick="setMode('portfolio', 'pct', this)">Performance (%)</button>
-        </div>
+  <!-- ═══ SECTION 1 — PORTFOLIO CHART ═══ -->
+  <div class="cp-chart-section" id="portfolio-section">
+    <div class="cp-chart-controls">
+      <div class="cp-controls-left">
+        <button class="chart-mode-btn active" data-mode="valeur" onclick="setMode('valeur',this)">VALEUR (€)</button>
+        <button class="chart-mode-btn"        data-mode="perf"   onclick="setMode('perf',this)">PERF (%)</button>
+        <button class="chart-mode-btn"        data-mode="dd"     onclick="setMode('dd',this)">DRAWDOWN</button>
+      </div>
+      <div class="cp-controls-right">
+        <button class="tf-btn"        data-tf="1M"  onclick="setTf('1M',this)">1M</button>
+        <button class="tf-btn"        data-tf="3M"  onclick="setTf('3M',this)">3M</button>
+        <button class="tf-btn"        data-tf="6M"  onclick="setTf('6M',this)">6M</button>
+        <button class="tf-btn"        data-tf="1A"  onclick="setTf('1A',this)">1A</button>
+        <button class="tf-btn active" data-tf="MAX" onclick="setTf('MAX',this)">MAX</button>
+      </div>
     </div>
-    <div id="chart-portfolio"></div>
-</div>
-{% endif %}
-
-{% for etf_id, data in charts.items() %}
-<div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <div>
-            <span class="badge badge-etf">{{ data.asset.ticker }}</span>
-            <strong style="margin-left:0.5rem; color:#e8f0ff;">{{ data.asset.name }}</strong>
-            {% if data.asset.isin %}
-            <span style="font-size:0.8rem; color:rgba(232,240,255,0.3); margin-left:0.5rem;">{{ data.asset.isin }}</span>
-            {% endif %}
-        </div>
-        <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-sm btn-primary" onclick="setMode('{{ etf_id }}', 'eur', this)">Valeur (€)</button>
-            <button class="btn btn-sm btn-ghost" onclick="setMode('{{ etf_id }}', 'pct', this)">Performance (%)</button>
-        </div>
+    <div class="cp-legend" id="portfolio-legend">
+      <div class="cp-legend-item">
+        <div class="cp-legend-line" style="background:#FF8C00;"></div>
+        <span>Portefeuille</span>
+      </div>
+      <div class="cp-legend-item">
+        <div class="cp-legend-line" style="background:rgba(170,170,170,0.5);border-top:2px dashed rgba(170,170,170,0.5);height:0;"></div>
+        <span>MSCI World fictif</span>
+      </div>
+      <div class="cp-legend-item" id="legend-invested">
+        <div class="cp-legend-line" style="background:rgba(80,80,80,0.7);"></div>
+        <span>Capital investi</span>
+      </div>
     </div>
-    <div id="chart-{{ etf_id }}"></div>
-</div>
-{% endfor %}
+    <div id="portfolio-chart" style="height:400px;"></div>
+  </div>
+
+  <!-- ═══ SECTION 2 — POSITIONS GRID ═══ -->
+  <div class="cp-divider">
+    <span class="cp-divider-label">Positions</span>
+    <div class="cp-divider-line"></div>
+    <span id="positions-count" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);white-space:nowrap;"></span>
+  </div>
+  <div class="positions-grid" id="positions-grid"></div>
+
+  <!-- ═══ SECTION 3 — ASSET DETAIL ═══ -->
+  <div id="detail-section" style="display:none;">
+    <div class="cp-divider">
+      <span class="cp-divider-label" id="detail-title">DÉTAIL</span>
+      <div class="cp-divider-line"></div>
+      <button onclick="closeDetail()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:8px;padding:3px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0;">✕ FERMER</button>
+    </div>
+    <div id="detail-chart" style="height:300px;"></div>
+    <div class="detail-summary" id="detail-summary"></div>
+  </div>
+
+  <!-- ═══ SECTION 4 — CORRÉLATIONS ═══ -->
+  <div id="correlation-section" style="display:none;">
+    <div class="cp-divider">
+      <span class="cp-divider-label">Corrélations</span>
+      <div class="cp-divider-line"></div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);white-space:nowrap;">6 mois · rendements quotidiens</span>
+    </div>
+    <div id="corr-chart-wrap">
+      <div id="correlation-chart"></div>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>{# /charts-page #}
 
 <script>
-const chartsData = {};
-const originalY  = {};
+// ── Data ──────────────────────────────────────────────────────────────────────
+var CPD = {{ chart_page_data | tojson }};
 
-{% if portfolio_chart %}
-chartsData["portfolio"] = {{ portfolio_chart | safe }};
-{% endif %}
-{% for etf_id, data in charts.items() %}
-chartsData["{{ etf_id }}"] = {{ data.plot | safe }};
-{% endfor %}
+// ── State ─────────────────────────────────────────────────────────────────────
+var _chartMode = 'valeur';
+var _chartTf   = 'MAX';
+var _selTicker = null;
 
-const isMobile = window.innerWidth < 768;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function r2(n) { return Math.round(n * 100) / 100; }
+function fmtEur(n) {
+  return Math.abs(n) >= 1000
+    ? (n / 1000).toLocaleString('fr-FR', {minimumFractionDigits:1,maximumFractionDigits:1}) + 'k€'
+    : n.toLocaleString('fr-FR', {minimumFractionDigits:2,maximumFractionDigits:2}) + '€';
+}
+function fmtEurFull(n) {
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+}
+function fmtPct(n) {
+  return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+}
 
-const darkLayout = {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    height: isMobile ? 260 : 380,
-    margin: isMobile
-        ? { l: 45, r: 10, t: 20, b: 60 }
-        : { l: 20, r: 20, t: 40, b: 40 },
-    hoverlabel: {
-        bgcolor: '#16161F',
-        bordercolor: 'rgba(74,122,155,0.1)',
-        font: { color: 'rgba(232,240,255,0.8)' }
-    },
-    font: { color: 'rgba(232,240,255,0.5)', size: isMobile ? 10 : 12 },
-    xaxis: {
-        gridcolor: 'rgba(74,122,155,0.06)',
-        linecolor: 'rgba(74,122,155,0.06)',
-        tickfont: { color: 'rgba(232,240,255,0.4)', size: isMobile ? 9 : 11 },
-        tickangle: isMobile ? -45 : 0
-    },
-    yaxis: {
-        gridcolor: 'rgba(74,122,155,0.06)',
-        linecolor: 'rgba(74,122,155,0.06)',
-        tickfont: { color: 'rgba(232,240,255,0.4)', size: isMobile ? 9 : 11 }
-    },
-    legend: {
-        font: { color: 'rgba(232,240,255,0.5)', size: isMobile ? 9 : 11 },
-        bgcolor: 'rgba(0,0,0,0)',
-        orientation: 'h',
-        y: isMobile ? -0.35 : -0.15
-    }
+// ── Timeframe filter ──────────────────────────────────────────────────────────
+function getTfCutoff(tf) {
+  if (tf === 'MAX') return null;
+  var now  = new Date();
+  var days = { '1M': 31, '3M': 92, '6M': 183, '1A': 366 }[tf] || null;
+  if (!days) return null;
+  var cut = new Date(now.getTime() - days * 86400000);
+  return cut.toISOString().split('T')[0];
+}
+
+function filterPortfolio(tf) {
+  var d   = CPD.portfolio;
+  var cut = getTfCutoff(tf);
+
+  var dates = d.dates.slice(), inv = d.invested.slice(), mkt = d.market.slice();
+  if (cut) {
+    var si = 0;
+    while (si < dates.length && dates[si] < cut) si++;
+    dates = dates.slice(si); inv = inv.slice(si); mkt = mkt.slice(si);
+  }
+
+  // MSCI: filter to same date range as portfolio
+  var msciD = d.msci_dates.slice(), msciV = d.msci_values.slice();
+  if (dates.length) {
+    var startStr = dates[0], endStr = dates[dates.length - 1];
+    var ms = 0;
+    while (ms < msciD.length && msciD[ms] < startStr) ms++;
+    var me = msciD.length - 1;
+    while (me >= 0 && msciD[me] > endStr) me--;
+    msciD = msciD.slice(ms, me + 1);
+    msciV = msciV.slice(ms, me + 1);
+  }
+
+  return { dates, inv, mkt, msciD, msciV };
+}
+
+// ── Portfolio chart rendering ─────────────────────────────────────────────────
+var _plotlyConfig = { displayModeBar: false, responsive: true };
+
+var _baseLayout = {
+  paper_bgcolor: 'transparent',
+  plot_bgcolor:  'transparent',
+  margin:        { l: 8, r: 56, t: 6, b: 36 },
+  showlegend:    false,
+  font:          { family: 'IBM Plex Mono', color: '#666', size: 10 },
+  xaxis: {
+    showgrid: false,
+    tickfont: { size: 9, color: '#666' },
+    linecolor: '#333',
+    zeroline: false,
+  },
+  yaxis: {
+    side: 'right',
+    showgrid: true,
+    gridcolor: 'rgba(255,255,255,0.04)',
+    gridwidth: 0.5,
+    tickfont: { size: 9, color: '#666' },
+    linecolor: 'transparent',
+    zeroline: false,
+  },
+  hovermode: 'x unified',
+  hoverlabel: {
+    bgcolor: '#1a1a1a',
+    bordercolor: '#FF8C00',
+    font: { color: '#fff', family: 'IBM Plex Mono', size: 10 },
+  },
 };
 
-Object.keys(chartsData).forEach(id => {
-    const fig = chartsData[id];
-    originalY[id] = {
-        inv: [...fig.data[0].y],
-        mkt: [...fig.data[1].y],
-        msci: fig.data[2] ? [...fig.data[2].y] : null
-    };
-    const layout = Object.assign({}, fig.layout, darkLayout);
-    Plotly.newPlot('chart-' + id, fig.data, layout,
-        { responsive: true, displayModeBar: false });
-});
+function renderPortfolioChart() {
+  var f  = filterPortfolio(_chartTf);
+  var el = document.getElementById('portfolio-chart');
+  if (!el || !f.dates.length) return;
 
-function setMode(id, mode, btn) {
-    const orig = originalY[id];
+  var traces = [];
+  var layoutPatch = {};
+  var legendInvested = document.getElementById('legend-invested');
 
-    btn.parentElement.querySelectorAll('.btn').forEach(b => {
-        b.classList.remove('btn-primary');
-        b.classList.add('btn-ghost');
+  if (_chartMode === 'valeur') {
+    // Invested area (grey)
+    traces.push({
+      x: f.dates, y: f.inv,
+      type: 'scatter', fill: 'tozeroy',
+      fillcolor: 'rgba(60,60,60,0.30)',
+      line: { color: 'rgba(90,90,90,0.6)', width: 1 },
+      name: 'Investi',
+      hovertemplate: 'Investi: %{y:,.0f}€<extra></extra>',
     });
-    btn.classList.remove('btn-ghost');
-    btn.classList.add('btn-primary');
-
-    if (mode === 'pct') {
-        const baseInv  = orig.inv.find(v => v > 0)  || 1;
-        const baseMkt  = orig.mkt.find(v => v > 0)  || 1;
-
-        const yInv  = orig.inv.map(v  => +((v  - baseInv)  / baseInv  * 100).toFixed(2));
-        const yMkt  = orig.mkt.map(v  => +((v  - baseMkt)  / baseMkt  * 100).toFixed(2));
-
-        const newY = [yInv, yMkt];
-        const newLayout = { 'yaxis.ticksuffix': '%', 'yaxis.tickprefix': '' };
-
-        if (orig.msci) {
-            const baseMsci = orig.msci.find(v => v > 0) || 1;
-            const yMsci = orig.msci.map(v => +((v - baseMsci) / baseMsci * 100).toFixed(2));
-            newY.push(yMsci);
-        }
-
-        Plotly.update('chart-' + id, { y: newY }, newLayout);
-    } else {
-        const newY = [orig.inv, orig.mkt];
-        if (orig.msci) newY.push(orig.msci);
-        Plotly.update('chart-' + id,
-            { y: newY },
-            { 'yaxis.ticksuffix': ' €', 'yaxis.tickprefix': '' }
-        );
+    // Portfolio area (orange)
+    traces.push({
+      x: f.dates, y: f.mkt,
+      type: 'scatter', fill: 'tozeroy',
+      fillcolor: 'rgba(255,140,0,0.07)',
+      line: { color: '#FF8C00', width: 2 },
+      name: 'Portefeuille',
+      hovertemplate: 'Portfolio: %{y:,.0f}€<extra></extra>',
+    });
+    // MSCI fictif (dashed)
+    if (f.msciD.length >= 2) {
+      traces.push({
+        x: f.msciD, y: f.msciV,
+        type: 'scatter',
+        line: { color: 'rgba(180,180,180,0.45)', width: 1.5, dash: 'dot' },
+        name: 'MSCI World',
+        hovertemplate: 'MSCI fictif: %{y:,.0f}€<extra></extra>',
+      });
     }
-}
-</script>
+    layoutPatch = { 'yaxis.ticksuffix': '€', 'yaxis.tickformat': ',.0f', 'yaxis.rangemode': 'tozero' };
+    if (legendInvested) legendInvested.style.display = '';
 
-{% endif %}
+  } else if (_chartMode === 'perf') {
+    // Build invested lookup for MSCI perf alignment
+    var invLookup = {};
+    f.dates.forEach(function(d, i) { invLookup[d] = f.inv[i]; });
+
+    var portPerf = f.dates.map(function(_, i) {
+      return f.inv[i] > 0 ? r2((f.mkt[i] - f.inv[i]) / f.inv[i] * 100) : 0;
+    });
+    traces.push({
+      x: f.dates, y: portPerf,
+      type: 'scatter',
+      line: { color: '#FF8C00', width: 2 },
+      name: 'Portefeuille',
+      hovertemplate: 'Portfolio: %{y:+.2f}%<extra></extra>',
+    });
+
+    if (f.msciD.length >= 2) {
+      var msciPerf = f.msciD.map(function(d, i) {
+        // Find aligned invested amount at this date
+        var inv = invLookup[d];
+        if (inv === undefined) {
+          // Walk backward to find closest past date
+          for (var j = f.dates.length - 1; j >= 0; j--) {
+            if (f.dates[j] <= d) { inv = f.inv[j]; break; }
+          }
+        }
+        return inv > 0 ? r2((f.msciV[i] - inv) / inv * 100) : 0;
+      });
+      traces.push({
+        x: f.msciD, y: msciPerf,
+        type: 'scatter',
+        line: { color: 'rgba(180,180,180,0.45)', width: 1.5, dash: 'dot' },
+        name: 'MSCI World',
+        hovertemplate: 'MSCI fictif: %{y:+.2f}%<extra></extra>',
+      });
+    }
+    // Zero line
+    traces.push({
+      x: [f.dates[0], f.dates[f.dates.length - 1]], y: [0, 0],
+      type: 'scatter',
+      line: { color: 'rgba(255,255,255,0.12)', width: 1, dash: 'dot' },
+      hoverinfo: 'skip', showlegend: false,
+    });
+    layoutPatch = { 'yaxis.ticksuffix': '%', 'yaxis.tickformat': '+.2f', 'yaxis.rangemode': 'normal' };
+    if (legendInvested) legendInvested.style.display = 'none';
+
+  } else {
+    // DRAWDOWN
+    var maxSoFar = 0;
+    var dd = f.mkt.map(function(v) {
+      if (v > maxSoFar) maxSoFar = v;
+      return maxSoFar > 0 ? r2((v - maxSoFar) / maxSoFar * 100) : 0;
+    });
+    traces.push({
+      x: f.dates, y: dd,
+      type: 'scatter', fill: 'tozeroy',
+      fillcolor: 'rgba(255,68,68,0.22)',
+      line: { color: '#ff4444', width: 1.5 },
+      name: 'Drawdown',
+      hovertemplate: 'Drawdown: %{y:.2f}%<extra></extra>',
+    });
+    // Zero reference
+    traces.push({
+      x: [f.dates[0], f.dates[f.dates.length - 1]], y: [0, 0],
+      type: 'scatter',
+      line: { color: 'rgba(255,255,255,0.12)', width: 1 },
+      hoverinfo: 'skip', showlegend: false,
+    });
+    layoutPatch = { 'yaxis.ticksuffix': '%', 'yaxis.tickformat': '.2f', 'yaxis.rangemode': 'normal' };
+    if (legendInvested) legendInvested.style.display = 'none';
+  }
+
+  var layout = Object.assign({}, _baseLayout, { height: 400 });
+  Plotly.react('portfolio-chart', traces, layout, _plotlyConfig);
+  if (Object.keys(layoutPatch).length) {
+    Plotly.relayout('portfolio-chart', layoutPatch);
+  }
+  console.log('[charts] portfolio rendered mode=' + _chartMode + ' tf=' + _chartTf + ' pts=' + f.dates.length);
+}
+
+function setMode(mode, btn) {
+  _chartMode = mode;
+  document.querySelectorAll('.chart-mode-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderPortfolioChart();
+}
+function setTf(tf, btn) {
+  _chartTf = tf;
+  document.querySelectorAll('.tf-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderPortfolioChart();
+}
+
+// ── Sparkline canvas ──────────────────────────────────────────────────────────
+function drawSparkline(canvas, prices, pnl_pct) {
+  if (!canvas || !prices || prices.length < 2) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var pad = 2;
+  var cw = W - pad * 2, ch = H - pad * 2;
+
+  var min = prices[0], max = prices[0];
+  prices.forEach(function(v) { if (v < min) min = v; if (v > max) max = v; });
+  var range = max - min || 1;
+
+  ctx.clearRect(0, 0, W, H);
+
+  var color = pnl_pct >= 0 ? '#00cc66' : '#ff4444';
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(pad, H - pad);
+  prices.forEach(function(p, i) {
+    var x = pad + (i / (prices.length - 1)) * cw;
+    var y = pad + (1 - (p - min) / range) * ch;
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad + cw, H - pad);
+  ctx.closePath();
+  ctx.fillStyle = pnl_pct >= 0 ? 'rgba(0,200,100,0.07)' : 'rgba(255,68,68,0.07)';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  prices.forEach(function(p, i) {
+    var x = pad + (i / (prices.length - 1)) * cw;
+    var y = pad + (1 - (p - min) / range) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ── Position cards grid ───────────────────────────────────────────────────────
+function renderPositionCards() {
+  var grid = document.getElementById('positions-grid');
+  if (!grid) return;
+
+  var tickers = Object.keys(CPD.positions);
+  // Sort by weight desc
+  tickers.sort(function(a, b) {
+    return (CPD.positions[b].weight || 0) - (CPD.positions[a].weight || 0);
+  });
+
+  var cnt = document.getElementById('positions-count');
+  if (cnt) cnt.textContent = tickers.length + ' actif' + (tickers.length > 1 ? 's' : '');
+
+  grid.innerHTML = tickers.map(function(tk) {
+    var pos = CPD.positions[tk];
+    var pnlCls = pos.pnl_pct >= 0 ? 'pos' : 'neg';
+    var pnlStr = (pos.pnl_pct >= 0 ? '+' : '') + pos.pnl_pct.toFixed(2) + '%';
+    var typeShort = (pos.asset_type || '').toUpperCase();
+    if (typeShort === 'ACTION') typeShort = 'ACT';
+    else if (typeShort === 'CRYPTO') typeShort = 'CRY';
+    else if (typeShort === 'OBLIGATION') typeShort = 'OBL';
+    else if (typeShort === '') typeShort = 'ACT';
+    else typeShort = typeShort.slice(0, 3);
+
+    return '<div class="position-card" data-ticker="' + tk + '" onclick="showDetail(\'' + tk + '\')">'
+      + '<div class="card-header">'
+      + '<span class="card-badge">' + typeShort + '</span>'
+      + '<span class="card-ticker">' + tk + '</span>'
+      + '</div>'
+      + '<canvas class="card-sparkline" id="spark-' + tk.replace(/[^a-z0-9]/gi,'_') + '" width="160" height="36"></canvas>'
+      + '<div class="card-footer">'
+      + '<span class="card-pnl ' + pnlCls + '">' + pnlStr + '</span>'
+      + '<span class="card-value">' + fmtEur(pos.current_value) + '</span>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Draw sparklines after DOM insert
+  setTimeout(function() {
+    tickers.forEach(function(tk) {
+      var pos = CPD.positions[tk];
+      var canvasId = 'spark-' + tk.replace(/[^a-z0-9]/gi,'_');
+      var canvas   = document.getElementById(canvasId);
+      if (canvas && pos.sparkline && pos.sparkline.length) {
+        canvas.width  = canvas.offsetWidth || 160;
+        drawSparkline(canvas, pos.sparkline, pos.pnl_pct);
+      }
+    });
+  }, 0);
+}
+
+// ── Asset detail chart ────────────────────────────────────────────────────────
+function showDetail(ticker) {
+  var pos = CPD.positions[ticker];
+  if (!pos) return;
+
+  // Deselect previous, select new
+  document.querySelectorAll('.position-card').forEach(function(c) {
+    c.classList.toggle('selected', c.dataset.ticker === ticker);
+  });
+  _selTicker = ticker;
+
+  var sec = document.getElementById('detail-section');
+  sec.style.display = 'block';
+  document.getElementById('detail-title').textContent
+    = 'DÉTAIL : ' + ticker + (pos.name !== ticker ? ' — ' + pos.name : '');
+
+  var traces = [];
+
+  // Price line (orange)
+  if (pos.hist_dates.length >= 2) {
+    traces.push({
+      x: pos.hist_dates, y: pos.hist_prices,
+      type: 'scatter',
+      line: { color: '#FF8C00', width: 1.8 },
+      name: ticker,
+      hovertemplate: '%{x}: %{y:,.4f}<extra></extra>',
+    });
+
+    // Fill zones above/below PRU
+    if (pos.pru > 0) {
+      var aboveY = pos.hist_prices.map(function(p) { return p >= pos.pru ? p : pos.pru; });
+      var belowY = pos.hist_prices.map(function(p) { return p < pos.pru ? p : pos.pru; });
+      traces.push({
+        x: pos.hist_dates, y: aboveY,
+        type: 'scatter', fill: 'tonexty',
+        fillcolor: 'rgba(0,200,80,0.06)',
+        line: { width: 0, color: 'transparent' },
+        hoverinfo: 'skip', showlegend: false,
+      });
+      traces.push({
+        x: pos.hist_dates, y: belowY,
+        type: 'scatter', fill: 'tonexty',
+        fillcolor: 'rgba(255,68,68,0.06)',
+        line: { width: 0, color: 'transparent' },
+        hoverinfo: 'skip', showlegend: false,
+      });
+    }
+
+    // PRU horizontal dashed line
+    if (pos.pru > 0) {
+      traces.push({
+        x: [pos.hist_dates[0], pos.hist_dates[pos.hist_dates.length - 1]],
+        y: [pos.pru, pos.pru],
+        type: 'scatter',
+        line: { color: 'rgba(255,255,255,0.45)', width: 1.5, dash: 'dot' },
+        name: 'PRU ' + pos.pru.toFixed(2),
+        hovertemplate: 'PRU: ' + pos.pru.toFixed(4) + '<extra></extra>',
+        showlegend: false,
+      });
+    }
+  }
+
+  // Buy markers (triangles)
+  if (pos.buy_events.length) {
+    traces.push({
+      x: pos.buy_events.map(function(e) { return e.date; }),
+      y: pos.buy_events.map(function(e) { return e.price; }),
+      mode: 'markers',
+      type: 'scatter',
+      marker: {
+        symbol: 'triangle-up', color: '#FF8C00', size: 9,
+        line: { color: '#1a1a1a', width: 0.5 },
+      },
+      name: 'Achats',
+      hovertemplate: 'Achat %{x}<br>%{y:.4f}<br>%{customdata[0]} parts<extra></extra>',
+      customdata: pos.buy_events.map(function(e) { return [e.qty.toFixed(4)]; }),
+    });
+  }
+
+  var detailLayout = Object.assign({}, _baseLayout, {
+    height: 300,
+    yaxis: Object.assign({}, _baseLayout.yaxis, { tickformat: ',.4f', ticksuffix: '' }),
+  });
+
+  Plotly.react('detail-chart', traces, detailLayout, _plotlyConfig);
+  console.log('[charts] detail rendered ticker=' + ticker + ' pts=' + pos.hist_dates.length);
+
+  // Summary stats
+  renderDetailSummary(pos);
+
+  // Scroll into view
+  setTimeout(function() {
+    sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+function closeDetail() {
+  document.getElementById('detail-section').style.display = 'none';
+  document.querySelectorAll('.position-card.selected').forEach(function(c) {
+    c.classList.remove('selected');
+  });
+  _selTicker = null;
+}
+
+function renderDetailSummary(pos) {
+  var pnlCls = pos.pnl >= 0 ? 'pos' : 'neg';
+  var pnlStr = (pos.pnl >= 0 ? '+' : '') + fmtEurFull(pos.pnl) + ' (' + fmtPct(pos.pnl_pct) + ')';
+  document.getElementById('detail-summary').innerHTML =
+    stat('INVESTI',  fmtEurFull(pos.invested))
+    + stat('VALEUR', fmtEurFull(pos.current_value))
+    + stat('P&amp;L', pnlStr, pnlCls)
+    + stat('PRU',    pos.pru.toFixed(4))
+    + stat('QTÉ',    pos.shares.toFixed(4))
+    + stat('POIDS',  pos.weight.toFixed(1) + '%');
+}
+
+function stat(label, value, cls) {
+  return '<div class="detail-stat"><span class="stat-label">' + label + '</span>'
+    + '<span class="stat-value' + (cls ? ' ' + cls : '') + '">' + value + '</span></div>';
+}
+
+// ── Correlation heatmap ───────────────────────────────────────────────────────
+function renderCorrelation() {
+  var sec = document.getElementById('correlation-section');
+  if (!sec) return;
+  var corr = CPD.correlation;
+  if (!corr || !corr.tickers || corr.tickers.length < 2) {
+    sec.style.display = 'none';
+    return;
+  }
+  sec.style.display = 'block';
+
+  var n    = corr.tickers.length;
+  var cell = Math.max(50, Math.min(80, Math.floor(400 / n)));
+  var h    = n * cell + 100;
+
+  var trace = {
+    z: corr.matrix,
+    x: corr.tickers,
+    y: corr.tickers,
+    type: 'heatmap',
+    colorscale: [
+      [0,   '#ff4444'],
+      [0.5, '#1a1a1a'],
+      [1,   '#00cc66'],
+    ],
+    zmin: -1, zmax: 1,
+    text: corr.matrix.map(function(row) {
+      return row.map(function(v) { return v.toFixed(2); });
+    }),
+    texttemplate: '%{text}',
+    textfont: { color: '#fff', size: 10, family: 'IBM Plex Mono' },
+    hovertemplate: '%{x} vs %{y}: %{z:.2f}<extra></extra>',
+    showscale: false,
+  };
+
+  Plotly.newPlot('correlation-chart', [trace], {
+    paper_bgcolor: 'transparent',
+    plot_bgcolor:  'transparent',
+    height:        h,
+    margin:        { l: 70, r: 20, t: 20, b: 70 },
+    xaxis: {
+      tickfont: { color: '#FF8C00', size: 10, family: 'IBM Plex Mono' },
+      linecolor: '#333', showgrid: false,
+    },
+    yaxis: {
+      tickfont: { color: '#FF8C00', size: 10, family: 'IBM Plex Mono' },
+      autorange: 'reversed', linecolor: '#333', showgrid: false,
+    },
+    font: { family: 'IBM Plex Mono' },
+  }, { displayModeBar: false, responsive: true });
+  console.log('[charts] correlation rendered tickers=' + JSON.stringify(corr.tickers));
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  if (!CPD.portfolio.dates.length && !Object.keys(CPD.positions).length) return;
+
+  renderPortfolioChart();
+  renderPositionCards();
+  renderCorrelation();
+
+  window.addEventListener('resize', function() {
+    // Redraw sparklines on resize
+    Object.keys(CPD.positions).forEach(function(tk) {
+      var pos = CPD.positions[tk];
+      var canvasId = 'spark-' + tk.replace(/[^a-z0-9]/gi,'_');
+      var canvas   = document.getElementById(canvasId);
+      if (canvas && pos.sparkline && pos.sparkline.length) {
+        canvas.width = canvas.offsetWidth || 160;
+        drawSparkline(canvas, pos.sparkline, pos.pnl_pct);
+      }
+    });
+  });
+});
+</script>
 {% endblock %}
