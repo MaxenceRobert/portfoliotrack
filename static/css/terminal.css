@@ -887,3 +887,15 @@ footer a:hover { color: var(--text); }
   .page-header { padding: 8px; }
   .card        { margin: 6px 8px; padding: 10px; }
 }
+
+/* ── Bloomberg tick flash animations ──────────────────────────────────────── */
+@keyframes flash-green {
+  0%   { background-color: rgba(0, 200, 0, 0.3); }
+  100% { background-color: transparent; }
+}
+@keyframes flash-red {
+  0%   { background-color: rgba(255, 0, 0, 0.3); }
+  100% { background-color: transparent; }
+}
+.tick-up   { animation: flash-green 0.6s ease-out; }
+.tick-down { animation: flash-red   0.6s ease-out; }

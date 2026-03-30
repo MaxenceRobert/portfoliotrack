@@ -416,7 +416,7 @@
     <!-- Actions -->
     <div class="result-actions">
         <a href="{{ url_for('main.profile') }}" class="btn btn-ghost">← RETOUR AU PROFIL</a>
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
+        <a href="{{ url_for('main.test_profil') }}?redo=1" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">SUIVRE MON PORTEFEUILLE →</a>
     </div>
 

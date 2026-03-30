@@ -661,6 +661,63 @@ def dashboard():
     msci_risk   = get_risk_score('CW8.PA', 'ETF')
     msci_sharpe = round(float(msci_risk.get('sharpe') or 0), 2) if msci_risk and msci_risk.get('sharpe') is not None else None
 
+    # ── MSCI World fictif (money-weighted) ────────────────────────────────────
+    # Pour chaque achat du portfolio, simule le même montant investi dans MSCI.
+    # Construit une série journalière de la valeur du "portfolio MSCI fictif" en €.
+    msci_portfolio_dates: list = []
+    msci_portfolio_values: list = []
+    if benchmark_dates and _all_purchases_list:
+        # lookup date → valeur base-100 du benchmark
+        _bench_lookup = {_d: _v for _d, _v in zip(benchmark_dates, benchmark_values)}
+
+        # Pour chaque achat : calculer les "unités" MSCI fictives achetées
+        _purchase_units: dict = {}
+        _skipped_p = 0
+        for _p in _all_purchases_list:
+            _p_date = str(_p.get('date', ''))[:10]
+            _amount = float(_p.get('total_cost') or 0)
+            if not _p_date or _amount <= 0:
+                continue
+            # Prix MSCI le jour de l'achat (ou le plus proche précédent)
+            if _p_date in _bench_lookup:
+                _msci_val = _bench_lookup[_p_date]
+            else:
+                _avail = [_bd for _bd in benchmark_dates if _bd <= _p_date]
+                if not _avail:
+                    _avail = benchmark_dates[:1]
+                if not _avail:
+                    _skipped_p += 1
+                    continue
+                _msci_val = _bench_lookup[_avail[-1]]
+            if _msci_val > 0:
+                _units = _amount / _msci_val
+                _purchase_units[_p_date] = _purchase_units.get(_p_date, 0.0) + _units
+
+        print(f'[msci_fictif] purchases={len(_all_purchases_list)} skipped={_skipped_p} dates_with_units={len(_purchase_units)}')
+
+        # Construire la série journalière : valeur = cumul_unités × prix_msci_du_jour
+        _unit_dates_sorted = sorted(_purchase_units.keys())
+        _ui2 = 0
+        _cumul_units = 0.0
+        _first_invest_date = _unit_dates_sorted[0] if _unit_dates_sorted else None
+
+        for _bd in benchmark_dates:
+            while _ui2 < len(_unit_dates_sorted) and _unit_dates_sorted[_ui2] <= _bd:
+                _cumul_units += _purchase_units[_unit_dates_sorted[_ui2]]
+                _ui2 += 1
+            if _cumul_units > 0 and _first_invest_date and _bd >= _first_invest_date:
+                _val = round(_cumul_units * _bench_lookup[_bd], 2)
+                msci_portfolio_dates.append(_bd)
+                msci_portfolio_values.append(_val)
+
+        if msci_portfolio_values:
+            print(f'[msci_fictif] OK: {len(msci_portfolio_values)} points '
+                  f'[{msci_portfolio_values[0]:.0f}€ → {msci_portfolio_values[-1]:.0f}€]')
+        else:
+            print('[msci_fictif] série vide (pas assez de données benchmark/achats)')
+    else:
+        print(f'[msci_fictif] skip: benchmark_dates={len(benchmark_dates)} purchases={len(_all_purchases_list)}')
+
     # ── Sparkline 6M ──────────────────────────────────────────────────────────
     from datetime import date as _date, timedelta as _td
     _six_months_ago = (_date.today() - _td(days=182)).isoformat()
@@ -697,6 +754,8 @@ def dashboard():
         benchmark_dates=benchmark_dates,
         benchmark_values=benchmark_values,
         msci_sharpe=msci_sharpe,
+        msci_portfolio_dates=msci_portfolio_dates,
+        msci_portfolio_values=msci_portfolio_values,
         sparkline_data=sparkline_data,
         perf_6m_pct=perf_6m_pct,
     )
@@ -1384,6 +1443,12 @@ def profile():
 # ── Test profil investisseur ──────────────────────────────────────────────────
 @main_bp.route('/test-profil')
 def test_profil():
+    redo = request.args.get('redo', '0') == '1'
+    if not redo and current_user.is_authenticated:
+        last_profil = get_last_profil_investisseur(current_user.id)
+        print(f'[test_profil] user={current_user.id} has_profil={bool(last_profil)} score={last_profil.get("score_global") if last_profil else None}')
+        if last_profil and last_profil.get('score_global') is not None:
+            return redirect(url_for('main.mon_profil_investisseur'))
     return render_template('test_profil.html')
 
 @main_bp.route('/resultat-profil', methods=['POST'])

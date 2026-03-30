@@ -594,7 +594,7 @@
 
     <!-- Actions -->
     <div class="result-actions">
-        <a href="{{ url_for('main.test_profil') }}" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
+        <a href="{{ url_for('main.test_profil') }}?redo=1" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">SUIVRE MON PORTEFEUILLE →</a>
         {% endif %}

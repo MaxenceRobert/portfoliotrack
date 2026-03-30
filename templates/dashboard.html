@@ -358,7 +358,7 @@
           {% set env = a.envelope or '' %}
           {% set weight = (a.current_value / summary.total_value * 100)|round(1) if summary.total_value > 0 else 0 %}
           {% set pl_color = 'var(--green)' if a.unrealized_gain >= 0 else 'var(--red)' %}
-          <tr class="dash-asset-tr" data-asset-id="{{ a.asset_id }}" data-envelope="{{ env }}"
+          <tr class="dash-asset-tr" data-asset-id="{{ a.asset_id }}" data-envelope="{{ env }}" data-ticker="{{ a.ticker or '' }}"
               onclick="toggleAssetRow('detail-{{ a.asset_id }}')" style="cursor:pointer;">
             <td><span class="tag {{ 'etf' if a.asset_type == 'ETF' else 'stock' if a.asset_type == 'Action' else 'crypto' if a.asset_type == 'Crypto' else '' }}">
               {{ 'ETF' if a.asset_type == 'ETF' else 'ACT' if a.asset_type == 'Action' else 'CRY' if a.asset_type == 'Crypto' else a.asset_type[:3]|upper }}
@@ -380,7 +380,7 @@
             </td>
             <td class="right">{{ a.shares_held }}</td>
             <td class="right">{{ a.avg_price }}</td>
-            <td class="right" style="color:var(--text-bright);font-weight:500;">{{ a.current_price }}</td>
+            <td class="right price-cell" style="color:var(--text-bright);font-weight:500;">{{ a.current_price }}</td>
             <td class="right {{ 'pos' if a.unrealized_gain >= 0 else 'neg' }}">{{ '+' if a.unrealized_gain >= 0 else '' }}{{ a.unrealized_gain }} €</td>
             <td class="right {{ 'pos' if a.unrealized_pct >= 0 else 'neg' }}">{{ '+' if a.unrealized_pct >= 0 else '' }}{{ a.unrealized_pct }}%</td>
             <td class="right" style="color:var(--text-bright);">{{ a.current_value }} €</td>
@@ -659,6 +659,8 @@ var HISTORY_DATES  = {{ history_dates | tojson }};
 var HISTORY_VALS   = {{ history_values | tojson }};
 var BENCH_DATES    = {{ benchmark_dates | tojson }};
 var BENCH_VALS     = {{ benchmark_values | tojson }};
+var MSCI_PORT_DATES = {{ msci_portfolio_dates | tojson }};
+var MSCI_PORT_VALS  = {{ msci_portfolio_values | tojson }};
 var SPARKLINE_DATA = {{ sparkline_data | tojson }};
 var PERF_6M_PCT    = {{ perf_6m_pct | tojson }};
 var PROFIL_RISK    = {{ profil_risk_score if profil_risk_score is not none else 'null' }};
@@ -686,6 +688,8 @@ function renderWatchlistStatic() {
   }).join('');
 }
 
+var _prevWatchPrices = {};
+
 function fetchMarketWatchlist() {
   fetch('/api/market-watchlist')
     .then(function(r) { return r.json(); })
@@ -701,7 +705,14 @@ function fetchMarketWatchlist() {
           ? (w.change_pct >= 0 ? '+' : '') + w.change_pct.toFixed(2) + '%'
           : '—';
         var cls = (w.change_pct !== null && w.change_pct >= 0) ? 'pos' : 'neg';
-        return '<div class="watch-row">'
+        var tickCls = '';
+        if (w.price !== null && w.ticker && _prevWatchPrices[w.ticker] !== undefined) {
+          if (w.price > _prevWatchPrices[w.ticker]) tickCls = ' tick-up';
+          else if (w.price < _prevWatchPrices[w.ticker]) tickCls = ' tick-down';
+        }
+        if (w.ticker && w.price !== null) _prevWatchPrices[w.ticker] = w.price;
+        console.log('[watchlist] ticker=' + w.ticker + ' price=' + w.price + ' tickCls=' + (tickCls || 'none'));
+        return '<div class="watch-row' + tickCls + '">'
           + '<div class="watch-ticker">' + w.name + '</div>'
           + '<div class="watch-price">' + priceStr + '</div>'
           + '<div class="watch-change ' + cls + '">' + chgStr + '</div>'
@@ -812,8 +823,8 @@ function drawPerfChart() {
   canvas.height = wrap.offsetHeight;
   var ctx = canvas.getContext('2d');
   var w = canvas.width, h = canvas.height;
-  // pad.left = labels € portfolio, pad.right = labels % MSCI
-  var pad = { top:10, right:52, bottom:22, left:46 };
+  // Axe Y unique en € (capital investi + MSCI fictif = même unité)
+  var pad = { top:10, right:52, bottom:22, left:10 };
 
   var filtered = filterHistory(_perfPeriod);
   var portDates = filtered.dates;
@@ -821,99 +832,66 @@ function drawPerfChart() {
 
   if (!portVals.length || w < 20 || h < 20) { ctx.clearRect(0,0,w,h); return; }
 
-  // ── Plage de dates commune ──────────────────────────────────────────────
   var startIso = portDates[0];
   var endIso   = portDates[portDates.length - 1];
 
-  // Benchmark filtré sur la même plage (données journalières continues)
-  var benchDatesInRange = [], benchValsInRange = [];
-  for (var bi = 0; bi < BENCH_DATES.length; bi++) {
-    if (BENCH_DATES[bi] >= startIso && BENCH_DATES[bi] <= endIso) {
-      benchDatesInRange.push(BENCH_DATES[bi]);
-      benchValsInRange.push(BENCH_VALS[bi]);
+  // MSCI fictif filtré sur la même plage temporelle
+  var msciDates = [], msciVals = [];
+  for (var mi = 0; mi < MSCI_PORT_DATES.length; mi++) {
+    if (MSCI_PORT_DATES[mi] >= startIso && MSCI_PORT_DATES[mi] <= endIso) {
+      msciDates.push(MSCI_PORT_DATES[mi]);
+      msciVals.push(MSCI_PORT_VALS[mi]);
     }
   }
 
   console.log('[drawPerfChart] period=' + _perfPeriod
     + ' portPoints=' + portVals.length
-    + ' portRange=[' + (portVals[0]||0).toFixed(0) + '€ → ' + (portVals[portVals.length-1]||0).toFixed(0) + '€]'
-    + ' benchPoints=' + benchDatesInRange.length
-    + ' benchRange=' + (benchValsInRange.length >= 2 ? '[' + benchValsInRange[0].toFixed(2) + ' → ' + benchValsInRange[benchValsInRange.length-1].toFixed(2) + ']' : 'none'));
+    + ' port=[' + (portVals[0]||0).toFixed(0) + '€ → ' + (portVals[portVals.length-1]||0).toFixed(0) + '€]'
+    + ' msciPoints=' + msciVals.length
+    + (msciVals.length > 0 ? ' msci=[' + msciVals[0].toFixed(0) + '€ → ' + msciVals[msciVals.length-1].toFixed(0) + '€]' : ' msci=none'));
+
+  // ── Échelle Y combinée (€) ──────────────────────────────────────────────
+  var allVals = portVals.slice();
+  msciVals.forEach(function(v) { allVals.push(v); });
+  var minV = Math.min.apply(null, allVals);
+  var maxV = Math.max.apply(null, allVals);
+  var rangeV = maxV - minV; if (rangeV < 1) rangeV = 1;
+  minV -= rangeV * 0.06; maxV += rangeV * 0.06; rangeV = maxV - minV;
 
   var cw = w - pad.left - pad.right;
   var ch = h - pad.top - pad.bottom;
 
-  // Mapping date → x (axe temporel réel)
+  // Mapping date → x (axe temporel continu)
   var tStart = new Date(startIso + 'T00:00:00').getTime();
   var tEnd   = new Date(endIso   + 'T00:00:00').getTime();
   var tRange = tEnd - tStart || 1;
   function dateToX(iso) {
     return pad.left + ((new Date(iso + 'T00:00:00').getTime() - tStart) / tRange) * cw;
   }
-
-  // ── Y portfolio : axe indépendant en € ─────────────────────────────────
-  var portMin = Math.min.apply(null, portVals);
-  var portMax = Math.max.apply(null, portVals);
-  var portRange = portMax - portMin; if (portRange < 1) portRange = 1;
-  portMin -= portRange * 0.06; portMax += portRange * 0.06; portRange = portMax - portMin;
-  function toYPort(v) { return pad.top + (1 - (v - portMin) / portRange) * ch; }
-
-  // ── Y MSCI : axe indépendant en % (base 100) ───────────────────────────
-  var benchNorm = null;
-  if (benchDatesInRange.length >= 2 && benchValsInRange[0] > 0) {
-    var benchBase = benchValsInRange[0];
-    benchNorm = benchValsInRange.map(function(v) { return v / benchBase * 100; });
-    var benchMin = Math.min.apply(null, benchNorm);
-    var benchMax = Math.max.apply(null, benchNorm);
-    var benchRange = benchMax - benchMin; if (benchRange < 0.5) benchRange = 0.5;
-    benchMin -= benchRange * 0.06; benchMax += benchRange * 0.06; benchRange = benchMax - benchMin;
-    console.log('[drawPerfChart] MSCI base=' + benchBase.toFixed(2)
-      + ' norm=[' + benchNorm[0].toFixed(1) + ' → ' + benchNorm[benchNorm.length-1].toFixed(1) + ']'
-      + ' displayRange=[' + benchMin.toFixed(1) + ' → ' + benchMax.toFixed(1) + ']');
-  } else {
-    console.log('[drawPerfChart] MSCI non disponible: benchDatesInRange=' + benchDatesInRange.length
-      + ' benchValsInRange[0]=' + (benchValsInRange[0] || 'undef'));
-    var benchMin = 94, benchMax = 106, benchRange = 12;
-  }
-  function toYBench(v) { return pad.top + (1 - (v - benchMin) / benchRange) * ch; }
+  function toY(v) { return pad.top + (1 - (v - minV) / rangeV) * ch; }
 
   ctx.clearRect(0, 0, w, h);
 
-  // ── Grid lines (4 intervalles) ──────────────────────────────────────────
+  // ── Grid + labels Y droite (€) ──────────────────────────────────────────
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   var steps = 4;
-  for (var gi = 0; gi <= steps; gi++) {
-    var gy = pad.top + (gi / steps) * ch;
-    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke();
-  }
-
-  // ── Labels Y gauche : portfolio en € ────────────────────────────────────
   ctx.font = '8px IBM Plex Mono';
   for (var gi = 0; gi <= steps; gi++) {
     var gy = pad.top + (gi / steps) * ch;
-    var gv = portMax - (gi / steps) * portRange;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke();
+    var gv = maxV - (gi / steps) * rangeV;
     var glbl = gv >= 1000 ? (gv/1000).toFixed(1) + 'k€' : gv.toFixed(0) + '€';
-    ctx.fillStyle = 'rgba(255,140,0,0.5)';
-    ctx.textAlign = 'right';
-    ctx.fillText(glbl, pad.left - 4, gy + 3);
-  }
-
-  // ── Labels Y droite : MSCI en % ─────────────────────────────────────────
-  for (var gi = 0; gi <= steps; gi++) {
-    var gy = pad.top + (gi / steps) * ch;
-    var gv = benchMax - (gi / steps) * benchRange;
-    var glbl = (gv - 100 >= 0 ? '+' : '') + (gv - 100).toFixed(1) + '%';
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.textAlign = 'left';
     ctx.fillText(glbl, w - pad.right + 4, gy + 3);
   }
 
-  // ── Ligne MSCI World (pointillée blanche, axe indépendant) ─────────────
-  if (benchNorm && benchDatesInRange.length >= 2) {
+  // ── Ligne MSCI fictif (pointillée blanche, même échelle €) ─────────────
+  if (msciVals.length >= 2) {
     ctx.beginPath();
-    benchDatesInRange.forEach(function(d, i) {
-      var bx = dateToX(d), by = toYBench(benchNorm[i]);
+    msciDates.forEach(function(d, i) {
+      var bx = dateToX(d), by = toY(msciVals[i]);
       i === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
     });
     ctx.setLineDash([4, 3]);
@@ -923,27 +901,27 @@ function drawPerfChart() {
     ctx.setLineDash([]);
   }
 
-  // ── Zone portfolio (fill, axe indépendant €) ────────────────────────────
+  // ── Zone portfolio (fill) ───────────────────────────────────────────────
   var grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
   grad.addColorStop(0, 'rgba(255,140,0,0.14)');
   grad.addColorStop(1, 'rgba(255,140,0,0)');
   ctx.beginPath();
   ctx.moveTo(dateToX(portDates[0]), h - pad.bottom);
-  portDates.forEach(function(d, i) { ctx.lineTo(dateToX(d), toYPort(portVals[i])); });
+  portDates.forEach(function(d, i) { ctx.lineTo(dateToX(d), toY(portVals[i])); });
   ctx.lineTo(dateToX(portDates[portDates.length - 1]), h - pad.bottom);
   ctx.fillStyle = grad; ctx.fill();
 
-  // ── Ligne portfolio (orange, axe indépendant €) ─────────────────────────
+  // ── Ligne portfolio (orange) ────────────────────────────────────────────
   ctx.beginPath();
   portDates.forEach(function(d, i) {
-    var px = dateToX(d), py = toYPort(portVals[i]);
+    var px = dateToX(d), py = toY(portVals[i]);
     i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
   });
   ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.stroke();
 
   // Point final orange
   var lpx = dateToX(portDates[portDates.length - 1]);
-  var lpy = toYPort(portVals[portVals.length - 1]);
+  var lpy = toY(portVals[portVals.length - 1]);
   ctx.beginPath(); ctx.arc(lpx, lpy, 3, 0, Math.PI * 2);
   ctx.fillStyle = '#FF8C00'; ctx.fill();
 
