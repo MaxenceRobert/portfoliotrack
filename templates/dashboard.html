@@ -466,6 +466,15 @@
       <div id="watchlist-body"></div>
     </div>
 
+    {# C1.5 — Marchés mondiaux (horloges) #}
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Marchés mondiaux</div>
+        <div class="panel-subtitle" id="world-clocks-time" style="font-variant-numeric:tabular-nums;"></div>
+      </div>
+      <div id="world-clocks-body" style="padding:6px 10px;"></div>
+    </div>
+
     {# C2 — Allocation par type #}
     <div class="panel">
       <div class="panel-head">
@@ -706,12 +715,12 @@ function fetchMarketWatchlist() {
           : '—';
         var cls = (w.change_pct !== null && w.change_pct >= 0) ? 'pos' : 'neg';
         var tickCls = '';
-        if (w.price !== null && w.ticker && _prevWatchPrices[w.ticker] !== undefined) {
-          if (w.price > _prevWatchPrices[w.ticker]) tickCls = ' tick-up';
-          else if (w.price < _prevWatchPrices[w.ticker]) tickCls = ' tick-down';
+        if (w.price !== null && w.name && _prevWatchPrices[w.name] !== undefined) {
+          if (w.price > _prevWatchPrices[w.name]) tickCls = ' tick-up';
+          else if (w.price < _prevWatchPrices[w.name]) tickCls = ' tick-down';
         }
-        if (w.ticker && w.price !== null) _prevWatchPrices[w.ticker] = w.price;
-        console.log('[watchlist] ticker=' + w.ticker + ' price=' + w.price + ' tickCls=' + (tickCls || 'none'));
+        if (w.name && w.price !== null) _prevWatchPrices[w.name] = w.price;
+        console.log('[watchlist] name=' + w.name + ' price=' + w.price + ' tickCls=' + (tickCls || 'none'));
         return '<div class="watch-row' + tickCls + '">'
           + '<div class="watch-ticker">' + w.name + '</div>'
           + '<div class="watch-price">' + priceStr + '</div>'
@@ -1282,13 +1291,13 @@ function loadMacro() {
         var chgHtml;
         if (chg !== null && chg !== undefined) {
           var c = chg >= 0 ? 'var(--green)' : 'var(--red)';
-          chgHtml = '<span style="color:' + c + ';">' + (chg >= 0 ? '+' : '') + fmtNum(chg, 2) + '%</span>';
+          chgHtml = '<span style="color:' + c + ';width:54px;text-align:right;flex-shrink:0;">' + (chg >= 0 ? '+' : '') + fmtNum(chg, 2) + '%</span>';
         } else {
-          chgHtml = '<span style="color:var(--text-dim);">—</span>';
+          chgHtml = '<span style="color:var(--text-dim);width:54px;text-align:right;flex-shrink:0;">—</span>';
         }
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid rgba(255,140,0,0.08);">' +
-          '<span style="color:var(--text-dim);min-width:75px;">' + label + '</span>' +
-          '<span style="color:var(--text-bright);font-weight:600;">' + valStr + '</span>' +
+        return '<div style="display:flex;align-items:center;padding:2px 0;border-bottom:1px solid rgba(255,140,0,0.08);">' +
+          '<span style="color:var(--text-dim);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + label + '</span>' +
+          '<span style="color:var(--text-bright);font-weight:600;width:54px;text-align:right;flex-shrink:0;">' + valStr + '</span>' +
           chgHtml + '</div>';
       }
       var html = '';
@@ -1334,6 +1343,69 @@ function loadDividendCalendar() {
     });
 }
 
+// ── Marchés mondiaux (horloges) ───────────────────────────────────────────────
+var WORLD_MARKETS = [
+  { name: 'PARIS',      tz: 'Europe/Paris',      open: [9,0],  close: [17,30] },
+  { name: 'LONDON',     tz: 'Europe/London',      open: [8,0],  close: [16,30] },
+  { name: 'NEW YORK',   tz: 'America/New_York',   open: [9,30], close: [16,0]  },
+  { name: 'TOKYO',      tz: 'Asia/Tokyo',         open: [9,0],  close: [15,0]  },
+  { name: 'HONG KONG',  tz: 'Asia/Hong_Kong',     open: [9,30], close: [16,0]  },
+  { name: 'SYDNEY',     tz: 'Australia/Sydney',   open: [10,0], close: [16,0]  }
+];
+
+function updateWorldClocks() {
+  var container = document.getElementById('world-clocks-body');
+  var subtitle  = document.getElementById('world-clocks-time');
+  if (!container) return;
+
+  var now = new Date();
+  if (subtitle) {
+    var hh = now.getHours().toString().padStart(2,'0');
+    var mm = now.getMinutes().toString().padStart(2,'0');
+    var ss = now.getSeconds().toString().padStart(2,'0');
+    subtitle.textContent = hh + ':' + mm + ':' + ss;
+  }
+
+  var html = '';
+  WORLD_MARKETS.forEach(function(m) {
+    var localStr = now.toLocaleString('en-US', { timeZone: m.tz,
+      hour: 'numeric', minute: '2-digit', hour12: false });
+    // parse "HH:MM"
+    var parts = localStr.split(':');
+    var lh = parseInt(parts[0], 10), lm = parseInt(parts[1], 10);
+    var timeStr = (lh < 0 ? 0 : lh).toString().padStart(2,'0') + ':' + lm.toString().padStart(2,'0');
+
+    var day = new Date(now.toLocaleString('en-US', { timeZone: m.tz })).getDay();
+    var isWeekday = day >= 1 && day <= 5;
+    var cur = lh * 60 + lm;
+    var openMin  = m.open[0]  * 60 + m.open[1];
+    var closeMin = m.close[0] * 60 + m.close[1];
+    var preMin   = openMin - 60;
+
+    var status, color;
+    if (!isWeekday) {
+      status = 'FERMÉ'; color = 'var(--red)';
+    } else if (cur >= openMin && cur < closeMin) {
+      status = 'OUVERT'; color = 'var(--green)';
+    } else if (cur >= preMin && cur < openMin) {
+      status = 'PRÉ-MKT'; color = 'var(--yellow)';
+    } else {
+      status = 'FERMÉ'; color = 'var(--red)';
+    }
+
+    console.log('[world-clocks] ' + m.name + ' ' + timeStr + ' ' + status);
+    html += '<div style="display:flex;align-items:center;padding:3px 0;font-family:\'IBM Plex Mono\',monospace;font-size:10px;">'
+      + '<span style="color:' + color + ';margin-right:6px;font-size:8px;">●</span>'
+      + '<span style="flex:1;color:var(--text-dim);">' + m.name + '</span>'
+      + '<span style="color:var(--text-bright);font-variant-numeric:tabular-nums;margin-right:8px;">' + timeStr + '</span>'
+      + '<span style="color:' + color + ';font-size:8px;font-weight:700;letter-spacing:0.5px;width:50px;text-align:right;">' + status + '</span>'
+      + '</div>';
+  });
+  container.innerHTML = html;
+}
+
+setInterval(updateWorldClocks, 1000);
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
   // DCA bar animation
@@ -1352,6 +1424,9 @@ window.addEventListener('load', function() {
     drawPerfChart();
     drawSparkline();
   }, 100);
+
+  // World clocks (start immediately)
+  updateWorldClocks();
 
   // Market watchlist (fetch live, refresh every 60s)
   fetchMarketWatchlist();

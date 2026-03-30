@@ -1999,14 +1999,27 @@ def dividend_calendar_api():
         try:
             info     = _yf.Ticker(ticker).info
             ex_ts    = info.get('exDividendDate')
-            div_rate = info.get('dividendRate')
-            if not ex_ts or not div_rate:
+            div_rate = info.get('dividendRate') or info.get('trailingAnnualDividendRate')
+            if not div_rate or float(div_rate) <= 0:
+                print(f'[dividend-calendar] {ticker}: pas de dividendRate')
                 return
-            ex_dt = _dt.datetime.fromtimestamp(ex_ts)
-            if ex_dt.date() < _dt.date.today():
-                return  # date passée
-            freq   = info.get('dividendFrequency') or 4  # trimestriel par défaut
-            amount = round(float(div_rate) / int(freq) * float(shares), 2)
+            freq = int(info.get('dividendFrequency') or 4)  # trimestriel par défaut
+            amount = round(float(div_rate) / freq * float(shares), 2)
+
+            # Reconstruire la prochaine date ex-dividende
+            if ex_ts:
+                ex_dt = _dt.datetime.fromtimestamp(ex_ts).date()
+            else:
+                ex_dt = _dt.date.today()
+
+            # Avancer la date jusqu'à une date future (par tranches = fréquence)
+            interval_days = max(int(365 / freq), 1)
+            iters = 0
+            while ex_dt < _dt.date.today() and iters < freq * 2:
+                ex_dt += _dt.timedelta(days=interval_days)
+                iters += 1
+
+            print(f'[dividend-calendar] {ticker}: ex_date={ex_dt} amount={amount} freq={freq}')
             with lock:
                 results.append({
                     'ticker':       ticker,
