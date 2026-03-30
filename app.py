@@ -886,7 +886,7 @@ def charts():
                 'buy_events':    buy_events,
             }
             if len(hist_prices) >= 20:
-                corr_raw[ticker] = hist_prices[-126:]
+                corr_raw[ticker] = dict(zip(hist_dates[-252:], hist_prices[-252:]))
 
     threads = []
     for _assets_list in summary.get('by_type', {}).values():
@@ -902,9 +902,9 @@ def charts():
     correlation_data = None
     if len(corr_raw) >= 2:
         try:
-            min_len = min(len(v) for v in corr_raw.values())
-            cl      = min(min_len, 126)
-            df      = _pd.DataFrame({k: v[-cl:] for k, v in corr_raw.items()})
+            series  = {k: _pd.Series(v) for k, v in corr_raw.items()}
+            df      = _pd.DataFrame(series).sort_index().dropna()   # inner join by calendar date
+            df      = df.tail(252)
             pct     = df.pct_change().dropna()
             corr    = pct.corr().round(2)
             correlation_data = {
