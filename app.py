@@ -885,8 +885,6 @@ def charts():
                 'sparkline':     sparkline,
                 'buy_events':    buy_events,
             }
-            if len(hist_prices) >= 20:
-                corr_raw[ticker] = dict(zip(hist_dates[-252:], hist_prices[-252:]))
 
     threads = []
     for _assets_list in summary.get('by_type', {}).values():
@@ -898,22 +896,65 @@ def charts():
         _t.join(timeout=15)
     print(f'[charts] {len(positions_data)} positions OK')
 
-    # ── Correlation matrix ────────────────────────────────────────────────────
+    # ── Correlation matrix — download single-threaded to avoid yfinance race conditions ──
+    print("=== CORR DEBUG ===")
+    active_tickers = sorted([t for t, pos in positions_data.items()
+                              if len(pos.get('hist_prices', [])) >= 20])
+    print(f"[corr] active tickers for corr: {active_tickers}")
+
     correlation_data = None
+    corr_raw = {}
+    if len(active_tickers) >= 2:
+        try:
+            _ch = _yf.download(active_tickers, period='2y', progress=False, auto_adjust=True)
+            print(f"[corr] download shape={_ch.shape if _ch is not None else 'None'}")
+            if _ch is not None and not _ch.empty:
+                _close = _ch['Close']
+                # yfinance multi-ticker → DataFrame with ticker columns
+                if hasattr(_close, 'columns') and len(_close.columns) > 1:
+                    for t in active_tickers:
+                        if t in _close.columns:
+                            s = _close[t].dropna()
+                            if len(s) >= 20:
+                                dates  = [d.strftime('%Y-%m-%d') for d in s.index]
+                                prices = [round(float(v), 4) for v in s]
+                                corr_raw[t] = dict(zip(dates[-252:], prices[-252:]))
+                                print(f"[corr] {t}: {len(corr_raw[t])} pts "
+                                      f"[{dates[0]} → {dates[-1]}] "
+                                      f"first={[round(x,4) for x in prices[:3]]}")
+                else:
+                    # fallback: single-ticker squeeze
+                    s = _close.squeeze().dropna()
+                    t = active_tickers[0]
+                    dates  = [d.strftime('%Y-%m-%d') for d in s.index]
+                    prices = [round(float(v), 4) for v in s]
+                    corr_raw[t] = dict(zip(dates[-252:], prices[-252:]))
+                    print(f"[corr] {t}: {len(corr_raw[t])} pts (fallback)")
+        except Exception as e:
+            print(f'[corr] download error: {e}')
+
     if len(corr_raw) >= 2:
         try:
             series  = {k: _pd.Series(v) for k, v in corr_raw.items()}
-            df      = _pd.DataFrame(series).sort_index().dropna()   # inner join by calendar date
+            df_raw  = _pd.DataFrame(series).sort_index()
+            print(f"[corr] df_raw shape={df_raw.shape}, NaN counts: {df_raw.isna().sum().to_dict()}")
+            df      = df_raw.dropna()   # inner join by calendar date
+            print(f"[corr] df after dropna shape={df.shape}")
             df      = df.tail(252)
             pct     = df.pct_change().dropna()
+            print(f"[corr] pct shape={pct.shape}")
+            print(f"[corr] pct head:\n{pct.head()}")
             corr    = pct.corr().round(2)
+            print(f"[corr] corr matrix:\n{corr}")
             correlation_data = {
                 'tickers': list(corr.columns),
                 'matrix':  [[round(float(v), 2) for v in row] for row in corr.values],
             }
-            print(f'[charts] corr: {correlation_data["tickers"]}')
+            print(f'[charts] corr sent to front: {correlation_data}')
         except Exception as e:
             print(f'[charts] corr error: {e}')
+    else:
+        print(f"[corr] not enough tickers after download: {len(corr_raw)}")
 
     chart_page_data = {
         'portfolio': {
