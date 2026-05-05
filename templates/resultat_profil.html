@@ -159,6 +159,18 @@
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+.axis-interp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+    padding-left: 212px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+@media (max-width: 640px) {
+    .axis-interp { padding-left: 0; }
+}
 /* ── Recommendation panel ── */
 .rec-panel {
     padding: 16px 24px;
@@ -445,15 +457,22 @@
     <div class="axes-panel">
         <div class="panel-section-label">Scores par axe</div>
         <div>
-            {% for ax_num in range(1, 6) %}
-            <div class="axis-row">
-                <span class="axis-name">{{ axis_names[ax_num] }}</span>
+            <div class="axis-row" style="margin-bottom:4px;">
+                <span class="axis-name">A — TOLÉRANCE AU RISQUE</span>
                 <div class="axis-bar-outer">
-                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores[ax_num] }}"></div>
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['A'] }}"></div>
                 </div>
-                <span class="axis-score-val">{{ axis_scores[ax_num] }}/100</span>
+                <span class="axis-score-val">{{ axis_scores['A'] }}/100</span>
             </div>
-            {% endfor %}
+            <div class="axis-interp">{{ axe_a_interp }}</div>
+            <div class="axis-row" style="margin-bottom:4px;">
+                <span class="axis-name">B — CONNAISSANCE FINANCIÈRE</span>
+                <div class="axis-bar-outer">
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['B'] }}"></div>
+                </div>
+                <span class="axis-score-val">{{ axis_scores['B'] }}/100</span>
+            </div>
+            <div class="axis-interp" style="margin-bottom:0;">{{ axe_b_interp }}</div>
         </div>
     </div>
 

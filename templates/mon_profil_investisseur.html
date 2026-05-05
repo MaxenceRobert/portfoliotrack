@@ -156,6 +156,18 @@
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+.axis-interp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+    padding-left: 212px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+@media (max-width: 640px) {
+    .axis-interp { padding-left: 0; }
+}
 /* ── Recommendation ── */
 .rec-panel {
     padding: 16px 24px;
@@ -338,17 +350,25 @@
     <!-- Axes -->
     <div class="axes-panel">
         <div class="panel-section-label">Scores par axe</div>
+        {% set axe_a = last_profil.scores_axes.get('A', 0) %}
+        {% set axe_b = last_profil.scores_axes.get('B', 0) %}
         <div>
-            {% for k, name in axis_names.items() %}
-            {% set score = last_profil.scores_axes.get(k, last_profil.scores_axes.get(k | int, 0)) %}
-            <div class="axis-row">
-                <span class="axis-name">{{ name }}</span>
+            <div class="axis-row" style="margin-bottom:4px;">
+                <span class="axis-name">A — TOLÉRANCE AU RISQUE</span>
                 <div class="axis-bar-outer">
-                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ score }}"></div>
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axe_a }}"></div>
                 </div>
-                <span class="axis-score-val">{{ score }}/100</span>
+                <span class="axis-score-val">{{ axe_a }}/100</span>
             </div>
-            {% endfor %}
+            <div class="axis-interp">{{ axe_a_interp }}</div>
+            <div class="axis-row" style="margin-bottom:4px;">
+                <span class="axis-name">B — CONNAISSANCE FINANCIÈRE</span>
+                <div class="axis-bar-outer">
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axe_b }}"></div>
+                </div>
+                <span class="axis-score-val">{{ axe_b }}/100</span>
+            </div>
+            <div class="axis-interp" style="margin-bottom:0;">{{ axe_b_interp }}</div>
         </div>
     </div>
 

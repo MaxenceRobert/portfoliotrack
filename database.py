@@ -518,9 +518,9 @@ def init_db():
     except Exception:
         conn.rollback()
 
-    # ── Migration scoring v3 : vider profil_investisseur si version dépassée ──
-    # Version "scoring_v3" = refonte 5 axes, 15 questions choice, normalisation (mars 2026)
-    SCORING_VERSION = 'scoring_v3'
+    # ── Migration scoring v4 : vider profil_investisseur si version dépassée ──
+    # Version "scoring_v4" = 2 axes (tolérance + connaissance), 10 questions, formule 70/30
+    SCORING_VERSION = 'scoring_v4'
     try:
         if is_postgres():
             c.execute('''

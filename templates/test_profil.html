@@ -326,9 +326,8 @@
 <div class="quiz-wrap">
 
   <form id="quiz-form" method="POST" action="{{ url_for('main.resultat_profil') }}">
-    {% for i in range(1, 16) %}
+    {% for i in range(1, 11) %}
     <input type="hidden" name="q{{ i }}" id="ans{{ i }}" value="">
-    <input type="hidden" name="q{{ i }}_text" id="ans{{ i }}t" value="">
     {% endfor %}
 
     {# ── Disclaimer ── #}
@@ -346,8 +345,8 @@
         </div>
         <div class="disclaimer-meta">
           <span class="disclaimer-badge">3-5 minutes</span>
-          <span class="disclaimer-badge">15 questions</span>
-          <span class="disclaimer-badge">5 axes analysés</span>
+          <span class="disclaimer-badge">10 questions</span>
+          <span class="disclaimer-badge">2 axes analysés</span>
           <span class="disclaimer-badge">Recommandation IA</span>
         </div>
         <button type="button" class="btn btn-primary"
@@ -397,15 +396,16 @@
 
 <script>
 const QUESTIONS = [
-  {n:1, axis:"Tolérance aux pertes",
-   text:"Quelle perte maximale sur ton portefeuille total pourrais-tu supporter sans vendre ?",
+  // ── Axe A : Tolérance au risque ──────────────────────────────────────────
+  {n:1, axis:"Axe A · Tolérance au risque",
+   text:"Quelle perte maximale pourrais-tu supporter sur ton portefeuille sans vendre ?",
    type:"choice", options:[
     {v:"A", t:"-5% — Au-delà je panique"},
     {v:"B", t:"-10% — C'est ma limite de confort"},
     {v:"C", t:"-20% — Ça fait mal mais je tiens"},
     {v:"D", t:"-30% ou plus — J'ai l'estomac solide"},
   ]},
-  {n:2, axis:"Tolérance aux pertes",
+  {n:2, axis:"Axe A · Tolérance au risque",
    text:"Ton portefeuille perd 35% en 3 mois (type COVID mars 2020). Tu fais quoi ?",
    type:"choice", options:[
     {v:"A", t:"Je vends tout pour stopper l'hémorragie"},
@@ -413,16 +413,7 @@ const QUESTIONS = [
     {v:"C", t:"Je ne touche à rien, je continue mon DCA"},
     {v:"D", t:"Je renforce — historiquement c'est le meilleur moment"},
   ]},
-  {n:3, axis:"Tolérance aux pertes",
-   text:"As-tu déjà subi une perte significative (> 10%) sur un investissement réel ?",
-   subtext:"On ne parle pas de paper trading — une vraie perte avec ton argent.",
-   type:"choice", options:[
-    {v:"A", t:"Non, jamais — je n'ai jamais investi ou jamais perdu"},
-    {v:"B", t:"Oui, et ça m'a marqué négativement"},
-    {v:"C", t:"Oui, c'était désagréable mais j'ai gardé mes positions"},
-    {v:"D", t:"Oui, et j'en ai profité pour renforcer"},
-  ]},
-  {n:4, axis:"Tolérance aux pertes",
+  {n:3, axis:"Axe A · Tolérance au risque",
    text:"Ton portefeuille baisse de 15% cette semaine. Quel impact sur toi ?",
    type:"choice", options:[
     {v:"A", t:"J'y pense constamment, ça me stresse"},
@@ -430,7 +421,7 @@ const QUESTIONS = [
     {v:"C", t:"Je note la baisse mais ça ne m'affecte pas au quotidien"},
     {v:"D", t:"Je ne regarde même pas, ça reviendra"},
   ]},
-  {n:5, axis:"Horizon & stabilité",
+  {n:4, axis:"Axe A · Tolérance au risque",
    text:"Dans combien de temps pourrais-tu avoir besoin de cet argent ?",
    subtext:"Pense au scénario le plus probable — pas le pire cas.",
    type:"choice", options:[
@@ -439,48 +430,7 @@ const QUESTIONS = [
     {v:"C", t:"5 à 10 ans"},
     {v:"D", t:"Plus de 10 ans — je n'en ai pas besoin avant longtemps"},
   ]},
-  {n:6, axis:"Horizon & stabilité",
-   text:"Comment décrirais-tu la prévisibilité de tes revenus ?",
-   type:"choice", options:[
-    {v:"A", t:"Très variable — freelance, commissions, missions"},
-    {v:"B", t:"Plutôt stable mais sans garantie à long terme"},
-    {v:"C", t:"Stable — CDI ou équivalent"},
-    {v:"D", t:"Très stable et en progression"},
-  ]},
-  {n:7, axis:"Horizon & stabilité",
-   text:"As-tu des dépenses importantes prévues dans les 3 prochaines années ?",
-   subtext:"Ex: achat immobilier, études, mariage, création d'entreprise...",
-   type:"choice", options:[
-    {v:"A", t:"Oui, un gros projet certain"},
-    {v:"B", t:"Possible mais pas encore décidé"},
-    {v:"C", t:"Rien de prévu pour le moment"},
-  ]},
-  {n:8, axis:"Expérience & connaissance",
-   text:"Depuis combien de temps investis-tu en bourse ?",
-   type:"choice", options:[
-    {v:"A", t:"Jamais commencé"},
-    {v:"B", t:"Moins d'un an"},
-    {v:"C", t:"1 à 3 ans"},
-    {v:"D", t:"Plus de 3 ans"},
-  ]},
-  {n:9, axis:"Expérience & connaissance",
-   text:"Quels produits comprends-tu suffisamment pour investir en confiance ?",
-   subtext:"Sélectionne le niveau le plus avancé que tu maîtrises.",
-   type:"choice", options:[
-    {v:"A", t:"Livrets, fonds euros — je connais surtout l'épargne classique"},
-    {v:"B", t:"ETF indiciels (MSCI World, S&P 500)"},
-    {v:"C", t:"Actions individuelles + ETF, je sais lire un bilan"},
-    {v:"D", t:"Produits dérivés, options, effet de levier — à l'aise avec la complexité"},
-  ]},
-  {n:10, axis:"Expérience & connaissance",
-   text:"Un ETF World baisse de 20%. Le ratio de Sharpe passe de 1.2 à 0.4. Qu'est-ce que ça te dit ?",
-   type:"choice", options:[
-    {v:"A", t:"Rien du tout — je ne comprends pas ces termes"},
-    {v:"B", t:"Je sais que c'est négatif mais je ne saurais pas l'interpréter"},
-    {v:"C", t:"Le rendement ajusté au risque s'est dégradé, mais ça peut être temporaire"},
-    {v:"D", t:"C'est normal en drawdown, le Sharpe se recalcule sur la fenêtre récente — ça ne change pas ma thèse long terme"},
-  ]},
-  {n:11, axis:"Comportement investisseur",
+  {n:5, axis:"Axe A · Tolérance au risque",
    text:"À quelle fréquence regardes-tu (ou regarderais-tu) ton portefeuille ?",
    type:"choice", options:[
     {v:"A", t:"Plusieurs fois par jour"},
@@ -488,37 +438,46 @@ const QUESTIONS = [
     {v:"C", t:"Quelques fois par semaine"},
     {v:"D", t:"Une fois par mois ou moins"},
   ]},
-  {n:12, axis:"Comportement investisseur",
-   text:"Une action que tu détiens chute de 8% après une mauvaise publication de résultats. Ta réaction ?",
+  // ── Axe B : Connaissance financière ──────────────────────────────────────
+  {n:6, axis:"Axe B · Connaissance financière",
+   text:"Qu'est-ce qu'un ETF (Exchange Traded Fund) ?",
    type:"choice", options:[
-    {v:"A", t:"Je vends immédiatement pour limiter les pertes"},
-    {v:"B", t:"Je m'inquiète et je surveille de près les prochains jours"},
-    {v:"C", t:"J'analyse les résultats avant de décider"},
-    {v:"D", t:"Si ma thèse n'a pas changé, -8% c'est du bruit"},
+    {v:"A", t:"Un fonds actif géré par un gestionnaire professionnel"},
+    {v:"B", t:"Une obligation d'État cotée en bourse"},
+    {v:"C", t:"Un fonds coté qui réplique passivement un indice boursier"},
+    {v:"D", t:"Un produit dérivé à effet de levier"},
   ]},
-  {n:13, axis:"Comportement investisseur",
-   text:"Tu as une forte conviction sur une action. Quel poids maximum tu lui donnerais dans ton portefeuille ?",
+  {n:7, axis:"Axe B · Connaissance financière",
+   text:"Quand les taux d'intérêt augmentent, que se passe-t-il sur le prix des obligations existantes ?",
    type:"choice", options:[
-    {v:"A", t:"5% max — je diversifie au maximum"},
-    {v:"B", t:"10-15% — conviction mesurée"},
-    {v:"C", t:"20-25% — si j'y crois, j'y vais"},
-    {v:"D", t:"30%+ — quand j'ai raison, je mise gros"},
+    {v:"A", t:"Le prix des obligations baisse"},
+    {v:"B", t:"Le prix des obligations monte"},
+    {v:"C", t:"Le prix reste stable, seul le coupon change"},
+    {v:"D", t:"Les obligations sont remboursées par anticipation"},
   ]},
-  {n:14, axis:"Capacité financière",
-   text:"Combien de mois de dépenses as-tu en épargne de précaution (hors investissements) ?",
+  {n:8, axis:"Axe B · Connaissance financière",
+   text:"Que mesure la volatilité d'un actif financier ?",
    type:"choice", options:[
-    {v:"A", t:"Moins de 2 mois"},
-    {v:"B", t:"2 à 4 mois"},
-    {v:"C", t:"4 à 6 mois"},
-    {v:"D", t:"Plus de 6 mois"},
+    {v:"A", t:"Le rendement annuel moyen sur 10 ans"},
+    {v:"B", t:"Le risque de défaut de l'émetteur"},
+    {v:"C", t:"L'amplitude des variations de prix dans le temps"},
+    {v:"D", t:"Le montant des dividendes versés"},
   ]},
-  {n:15, axis:"Capacité financière",
-   text:"Quel pourcentage de ton patrimoine total est (ou sera) investi en bourse ?",
+  {n:9, axis:"Axe B · Connaissance financière",
+   text:"Le PEA (Plan d'Épargne en Actions) permet d'investir dans :",
    type:"choice", options:[
-    {v:"A", t:"Moins de 15%"},
-    {v:"B", t:"15-30%"},
-    {v:"C", t:"30-50%"},
-    {v:"D", t:"Plus de 50%"},
+    {v:"A", t:"Tous les actifs mondiaux sans restriction"},
+    {v:"B", t:"Uniquement des actions françaises"},
+    {v:"C", t:"Des actions et ETF d'entreprises européennes, avec avantage fiscal"},
+    {v:"D", t:"Des obligations d'État et fonds euros uniquement"},
+  ]},
+  {n:10, axis:"Axe B · Connaissance financière",
+   text:"La diversification d'un portefeuille permet principalement de réduire :",
+   type:"choice", options:[
+    {v:"A", t:"Le risque systémique (krach général des marchés)"},
+    {v:"B", t:"Le risque spécifique lié à un titre ou secteur particulier"},
+    {v:"C", t:"La volatilité globale du marché mondial"},
+    {v:"D", t:"L'impact des décisions des banques centrales"},
   ]},
 ];
 
@@ -582,7 +541,8 @@ function escHtml(s) {
 
 function selectOpt(qn, val, el) {
   answers[qn] = val;
-  document.getElementById('ans' + qn).value = val;
+  var inp = document.getElementById('ans' + qn);
+  if (inp) inp.value = val;
   document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('q-error').style.display = 'none';
