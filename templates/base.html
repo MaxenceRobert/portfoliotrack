@@ -57,6 +57,7 @@
     ('F7', 'BILAN',      '/bilan-pdf'),
     ('F8', 'COACH',      '/coach'),
     ('F9', 'ALERTES',    '/alerts'),
+    ('F10', 'LIENS',    '/links'),
   ] -%}
   {% for key, label, path in _tabs %}
   <a href="{{ path }}"
@@ -128,6 +129,15 @@
       <span style="position:absolute;top:4px;right:6px;width:6px;height:6px;background:var(--red);display:block;border-radius:0;"></span>
       {% endif %}
       <span>Alerts</span>
+    </a>
+    <a href="{{ url_for('main.links') }}"
+       class="rail-icon{% if request.path == '/links' %} active{% endif %}"
+       title="Liens & Ressources">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+      <span>Liens</span>
     </a>
     <div class="rail-spacer"></div>
     <a href="{{ url_for('main.settings') }}"
@@ -238,6 +248,7 @@
     'BILAN': '/bilan-pdf', 'PDF': '/bilan-pdf', 'F7': '/bilan-pdf',
     'COACH': '/coach', 'IA': '/coach', 'F8': '/coach',
     'ALERTES': '/alerts', 'ALERTS': '/alerts', 'F9': '/alerts',
+    'LIENS': '/links', 'LINKS': '/links', 'RESSOURCES': '/links', 'F10': '/links',
     'SETTINGS': '/settings', 'CONFIG': '/settings', 'F0': '/settings',
     'IMPORT': '/import', 'EXPORT': '/export/csv',
     'ACHAT': '/purchases/add', 'VENTE': '/sales/add',

@@ -2629,6 +2629,39 @@ def get_price_api(ticker):
         return jsonify({'price': None})
 
 
+# ── Liens & Ressources ────────────────────────────────────────────────────────
+@main_bp.route('/links')
+@login_required
+def links():
+    from database import get_user_links
+    links_list = get_user_links(current_user.id)
+    print(f'[links] user={current_user.id} count={len(links_list)}')
+    return render_template('links.html', links=links_list)
+
+@main_bp.route('/links/add', methods=['POST'])
+@login_required
+def add_link():
+    from database import create_link
+    nom       = request.form.get('nom', '').strip()
+    url       = request.form.get('url', '').strip()
+    categorie = request.form.get('categorie', 'Autre').strip()
+    if nom and url:
+        if not url.startswith('http://') and not url.startswith('https://'):
+            url = 'https://' + url
+        create_link(current_user.id, nom, url, categorie)
+        flash('Lien ajouté ✓', 'success')
+    else:
+        flash('Nom et URL requis.', 'error')
+    return redirect(url_for('main.links'))
+
+@main_bp.route('/links/delete/<int:link_id>', methods=['POST'])
+@login_required
+def delete_link_route(link_id):
+    from database import delete_link
+    delete_link(link_id, current_user.id)
+    return redirect(url_for('main.links'))
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required

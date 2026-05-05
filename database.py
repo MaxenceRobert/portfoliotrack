@@ -629,6 +629,36 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Links table ───────────────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS links (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER NOT NULL,
+                    nom        TEXT    NOT NULL,
+                    url        TEXT    NOT NULL,
+                    categorie  TEXT    NOT NULL DEFAULT 'Autre',
+                    date_ajout TIMESTAMP DEFAULT NOW(),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS links (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id    INTEGER NOT NULL,
+                    nom        TEXT    NOT NULL,
+                    url        TEXT    NOT NULL,
+                    categorie  TEXT    NOT NULL DEFAULT 'Autre',
+                    date_ajout TEXT    DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 
@@ -1127,6 +1157,51 @@ def get_triggered_alerts_count(user_id):
     row = fetchone_as_dict(c)
     conn.close()
     return int(row['n']) if row else 0
+
+
+# ── Liens ─────────────────────────────────────────────────────────────────────
+def create_link(user_id, nom, url, categorie='Autre'):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'INSERT INTO links (user_id, nom, url, categorie) VALUES ({p},{p},{p},{p})',
+            (user_id, nom, url, categorie)
+        )
+        conn.commit()
+        print(f'[links] created: user={user_id} nom={nom} cat={categorie}')
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_user_links(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f"SELECT * FROM links WHERE user_id = {p} ORDER BY categorie, date_ajout DESC",
+        (user_id,)
+    )
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+
+def delete_link(link_id, user_id):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM links WHERE id = {p} AND user_id = {p}', (link_id, user_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 def update_user_email(user_id, new_email):
