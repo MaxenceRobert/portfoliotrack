@@ -1051,7 +1051,11 @@ def delete_alert(alert_id, user_id):
 
 
 def check_and_update_alerts(user_id):
-    """Fetch current prices for active alerts and update triggered status."""
+    """Fetch current prices for active alerts and update triggered status.
+
+    Returns (count, newly_triggered) where newly_triggered is a list of dicts
+    describing each alert that just fired, for use by the caller (e.g. email).
+    """
     p = placeholder()
     conn = get_db()
     c = conn.cursor()
@@ -1059,12 +1063,12 @@ def check_and_update_alerts(user_id):
     active = fetchall_as_dict(c)
     if not active:
         conn.close()
-        return 0
+        return 0, []
     try:
         import yfinance as yf
     except ImportError:
         conn.close()
-        return 0
+        return 0, []
 
     tickers = list(set(a['ticker'] for a in active))
     prices = {}
@@ -1078,15 +1082,16 @@ def check_and_update_alerts(user_id):
             pass
 
     updated = 0
+    newly_triggered = []
     now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for row in active:
         ticker = row['ticker']
         if ticker not in prices:
             continue
-        price    = prices[ticker]
-        alert_id = row['id']
+        price     = prices[ticker]
+        alert_id  = row['id']
         condition = row['condition']
-        target   = float(row['target_price'])
+        target    = float(row['target_price'])
         triggered = (condition == 'above' and price >= target) or \
                     (condition == 'below' and price <= target)
         if triggered:
@@ -1095,6 +1100,15 @@ def check_and_update_alerts(user_id):
                 (price, now_str, alert_id, user_id)
             )
             updated += 1
+            newly_triggered.append({
+                'ticker':        ticker,
+                'ticker_name':   row['ticker_name'] or ticker,
+                'condition':     condition,
+                'target_price':  target,
+                'current_price': price,
+                'triggered_at':  now_str,
+            })
+            print(f'[alerts] triggered: {ticker} {condition} {target} @ {price}')
         else:
             c.execute(
                 f"UPDATE alerts SET current_price={p} WHERE id={p} AND user_id={p}",
@@ -1102,7 +1116,7 @@ def check_and_update_alerts(user_id):
             )
     conn.commit()
     conn.close()
-    return updated
+    return updated, newly_triggered
 
 
 def get_triggered_alerts_count(user_id):

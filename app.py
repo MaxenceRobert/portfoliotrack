@@ -2556,7 +2556,18 @@ def coach_clear():
 @login_required
 def alerts():
     from database import get_user_alerts, check_and_update_alerts
-    check_and_update_alerts(current_user.id)
+    from auth import send_alert_email
+    _updated, _newly_triggered = check_and_update_alerts(current_user.id)
+    for al in _newly_triggered:
+        try:
+            send_alert_email(
+                current_user.email,
+                al['ticker'], al['ticker_name'],
+                al['condition'], al['target_price'],
+                al['current_price'], al['triggered_at'],
+            )
+        except Exception as _e:
+            print(f"[alerts] email error for {al['ticker']}: {_e}")
     alerts_list = get_user_alerts(current_user.id)
     return render_template('alerts.html', alerts=alerts_list)
 
@@ -2593,8 +2604,19 @@ def delete_alert_route(alert_id):
 @login_required
 def check_alerts_api():
     from database import check_and_update_alerts
-    updated = check_and_update_alerts(current_user.id)
-    return jsonify({'updated': updated})
+    from auth import send_alert_email
+    _updated, _newly_triggered = check_and_update_alerts(current_user.id)
+    for al in _newly_triggered:
+        try:
+            send_alert_email(
+                current_user.email,
+                al['ticker'], al['ticker_name'],
+                al['condition'], al['target_price'],
+                al['current_price'], al['triggered_at'],
+            )
+        except Exception as _e:
+            print(f"[alerts] email error for {al['ticker']}: {_e}")
+    return jsonify({'updated': _updated})
 
 @main_bp.route('/api/price/<ticker>')
 def get_price_api(ticker):

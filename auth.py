@@ -48,6 +48,61 @@ def send_verification_email(email, token):
         """
     })
 
+def send_alert_email(email, ticker, ticker_name, condition, target_price, current_price, triggered_at):
+    condition_label = '↑ AU-DESSUS DE' if condition == 'above' else '↓ EN-DESSOUS DE'
+    subject = f'⚡ Alerte déclenchée — {ticker} a atteint {current_price:.4f}'
+    alerts_url = 'https://getportfoliotrack.com/alerts'
+    print(f'[alerts] sending email to {email} for {ticker}')
+    resend.Emails.send({
+        'from': 'PortfolioTrack <noreply@getportfoliotrack.com>',
+        'to': email,
+        'subject': subject,
+        'html': f"""
+<div style="background:#0a0a0a;color:#e0e0e0;font-family:'IBM Plex Mono',monospace;
+            max-width:520px;margin:0 auto;padding:0;border:1px solid #222;">
+  <div style="background:#111;border-bottom:2px solid #FF8C00;padding:16px 20px;">
+    <span style="color:#FF8C00;font-size:12px;font-weight:700;letter-spacing:2px;">PORTFOLIOTRACK</span>
+  </div>
+  <div style="padding:24px 20px;">
+    <div style="color:#FF8C00;font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:1px;">
+      &#9889; ALERTE D&Eacute;CLENCH&Eacute;E
+    </div>
+    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-bottom:20px;">
+      {ticker} &mdash; {ticker_name}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;">
+      <tr style="border-bottom:1px solid #222;">
+        <td style="color:#888;padding:9px 0;width:44%;">CONDITION</td>
+        <td style="color:#FF8C00;font-weight:700;padding:9px 0;">{condition_label}&nbsp;{target_price:.2f}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="color:#888;padding:9px 0;">PRIX ACTUEL</td>
+        <td style="color:#ffffff;font-weight:700;padding:9px 0;">{current_price:.4f}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="color:#888;padding:9px 0;">PRIX CIBLE</td>
+        <td style="color:#e0e0e0;padding:9px 0;">{target_price:.2f}</td>
+      </tr>
+      <tr>
+        <td style="color:#888;padding:9px 0;">DATE / HEURE</td>
+        <td style="color:#e0e0e0;padding:9px 0;">{triggered_at}</td>
+      </tr>
+    </table>
+    <a href="{alerts_url}"
+       style="display:inline-block;padding:10px 22px;background:#FF8C00;color:#000;
+              font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;
+              text-decoration:none;letter-spacing:1px;border-radius:2px;">
+      VOIR MES ALERTES &#8594;
+    </a>
+  </div>
+  <div style="border-top:1px solid #222;padding:12px 20px;">
+    <span style="color:#444;font-size:11px;">PortfolioTrack &middot; getportfoliotrack.com</span>
+  </div>
+</div>
+""",
+    })
+
+
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
