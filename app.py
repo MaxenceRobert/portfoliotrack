@@ -1553,57 +1553,88 @@ def resultat_profil():
     import requests as req
     import json as _json
 
-    # ── Lecture des 10 réponses ───────────────────────────────────────────────
+    # ── Lecture des 12 réponses (valeurs '1'–'4') ─────────────────────────────
     answers = {}
-    for i in range(1, 11):
-        answers[i] = request.form.get(f'q{i}', '').strip().upper()
+    for i in range(1, 13):
+        answers[i] = request.form.get(f'q{i}', '').strip()
 
-    # ── Axe A : Tolérance au risque (q1-q5) — A=0, B=25, C=75, D=100 ─────────
-    AXE_A_POINTS = {'A': 0, 'B': 25, 'C': 75, 'D': 100}
-    axe_a_scores = [AXE_A_POINTS.get(answers.get(i, ''), 0) for i in range(1, 6)]
-    axe_a = round(sum(axe_a_scores) / 5)
+    print(f'[resultat_profil] raw answers: {answers}')
 
-    # ── Axe B : Connaissance financière (q6-q10) — bonne réponse=100, sinon=0 ─
-    AXE_B_CORRECT = {6: 'C', 7: 'A', 8: 'C', 9: 'C', 10: 'B'}
-    axe_b_scores = [100 if answers.get(i, '') == AXE_B_CORRECT[i] else 0 for i in range(6, 11)]
-    axe_b = round(sum(axe_b_scores) / 5)
+    # ── Tables de scores par question ─────────────────────────────────────────
+    Q_SCORES = {
+        1:  {'1': 10, '2': 35, '3': 65, '4': 90},   # part du patrimoine
+        2:  {'1': 10, '2': 35, '3': 75, '4': 100},  # liquidité urgence
+        3:  {'1': 10, '2': 40, '3': 75, '4': 100},  # situation financière
+        4:  {'1': 5,  '2': 35, '3': 70, '4': 100},  # objectif principal
+        5:  {'1': 30, '2': 45, '3': 70, '4': 90},   # convictions actifs
+        6:  {'1': 50, '2': 50, '3': 50, '4': 50},   # ESG — score neutre
+        7:  {'1': 0,  '2': 25, '3': 65, '4': 100},  # réaction chute 25%
+        8:  {'1': 15, '2': 40, '3': 70, '4': 100},  # perte max supportable
+        9:  {'1': 20, '2': 45, '3': 75, '4': 100},  # FOMO réaction
+        10: {'1': 10, '2': 35, '3': 70, '4': 100},  # horizon temporel
+        11: {'1': 20, '2': 50, '3': 75, '4': 95},   # concentration
+        12: {'1': 30, '2': 50, '3': 75, '4': 90},   # gestion active/passive
+    }
 
-    # ── Score final : 70% tolérance + 30% connaissance ───────────────────────
-    global_score = max(1, round(axe_a * 0.70 + axe_b * 0.30))
-    axis_scores = {'A': axe_a, 'B': axe_b}
+    def q_score(n):
+        return Q_SCORES.get(n, {}).get(answers.get(n, ''), 0)
 
-    # ── Profil ────────────────────────────────────────────────────────────────
-    if global_score <= 25:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'PRUDENT',   '70% fonds euros / 30% actions',  3.0, '#34D399', '🛡️'
-    elif global_score <= 50:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'ÉQUILIBRÉ', '50% obligations / 50% actions',  5.0, '#F6C90E', '⚖️'
-    elif global_score <= 75:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'DYNAMIQUE', '20% obligations / 80% actions',  7.0, '#5B5FED', '🚀'
+    # ── Calcul des 4 axes ─────────────────────────────────────────────────────
+    score_A = round((q_score(1) + q_score(2) + q_score(3)) / 3)
+    score_B = round((q_score(4) + q_score(5)) / 2)
+    score_C = round((q_score(7) + q_score(8) + q_score(9)) / 3)
+    score_D = round((q_score(10) + q_score(11) + q_score(12)) / 3)
+
+    # ── Score final pondéré ───────────────────────────────────────────────────
+    risk_score = max(1, round(score_A * 0.20 + score_B * 0.25 + score_C * 0.35 + score_D * 0.20))
+
+    # ── Préférence ESG (Q6, non incluse dans le score) ────────────────────────
+    ESG_MAP = {'1': 'oui', '2': 'oui', '3': 'non', '4': 'neutre'}
+    esg_pref = ESG_MAP.get(answers.get(6, ''), 'neutre')
+
+    print(f'[resultat_profil] score_A={score_A} score_B={score_B} score_C={score_C} score_D={score_D} risk_score={risk_score} esg={esg_pref}')
+
+    # ── Profil (5 niveaux) ────────────────────────────────────────────────────
+    if risk_score <= 20:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'TRÈS PRUDENT', '80% fonds euros / 20% actions',  2.5, '#34D399', '🛡️'
+    elif risk_score <= 40:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'PRUDENT',      '60% obligations / 40% actions',  3.5, '#6EE7B7', '⚖️'
+    elif risk_score <= 60:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'ÉQUILIBRÉ',    '50% obligations / 50% actions',  5.0, '#F6C90E', '🎯'
+    elif risk_score <= 80:
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'DYNAMIQUE',    '20% obligations / 80% actions',  7.0, '#5B5FED', '🚀'
     else:
-        profil, allocation, dca_rate, profil_color, profil_emoji = 'AGRESSIF',  '95% actions / 5% liquidités',    9.0, '#F87171', '⚡'
+        profil, allocation, dca_rate, profil_color, profil_emoji = 'AGRESSIF',     '95% actions / 5% liquidités',    9.0, '#F87171', '⚡'
 
-    # ── Interprétation des sous-scores ───────────────────────────────────────
-    if axe_a <= 25:
-        axe_a_interp = "Aversion au risque marquée — tu préfères la préservation du capital"
-    elif axe_a <= 50:
-        axe_a_interp = "Tolérance modérée — tu acceptes quelques fluctuations"
-    elif axe_a <= 75:
-        axe_a_interp = "Bonne tolérance — tu resteras serein lors des corrections"
-    else:
-        axe_a_interp = "Très haute tolérance — les baisses ne te font pas peur"
+    # ── Interprétations des 4 axes ────────────────────────────────────────────
+    def interp_A(s):
+        if s <= 30: return "Capacité d'investissement contrainte — préservez votre épargne de sécurité"
+        if s <= 55: return "Situation correcte — quelques contraintes patrimoniales à considérer"
+        if s <= 75: return "Bonne assise financière — vous pouvez investir avec sérénité"
+        return "Situation solide — large marge de manœuvre patrimoniale"
 
-    correct_count = sum(1 for s in axe_b_scores if s == 100)
-    if axe_b <= 20:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — notions de base à consolider"
-    elif axe_b <= 40:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — connaissances en développement"
-    elif axe_b <= 60:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — niveau intermédiaire solide"
-    elif axe_b <= 80:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — bonnes connaissances financières"
-    else:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — niveau avancé"
+    def interp_B(s):
+        if s <= 30: return "Priorité à la préservation du capital — pas de prise de risque inutile"
+        if s <= 55: return "Recherche d'équilibre entre revenus réguliers et croissance"
+        if s <= 75: return "Vision croissance long terme — investisseur patient et discipliné"
+        return "Orientation performance — vous assumez la volatilité pour maximiser"
 
+    def interp_C(s):
+        if s <= 25: return "Forte sensibilité émotionnelle aux baisses — profil défensif recommandé"
+        if s <= 50: return "Stress modéré en turbulences — quelques réflexes de protection à surveiller"
+        if s <= 75: return "Bonne résistance aux corrections — vous tenez votre stratégie"
+        return "Sang-froid en toutes circonstances — opportuniste en période de crise"
+
+    def interp_D(s):
+        if s <= 30: return "Horizon court — liquidité et préservation priment"
+        if s <= 55: return "Horizon moyen — équilibre entre croissance et accessibilité"
+        if s <= 75: return "Long terme — vous pouvez absorber la volatilité du marché"
+        return "Très long terme — investisseur de conviction sans contrainte d'horizon"
+
+    axis_scores  = {'A': score_A, 'B': score_B, 'C': score_C, 'D': score_D}
+    axis_interps = {'A': interp_A(score_A), 'B': interp_B(score_B), 'C': interp_C(score_C), 'D': interp_D(score_D)}
+
+    # ── API Claude ────────────────────────────────────────────────────────────
     api_key = os.environ.get('ANTHROPIC_API_KEY', '')
     api_headers = {
         'x-api-key': api_key,
@@ -1611,23 +1642,25 @@ def resultat_profil():
         'content-type': 'application/json',
     }
 
-    # ── Recommandation textuelle ──────────────────────────────────────────────
     system_prompt = (
-        "Tu es un outil pédagogique d'orientation financière. Tu génères des recommandations "
-        "éducatives personnalisées. Tu n'es pas un conseiller en investissement agréé. "
-        "Chaque recommandation inclut un disclaimer clair. Tu rédiges en français, ton accessible et bienveillant."
+        "Tu es un outil pédagogique d'orientation financière simulant un CGP (conseiller en gestion de patrimoine). "
+        "Tu génères des recommandations éducatives personnalisées en français. "
+        "Tu n'es pas un conseiller en investissement agréé. Ton ton est direct, professionnel et bienveillant."
     )
     user_prompt = (
-        f"Profil investisseur — score {global_score}/100 ({profil}).\n"
-        f"Axe A (tolérance au risque) : {axe_a}/100. Axe B (connaissance financière) : {axe_b}/100.\n\n"
-        f"Génère une recommandation concise : "
-        f"1) Analyse du profil (3 phrases max). "
-        f"2) 2-3 enveloppes fiscales adaptées (3 bullet points chacune). "
-        f"3) Max 3 ETF illustratifs avec disclaimer. "
-        f"4) Allocation indicative par catégorie (%). "
-        f"5) 3 points de vigilance (2 lignes chacun). "
-        f"6) Disclaimer légal en 1 phrase. "
-        f"Sois direct, accessible, sans tableaux complexes."
+        f"Profil investisseur issu d'un entretien de découverte — score {risk_score}/100 ({profil}).\n"
+        f"Situation & contraintes patrimoniales : {score_A}/100. "
+        f"Objectifs & convictions : {score_B}/100. "
+        f"Comportement face au risque : {score_C}/100. "
+        f"Horizon & flexibilité : {score_D}/100. "
+        f"Sensibilité ESG : {esg_pref}.\n\n"
+        f"Génère une recommandation concise (style CGP) : "
+        f"1) Synthèse du profil en 3 phrases — identifier les forces et tensions. "
+        f"2) 2-3 enveloppes fiscales recommandées selon la situation. "
+        f"3) Allocation indicative par catégorie d'actifs (%). "
+        f"4) 3 points de vigilance spécifiques à ce profil. "
+        f"5) Disclaimer légal en 1 phrase. "
+        f"Sois direct, sans jargon, sans tableaux."
     )
 
     recommendation = ''
@@ -1636,27 +1669,23 @@ def resultat_profil():
             resp = req.post(
                 'https://api.anthropic.com/v1/messages',
                 headers=api_headers,
-                json={
-                    'model':      'claude-haiku-4-5-20251001',
-                    'max_tokens': 1500,
-                    'system':     system_prompt,
-                    'messages':   [{'role': 'user', 'content': user_prompt}],
-                },
+                json={'model': 'claude-haiku-4-5-20251001', 'max_tokens': 1500,
+                      'system': system_prompt, 'messages': [{'role': 'user', 'content': user_prompt}]},
                 timeout=30,
             )
             if resp.status_code == 200:
                 recommendation = resp.json()['content'][0]['text']
             else:
-                print(f"Anthropic rec error: {resp.status_code}")
+                print(f'[resultat_profil] Anthropic rec error: {resp.status_code}')
         except Exception as e:
-            print(f"Anthropic rec error: {e}")
+            print(f'[resultat_profil] Anthropic rec error: {e}')
 
     if not recommendation:
         recommendation = (
-            f"**Profil {profil}** — Score global : {global_score}/100\n\n"
-            "La génération de recommandation personnalisée n'est pas disponible pour le moment. "
+            f"**Profil {profil}** — Score : {risk_score}/100\n\n"
+            "La génération de recommandation n'est pas disponible en ce moment. "
             "Consultez un conseiller financier agréé.\n\n"
-            "> ⚠️ À titre indicatif uniquement, pas un conseil en investissement."
+            "> ⚠️ À titre indicatif uniquement — pas un conseil en investissement."
         )
 
     rec_html = md_lib.markdown(recommendation, extensions=['nl2br'])
@@ -1665,62 +1694,54 @@ def resultat_profil():
     asset_suggestions = []
     if api_key:
         assets_prompt = (
-            f"Tu es un outil pédagogique en investissement. "
-            f"Profil : score {global_score}/100 ({profil}). "
-            f"Tolérance au risque : {axe_a}/100. Connaissance financière : {axe_b}/100.\n\n"
-            f"Recommande exactement 6 actifs réels adaptés à ce profil. "
-            f"Réponds UNIQUEMENT en JSON valide, sans markdown ni texte autour, format exact :\n"
-            f'[{{"ticker":"XXXX","nom":"Nom complet","type":"ETF","score_risque":45,'
-            f'"allocation_pct":20,"explication":"Pourquoi cet actif correspond"}}, ...]\n'
-            f"Types autorisés : ETF, Action, Crypto, Obligation. "
-            f"score_risque = estimation 0-100. allocation_pct = allocation suggérée (total ~100%). "
-            f"Tickers Yahoo Finance exacts obligatoires. "
-            f"DISCLAIMER : à titre illustratif uniquement."
+            f"Profil investisseur : {profil}, score {risk_score}/100. "
+            f"Comportement risque : {score_C}/100. Horizon : {score_D}/100. ESG : {esg_pref}.\n\n"
+            f"Recommande 6 actifs adaptés. Réponds UNIQUEMENT en JSON valide, format exact :\n"
+            f'[{{"ticker":"XXXX","nom":"Nom","type":"ETF","score_risque":45,"allocation_pct":20,"explication":"..."}}, ...]\n'
+            f"Tickers Yahoo Finance exacts. À titre illustratif uniquement."
         )
         try:
             resp2 = req.post(
                 'https://api.anthropic.com/v1/messages',
                 headers=api_headers,
-                json={
-                    'model':    'claude-haiku-4-5-20251001',
-                    'max_tokens': 1200,
-                    'messages': [{'role': 'user', 'content': assets_prompt}],
-                },
+                json={'model': 'claude-haiku-4-5-20251001', 'max_tokens': 1200,
+                      'messages': [{'role': 'user', 'content': assets_prompt}]},
                 timeout=25,
             )
             if resp2.status_code == 200:
-                raw = resp2.json()['content'][0]['text'].strip()
+                raw   = resp2.json()['content'][0]['text'].strip()
                 start = raw.find('[')
                 end   = raw.rfind(']') + 1
                 if start >= 0 and end > start:
                     asset_suggestions = _json.loads(raw[start:end])
         except Exception as e:
-            print(f"Anthropic assets error: {e}")
+            print(f'[resultat_profil] assets error: {e}')
 
     # ── Sauvegarde ────────────────────────────────────────────────────────────
     if current_user.is_authenticated:
         try:
             save_profil_investisseur(
                 user_id=current_user.id,
-                score_global=global_score,
+                score_global=risk_score,
                 nom_profil=profil,
-                scores_axes={'A': axe_a, 'B': axe_b},
+                scores_axes={'A': score_A, 'B': score_B, 'C': score_C, 'D': score_D, 'ESG': esg_pref},
                 recommandation=recommendation,
             )
+            print(f'[resultat_profil] saved for user {current_user.id}')
         except Exception as e:
-            print(f"Erreur sauvegarde profil investisseur: {e}")
+            print(f'[resultat_profil] save error: {e}')
 
     return render_template(
         'resultat_profil.html',
         profil=profil,
         profil_emoji=profil_emoji,
-        global_score=global_score,
+        risk_score=risk_score,
         allocation=allocation,
         dca_rate=dca_rate,
         profil_color=profil_color,
         axis_scores=axis_scores,
-        axe_a_interp=axe_a_interp,
-        axe_b_interp=axe_b_interp,
+        axis_interps=axis_interps,
+        esg_pref=esg_pref,
         recommendation_html=rec_html,
         asset_suggestions=asset_suggestions,
     )
@@ -1776,11 +1797,13 @@ def mon_profil_investisseur():
         return redirect(url_for('main.test_profil'))
 
     sc = last_profil['score_global']
-    if sc <= 25:
-        profil_color, profil_emoji, allocation, dca_rate = '#34D399', '🛡️', '70% fonds euros / 30% actions', 3.0
-    elif sc <= 50:
-        profil_color, profil_emoji, allocation, dca_rate = '#F6C90E', '⚖️', '50% obligations / 50% actions', 5.0
-    elif sc <= 75:
+    if sc <= 20:
+        profil_color, profil_emoji, allocation, dca_rate = '#34D399', '🛡️', '80% fonds euros / 20% actions', 2.5
+    elif sc <= 40:
+        profil_color, profil_emoji, allocation, dca_rate = '#6EE7B7', '⚖️', '60% obligations / 40% actions', 3.5
+    elif sc <= 60:
+        profil_color, profil_emoji, allocation, dca_rate = '#F6C90E', '🎯', '50% obligations / 50% actions', 5.0
+    elif sc <= 80:
         profil_color, profil_emoji, allocation, dca_rate = '#5B5FED', '🚀', '20% obligations / 80% actions', 7.0
     else:
         profil_color, profil_emoji, allocation, dca_rate = '#F87171', '⚡', '95% actions / 5% liquidités', 9.0
@@ -1788,29 +1811,38 @@ def mon_profil_investisseur():
     rec_html = md_lib.markdown(last_profil.get('recommandation', ''), extensions=['nl2br'])
 
     scores_axes = last_profil.get('scores_axes', {})
-    axe_a = scores_axes.get('A', 0)
-    axe_b = scores_axes.get('B', 0)
+    score_A = scores_axes.get('A', 0)
+    score_B = scores_axes.get('B', 0)
+    score_C = scores_axes.get('C', 0)
+    score_D = scores_axes.get('D', 0)
+    esg_pref = scores_axes.get('ESG', 'neutre')
 
-    if axe_a <= 25:
-        axe_a_interp = "Aversion au risque marquée — tu préfères la préservation du capital"
-    elif axe_a <= 50:
-        axe_a_interp = "Tolérance modérée — tu acceptes quelques fluctuations"
-    elif axe_a <= 75:
-        axe_a_interp = "Bonne tolérance — tu resteras serein lors des corrections"
-    else:
-        axe_a_interp = "Très haute tolérance — les baisses ne te font pas peur"
+    def interp_A(s):
+        if s <= 30: return "Capacité d'investissement contrainte — préservez votre épargne de sécurité"
+        if s <= 55: return "Situation correcte — quelques contraintes patrimoniales à considérer"
+        if s <= 75: return "Bonne assise financière — vous pouvez investir avec sérénité"
+        return "Situation solide — large marge de manœuvre patrimoniale"
 
-    correct_count = round(axe_b / 20)
-    if axe_b <= 20:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — notions de base à consolider"
-    elif axe_b <= 40:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — connaissances en développement"
-    elif axe_b <= 60:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — niveau intermédiaire solide"
-    elif axe_b <= 80:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — bonnes connaissances financières"
-    else:
-        axe_b_interp = f"{correct_count}/5 bonnes réponses — niveau avancé"
+    def interp_B(s):
+        if s <= 30: return "Priorité à la préservation du capital — pas de prise de risque inutile"
+        if s <= 55: return "Recherche d'équilibre entre revenus réguliers et croissance"
+        if s <= 75: return "Vision croissance long terme — investisseur patient et discipliné"
+        return "Orientation performance — vous assumez la volatilité pour maximiser"
+
+    def interp_C(s):
+        if s <= 25: return "Forte sensibilité émotionnelle aux baisses — profil défensif recommandé"
+        if s <= 50: return "Stress modéré en turbulences — quelques réflexes de protection à surveiller"
+        if s <= 75: return "Bonne résistance aux corrections — vous tenez votre stratégie"
+        return "Sang-froid en toutes circonstances — opportuniste en période de crise"
+
+    def interp_D(s):
+        if s <= 30: return "Horizon court — liquidité et préservation priment"
+        if s <= 55: return "Horizon moyen — équilibre entre croissance et accessibilité"
+        if s <= 75: return "Long terme — vous pouvez absorber la volatilité du marché"
+        return "Très long terme — investisseur de conviction sans contrainte d'horizon"
+
+    axis_scores  = {'A': score_A, 'B': score_B, 'C': score_C, 'D': score_D}
+    axis_interps = {'A': interp_A(score_A), 'B': interp_B(score_B), 'C': interp_C(score_C), 'D': interp_D(score_D)}
 
     return render_template(
         'mon_profil_investisseur.html',
@@ -1820,8 +1852,9 @@ def mon_profil_investisseur():
         profil_color=profil_color,
         allocation=allocation,
         dca_rate=dca_rate,
-        axe_a_interp=axe_a_interp,
-        axe_b_interp=axe_b_interp,
+        axis_scores=axis_scores,
+        axis_interps=axis_interps,
+        esg_pref=esg_pref,
         recommendation_html=rec_html,
     )
 

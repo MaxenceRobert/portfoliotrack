@@ -42,9 +42,9 @@
     color: var(--accent);
     letter-spacing: 3px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
-.result-alloc-badge {
+.result-badge {
     display: inline-block;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
@@ -55,8 +55,12 @@
     padding: 3px 8px;
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-right: 6px;
+    margin-right: 5px;
+    margin-bottom: 4px;
 }
+.result-badge.esg-oui   { color: #aed581; border-color: rgba(174,213,129,0.4); background: rgba(174,213,129,0.06); }
+.result-badge.esg-non   { color: #888; border-color: var(--border); }
+.result-badge.esg-neutre { color: var(--text-dim); border-color: var(--border); }
 .result-hero-emoji {
     font-size: 36px;
     flex-shrink: 0;
@@ -86,20 +90,17 @@
     height: 8px;
     margin-bottom: 6px;
 }
-.seg-bar-seg {
-    flex: 1;
-    background: var(--border-light);
-}
-.seg-bar-seg.filled-1 { background: #00C853; }
-.seg-bar-seg.filled-2 { background: #00C853; }
-.seg-bar-seg.filled-3 { background: #64DD17; }
-.seg-bar-seg.filled-4 { background: #64DD17; }
-.seg-bar-seg.filled-5 { background: #FFD600; }
-.seg-bar-seg.filled-6 { background: #FFD600; }
-.seg-bar-seg.filled-7 { background: #FF8C00; }
-.seg-bar-seg.filled-8 { background: #FF8C00; }
-.seg-bar-seg.filled-9 { background: #FF1744; }
-.seg-bar-seg.filled-10 { background: #FF1744; }
+.seg-bar-seg               { flex: 1; background: var(--border-light); }
+.seg-bar-seg.filled-1      { background: #00C853; }
+.seg-bar-seg.filled-2      { background: #00C853; }
+.seg-bar-seg.filled-3      { background: #64DD17; }
+.seg-bar-seg.filled-4      { background: #64DD17; }
+.seg-bar-seg.filled-5      { background: #FFD600; }
+.seg-bar-seg.filled-6      { background: #FFD600; }
+.seg-bar-seg.filled-7      { background: #FF8C00; }
+.seg-bar-seg.filled-8      { background: #FF8C00; }
+.seg-bar-seg.filled-9      { background: #FF1744; }
+.seg-bar-seg.filled-10     { background: #FF1744; }
 .seg-bar-markers {
     display: flex;
     justify-content: space-between;
@@ -122,20 +123,21 @@
     letter-spacing: 1.5px;
     color: var(--text-dim);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
+.axis-block { margin-bottom: 14px; }
+.axis-block:last-child { margin-bottom: 0; }
 .axis-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
-.axis-row:last-child { margin-bottom: 0; }
 .axis-name {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
     color: var(--text-dim);
-    min-width: 200px;
+    min-width: 220px;
     flex-shrink: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -162,14 +164,10 @@
 .axis-interp {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 8px;
-    color: var(--text-dim);
+    color: #666;
     letter-spacing: 0.3px;
-    padding-left: 212px;
-    margin-bottom: 10px;
+    padding-left: 232px;
     line-height: 1.5;
-}
-@media (max-width: 640px) {
-    .axis-interp { padding-left: 0; }
 }
 /* ── Recommendation panel ── */
 .rec-panel {
@@ -276,9 +274,9 @@
     border: 1px solid var(--border-light);
     color: var(--text-dim);
 }
-.s-badge.risk-low  { color: var(--green); border-color: var(--green); }
+.s-badge.risk-low  { color: var(--green);  border-color: var(--green); }
 .s-badge.risk-mid  { color: var(--yellow); border-color: var(--yellow); }
-.s-badge.risk-high { color: var(--red); border-color: var(--red); }
+.s-badge.risk-high { color: var(--red);    border-color: var(--red); }
 .suggestion-explication {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
@@ -366,7 +364,7 @@
     font-variant-numeric: tabular-nums;
 }
 .dca-kpi-val.green { color: var(--green); }
-/* ── Non-auth CTA ── */
+/* ── CTA non-auth ── */
 .cta-panel {
     padding: 24px;
     background: var(--panel);
@@ -405,6 +403,7 @@
     .result-hero { flex-direction: column; gap: 12px; align-items: flex-start; }
     .result-hero-score { font-size: 40px; }
     .axis-name { min-width: 130px; font-size: 8px; }
+    .axis-interp { padding-left: 0; }
     .dca-kpis { grid-template-columns: repeat(2, 1fr); }
     .suggestions-grid { grid-template-columns: 1fr; }
     .result-actions { flex-direction: column; }
@@ -419,25 +418,32 @@
         <div class="result-hero-info">
             <div class="result-profil-name">{{ profil }}</div>
             <div style="margin-bottom:8px;">
-                <span class="result-alloc-badge">{{ allocation }}</span>
-                <span class="result-alloc-badge">Score global</span>
+                <span class="result-badge">{{ allocation }}</span>
+                <span class="result-badge">Score global</span>
+                {% if esg_pref == 'oui' %}
+                <span class="result-badge esg-oui">Sensibilité ESG : oui</span>
+                {% elif esg_pref == 'non' %}
+                <span class="result-badge esg-non">Sensibilité ESG : non</span>
+                {% else %}
+                <span class="result-badge esg-neutre">Sensibilité ESG : neutre</span>
+                {% endif %}
             </div>
             <div style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase;">
-                Résultat · Test investisseur
+                Résultat · Entretien de profil investisseur
             </div>
         </div>
-        <div class="result-hero-score">{{ global_score }}<sup>/100</sup></div>
+        <div class="result-hero-score">{{ risk_score }}<sup>/100</sup></div>
     </div>
 
     <!-- Segmented bar -->
     <div class="seg-bar-wrap">
-        <div class="seg-bar-label">Spectre de risque · 0 = Prudent → 100 = Agressif</div>
-        <div class="seg-bar" id="seg-bar">
+        <div class="seg-bar-label">Spectre de risque · 0 = Très prudent → 100 = Agressif</div>
+        <div class="seg-bar">
             {% for i in range(1, 11) %}
             {% set threshold = i * 10 %}
-            {% if global_score >= threshold %}
+            {% if risk_score >= threshold %}
             <div class="seg-bar-seg filled-{{ i }}"></div>
-            {% elif global_score >= (threshold - 5) %}
+            {% elif risk_score >= (threshold - 5) %}
             <div class="seg-bar-seg filled-{{ i }}" style="opacity:0.5;"></div>
             {% else %}
             <div class="seg-bar-seg"></div>
@@ -445,34 +451,60 @@
             {% endfor %}
         </div>
         <div class="seg-bar-markers">
-            <span>0 — PRUDENT</span>
-            <span>25</span>
-            <span>50 — ÉQUILIBRÉ</span>
-            <span>75</span>
+            <span>0 — TRÈS PRUDENT</span>
+            <span>20 — PRUDENT</span>
+            <span>40 — ÉQUILIBRÉ</span>
+            <span>60 — DYNAMIQUE</span>
             <span>100 — AGRESSIF</span>
         </div>
     </div>
 
-    <!-- Axes -->
+    <!-- Axes (4) -->
     <div class="axes-panel">
         <div class="panel-section-label">Scores par axe</div>
-        <div>
-            <div class="axis-row" style="margin-bottom:4px;">
-                <span class="axis-name">A — TOLÉRANCE AU RISQUE</span>
+
+        <div class="axis-block">
+            <div class="axis-row">
+                <span class="axis-name">A — Situation & contraintes</span>
                 <div class="axis-bar-outer">
                     <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['A'] }}"></div>
                 </div>
                 <span class="axis-score-val">{{ axis_scores['A'] }}/100</span>
             </div>
-            <div class="axis-interp">{{ axe_a_interp }}</div>
-            <div class="axis-row" style="margin-bottom:4px;">
-                <span class="axis-name">B — CONNAISSANCE FINANCIÈRE</span>
+            <div class="axis-interp">{{ axis_interps['A'] }}</div>
+        </div>
+
+        <div class="axis-block">
+            <div class="axis-row">
+                <span class="axis-name">B — Objectifs & convictions</span>
                 <div class="axis-bar-outer">
                     <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['B'] }}"></div>
                 </div>
                 <span class="axis-score-val">{{ axis_scores['B'] }}/100</span>
             </div>
-            <div class="axis-interp" style="margin-bottom:0;">{{ axe_b_interp }}</div>
+            <div class="axis-interp">{{ axis_interps['B'] }}</div>
+        </div>
+
+        <div class="axis-block">
+            <div class="axis-row">
+                <span class="axis-name">C — Comportement face au risque</span>
+                <div class="axis-bar-outer">
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['C'] }}"></div>
+                </div>
+                <span class="axis-score-val">{{ axis_scores['C'] }}/100</span>
+            </div>
+            <div class="axis-interp">{{ axis_interps['C'] }}</div>
+        </div>
+
+        <div class="axis-block">
+            <div class="axis-row">
+                <span class="axis-name">D — Horizon & flexibilité</span>
+                <div class="axis-bar-outer">
+                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axis_scores['D'] }}"></div>
+                </div>
+                <span class="axis-score-val">{{ axis_scores['D'] }}/100</span>
+            </div>
+            <div class="axis-interp">{{ axis_interps['D'] }}</div>
         </div>
     </div>
 
@@ -495,20 +527,20 @@
             <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); border:1px solid var(--border-light); padding:2px 6px; text-transform:uppercase; letter-spacing:0.5px;">Optionnel</span>
         </div>
         <p style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); line-height:1.7; margin-bottom:14px;">
-            Précise tes convictions pour personnaliser la recommandation IA. Ces réponses ne modifient pas ton score.
+            Précisez vos convictions pour personnaliser la recommandation IA. Ces réponses ne modifient pas votre score.
         </p>
         <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
             <div>
                 <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Convictions sectorielles ou contraintes éthiques</label>
-                <textarea id="aff-sectorial" class="quiz-textarea" placeholder="Ex: finance islamique (halal), exclusion armement/tabac, ESG, tech uniquement…" rows="2" style="margin-top:0;"></textarea>
+                <textarea id="aff-sectorial" style="width:100%; padding:8px 10px; border:1px solid var(--border-light); background:var(--bg); color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:10px; line-height:1.7; resize:vertical; outline:none; box-sizing:border-box;" placeholder="Ex: finance islamique (halal), exclusion armement/tabac, ESG, tech uniquement…" rows="2"></textarea>
             </div>
             <div>
                 <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Convictions géographiques</label>
-                <textarea id="aff-geographic" class="quiz-textarea" placeholder="Ex: je crois à l'Inde et aux USA, j'évite la Chine, je préfère l'Europe…" rows="2" style="margin-top:0;"></textarea>
+                <textarea id="aff-geographic" style="width:100%; padding:8px 10px; border:1px solid var(--border-light); background:var(--bg); color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:10px; line-height:1.7; resize:vertical; outline:none; box-sizing:border-box;" placeholder="Ex: je crois à l'Inde et aux USA, j'évite la Chine, je préfère l'Europe…" rows="2"></textarea>
             </div>
             <div>
                 <label style="display:block; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Types d'actifs préférés ou à éviter</label>
-                <textarea id="aff-assets" class="quiz-textarea" placeholder="Ex: je veux du dividende, j'aime les ETF indiciels, j'évite la crypto, je veux de l'or…" rows="2" style="margin-top:0;"></textarea>
+                <textarea id="aff-assets" style="width:100%; padding:8px 10px; border:1px solid var(--border-light); background:var(--bg); color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:10px; line-height:1.7; resize:vertical; outline:none; box-sizing:border-box;" placeholder="Ex: je veux du dividende, j'aime les ETF indiciels, j'évite la crypto, je veux de l'or…" rows="2"></textarea>
             </div>
         </div>
         <button class="btn btn-primary" onclick="submitAffiner()" id="aff-btn">PERSONNALISER →</button>
@@ -518,7 +550,7 @@
     <!-- Asset suggestions -->
     {% if asset_suggestions %}
     <div class="suggestions-outer">
-        <div class="panel-section-label">Actifs suggérés pour ton profil</div>
+        <div class="panel-section-label">Actifs suggérés pour votre profil</div>
         <div style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0;">
             Sélection indicative générée par IA · pas un conseil d'investissement
         </div>
@@ -600,9 +632,9 @@
     <!-- CTA non-auth -->
     {% if not current_user.is_authenticated %}
     <div class="cta-panel">
-        <div class="cta-title">[ LOCK ] Sauvegarde ton profil</div>
+        <div class="cta-title">[ LOCK ] Sauvegardez votre profil</div>
         <div class="cta-sub">
-            Crée un compte gratuit pour sauvegarder ce résultat, suivre ton portefeuille et accéder à toutes les analyses.
+            Créez un compte gratuit pour sauvegarder ce résultat, suivre votre portefeuille et accéder à toutes les analyses.
         </div>
         <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
             <a href="{{ url_for('auth.register') }}" class="btn btn-primary">CRÉER UN COMPTE →</a>
@@ -613,7 +645,10 @@
 
     <!-- Actions -->
     <div class="result-actions">
-        <a href="{{ url_for('main.test_profil') }}?redo=1" class="btn btn-ghost">↺ REFAIRE LE TEST</a>
+        <a href="{{ url_for('main.test_profil') }}?redo=1" class="btn btn-ghost"
+           onclick="return confirm('Refaire le questionnaire ? Votre profil actuel sera remplacé.')">
+           ↺ REFAIRE LE QUESTIONNAIRE
+        </a>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">SUIVRE MON PORTEFEUILLE →</a>
         {% endif %}
@@ -627,6 +662,8 @@ window.addEventListener('load', function() {
         setTimeout(function() { el.style.width = el.dataset.target + '%'; }, 300);
     });
     setTimeout(runDCA, 500);
+    console.log('[resultat] risk_score={{ risk_score }} profil={{ profil }} esg={{ esg_pref }}');
+    console.log('[resultat] axes: A={{ axis_scores["A"] }} B={{ axis_scores["B"] }} C={{ axis_scores["C"] }} D={{ axis_scores["D"] }}');
 });
 
 function submitAffiner() {
@@ -646,7 +683,7 @@ function submitAffiner() {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            global_score: {{ global_score }},
+            global_score: {{ risk_score }},
             profil_name:  '{{ profil }}',
             sectorial:    sectorial,
             geographic:   geographic,

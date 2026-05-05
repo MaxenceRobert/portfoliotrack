@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Test de profil investisseur — PortfolioTrack{% endblock %}
+{% block title %}Profil Investisseur — PortfolioTrack{% endblock %}
 {% block content %}
 <style>
+.page-content { padding: 0 !important; }
 .quiz-outer {
   display: flex;
   flex-direction: column;
@@ -51,9 +52,7 @@
 }
 
 /* ── Progress ── */
-.quiz-progress-header {
-  margin-bottom: 16px;
-}
+.quiz-progress-header { margin-bottom: 16px; }
 .quiz-progress-meta {
   display: flex;
   justify-content: space-between;
@@ -61,19 +60,19 @@
   margin-bottom: 8px;
 }
 .q-counter {
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 14px;
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 1px;
 }
 .q-axis-label {
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 8px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
-/* Segmented progress bar */
 .progress-bar-wrap {
   display: flex;
   gap: 2px;
@@ -86,52 +85,31 @@
   transition: background 0.3s;
 }
 .progress-bar-wrap .seg.filled { background: var(--accent); }
-/* Fallback: single bar mode (for JS width update) */
-.progress-bar-wrap-simple {
-  background: var(--border);
-  height: 3px;
-  overflow: hidden;
-}
-.progress-bar {
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.4s ease;
-}
 
 /* ── Question card ── */
 .quiz-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  padding: 24px;
+  padding: 28px 24px 20px;
   margin-bottom: 12px;
 }
 .q-text {
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-bright);
   line-height: 1.6;
-  margin-bottom: 6px;
-}
-.q-subtext {
-  font-size: 10px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  margin-bottom: 16px;
-  font-style: italic;
+  margin-bottom: 20px;
 }
 .q-options-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 16px;
 }
 
 /* ── Option card ── */
 .option-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 14px;
+  padding: 13px 18px;
   border: 1px solid var(--border);
   background: transparent;
   cursor: pointer;
@@ -139,147 +117,30 @@
   user-select: none;
 }
 .option-card:hover {
-  border-color: var(--accent);
-  background: var(--accent-bg);
+  border-color: rgba(255,140,0,0.5);
+  background: rgba(255,140,0,0.04);
 }
 .option-card.selected {
   border-color: var(--accent);
-  background: var(--accent);
-}
-.option-card.selected .opt-letter {
-  background: #000;
-  color: var(--accent);
-  border-color: #000;
-}
-.option-card.selected .opt-text {
-  color: #000;
-}
-.opt-letter {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-dim);
-  transition: all 0.15s;
+  background: rgba(255,140,0,0.10);
 }
 .opt-text {
-  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
   color: var(--text);
-  line-height: 1.5;
-  padding-top: 3px;
+  line-height: 1.6;
 }
 .option-card:hover .opt-text { color: var(--text-bright); }
-
-/* ── Autre input ── */
-.autre-wrap { margin-top: 4px; }
-.autre-wrap input,
-.autre-input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border-light);
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  padding: 8px 10px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.autre-input:focus { border-color: var(--accent); }
-
-/* ── Textarea ── */
-.quiz-textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  line-height: 1.7;
-  resize: vertical;
-  margin-top: 12px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.quiz-textarea:focus { border-color: var(--accent); }
-.quiz-textarea::placeholder { color: var(--text-dim); }
-
-/* ── Numeric input ── */
-.quiz-numeric-wrap { margin-top: 16px; }
-.quiz-numeric-wrap input[type="number"] {
-  background: var(--bg);
-  border: 1px solid var(--border-light);
-  color: var(--text-bright);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 18px;
-  font-weight: 700;
-  padding: 10px 14px;
-  width: 100%;
-  max-width: 200px;
-  outline: none;
-  text-align: center;
-  transition: border-color 0.15s;
-  appearance: textfield;
-  font-variant-numeric: tabular-nums;
-}
-.quiz-numeric-wrap input[type="number"]:focus { border-color: var(--accent); }
-.quiz-numeric-unit {
-  display: inline-block;
-  margin-left: 10px;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-/* ── Slider ── */
-.slider-wrap { margin-top: 20px; }
-.quiz-slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 3px;
-  background: var(--border-light);
-  outline: none;
-  cursor: pointer;
-}
-.quiz-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--accent);
-  cursor: pointer;
-}
-.quiz-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: var(--accent);
-  cursor: pointer;
-  border: none;
-}
-.slider-val {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-bright);
-  text-align: center;
-  margin-top: 12px;
-  font-variant-numeric: tabular-nums;
-}
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 8px;
-  color: var(--text-dim);
-  margin-top: 6px;
-  letter-spacing: 0.5px;
+.option-card.selected .opt-text {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ── Error ── */
 .q-error {
   margin-top: 12px;
   padding: 8px 12px;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   color: var(--red);
   border: 1px solid rgba(255,23,68,0.2);
@@ -290,35 +151,37 @@
 /* ── Nav ── */
 .quiz-nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  gap: 8px;
 }
 .btn-quiz-next {
-  background: var(--accent);
-  color: #000;
-  padding: 10px 28px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  margin-left: auto;
+  padding: 11px 32px;
+  cursor: not-allowed;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.btn-quiz-next:hover { opacity: 0.88; }
+.btn-quiz-next.can-submit {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000;
+  cursor: pointer;
+}
+.btn-quiz-next.can-submit:hover { filter: brightness(1.08); }
 
 @media (max-width: 600px) {
   .quiz-outer { padding: 12px 8px 32px; }
   .disclaimer-panel { padding: 24px 16px; }
-  .quiz-card { padding: 16px; }
+  .quiz-card { padding: 18px 16px; }
   .q-text { font-size: 13px; }
   .btn-quiz-next { width: 100%; }
-  .quiz-nav { flex-direction: column-reverse; gap: 6px; }
-  .quiz-nav .btn { width: 100%; text-align: center; }
-  .quiz-numeric-wrap input[type="number"] { max-width: 100%; }
+  .quiz-nav { flex-direction: column; gap: 6px; }
 }
 </style>
 
@@ -326,7 +189,7 @@
 <div class="quiz-wrap">
 
   <form id="quiz-form" method="POST" action="{{ url_for('main.resultat_profil') }}">
-    {% for i in range(1, 11) %}
+    {% for i in range(1, 13) %}
     <input type="hidden" name="q{{ i }}" id="ans{{ i }}" value="">
     {% endfor %}
 
@@ -334,25 +197,27 @@
     <div id="slide-disclaimer">
       <div class="panel-head" style="margin-bottom:1px;">
         <div class="panel-title">Profil Investisseur</div>
-        <div class="panel-subtitle">Test personnalisé</div>
+        <div class="panel-subtitle">Entretien de découverte</div>
       </div>
       <div class="disclaimer-panel">
-        <div style="font-size:24px;color:var(--accent);margin-bottom:12px;letter-spacing:4px;">[ ? ]</div>
-        <div class="disclaimer-title">Avant de commencer</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:22px; color:var(--accent); margin-bottom:14px; letter-spacing:4px;">[ CGP ]</div>
+        <div class="disclaimer-title">Votre entretien de profil</div>
         <div class="disclaimer-text">
-          Pas de bonne ou mauvaise réponse. Ce test est conçu pour mieux te connaître et générer
-          une stratégie personnalisée. Réponds instinctivement et honnêtement.
+          Ce questionnaire fonctionne comme un entretien CGP. Il explore votre situation
+          patrimoniale, vos objectifs, votre comportement face au risque et votre horizon
+          d'investissement.<br>
+          Répondez instinctivement — il n'y a pas de bonne ou mauvaise réponse.
         </div>
         <div class="disclaimer-meta">
-          <span class="disclaimer-badge">3-5 minutes</span>
-          <span class="disclaimer-badge">10 questions</span>
-          <span class="disclaimer-badge">2 axes analysés</span>
+          <span class="disclaimer-badge">3–5 minutes</span>
+          <span class="disclaimer-badge">12 questions</span>
+          <span class="disclaimer-badge">4 axes analysés</span>
           <span class="disclaimer-badge">Recommandation IA</span>
         </div>
         <button type="button" class="btn btn-primary"
-                style="width:100%;padding:12px;font-size:11px;letter-spacing:1px;"
+                style="width:100%;padding:13px;font-size:11px;letter-spacing:1px;"
                 onclick="startQuiz()">
-          COMMENCER LE TEST →
+          COMMENCER L'ENTRETIEN →
         </button>
       </div>
     </div>
@@ -361,31 +226,23 @@
     <div id="slide-question" style="display:none;">
       <div class="quiz-progress-header">
         <div class="quiz-progress-meta">
-          <span id="q-counter" class="q-counter">Q.01/15</span>
+          <span id="q-counter" class="q-counter">Q.01/12</span>
           <span id="q-axis-label" class="q-axis-label"></span>
         </div>
-        {# Segmented progress rendered by JS #}
         <div id="q-progress-segs" class="progress-bar-wrap"></div>
-        {# Hidden fallback for JS width update #}
-        <div class="progress-bar-wrap-simple" style="display:none;">
-          <div class="progress-bar" id="q-progress" style="width:0%"></div>
-        </div>
       </div>
 
       <div class="quiz-card">
         <div id="q-text" class="q-text"></div>
-        <div id="q-subtext" class="q-subtext" style="display:none;"></div>
         <div id="q-options" class="q-options-list"></div>
         <div id="q-error" class="q-error" style="display:none;">
-          ⚠ Merci de renseigner une réponse avant de continuer.
+          Veuillez sélectionner une réponse pour continuer.
         </div>
       </div>
 
       <div class="quiz-nav">
-        <button type="button" class="btn" id="btn-prev"
-                onclick="goPrev()" style="display:none;">← Précédent</button>
         <button type="button" class="btn-quiz-next" id="btn-next" onclick="goNext()">
-          Suivant →
+          SUIVANT →
         </button>
       </div>
     </div>
@@ -396,95 +253,112 @@
 
 <script>
 const QUESTIONS = [
-  // ── Axe A : Tolérance au risque ──────────────────────────────────────────
-  {n:1, axis:"Axe A · Tolérance au risque",
-   text:"Quelle perte maximale pourrais-tu supporter sur ton portefeuille sans vendre ?",
-   type:"choice", options:[
-    {v:"A", t:"-5% — Au-delà je panique"},
-    {v:"B", t:"-10% — C'est ma limite de confort"},
-    {v:"C", t:"-20% — Ça fait mal mais je tiens"},
-    {v:"D", t:"-30% ou plus — J'ai l'estomac solide"},
+  // ── Axe A : Situation & contraintes ──────────────────────────────────────
+  {n:1, axis:"Axe A · Situation & contraintes",
+   text:"Quelle part de votre patrimoine total représente ce portefeuille ?",
+   options:[
+    {v:"1", t:"C'est la quasi-totalité de ce que j'ai"},
+    {v:"2", t:"Entre la moitié et les deux tiers de mon patrimoine"},
+    {v:"3", t:"Moins d'un tiers — j'ai d'autres actifs à côté"},
+    {v:"4", t:"C'est une poche parmi plusieurs, je suis bien diversifié"},
   ]},
-  {n:2, axis:"Axe A · Tolérance au risque",
-   text:"Ton portefeuille perd 35% en 3 mois (type COVID mars 2020). Tu fais quoi ?",
-   type:"choice", options:[
-    {v:"A", t:"Je vends tout pour stopper l'hémorragie"},
-    {v:"B", t:"Je vends la moitié et j'attends avec le reste"},
-    {v:"C", t:"Je ne touche à rien, je continue mon DCA"},
-    {v:"D", t:"Je renforce — historiquement c'est le meilleur moment"},
+  {n:2, axis:"Axe A · Situation & contraintes",
+   text:"En cas de besoin urgent d'argent, que se passe-t-il ?",
+   options:[
+    {v:"1", t:"Je devrais vendre des positions — c'est ma seule réserve"},
+    {v:"2", t:"J'ai quelques mois de côté mais ça resterait tendu"},
+    {v:"3", t:"J'ai une épargne de précaution suffisante, ce portefeuille est intouchable"},
+    {v:"4", t:"Je n'aurais aucun problème — j'ai d'autres sources de liquidités"},
   ]},
-  {n:3, axis:"Axe A · Tolérance au risque",
-   text:"Ton portefeuille baisse de 15% cette semaine. Quel impact sur toi ?",
-   type:"choice", options:[
-    {v:"A", t:"J'y pense constamment, ça me stresse"},
-    {v:"B", t:"Ça m'embête, je vérifie souvent"},
-    {v:"C", t:"Je note la baisse mais ça ne m'affecte pas au quotidien"},
-    {v:"D", t:"Je ne regarde même pas, ça reviendra"},
+  {n:3, axis:"Axe A · Situation & contraintes",
+   text:"Comment décririez-vous votre situation financière actuelle ?",
+   options:[
+    {v:"1", t:"Fragile — je fais attention à chaque dépense"},
+    {v:"2", t:"Stable mais sans grande marge de manœuvre"},
+    {v:"3", t:"Confortable — j'épargne régulièrement sans effort"},
+    {v:"4", t:"Solide — revenus élevés, peu de contraintes"},
   ]},
-  {n:4, axis:"Axe A · Tolérance au risque",
-   text:"Dans combien de temps pourrais-tu avoir besoin de cet argent ?",
-   subtext:"Pense au scénario le plus probable — pas le pire cas.",
-   type:"choice", options:[
-    {v:"A", t:"Moins de 2 ans"},
-    {v:"B", t:"2 à 5 ans"},
-    {v:"C", t:"5 à 10 ans"},
-    {v:"D", t:"Plus de 10 ans — je n'en ai pas besoin avant longtemps"},
+  // ── Axe B : Objectifs & convictions ──────────────────────────────────────
+  {n:4, axis:"Axe B · Objectifs & convictions",
+   text:"Quel est votre objectif principal avec ce portefeuille ?",
+   options:[
+    {v:"1", t:"Ne pas perdre ce que j'ai mis — la sécurité avant tout"},
+    {v:"2", t:"Générer des revenus réguliers (dividendes, intérêts)"},
+    {v:"3", t:"Faire croître mon capital sur le long terme"},
+    {v:"4", t:"Maximiser la performance, quitte à prendre des risques"},
   ]},
-  {n:5, axis:"Axe A · Tolérance au risque",
-   text:"À quelle fréquence regardes-tu (ou regarderais-tu) ton portefeuille ?",
-   type:"choice", options:[
-    {v:"A", t:"Plusieurs fois par jour"},
-    {v:"B", t:"Une fois par jour"},
-    {v:"C", t:"Quelques fois par semaine"},
-    {v:"D", t:"Une fois par mois ou moins"},
+  {n:5, axis:"Axe B · Objectifs & convictions",
+   text:"Sur quels types d'actifs avez-vous des convictions ?",
+   options:[
+    {v:"1", t:"Aucune conviction particulière — je préfère les fonds diversifiés"},
+    {v:"2", t:"Les grandes entreprises solides et établies"},
+    {v:"3", t:"Des secteurs spécifiques où je crois à une tendance forte"},
+    {v:"4", t:"Des entreprises en croissance ou des actifs plus spéculatifs"},
   ]},
-  // ── Axe B : Connaissance financière ──────────────────────────────────────
-  {n:6, axis:"Axe B · Connaissance financière",
-   text:"Qu'est-ce qu'un ETF (Exchange Traded Fund) ?",
-   type:"choice", options:[
-    {v:"A", t:"Un fonds actif géré par un gestionnaire professionnel"},
-    {v:"B", t:"Une obligation d'État cotée en bourse"},
-    {v:"C", t:"Un fonds coté qui réplique passivement un indice boursier"},
-    {v:"D", t:"Un produit dérivé à effet de levier"},
+  {n:6, axis:"Axe B · Objectifs & convictions",
+   text:"Quelle importance accordez-vous aux critères ESG / éthiques dans vos choix ?",
+   options:[
+    {v:"1", t:"Prioritaire — j'exclus certains secteurs quoi qu'il arrive"},
+    {v:"2", t:"Important mais pas bloquant si la performance est là"},
+    {v:"3", t:"Peu important — la performance prime"},
+    {v:"4", t:"Je n'y ai pas encore vraiment réfléchi"},
   ]},
-  {n:7, axis:"Axe B · Connaissance financière",
-   text:"Quand les taux d'intérêt augmentent, que se passe-t-il sur le prix des obligations existantes ?",
-   type:"choice", options:[
-    {v:"A", t:"Le prix des obligations baisse"},
-    {v:"B", t:"Le prix des obligations monte"},
-    {v:"C", t:"Le prix reste stable, seul le coupon change"},
-    {v:"D", t:"Les obligations sont remboursées par anticipation"},
+  // ── Axe C : Comportement face au risque ──────────────────────────────────
+  {n:7, axis:"Axe C · Comportement face au risque",
+   text:"Votre portefeuille perd 25% en 3 mois suite à une correction de marché. Que faites-vous ?",
+   options:[
+    {v:"1", t:"Je vends pour éviter de perdre davantage"},
+    {v:"2", t:"Je ne fais rien mais je surveille avec anxiété"},
+    {v:"3", t:"Je ne fais rien — les marchés remontent toujours"},
+    {v:"4", t:"Je cherche à renforcer mes positions sur la baisse"},
   ]},
-  {n:8, axis:"Axe B · Connaissance financière",
-   text:"Que mesure la volatilité d'un actif financier ?",
-   type:"choice", options:[
-    {v:"A", t:"Le rendement annuel moyen sur 10 ans"},
-    {v:"B", t:"Le risque de défaut de l'émetteur"},
-    {v:"C", t:"L'amplitude des variations de prix dans le temps"},
-    {v:"D", t:"Le montant des dividendes versés"},
+  {n:8, axis:"Axe C · Comportement face au risque",
+   text:"Quelle perte non réalisée sur une ligne seriez-vous capable de porter sans remettre en question votre stratégie ?",
+   options:[
+    {v:"1", t:"10% maximum — au-delà je reconsidère"},
+    {v:"2", t:"Jusqu'à 25% — c'est mon seuil de confort"},
+    {v:"3", t:"Jusqu'à 40% — si la thèse tient, je reste"},
+    {v:"4", t:"Peu importe — si la conviction est là, je tiens"},
   ]},
-  {n:9, axis:"Axe B · Connaissance financière",
-   text:"Le PEA (Plan d'Épargne en Actions) permet d'investir dans :",
-   type:"choice", options:[
-    {v:"A", t:"Tous les actifs mondiaux sans restriction"},
-    {v:"B", t:"Uniquement des actions françaises"},
-    {v:"C", t:"Des actions et ETF d'entreprises européennes, avec avantage fiscal"},
-    {v:"D", t:"Des obligations d'État et fonds euros uniquement"},
+  {n:9, axis:"Axe C · Comportement face au risque",
+   text:"Comment réagissez-vous émotionnellement quand un actif que vous n'avez pas acheté performe très bien ?",
+   options:[
+    {v:"1", t:"Ça me ronge — j'aurais dû l'avoir, je me sens mal"},
+    {v:"2", t:"Légère frustration, mais ça passe vite"},
+    {v:"3", t:"Je prends note pour la prochaine fois, sans regret"},
+    {v:"4", t:"Ça ne m'affecte pas — je reste concentré sur ma stratégie"},
   ]},
-  {n:10, axis:"Axe B · Connaissance financière",
-   text:"La diversification d'un portefeuille permet principalement de réduire :",
-   type:"choice", options:[
-    {v:"A", t:"Le risque systémique (krach général des marchés)"},
-    {v:"B", t:"Le risque spécifique lié à un titre ou secteur particulier"},
-    {v:"C", t:"La volatilité globale du marché mondial"},
-    {v:"D", t:"L'impact des décisions des banques centrales"},
+  // ── Axe D : Horizon & flexibilité ────────────────────────────────────────
+  {n:10, axis:"Axe D · Horizon & flexibilité",
+   text:"Dans combien de temps pensez-vous avoir besoin de tout ou partie de cet argent ?",
+   options:[
+    {v:"1", t:"Moins de 2 ans — j'ai des projets proches"},
+    {v:"2", t:"Entre 2 et 5 ans"},
+    {v:"3", t:"Entre 5 et 15 ans"},
+    {v:"4", t:"Plus de 15 ans, ou pas de date précise"},
+  ]},
+  {n:11, axis:"Axe D · Horizon & flexibilité",
+   text:"Si une opportunité vraiment convaincante se présente, êtes-vous prêt à concentrer votre portefeuille ?",
+   options:[
+    {v:"1", t:"Non — la diversification est non négociable pour moi"},
+    {v:"2", t:"Légère surpondération oui, mais sans excès"},
+    {v:"3", t:"Oui, je peux mettre 20–30% sur une idée forte"},
+    {v:"4", t:"Oui, y compris au-delà de 30% si j'ai vraiment conviction"},
+  ]},
+  {n:12, axis:"Axe D · Horizon & flexibilité",
+   text:"Comment souhaitez-vous gérer ce portefeuille ?",
+   options:[
+    {v:"1", t:"Passif — je veux poser l'argent et ne plus y toucher"},
+    {v:"2", t:"Principalement passif, avec quelques ajustements annuels"},
+    {v:"3", t:"Actif — je veux suivre et arbitrer régulièrement"},
+    {v:"4", t:"Très actif — je veux optimiser en continu"},
   ]},
 ];
 
 let current = 0;
 const answers = {};
 
-function updateSegmentedProgress(idx, total) {
+function updateProgress(idx, total) {
   var segs = document.getElementById('q-progress-segs');
   if (!segs) return;
   var html = '';
@@ -497,38 +371,38 @@ function updateSegmentedProgress(idx, total) {
 function startQuiz() {
   document.getElementById('slide-disclaimer').style.display = 'none';
   document.getElementById('slide-question').style.display = 'block';
+  console.log('[quiz] started');
   renderQuestion();
 }
 
 function renderQuestion() {
-  const q = QUESTIONS[current];
-  const total = QUESTIONS.length;
-  const num = String(current + 1).padStart(2, '0');
-  document.getElementById('q-counter').textContent = 'Q.' + num + '/' + total;
+  var q     = QUESTIONS[current];
+  var total = QUESTIONS.length;
+  var num   = String(current + 1).padStart(2, '0');
+
+  document.getElementById('q-counter').textContent    = 'Q.' + num + '/' + total;
   document.getElementById('q-axis-label').textContent = q.axis;
-  updateSegmentedProgress(current, total);
-  document.getElementById('q-text').textContent = q.text;
+  updateProgress(current, total);
+  document.getElementById('q-text').textContent    = q.text;
   document.getElementById('q-error').style.display = 'none';
 
-  const subtextEl = document.getElementById('q-subtext');
-  if (q.subtext) { subtextEl.textContent = q.subtext; subtextEl.style.display = 'block'; }
-  else           { subtextEl.style.display = 'none'; }
-
-  document.getElementById('btn-prev').style.display = current > 0 ? 'inline-block' : 'none';
-  document.getElementById('btn-next').textContent = current === total - 1 ? 'Voir mon profil →' : 'Suivant →';
+  var btnNext = document.getElementById('btn-next');
+  var hasAnswer = !!answers[q.n];
+  btnNext.classList.toggle('can-submit', hasAnswer);
+  btnNext.textContent = current === total - 1 ? 'VOIR MON PROFIL →' : 'SUIVANT →';
 
   renderOptions(q);
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  console.log('[quiz] Q' + (current + 1) + ' rendered — axis: ' + q.axis + ' — hasAnswer: ' + hasAnswer);
 }
 
 function renderOptions(q) {
-  const container = document.getElementById('q-options');
-  const curVal    = answers[q.n] !== undefined ? answers[q.n] : '';
-  let html = '';
+  var container = document.getElementById('q-options');
+  var curVal    = answers[q.n] !== undefined ? answers[q.n] : '';
+  var html      = '';
   q.options.forEach(function(opt) {
-    const sel = curVal === opt.v ? ' selected' : '';
+    var sel = curVal === opt.v ? ' selected' : '';
     html += '<div class="option-card' + sel + '" onclick="selectOpt(' + q.n + ', \'' + opt.v + '\', this)">' +
-      '<span class="opt-letter">' + opt.v + '</span>' +
       '<span class="opt-text">' + escHtml(opt.t) + '</span>' +
       '</div>';
   });
@@ -536,32 +410,39 @@ function renderOptions(q) {
 }
 
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function selectOpt(qn, val, el) {
   answers[qn] = val;
   var inp = document.getElementById('ans' + qn);
   if (inp) inp.value = val;
-  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#q-options .option-card').forEach(function(c) {
+    c.classList.remove('selected');
+  });
   el.classList.add('selected');
   document.getElementById('q-error').style.display = 'none';
+  document.getElementById('btn-next').classList.add('can-submit');
+  console.log('[quiz] Q' + qn + ' = ' + val);
 }
 
 function goNext() {
-  const q = QUESTIONS[current];
+  var q = QUESTIONS[current];
   if (!answers[q.n]) {
-    document.getElementById('q-error').style.display = 'block'; return;
+    document.getElementById('q-error').style.display = 'block';
+    return;
   }
   if (current === QUESTIONS.length - 1) {
-    document.getElementById('quiz-form').submit(); return;
+    console.log('[quiz] submitting — answers:', JSON.stringify(answers));
+    document.getElementById('quiz-form').submit();
+    return;
   }
   current++;
   renderQuestion();
-}
-
-function goPrev() {
-  if (current > 0) { current--; renderQuestion(); }
 }
 
 document.getElementById('quiz-form').addEventListener('keydown', function(e) {

@@ -287,6 +287,21 @@
     font-variant-numeric: tabular-nums;
 }
 .dca-kpi-val.green { color: var(--green); }
+/* ── ESG badge ── */
+.result-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    margin-right: 6px;
+}
+.esg-oui     { background: rgba(52,211,153,.12); border-color: #34D399; color: #34D399; }
+.esg-non     { background: rgba(248,113,113,.12); border-color: #F87171; color: #F87171; }
+.esg-neutre  { background: rgba(255,255,255,.05); border-color: var(--border-light); color: var(--text-dim); }
 /* ── Actions ── */
 .result-actions {
     display: flex;
@@ -313,6 +328,13 @@
             <div style="margin-bottom:8px;">
                 <span class="result-alloc-badge">{{ allocation }}</span>
                 <span class="result-alloc-badge">Mon profil</span>
+                {% if esg_pref == 'oui' %}
+                <span class="result-badge esg-oui">ESG OUI</span>
+                {% elif esg_pref == 'non' %}
+                <span class="result-badge esg-non">ESG NON</span>
+                {% else %}
+                <span class="result-badge esg-neutre">ESG NEUTRE</span>
+                {% endif %}
             </div>
             {% if last_profil.date_test %}
             <div style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase;">
@@ -339,10 +361,10 @@
             {% endfor %}
         </div>
         <div class="seg-bar-markers">
-            <span>0 — PRUDENT</span>
-            <span>25</span>
-            <span>50 — ÉQUILIBRÉ</span>
-            <span>75</span>
+            <span>0 — TRÈS PRUDENT</span>
+            <span>20 — PRUDENT</span>
+            <span>40 — ÉQUILIBRÉ</span>
+            <span>60 — DYNAMIQUE</span>
             <span>100 — AGRESSIF</span>
         </div>
     </div>
@@ -350,26 +372,23 @@
     <!-- Axes -->
     <div class="axes-panel">
         <div class="panel-section-label">Scores par axe</div>
-        {% set axe_a = last_profil.scores_axes.get('A', 0) %}
-        {% set axe_b = last_profil.scores_axes.get('B', 0) %}
-        <div>
-            <div class="axis-row" style="margin-bottom:4px;">
-                <span class="axis-name">A — TOLÉRANCE AU RISQUE</span>
-                <div class="axis-bar-outer">
-                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axe_a }}"></div>
-                </div>
-                <span class="axis-score-val">{{ axe_a }}/100</span>
+        {% set axes = [
+            ('A', 'A — SITUATION & CONTRAINTES'),
+            ('B', 'B — OBJECTIFS & CONVICTIONS'),
+            ('C', 'C — COMPORTEMENT FACE AU RISQUE'),
+            ('D', 'D — HORIZON & FLEXIBILITÉ')
+        ] %}
+        {% for key, label in axes %}
+        {% set val = axis_scores.get(key, 0) %}
+        <div class="axis-row" style="margin-bottom:4px;">
+            <span class="axis-name">{{ label }}</span>
+            <div class="axis-bar-outer">
+                <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ val }}"></div>
             </div>
-            <div class="axis-interp">{{ axe_a_interp }}</div>
-            <div class="axis-row" style="margin-bottom:4px;">
-                <span class="axis-name">B — CONNAISSANCE FINANCIÈRE</span>
-                <div class="axis-bar-outer">
-                    <div class="axis-bar-fill axis-bar-anim" style="width:0%;" data-target="{{ axe_b }}"></div>
-                </div>
-                <span class="axis-score-val">{{ axe_b }}/100</span>
-            </div>
-            <div class="axis-interp" style="margin-bottom:0;">{{ axe_b_interp }}</div>
+            <span class="axis-score-val">{{ val }}/100</span>
         </div>
+        <div class="axis-interp" {% if loop.last %}style="margin-bottom:0;"{% endif %}>{{ axis_interps.get(key, '') }}</div>
+        {% endfor %}
     </div>
 
     <!-- Recommendation -->
