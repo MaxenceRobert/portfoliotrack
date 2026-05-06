@@ -3099,19 +3099,39 @@ def valorisation_portfolio_context():
 
     result = []
     for p in positions:
-        risk = risk_results.get(p['ticker'], {})
-        weight = (p['value'] / total_value * 100) if total_value > 0 else 0
+        risk      = risk_results.get(p['ticker'], {})
+        weight    = (p['value'] / total_value * 100) if total_value > 0 else 0
+
+        # Beta fallback — ETFs/émergents retournent souvent null ou ~0 via yfinance
+        raw_beta  = risk.get('beta')
+        atype_low = p.get('asset_type', '').lower()
+        if raw_beta is None or raw_beta == 0 or abs(raw_beta) < 0.1:
+            if any(x in atype_low for x in ('obligat', 'bond', 'fixed', 'trésor', 'tresor')):
+                eff_beta = 0.2
+            elif any(x in atype_low for x in ('emerg', 'émerg')):
+                eff_beta = 1.1
+            else:
+                eff_beta = 1.0
+            print(f"[portfolio_context] {p['ticker']}: beta={raw_beta} → default={eff_beta} (type={atype_low!r})")
+        else:
+            eff_beta = raw_beta
+
         result.append({
             **p,
             'value':       round(p['value'], 2),
             'weight_pct':  round(weight, 2),
             'country':     guess_country(p['ticker']),
-            'beta':        risk.get('beta'),
+            'beta':        round(eff_beta, 3),
             'risk_score':  risk.get('score'),
             'volatility':  risk.get('volatilite'),
         })
 
     result.sort(key=lambda x: x['value'], reverse=True)
+    print(f"Beta calc: {[(r['ticker'], r['beta'], r['weight_pct']) for r in result]}")
+    beta_portfolio = sum(r['beta'] * r['weight_pct'] / 100 for r in result if r['beta'])
+    print(f"Beta portfolio résultant: {beta_portfolio:.3f}")
+    if beta_portfolio < 0.3 or beta_portfolio > 2.0:
+        print(f"WARNING: beta portfolio suspect: {beta_portfolio:.3f}")
     return jsonify({
         'positions':   result,
         'total_value': round(total_value, 2),
