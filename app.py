@@ -22,6 +22,7 @@ from database import (
     update_asset_envelope,
     get_user_by_email, create_user,
     add_envelope, get_savings_envelopes, update_envelope_solde, delete_envelope,
+    get_dashboard_preferences, save_dashboard_preferences,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -92,6 +93,24 @@ SAVINGS_ENVELOPE_RISK = {
 }
 
 INFLATION_RATE = 2.0  # % — taux d'inflation de référence pour rendement réel
+
+# ── Dashboard blocs disponibles ───────────────────────────────────────────────
+ALL_DASHBOARD_BLOCKS = [
+    {'slug': 'valeur_portfolio', 'label': 'Valeur du portefeuille'},
+    {'slug': 'sparkline',        'label': 'Sparkline 6 mois'},
+    {'slug': 'performance',      'label': 'Graphique performance'},
+    {'slug': 'positions',        'label': 'Tableau des positions'},
+    {'slug': 'fear_greed',       'label': 'Fear & Greed'},
+    {'slug': 'macro',            'label': 'Indicateurs macro'},
+    {'slug': 'dividendes',       'label': 'Prévision dividendes'},
+    {'slug': 'marche',           'label': 'Watchlist marchés'},
+    {'slug': 'world_clock',      'label': 'Marchés mondiaux'},
+    {'slug': 'repartition',      'label': 'Allocation par classe'},
+    {'slug': 'risque',           'label': 'Métriques de risque'},
+    {'slug': 'enveloppes',       'label': 'Enveloppes fiscales'},
+    {'slug': 'feed',             'label': 'Activité récente'},
+]
+ALL_DASHBOARD_SLUGS = [b['slug'] for b in ALL_DASHBOARD_BLOCKS]
 
 # ── Scoring de risque ─────────────────────────────────────────────────────────
 def get_risk_score(ticker, asset_type='Autre'):
@@ -730,6 +749,11 @@ def dashboard():
     else:
         perf_6m_pct = 'PERF 6M'
 
+    # ── Préférences dashboard ─────────────────────────────────────────────────
+    _dash_prefs = get_dashboard_preferences(current_user.id)
+    visible_blocks = set(ALL_DASHBOARD_SLUGS) if _dash_prefs is None else _dash_prefs
+    print(f'[dashboard] user={current_user.id} visible_blocks={sorted(visible_blocks)}')
+
     return render_template(
         'dashboard.html',
         summary=summary,
@@ -758,6 +782,8 @@ def dashboard():
         msci_portfolio_values=msci_portfolio_values,
         sparkline_data=sparkline_data,
         perf_6m_pct=perf_6m_pct,
+        visible_blocks=visible_blocks,
+        all_dashboard_blocks=ALL_DASHBOARD_BLOCKS,
     )
 
 # ── Mise à jour enveloppe d'un actif (AJAX) ───────────────────────────────────
@@ -774,6 +800,25 @@ def update_envelope_route():
         return jsonify({'success': False, 'error': 'Actif introuvable'})
     update_asset_envelope(int(asset_id), current_user.id, envelope)
     return jsonify({'success': True})
+
+# ── Dashboard preferences API ─────────────────────────────────────────────────
+@main_bp.route('/api/dashboard/preferences', methods=['GET'])
+@login_required
+def get_dash_prefs_api():
+    prefs = get_dashboard_preferences(current_user.id)
+    visible = list(set(ALL_DASHBOARD_SLUGS)) if prefs is None else list(prefs)
+    print(f'[dashboard_prefs GET] user={current_user.id} visible={sorted(visible)}')
+    return jsonify({'visible': visible, 'all_blocks': ALL_DASHBOARD_BLOCKS})
+
+@main_bp.route('/api/dashboard/preferences', methods=['POST'])
+@login_required
+def save_dash_prefs_api():
+    data    = request.get_json(silent=True) or {}
+    visible = data.get('visible', [])
+    valid   = [s for s in visible if s in ALL_DASHBOARD_SLUGS]
+    save_dashboard_preferences(current_user.id, set(valid), ALL_DASHBOARD_SLUGS)
+    print(f'[dashboard_prefs POST] user={current_user.id} valid={sorted(valid)}')
+    return jsonify({'success': True, 'visible': valid})
 
 # ── Onboarding dismiss ────────────────────────────────────────────────────────
 @main_bp.route('/onboarding/dismiss', methods=['POST'])

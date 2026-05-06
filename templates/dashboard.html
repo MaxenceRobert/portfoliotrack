@@ -133,6 +133,128 @@
 /* ── KPI section ── */
 #kpi-section { flex-shrink: 0; }
 
+/* ── PERSONNALISER button ── */
+.btn-personnaliser {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  padding: 4px 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.15s, border-color 0.15s;
+  align-self: flex-start;
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-personnaliser:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Panneau personnalisation ── */
+.custom-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9990;
+}
+.custom-backdrop.open { display: block; }
+.custom-panel {
+  position: fixed;
+  top: 0; right: 0;
+  height: 100%;
+  width: 320px;
+  background: #111;
+  border-left: 3px solid #FF8C00;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.custom-panel.open { transform: translateX(0); }
+.custom-panel-head {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+.custom-panel-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #FF8C00;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.custom-panel-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+.custom-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+.custom-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.custom-toggle-row:hover { background: rgba(255,255,255,0.03); }
+.custom-toggle-box {
+  width: 14px; height: 14px;
+  background: #222;
+  border: 1px solid #444;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.custom-toggle-box.checked {
+  background: rgba(255,140,0,0.15);
+  border-color: #FF8C00;
+}
+.custom-toggle-check {
+  width: 8px; height: 8px;
+  background: #FF8C00;
+  display: none;
+}
+.custom-toggle-box.checked .custom-toggle-check { display: block; }
+.custom-toggle-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #ccc;
+  letter-spacing: 0.3px;
+}
+.custom-panel-foot {
+  padding: 14px 18px;
+  border-top: 1px solid #222;
+  flex-shrink: 0;
+}
+.btn-appliquer {
+  width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: #FF8C00;
+  color: #0a0a0a;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-appliquer:hover { opacity: 0.88; }
+.btn-appliquer:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .content { grid-template-columns: 1fr; }
@@ -147,6 +269,7 @@
   .hero-strip { flex-wrap: wrap; padding: 8px 12px; gap: 16px; }
   .hero-metrics { gap: 12px; }
   #kpi-section > div { grid-template-columns: 1fr !important; }
+  .custom-panel { width: 100%; }
 }
 </style>
 
@@ -180,6 +303,8 @@
 
   {# ══ HERO STRIP ══════════════════════════════════════════════════════════ #}
   <div class="hero-strip">
+
+    {% if 'valeur_portfolio' in visible_blocks %}
     <div class="hero-main">
       <div class="hero-label">Valeur du portefeuille</div>
       <div class="hero-value" id="hero-total-value">
@@ -192,6 +317,7 @@
         <span style="color:var(--text-dim);font-weight:400;font-size:9px;">· latent</span>
       </div>
     </div>
+    {% endif %}
 
     <div class="hero-metrics">
       {% set total_gain = summary.total_unrealized + summary.total_realized + summary.total_dividends %}
@@ -263,15 +389,21 @@
       {% endif %}
     </div>
 
+    {% if 'sparkline' in visible_blocks %}
     <div class="hero-sparkline" id="hero-sparkline-wrap">
       <canvas id="sparkline-canvas" width="180" height="50"></canvas>
       <div class="hero-sparkline-label" id="sparkline-label">PERF 6M</div>
     </div>
+    {% endif %}
+
+    <button class="btn-personnaliser" onclick="openCustomPanel()">⚙ PERSONNALISER</button>
+
   </div>
 
   {# ══ COLONNE GAUCHE ══════════════════════════════════════════════════════ #}
   <div class="dash-left">
 
+    {% if 'performance' in visible_blocks %}
     {# Performance chart — header 2 lignes #}
     <div style="flex-shrink:0;border-bottom:1px solid var(--border);background:var(--panel-header);">
       <div style="display:flex;align-items:center;padding:5px 12px 3px;gap:8px;">
@@ -307,7 +439,9 @@
       </div>
       <div class="plafond-bar-outer"><div class="plafond-bar-fill" id="plafond-bar-fill" style="width:0%;"></div></div>
     </div>
+    {% endif %}
 
+    {% if 'positions' in visible_blocks %}
     {# Positions table #}
     <div class="panel-head" style="flex-shrink:0;border-top:1px solid var(--border);">
       <div class="panel-title">Positions</div>
@@ -420,43 +554,50 @@
       </table>
       {% endif %}
     </div>
+    {% endif %}
 
     {# ══ KPI SECTION ═════════════════════════════════════════════════════════ #}
+    {% if 'fear_greed' in visible_blocks or 'macro' in visible_blocks or 'dividendes' in visible_blocks %}
     <div id="kpi-section" style="flex-shrink:0;border-top:1px solid var(--border);">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);">
 
-        {# Bloc 1 — Fear & Greed #}
+        {% if 'fear_greed' in visible_blocks %}
         <div style="background:var(--panel-header);padding:10px 12px;">
           <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Fear &amp; Greed</div>
           <div id="kpi-fg-body" style="color:var(--text-dim);font-size:9px;">
             <span style="color:var(--border-light);">—</span>
           </div>
         </div>
+        {% endif %}
 
-        {# Bloc 2 — Macro #}
+        {% if 'macro' in visible_blocks %}
         <div style="background:var(--panel-header);padding:10px 12px;">
           <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Macro</div>
           <div id="kpi-macro-body" style="color:var(--text-dim);font-size:9px;">
             <span style="color:var(--border-light);">—</span>
           </div>
         </div>
+        {% endif %}
 
-        {# Bloc 3 — Dividendes #}
+        {% if 'dividendes' in visible_blocks %}
         <div style="background:var(--panel-header);padding:10px 12px;">
           <div style="font-size:8px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Dividendes</div>
           <div id="kpi-div-body" style="color:var(--text-dim);font-size:9px;">
             <span style="color:var(--border-light);">—</span>
           </div>
         </div>
+        {% endif %}
 
       </div>
     </div>
+    {% endif %}
 
   </div>{# /dash-left #}
 
   {# ══ COLONNE DROITE ══════════════════════════════════════════════════════ #}
   <div class="right-col">
 
+    {% if 'marche' in visible_blocks %}
     {# C1 — Marché #}
     <div class="panel">
       <div class="panel-head">
@@ -465,7 +606,9 @@
       </div>
       <div id="watchlist-body"></div>
     </div>
+    {% endif %}
 
+    {% if 'world_clock' in visible_blocks %}
     {# C1.5 — Marchés mondiaux (horloges) #}
     <div class="panel">
       <div class="panel-head">
@@ -474,7 +617,9 @@
       </div>
       <div id="world-clocks-body" style="padding:6px 10px;"></div>
     </div>
+    {% endif %}
 
+    {% if 'repartition' in visible_blocks %}
     {# C2 — Allocation par type #}
     <div class="panel">
       <div class="panel-head">
@@ -483,7 +628,9 @@
       </div>
       <div class="alloc-grid" id="alloc-body"></div>
     </div>
+    {% endif %}
 
+    {% if 'risque' in visible_blocks %}
     {# C2.5 — Risque (profil investisseur + métriques portefeuille) #}
     {% set ns = namespace(w_beta=0,w_vol=0,w_dd=0,w_sharpe=0,tw_b=0,tw_v=0,tw_d=0,tw_s=0) %}
     {% for _at, _assets in summary.by_type.items() %}{% for a in _assets %}{% if not a.fully_sold %}
@@ -551,7 +698,9 @@
         {% endif %}
       </div>
     </div>
+    {% endif %}
 
+    {% if 'enveloppes' in visible_blocks %}
     {# C3 — Enveloppes fiscales #}
     <div class="panel">
       <div class="panel-head">
@@ -579,6 +728,7 @@
         {% endif %}
       </div>
     </div>
+    {% endif %}
 
     {# DCA block (if active) #}
     {% if summary.dca_target > 0 %}
@@ -604,6 +754,7 @@
     </div>
     {% endif %}
 
+    {% if 'feed' in visible_blocks %}
     {# C4 — Activité #}
     <div class="panel" style="flex:1;min-height:120px;">
       <div class="panel-head">
@@ -612,6 +763,7 @@
       </div>
       <div class="panel-body" id="feed-body"></div>
     </div>
+    {% endif %}
 
     <div style="padding:8px 10px;">
       <a href="{{ url_for('main.add_envelope_route') }}" style="font-size:9px;color:var(--text-dim);text-decoration:none;transition:color 0.15s;"
@@ -660,6 +812,21 @@
   </div>
 </div>
 
+{# ══ Panneau personnalisation ════════════════════════════════════════════ #}
+<div class="custom-backdrop" id="custom-backdrop" onclick="closeCustomPanel()"></div>
+<div class="custom-panel" id="custom-panel">
+  <div class="custom-panel-head">
+    <div class="custom-panel-title">Personnaliser le Dashboard</div>
+    <div class="custom-panel-sub">Activez ou désactivez les blocs · Rechargement automatique</div>
+  </div>
+  <div class="custom-panel-body" id="custom-panel-body">
+    {# Rempli par JS #}
+  </div>
+  <div class="custom-panel-foot">
+    <button class="btn-appliquer" id="btn-appliquer" onclick="applyCustomization()">APPLIQUER</button>
+  </div>
+</div>
+
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────────
 var ALL_ASSETS     = {{ all_assets_json | tojson }};
@@ -676,6 +843,84 @@ var PROFIL_RISK    = {{ profil_risk_score if profil_risk_score is not none else 
 var DCA_TARGET    = {{ summary.dca_target }};
 var PLAFONDS_MAP  = {'PEA':150000,'PEA-PME':225000};
 var currentEnvFilter = 'all';
+
+// ── Personnalisation ──────────────────────────────────────────────────────────
+var VISIBLE_BLOCKS   = {{ visible_blocks | list | tojson }};
+var ALL_BLOCKS_META  = {{ all_dashboard_blocks | tojson }};
+var _customState     = {};
+
+function buildCustomPanel() {
+  var body = document.getElementById('custom-panel-body');
+  if (!body) return;
+  // Initialise l'état courant depuis VISIBLE_BLOCKS
+  ALL_BLOCKS_META.forEach(function(b) {
+    _customState[b.slug] = VISIBLE_BLOCKS.indexOf(b.slug) !== -1;
+  });
+  body.innerHTML = ALL_BLOCKS_META.map(function(b) {
+    var checked = _customState[b.slug] ? ' checked' : '';
+    return '<div class="custom-toggle-row" onclick="toggleCustomBlock(\'' + b.slug + '\')" id="row-' + b.slug + '">'
+      + '<div class="custom-toggle-box' + checked + '" id="box-' + b.slug + '">'
+      + '<div class="custom-toggle-check"></div>'
+      + '</div>'
+      + '<span class="custom-toggle-label">' + b.label + '</span>'
+      + '</div>';
+  }).join('');
+  console.log('[custom-panel] built, VISIBLE_BLOCKS=', VISIBLE_BLOCKS);
+}
+
+function toggleCustomBlock(slug) {
+  _customState[slug] = !_customState[slug];
+  var box = document.getElementById('box-' + slug);
+  if (box) {
+    if (_customState[slug]) box.classList.add('checked');
+    else box.classList.remove('checked');
+  }
+  console.log('[custom-panel] toggle ' + slug + ' → ' + _customState[slug]);
+}
+
+function openCustomPanel() {
+  buildCustomPanel();
+  document.getElementById('custom-backdrop').classList.add('open');
+  document.getElementById('custom-panel').classList.add('open');
+  console.log('[custom-panel] opened');
+}
+
+function closeCustomPanel() {
+  document.getElementById('custom-backdrop').classList.remove('open');
+  document.getElementById('custom-panel').classList.remove('open');
+  console.log('[custom-panel] closed');
+}
+
+async function applyCustomization() {
+  var btn = document.getElementById('btn-appliquer');
+  btn.disabled = true;
+  btn.textContent = '…';
+  var visible = ALL_BLOCKS_META
+    .filter(function(b) { return _customState[b.slug]; })
+    .map(function(b) { return b.slug; });
+  console.log('[custom-panel] applying visible=', visible);
+  try {
+    var res = await fetch('/api/dashboard/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visible: visible })
+    });
+    var data = await res.json();
+    console.log('[custom-panel] saved', data);
+    if (data.success) {
+      window.location.reload();
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'APPLIQUER';
+      alert('Erreur lors de la sauvegarde');
+    }
+  } catch(e) {
+    console.error('[custom-panel] error', e);
+    btn.disabled = false;
+    btn.textContent = 'APPLIQUER';
+    alert('Erreur réseau');
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt2(n)    { return parseFloat(n).toFixed(2); }
@@ -1438,6 +1683,8 @@ window.addEventListener('load', function() {
   loadDividendCalendar();
 
   window.addEventListener('resize', drawPerfChart);
+
+  console.log('[dashboard] init complete, VISIBLE_BLOCKS=', VISIBLE_BLOCKS);
 });
 </script>
 {% endblock %}

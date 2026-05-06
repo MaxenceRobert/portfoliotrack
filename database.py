@@ -659,6 +659,36 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Dashboard preferences ─────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS dashboard_preferences (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER NOT NULL,
+                    bloc_slug  TEXT    NOT NULL,
+                    visible    INTEGER NOT NULL DEFAULT 1,
+                    updated_at TIMESTAMP DEFAULT NOW(),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    UNIQUE(user_id, bloc_slug)
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS dashboard_preferences (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id    INTEGER NOT NULL,
+                    bloc_slug  TEXT    NOT NULL,
+                    visible    INTEGER NOT NULL DEFAULT 1,
+                    updated_at TEXT    DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    UNIQUE(user_id, bloc_slug)
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 
@@ -1831,6 +1861,68 @@ def delete_envelope(envelope_id, user_id):
         return True
     except Exception:
         conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+# ── Dashboard preferences ─────────────────────────────────────────────────────
+
+def get_dashboard_preferences(user_id):
+    """Returns set of visible bloc slugs, or None if no prefs saved yet (default = all)."""
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'SELECT bloc_slug FROM dashboard_preferences WHERE user_id = {p} AND visible = 1',
+            (user_id,)
+        )
+        rows = c.fetchall()
+        if not rows:
+            # Check if user has any prefs at all (could have all hidden)
+            c.execute(
+                f'SELECT COUNT(*) FROM dashboard_preferences WHERE user_id = {p}',
+                (user_id,)
+            )
+            count_row = c.fetchone()
+            count = count_row[0] if count_row else 0
+            if count == 0:
+                return None  # No prefs saved → default all visible
+            return set()
+        return set(row[0] for row in rows)
+    except Exception as e:
+        print(f'[dashboard_prefs] get error: {e}')
+        return None
+    finally:
+        conn.close()
+
+def save_dashboard_preferences(user_id, visible_slugs, all_slugs):
+    """Saves visible/hidden state for all known slugs."""
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM dashboard_preferences WHERE user_id = {p}', (user_id,))
+        for slug in all_slugs:
+            visible = 1 if slug in visible_slugs else 0
+            if is_postgres():
+                c.execute(
+                    f'''INSERT INTO dashboard_preferences (user_id, bloc_slug, visible)
+                        VALUES ({p}, {p}, {p})
+                        ON CONFLICT (user_id, bloc_slug) DO UPDATE SET visible = EXCLUDED.visible''',
+                    (user_id, slug, visible)
+                )
+            else:
+                c.execute(
+                    f'INSERT OR REPLACE INTO dashboard_preferences (user_id, bloc_slug, visible) VALUES ({p}, {p}, {p})',
+                    (user_id, slug, visible)
+                )
+        conn.commit()
+        print(f'[dashboard_prefs] saved user={user_id} visible={sorted(visible_slugs)}')
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f'[dashboard_prefs] save error: {e}')
         return False
     finally:
         conn.close()
