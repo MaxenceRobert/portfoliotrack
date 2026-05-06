@@ -40,20 +40,20 @@
   font-family: 'IBM Plex Mono', monospace; font-size: 11px;
   padding: 6px 8px; outline: none;
 }
-.vsb-input:focus { border-color: #FF8C00; }
+.vsb-input:focus { border-color: #00D4C8; }
 .vsb-btn {
-  width: 100%; margin-top: 6px; background: #FF8C00; color: #000;
+  width: 100%; margin-top: 6px; background: #00D4C8; color: #000;
   font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
   letter-spacing: 0.5px; border: none; padding: 6px 0; cursor: pointer;
 }
-.vsb-btn:hover { background: #ffa030; }
+.vsb-btn:hover { background: #00D4C8; }
 .vsb-asset {
   display: flex; justify-content: space-between; align-items: center;
   padding: 5px 12px; cursor: pointer; border-left: 2px solid transparent; gap: 6px;
 }
 .vsb-asset:hover { background: #111; border-left-color: #333; }
-.vsb-asset.active { background: #111; border-left-color: #FF8C00; }
-.vsb-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #FF8C00; font-weight: 600; }
+.vsb-asset.active { background: #111; border-left-color: #00D4C8; }
+.vsb-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #00D4C8; font-weight: 600; }
 .vsb-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
 .vsb-weight { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #444; flex-shrink: 0; }
 /* ── main content ── */
@@ -68,7 +68,7 @@
   padding: 10px 16px; border-bottom: 1px solid #1a1a1a;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 40px;
 }
-.vh-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: #FF8C00; }
+.vh-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: #00D4C8; }
 .vh-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; }
 .vh-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #e0e0e0; }
 .vh-tag { font-family: 'IBM Plex Mono', monospace; font-size: 8px; padding: 2px 5px; border: 1px solid #333; color: #555; letter-spacing: 0.5px; }
@@ -78,7 +78,7 @@
 .val-section-title {
   font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555;
   letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
-  border-left: 2px solid #FF8C00; padding-left: 8px;
+  border-left: 2px solid #00D4C8; padding-left: 8px;
 }
 /* ── param grid ── */
 .dcf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -91,7 +91,7 @@
   color: #e0e0e0; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
   padding: 4px 6px; outline: none;
 }
-.param-input:focus { border-color: #FF8C00; }
+.param-input:focus { border-color: #00D4C8; }
 .param-hint { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #333; margin-top: 3px; }
 /* ── results column ── */
 .dcf-results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
@@ -113,7 +113,7 @@
 }
 .verdict-badge.sous-evalue { background: #002005; border: 1px solid #00C853; color: #00C853; }
 .verdict-badge.sur-evalue { background: #1a0000; border: 1px solid #FF3D00; color: #FF3D00; }
-.verdict-badge.fair { background: #0d0c00; border: 1px solid #FF8C00; color: #FF8C00; }
+.verdict-badge.fair { background: #001a1a; border: 1px solid #00D4C8; color: #00D4C8; }
 .verdict-badge.nc { background: #111; border: 1px solid #333; color: #555; }
 .verdict-text { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #666; line-height: 1.6; }
 /* ── multiples table ── */
@@ -124,12 +124,12 @@
 }
 .mult-table th { color: #444; font-weight: 400; letter-spacing: 0.5px; }
 .mult-table td { color: #aaa; }
-.mult-table td.val-metric { color: #FF8C00; }
+.mult-table td.val-metric { color: #00D4C8; }
 .mult-table td.val-median { color: #555; }
 .mult-table td.val-ratio { font-weight: 600; }
 .mult-table td.val-ratio.cheap { color: #00C853; }
 .mult-table td.val-ratio.expensive { color: #FF3D00; }
-.mult-table td.val-ratio.fair { color: #FF8C00; }
+.mult-table td.val-ratio.fair { color: #00D4C8; }
 /* ── simulator ── */
 .sim-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 .sim-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; flex-shrink: 0; min-width: 80px; }
@@ -138,7 +138,7 @@
   font-family: 'IBM Plex Mono', monospace; font-size: 11px;
   padding: 4px 8px; outline: none; width: 100px;
 }
-.sim-input:focus { border-color: #FF8C00; }
+.sim-input:focus { border-color: #00D4C8; }
 .sim-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 .sim-table th, .sim-table td {
   font-family: 'IBM Plex Mono', monospace; font-size: 9px;
@@ -157,7 +157,7 @@
   padding: 5px 8px; border-left: 2px solid;
 }
 .warn-item.red { border-color: #FF3D00; color: #FF3D00; background: #120000; }
-.warn-item.orange { border-color: #FF8C00; color: #FF8C00; background: #100800; }
+.warn-item.orange { border-color: #00D4C8; color: #00D4C8; background: #001515; }
 .warn-item.green { border-color: #00C853; color: #00C853; background: #001a05; }
 /* ── description ── */
 .val-desc {
@@ -252,7 +252,7 @@ function onG1Change(el) {
   var hint = document.getElementById('dcf-g1-hint');
   if (hint) {
     if (v > 15) {
-      hint.innerHTML = '<span style="color:#FF8C00;">Taux élevé — résultat très sensible à cette hypothèse</span>';
+      hint.innerHTML = '<span style="color:#00D4C8;">Taux élevé — résultat très sensible à cette hypothèse</span>';
     } else {
       hint.textContent = 'Durée = années ci-dessous';
     }
@@ -351,7 +351,7 @@ function updateDCFResults(r) {
     '<div class="result-card"><div class="result-label">VALEUR TERMINALE</div><div class="result-value">' + fmt(r.pv_tv) + '</div><div class="result-sub">Gordon Growth actualisé</div></div>' +
     '<div class="result-card"><div class="result-label">VALEUR ENTREPRISE</div><div class="result-value">' + fmt(r.ev) + '</div><div class="result-sub">FCF + Val. terminale</div></div>' +
     '<div class="result-card"><div class="result-label">CAPITAUX PROPRES</div><div class="result-value">' + fmt(r.equity) + '</div><div class="result-sub">VE – dette nette</div></div>' +
-    '<div class="result-card"><div class="result-label">PRIX INTRINSÈQUE</div><div class="result-value" style="color:#FF8C00;">' + r.price.toFixed(2) + updown + '</div><div class="result-sub">Par action</div></div>' +
+    '<div class="result-card"><div class="result-label">PRIX INTRINSÈQUE</div><div class="result-value" style="color:#00D4C8;">' + r.price.toFixed(2) + updown + '</div><div class="result-sub">Par action</div></div>' +
     '<div class="result-card"><div class="result-label">PRIX AVEC MARGE ' + r.margin.toFixed(0) + '%</div><div class="result-value" style="color:#00C853;">' + r.safety.toFixed(2) + '</div><div class="result-sub">Marge de sécurité</div></div>' +
     '</div>' + verdictHtml;
 }
@@ -502,8 +502,8 @@ function renderPage(data) {
   var wasCapped       = rawGrowthPct !== null && rawGrowthPct > 15.0;
   var guessCagrPct    = cappedGrowthPct.toFixed(1);
   var growthCapWarnHtml = wasCapped
-    ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#FF8C00;margin-top:4px;' +
-      'padding:3px 5px;background:#100800;border-left:2px solid #FF8C00;">' +
+    ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#00D4C8;margin-top:4px;' +
+      'padding:3px 5px;background:#001515;border-left:2px solid #00D4C8;">' +
       '⚠ Taux historique (' + rawGrowthPct.toFixed(1) + '%) plafonné à 15% — ' +
       'la croissance passée ne préjuge pas de la croissance future.</div>'
     : '';
@@ -589,7 +589,7 @@ function renderPage(data) {
     '<span class="sim-label">Nb d\'actions</span>' +
     '<input class="sim-input" id="sim-shares" type="number" step="1" value="1" oninput="calcSimulator()">' +
     (data.current_price ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#555;margin-left:4px;">× ' +
-      data.current_price.toFixed(2) + ' ' + currency + ' = <span id="sim-cost" style="color:#FF8C00;">' +
+      data.current_price.toFixed(2) + ' ' + currency + ' = <span id="sim-cost" style="color:#00D4C8;">' +
       data.current_price.toFixed(2) + ' ' + currency + '</span></span>' : '') +
     '</div>';
   html += '<div id="sim-results"></div>';

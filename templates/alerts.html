@@ -449,7 +449,7 @@
                 {% set dist_pct = (gap_abs / tp * 100) %}
                 {% set prox = [[(100 - dist_pct), 0] | max, 100] | min %}
                 {% if prox >= 90 %}{% set bar_color = '#FF1744' %}
-                {% elif prox >= 70 %}{% set bar_color = '#FF8C00' %}
+                {% elif prox >= 70 %}{% set bar_color = '#00D4C8' %}
                 {% elif prox >= 40 %}{% set bar_color = '#FFD600' %}
                 {% else %}{% set bar_color = '#00C853' %}
                 {% endif %}

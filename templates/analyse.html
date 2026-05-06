@@ -53,11 +53,11 @@
   padding: 6px 8px;
   outline: none;
 }
-.sb-input:focus { border-color: #FF8C00; }
+.sb-input:focus { border-color: #00D4C8; }
 .sb-analyser-btn {
   width: 100%;
   margin-top: 6px;
-  background: #FF8C00;
+  background: #00D4C8;
   color: #000;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
@@ -67,7 +67,7 @@
   padding: 6px 0;
   cursor: pointer;
 }
-.sb-analyser-btn:hover { background: #ffa030; }
+.sb-analyser-btn:hover { background: #00D4C8; }
 /* bouton valoriser */
 .sb-val-btn {
   width: 100%;
@@ -82,12 +82,12 @@
   cursor: not-allowed;
 }
 .sb-val-btn.active {
-  border-color: #FF8C00;
-  color: #FF8C00;
+  border-color: #00D4C8;
+  color: #00D4C8;
   cursor: pointer;
 }
 .sb-val-btn.active:hover {
-  background: #FF8C00;
+  background: #00D4C8;
   color: #0a0a0a;
 }
 .sb-toggles {
@@ -107,7 +107,7 @@
   text-align: center;
   min-width: 26px;
 }
-.sb-toggle.active { background: #1a1200; border-color: #FF8C00; color: #FF8C00; }
+.sb-toggle.active { background: #001a1a; border-color: #00D4C8; color: #00D4C8; }
 .sb-toggle:hover:not(.active) { border-color: #444; color: #ccc; }
 /* indicator rows */
 .indic-row {
@@ -127,13 +127,13 @@
   flex-shrink: 0;
   position: relative;
 }
-.indic-box.checked { border-color: #FF8C00; background: #1a1200; }
+.indic-box.checked { border-color: #00D4C8; background: #001a1a; }
 .indic-box.checked::after {
   content: '';
   position: absolute;
   top: 2px; left: 2px;
   width: 6px; height: 6px;
-  background: #FF8C00;
+  background: #00D4C8;
 }
 .indic-swatch { width: 8px; height: 8px; flex-shrink: 0; }
 .indic-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; flex: 1; }
@@ -156,7 +156,7 @@
   letter-spacing: 0.2px;
 }
 .draw-btn:hover { border-color: #444; color: #ccc; }
-.draw-btn.active { background: #1a1200; border-color: #FF8C00; color: #FF8C00; }
+.draw-btn.active { background: #001a1a; border-color: #00D4C8; color: #00D4C8; }
 .draw-btn.clear-btn { grid-column: span 2; color: #555; }
 .draw-btn.clear-btn:hover { color: #FF3D00; border-color: #FF3D00; }
 /* portfolio list */
@@ -179,8 +179,8 @@
   gap: 6px;
 }
 .sb-asset-item:hover { background: #111; border-left-color: #333; }
-.sb-asset-item.active { background: #111; border-left-color: #FF8C00; }
-.sb-asset-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #FF8C00; font-weight: 600; flex-shrink: 0; }
+.sb-asset-item.active { background: #111; border-left-color: #00D4C8; }
+.sb-asset-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #00D4C8; font-weight: 600; flex-shrink: 0; }
 .sb-asset-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
 /* main zone */
 .analyse-main {
@@ -202,7 +202,7 @@
 }
 .ah-row1 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .ah-row2 { display: flex; align-items: center; gap: 10px; }
-.ah-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: #FF8C00; }
+.ah-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: #00D4C8; }
 .ah-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; }
 .ah-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #e0e0e0; }
 .ah-curr { font-size: 9px; color: #555; }
@@ -393,7 +393,7 @@ var _ohlcvEl          = null;
 // INDICATOR META
 // ═══════════════════════════════════════════════════════════════════════════
 var INDICATORS = [
-  { id:'mm20',   label:'MM20',               color:'#FF8C00' },
+  { id:'mm20',   label:'MM20',               color:'#00D4C8' },
   { id:'mm50',   label:'MM50',               color:'#00BCD4' },
   { id:'mm200',  label:'MM200',              color:'#9C27B0' },
   { id:'boll',   label:'Bandes de Bollinger',color:'#888'    },
@@ -522,8 +522,8 @@ function mainChartOpts() {
     grid: { vertLines:{ color:'#1a1a1a' }, horzLines:{ color:'#1a1a1a' } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color:'#444', labelBackgroundColor:'#FF8C00' },
-      horzLine: { color:'#444', labelBackgroundColor:'#FF8C00' },
+      vertLine: { color:'#444', labelBackgroundColor:'#00D4C8' },
+      horzLine: { color:'#444', labelBackgroundColor:'#00D4C8' },
     },
     rightPriceScale: { borderColor:'#1a1a1a' },
     timeScale: { borderColor:'#1a1a1a', timeVisible:true, secondsVisible:false },
@@ -601,7 +601,7 @@ function setMainSeries(ohlcv) {
     }));
   } else {
     mainSeries = mainChart.addLineSeries({
-      color: '#FF8C00', lineWidth: 1.5, priceLineVisible: false,
+      color: '#00D4C8', lineWidth: 1.5, priceLineVisible: false,
     });
     mainSeries.setData(ohlcv.map(function(d) { return { time:d.time, value:d.close }; }));
   }
@@ -642,7 +642,7 @@ function addOverlayIndicators(times, closes) {
   var base = { lastValueVisible:false, priceLineVisible:false };
 
   if (activeIndicators['mm20']) {
-    var s = mainChart.addLineSeries(Object.assign({}, base, { color:'#FF8C00', lineWidth:1 }));
+    var s = mainChart.addLineSeries(Object.assign({}, base, { color:'#00D4C8', lineWidth:1 }));
     s.setData(toSeriesData(times, calcSMA(closes, 20)));
     overlaySeriesMap['mm20'] = s;
   }
@@ -738,7 +738,7 @@ function addMACDPanel(times, closes) {
     var v = mc.hist[i];
     return v !== null ? { time:t, value:v, color: v >= 0 ? '#00C85355' : '#FF3D0055' } : null;
   }).filter(Boolean));
-  var ms = pc.addLineSeries({ color:'#FF8C00', lineWidth:1.5, lastValueVisible:false, priceLineVisible:false });
+  var ms = pc.addLineSeries({ color:'#00D4C8', lineWidth:1.5, lastValueVisible:false, priceLineVisible:false });
   ms.setData(toSeriesData(times, mc.macd));
   var ss = pc.addLineSeries({ color:'#00BCD4', lineWidth:1.5, lastValueVisible:false, priceLineVisible:false });
   ss.setData(toSeriesData(times, mc.signal));
@@ -895,7 +895,7 @@ function onOverlayMousedown(e) {
 
   if (activeTool === 'hline') {
     var pl = mainSeries.createPriceLine({
-      price: co.price, color: '#FF8C00', lineWidth: 1,
+      price: co.price, color: '#00D4C8', lineWidth: 1,
       lineStyle: LightweightCharts.LineStyle.Dashed,
       axisLabelVisible: true,
       title: fmtP(co.price),
@@ -956,7 +956,7 @@ function redrawOverlay(hoverPt) {
   }
 
   drawings.filter(function(d) { return d.type !== 'hline'; }).forEach(function(d) {
-    drawShape(ctx, d, '#FF8C00', toPx);
+    drawShape(ctx, d, '#00D4C8', toPx);
   });
 
   if (drawingInProgress && hoverPt) {
@@ -965,7 +965,7 @@ function redrawOverlay(hoverPt) {
     if (hTime != null && hPrice != null) {
       var preview = { type:drawingInProgress.type,
                       points: drawingInProgress.points.concat([{ time:hTime, price:hPrice }]) };
-      drawShape(ctx, preview, 'rgba(255,140,0,0.45)', toPx);
+      drawShape(ctx, preview, 'rgba(0,212,200,0.45)', toPx);
     }
   }
 }
@@ -995,7 +995,7 @@ function drawShape(ctx, shape, color, toPx) {
     var rx = Math.min(x1, x2), ry = Math.min(y1, y2);
     var rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
     ctx.strokeRect(rx, ry, rw, rh);
-    ctx.fillStyle = 'rgba(255,140,0,0.05)';
+    ctx.fillStyle = 'rgba(0,212,200,0.05)';
     ctx.fillRect(rx, ry, rw, rh);
 
   } else if (shape.type === 'channel') {
@@ -1014,7 +1014,7 @@ function drawShape(ctx, shape, color, toPx) {
       ctx.moveTo(pts[0].x + ox, pts[0].y + oy);
       ctx.lineTo(pts[1].x + ox, pts[1].y + oy);
       ctx.stroke();
-      ctx.fillStyle = 'rgba(255,140,0,0.04)';
+      ctx.fillStyle = 'rgba(0,212,200,0.04)';
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       ctx.lineTo(pts[1].x, pts[1].y);

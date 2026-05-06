@@ -150,7 +150,7 @@
 .position-card:hover { border-color: var(--accent); }
 .position-card.selected {
   border-color: var(--accent);
-  background: rgba(255,140,0,0.04);
+  background: rgba(0,212,200,0.04);
 }
 .card-header {
   display: flex;
@@ -303,7 +303,7 @@
     </div>
     <div class="cp-legend" id="portfolio-legend">
       <div class="cp-legend-item">
-        <div class="cp-legend-line" style="background:#FF8C00;"></div>
+        <div class="cp-legend-line" style="background:#00D4C8;"></div>
         <span>Portefeuille</span>
       </div>
       <div class="cp-legend-item">
@@ -439,7 +439,7 @@ var _baseLayout = {
   hovermode: 'x unified',
   hoverlabel: {
     bgcolor: '#1a1a1a',
-    bordercolor: '#FF8C00',
+    bordercolor: '#00D4C8',
     font: { color: '#fff', family: 'IBM Plex Mono', size: 10 },
   },
 };
@@ -467,8 +467,8 @@ function renderPortfolioChart() {
     traces.push({
       x: f.dates, y: f.mkt,
       type: 'scatter', fill: 'tozeroy',
-      fillcolor: 'rgba(255,140,0,0.07)',
-      line: { color: '#FF8C00', width: 2 },
+      fillcolor: 'rgba(0,212,200,0.07)',
+      line: { color: '#00D4C8', width: 2 },
       name: 'Portefeuille',
       hovertemplate: 'Portfolio: %{y:,.0f}€<extra></extra>',
     });
@@ -496,7 +496,7 @@ function renderPortfolioChart() {
     traces.push({
       x: f.dates, y: portPerf,
       type: 'scatter',
-      line: { color: '#FF8C00', width: 2 },
+      line: { color: '#00D4C8', width: 2 },
       name: 'Portefeuille',
       hovertemplate: 'Portfolio: %{y:+.2f}%<extra></extra>',
     });
@@ -694,7 +694,7 @@ function showDetail(ticker) {
     traces.push({
       x: pos.hist_dates, y: pos.hist_prices,
       type: 'scatter',
-      line: { color: '#FF8C00', width: 1.8 },
+      line: { color: '#00D4C8', width: 1.8 },
       name: ticker,
       hovertemplate: '%{x}: %{y:,.4f}<extra></extra>',
     });
@@ -741,7 +741,7 @@ function showDetail(ticker) {
       mode: 'markers',
       type: 'scatter',
       marker: {
-        symbol: 'triangle-up', color: '#FF8C00', size: 9,
+        symbol: 'triangle-up', color: '#00D4C8', size: 9,
         line: { color: '#1a1a1a', width: 0.5 },
       },
       name: 'Achats',
@@ -841,11 +841,11 @@ function renderCorrelation() {
     height:        h,
     margin:        { l: 70, r: 20, t: 20, b: 70 },
     xaxis: {
-      tickfont: { color: '#FF8C00', size: 10, family: 'IBM Plex Mono' },
+      tickfont: { color: '#00D4C8', size: 10, family: 'IBM Plex Mono' },
       linecolor: '#333', showgrid: false,
     },
     yaxis: {
-      tickfont: { color: '#FF8C00', size: 10, family: 'IBM Plex Mono' },
+      tickfont: { color: '#00D4C8', size: 10, family: 'IBM Plex Mono' },
       autorange: 'reversed', linecolor: '#333', showgrid: false,
     },
     font: { family: 'IBM Plex Mono' },

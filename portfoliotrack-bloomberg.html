@@ -15,9 +15,9 @@
     --text: #C8C8C8;
     --text-dim: #666666;
     --text-bright: #FFFFFF;
-    --accent: #FF8C00;
-    --accent-dim: #CC7000;
-    --accent-bg: rgba(255,140,0,0.08);
+    --accent: #00D4C8;
+    --accent-dim: #009E95;
+    --accent-bg: rgba(0,212,200,0.08);
     --green: #00C853;
     --green-dim: rgba(0,200,83,0.12);
     --red: #FF1744;
@@ -237,7 +237,7 @@
     background: var(--accent-bg);
     color: var(--accent);
     padding: 1px 5px;
-    border: 1px solid rgba(255,140,0,0.2);
+    border: 1px solid rgba(0,212,200,0.2);
   }
   .panel-body { flex:1; overflow-y: auto; }
 
@@ -377,7 +377,7 @@
     letter-spacing: 0.3px;
   }
   .dtable .tag.etf { border-color: rgba(68,138,255,0.3); color: var(--blue); }
-  .dtable .tag.stock { border-color: rgba(255,140,0,0.3); color: var(--accent); }
+  .dtable .tag.stock { border-color: rgba(0,212,200,0.3); color: var(--accent); }
   .dtable .tag.crypto { border-color: rgba(255,214,0,0.3); color: var(--yellow); }
   .dtable .bar-cell { width: 60px; }
   .dtable .bar-bg {
@@ -669,7 +669,7 @@
 
   .blink { animation: blink 0.3s ease; }
   @keyframes blink {
-    0% { background: rgba(255,140,0,0.15); }
+    0% { background: rgba(0,212,200,0.15); }
     100% { background: transparent; }
   }
 
@@ -1082,8 +1082,8 @@ function drawSparkline() {
   ctx.clearRect(0,0,w,h);
 
   const grad = ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0, 'rgba(255,140,0,0.2)');
-  grad.addColorStop(1, 'rgba(255,140,0,0)');
+  grad.addColorStop(0, 'rgba(0,212,200,0.2)');
+  grad.addColorStop(1, 'rgba(0,212,200,0)');
 
   ctx.beginPath();
   ctx.moveTo(0, h);
@@ -1102,7 +1102,7 @@ function drawSparkline() {
     const y = h - ((d-min)/(max-min))*h*0.85 - 2;
     i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
   });
-  ctx.strokeStyle = '#FF8C00';
+  ctx.strokeStyle = '#00D4C8';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 }
@@ -1163,8 +1163,8 @@ function drawPerfChart() {
 
   // Portfolio gradient
   const grad = ctx.createLinearGradient(0,pad.top,0,h-pad.bottom);
-  grad.addColorStop(0, 'rgba(255,140,0,0.12)');
-  grad.addColorStop(1, 'rgba(255,140,0,0)');
+  grad.addColorStop(0, 'rgba(0,212,200,0.12)');
+  grad.addColorStop(1, 'rgba(0,212,200,0)');
   ctx.beginPath();
   ctx.moveTo(toX(0), h-pad.bottom);
   port.forEach((v,i) => ctx.lineTo(toX(i),toY(v)));
@@ -1175,7 +1175,7 @@ function drawPerfChart() {
   // Portfolio line
   ctx.beginPath();
   port.forEach((v,i) => i===0 ? ctx.moveTo(toX(i),toY(v)) : ctx.lineTo(toX(i),toY(v)));
-  ctx.strokeStyle = '#FF8C00';
+  ctx.strokeStyle = '#00D4C8';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
@@ -1183,7 +1183,7 @@ function drawPerfChart() {
   const lastX = toX(days-1), lastY = toY(port[days-1]);
   ctx.beginPath();
   ctx.arc(lastX, lastY, 3, 0, Math.PI*2);
-  ctx.fillStyle = '#FF8C00';
+  ctx.fillStyle = '#00D4C8';
   ctx.fill();
 
   // Date labels

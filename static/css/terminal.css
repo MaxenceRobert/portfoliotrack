@@ -15,9 +15,9 @@
   --text:          #C8C8C8;
   --text-dim:      #666666;
   --text-bright:   #FFFFFF;
-  --accent:        #FF8C00;
-  --accent-dim:    #CC7000;
-  --accent-bg:     rgba(255,140,0,0.08);
+  --accent:        #00D4C8;
+  --accent-dim:    #009E95;
+  --accent-bg:     rgba(0,212,200,0.08);
   --green:         #00C853;
   --green-dim:     rgba(0,200,83,0.12);
   --red:           #FF1744;
@@ -279,7 +279,7 @@ body {
   background: var(--accent-bg);
   color: var(--accent);
   padding: 1px 5px;
-  border: 1px solid rgba(255,140,0,0.2);
+  border: 1px solid rgba(0,212,200,0.2);
 }
 .panel-body { flex: 1; overflow-y: auto; }
 
@@ -401,7 +401,7 @@ body {
   letter-spacing: 0.3px;
 }
 .dtable .tag.etf    { border-color: rgba(68,138,255,0.3);  color: var(--blue);   }
-.dtable .tag.stock  { border-color: rgba(255,140,0,0.3);   color: var(--accent); }
+.dtable .tag.stock  { border-color: rgba(0,212,200,0.3);   color: var(--accent); }
 .dtable .tag.crypto { border-color: rgba(255,214,0,0.3);   color: var(--yellow); }
 .dtable .bar-cell   { width: 60px; }
 .dtable .bar-bg     { width: 100%; height: 4px; background: var(--border); position: relative; }
@@ -534,7 +534,7 @@ body {
 .btn:hover         { color: var(--text); border-color: var(--text-dim); }
 .btn:active        { background: rgba(255,255,255,0.03); }
 .btn-primary       { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.btn-primary:hover { background: rgba(255,140,0,0.14); border-color: var(--accent); color: var(--accent); }
+.btn-primary:hover { background: rgba(0,212,200,0.14); border-color: var(--accent); color: var(--accent); }
 .btn-success       { border-color: rgba(0,200,83,0.4); color: var(--green); background: var(--green-dim); }
 .btn-success:hover { background: rgba(0,200,83,0.18); }
 .btn-danger        { border-color: rgba(255,23,68,0.4); color: var(--red); }
@@ -725,7 +725,7 @@ a:hover { color: var(--text-bright); }
   display: inline-block;
 }
 .badge-etf,    .tag.etf    { border-color: rgba(68,138,255,0.35);  color: var(--blue);   }
-.badge-action, .tag.stock  { border-color: rgba(255,140,0,0.35);   color: var(--accent); }
+.badge-action, .tag.stock  { border-color: rgba(0,212,200,0.35);   color: var(--accent); }
 .badge-crypto, .tag.crypto { border-color: rgba(255,214,0,0.35);   color: var(--yellow); }
 .badge-other               { border-color: var(--border-light);    color: var(--text-dim); }
 
@@ -802,8 +802,8 @@ footer a:hover { color: var(--text); }
 
 /* ══ DEMO BANNER ═════════════════════════════════════════════════════════ */
 .demo-banner {
-  background: rgba(255,140,0,0.06);
-  border-bottom: 1px solid rgba(255,140,0,0.2);
+  background: rgba(0,212,200,0.06);
+  border-bottom: 1px solid rgba(0,212,200,0.2);
   padding: 5px 12px;
   display: flex;
   align-items: center;
@@ -835,7 +835,7 @@ footer a:hover { color: var(--text); }
   letter-spacing: 0.3px;
 }
 .env-pea, .env-peapme { border-color: rgba(68,138,255,0.35); color: var(--blue); }
-.env-cto              { border-color: rgba(255,140,0,0.35);  color: var(--accent); }
+.env-cto              { border-color: rgba(0,212,200,0.35);  color: var(--accent); }
 .env-av, .env-per     { border-color: rgba(255,214,0,0.3);   color: var(--yellow); }
 .env-livret           { border-color: rgba(0,200,83,0.3);    color: var(--green); }
 .env-autre            { border-color: var(--border-light);   color: var(--text-dim); }
@@ -850,7 +850,7 @@ footer a:hover { color: var(--text); }
   50%       { opacity: 0.3; }
 }
 @keyframes blink {
-  0%   { background: rgba(255,140,0,0.15); }
+  0%   { background: rgba(0,212,200,0.15); }
   100% { background: transparent; }
 }
 .blink { animation: blink 0.3s ease; }
