@@ -68,6 +68,28 @@
   cursor: pointer;
 }
 .sb-analyser-btn:hover { background: #ffa030; }
+/* bouton valoriser */
+.sb-val-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #333;
+  color: #444;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 0;
+  cursor: not-allowed;
+}
+.sb-val-btn.active {
+  border-color: #FF8C00;
+  color: #FF8C00;
+  cursor: pointer;
+}
+.sb-val-btn.active:hover {
+  background: #FF8C00;
+  color: #0a0a0a;
+}
 .sb-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -252,12 +274,6 @@
              autocomplete="off" spellcheck="false"
              value="{{ initial_ticker }}">
       <button class="sb-analyser-btn" id="btn-analyser">ANALYSER</button>
-      <a class="sb-analyser-btn" id="btn-valoriser"
-         href="/valorisation"
-         style="display:none;text-decoration:none;text-align:center;margin-top:3px;
-                background:#111;border:1px solid #FF8C00;color:#FF8C00;font-size:9px;">
-        VALORISER CET ACTIF →
-      </a>
     </div>
 
     <!-- TIMEFRAME -->
@@ -299,6 +315,13 @@
         <button class="draw-btn" data-tool="channel">↗ Canal</button>
         <button class="draw-btn clear-btn" data-tool="clear">⌫ Tout effacer</button>
       </div>
+    </div>
+
+    <!-- VALORISER -->
+    <div class="sb-block">
+      <button class="sb-val-btn" id="btn-valoriser" onclick="goToValorisation()">
+        📊 VALORISER CET ACTIF →
+      </button>
     </div>
 
     <!-- MON PORTEFEUILLE -->
@@ -1080,8 +1103,8 @@ function loadChart(ticker, timeframe) {
 
   var vBtn = document.getElementById('btn-valoriser');
   if (vBtn) {
-    vBtn.href = '/valorisation?ticker=' + encodeURIComponent(ticker);
-    vBtn.style.display = 'block';
+    vBtn.classList.add('active');
+    vBtn.dataset.ticker = ticker;
   }
 
   document.querySelectorAll('.sb-asset-item').forEach(function(el) {
@@ -1128,6 +1151,13 @@ function analyserTicker() {
 function selectAsset(ticker) {
   document.getElementById('analyse-input').value = ticker;
   loadChart(ticker, currentTimeframe);
+}
+
+function goToValorisation() {
+  var btn = document.getElementById('btn-valoriser');
+  if (!btn || !btn.classList.contains('active')) return;
+  var tk = btn.dataset.ticker || currentTicker;
+  if (tk) window.location.href = '/valorisation?ticker=' + encodeURIComponent(tk);
 }
 
 document.getElementById('btn-analyser').addEventListener('click', analyserTicker);
