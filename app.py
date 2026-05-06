@@ -2727,6 +2727,132 @@ def delete_link_route(link_id):
     return redirect(url_for('main.links'))
 
 
+# ── F11 Analyse ───────────────────────────────────────────────────────────────
+@main_bp.route('/analyse')
+@login_required
+def analyse():
+    summary = get_portfolio_summary(current_user.id)
+    portfolio_tickers = []
+    seen = set()
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            tk = (a.get('ticker') or '').strip()
+            if tk and not a.get('fully_sold') and tk not in seen:
+                seen.add(tk)
+                portfolio_tickers.append({
+                    'ticker': tk,
+                    'name':   (a.get('name') or tk)[:28],
+                    'pru':    round(float(a.get('avg_price') or 0), 4),
+                })
+    portfolio_tickers.sort(key=lambda x: x['ticker'])
+    initial_ticker = request.args.get('ticker', '').strip().upper()
+    return render_template('analyse.html',
+                           portfolio_tickers=portfolio_tickers,
+                           initial_ticker=initial_ticker)
+
+
+@main_bp.route('/api/analyse/chart-data')
+@login_required
+def analyse_chart_data():
+    import yfinance as _yf
+    from database import get_purchases_by_asset as _gpba, get_sales_by_asset as _gsba
+
+    ticker = request.args.get('ticker', '').strip().upper()
+    period = request.args.get('period', '1a').strip()
+
+    if not ticker:
+        return jsonify({'error': 'Ticker manquant'}), 400
+
+    PERIOD_MAP = {
+        '1s': ('5d',  '15m'),
+        '1m': ('1mo', '1h'),
+        '3m': ('3mo', '1d'),
+        '6m': ('6mo', '1d'),
+        '1a': ('1y',  '1d'),
+        '2a': ('2y',  '1wk'),
+        '5a': ('5y',  '1wk'),
+    }
+    yf_period, yf_interval = PERIOD_MAP.get(period, ('1y', '1d'))
+
+    try:
+        t    = _yf.Ticker(ticker)
+        hist = t.history(period=yf_period, interval=yf_interval, auto_adjust=True)
+        if hist.empty:
+            return jsonify({'error': f'Aucune donnée pour {ticker}'}), 404
+
+        info = {}
+        try:
+            info = t.info or {}
+        except Exception:
+            pass
+
+        name     = (info.get('longName') or info.get('shortName') or ticker)[:40]
+        currency = info.get('currency', '')
+
+        ohlcv = []
+        for idx, row in hist.iterrows():
+            ts = idx.strftime('%Y-%m-%dT%H:%M:%S') if hasattr(idx, 'strftime') else str(idx)
+            ohlcv.append({
+                'date':   ts,
+                'open':   round(float(row['Open']),   4),
+                'high':   round(float(row['High']),   4),
+                'low':    round(float(row['Low']),    4),
+                'close':  round(float(row['Close']),  4),
+                'volume': int(row.get('Volume', 0) or 0),
+            })
+
+        current_price = round(float(hist['Close'].iloc[-1]), 4)
+        prev_close    = round(float(hist['Close'].iloc[-2]), 4) if len(hist) > 1 else current_price
+        change_abs    = current_price - prev_close
+        change_pct    = (change_abs / prev_close * 100) if prev_close else 0
+
+        # PRU + transactions from portfolio
+        pru          = None
+        transactions = []
+        summary      = get_portfolio_summary(current_user.id)
+        for assets_list in summary.get('by_type', {}).values():
+            for a in assets_list:
+                if (a.get('ticker') or '').upper() != ticker:
+                    continue
+                if not a.get('fully_sold') and pru is None:
+                    v = round(float(a.get('avg_price') or 0), 4)
+                    pru = v if v > 0 else None
+                asset_id = a.get('asset_id') or a.get('id')
+                if asset_id:
+                    try:
+                        for p in _gpba(asset_id, current_user.id):
+                            if p.get('date') and p.get('price_per_share'):
+                                transactions.append({
+                                    'type':  'buy',
+                                    'date':  str(p['date'])[:10],
+                                    'price': round(float(p['price_per_share']), 4),
+                                })
+                        for s in _gsba(asset_id, current_user.id):
+                            if s.get('date') and s.get('price_per_share'):
+                                transactions.append({
+                                    'type':  'sell',
+                                    'date':  str(s['date'])[:10],
+                                    'price': round(float(s['price_per_share']), 4),
+                                })
+                    except Exception as _e:
+                        print(f'[analyse_chart_data] tx error: {_e}')
+
+        return jsonify({
+            'ticker':        ticker,
+            'name':          name,
+            'currency':      currency,
+            'current_price': current_price,
+            'change_pct':    round(change_pct, 2),
+            'change_abs':    round(change_abs, 4),
+            'ohlcv':         ohlcv,
+            'pru':           pru,
+            'transactions':  transactions,
+        })
+    except Exception as e:
+        print(f'[analyse_chart_data] error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required

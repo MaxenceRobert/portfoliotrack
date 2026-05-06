@@ -58,6 +58,7 @@
     ('F8', 'COACH',      '/coach'),
     ('F9', 'ALERTES',    '/alerts'),
     ('F10', 'LIENS',    '/links'),
+    ('F11', 'ANALYSE',  '/analyse'),
   ] -%}
   {% for key, label, path in _tabs %}
   <a href="{{ path }}"
@@ -138,6 +139,16 @@
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
       </svg>
       <span>Liens</span>
+    </a>
+    <a href="{{ url_for('main.analyse') }}"
+       class="rail-icon{% if request.path == '/analyse' %} active{% endif %}"
+       title="Analyse technique">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="6" width="4" height="12"/>
+        <rect x="10" y="3" width="4" height="15"/>
+        <rect x="17" y="9" width="4" height="9"/>
+      </svg>
+      <span>Analyse</span>
     </a>
     <div class="rail-spacer"></div>
     <a href="{{ url_for('main.settings') }}"
@@ -249,6 +260,7 @@
     'COACH': '/coach', 'IA': '/coach', 'F8': '/coach',
     'ALERTES': '/alerts', 'ALERTS': '/alerts', 'F9': '/alerts',
     'LIENS': '/links', 'LINKS': '/links', 'RESSOURCES': '/links', 'F10': '/links',
+    'ANALYSE': '/analyse', 'ANALYSIS': '/analyse', 'F11': '/analyse',
     'SETTINGS': '/settings', 'CONFIG': '/settings', 'F0': '/settings',
     'IMPORT': '/import', 'EXPORT': '/export/csv',
     'ACHAT': '/purchases/add', 'VENTE': '/sales/add',

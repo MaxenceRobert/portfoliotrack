@@ -1,0 +1,809 @@
+{% extends "base.html" %}
+{% block title %}F11 · ANALYSE — PortfolioTrack{% endblock %}
+
+{% block content %}
+<style>
+/* ── page-content override for full-height layout ─────────────────────────── */
+#page-content {
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ── layout ──────────────────────────────────────────────────────────────── */
+.analyse-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── sidebar ─────────────────────────────────────────────────────────────── */
+.analyse-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid #1a1a1a;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #222 transparent;
+}
+.analyse-sidebar::-webkit-scrollbar { width: 3px; }
+.analyse-sidebar::-webkit-scrollbar-track { background: transparent; }
+.analyse-sidebar::-webkit-scrollbar-thumb { background: #222; }
+
+.sb-block {
+  border-bottom: 1px solid #1a1a1a;
+  padding: 10px 12px;
+}
+.sb-label {
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 0.8px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sb-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #111;
+  border: 1px solid #222;
+  color: #e0e0e0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  outline: none;
+  letter-spacing: 0.3px;
+}
+.sb-input:focus { border-color: #FF8C00; }
+.sb-analyser-btn {
+  width: 100%;
+  margin-top: 6px;
+  background: #FF8C00;
+  color: #000;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.sb-analyser-btn:hover { background: #ffa030; }
+
+/* ── period / type toggles ───────────────────────────────────────────────── */
+.sb-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.sb-toggle {
+  background: #111;
+  border: 1px solid #222;
+  color: #666;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 4px 0;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  min-width: 28px;
+  letter-spacing: 0.3px;
+}
+.sb-toggle.active {
+  background: #1a1200;
+  border-color: #FF8C00;
+  color: #FF8C00;
+}
+.sb-toggle:hover:not(.active) {
+  border-color: #444;
+  color: #ccc;
+}
+
+/* ── indicator checkboxes ────────────────────────────────────────────────── */
+.indic-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.indic-row:hover .indic-name { color: #ccc; }
+.indic-box {
+  width: 12px;
+  height: 12px;
+  border: 1px solid #333;
+  background: #111;
+  flex-shrink: 0;
+  position: relative;
+}
+.indic-box.checked {
+  border-color: #FF8C00;
+  background: #1a1200;
+}
+.indic-box.checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background: #FF8C00;
+}
+.indic-swatch {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+.indic-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #666;
+  flex: 1;
+}
+.indic-name.checked { color: #e0e0e0; }
+
+/* ── portfolio asset list ────────────────────────────────────────────────── */
+.sb-assets-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #222 transparent;
+}
+.sb-assets-wrap::-webkit-scrollbar { width: 3px; }
+.sb-assets-wrap::-webkit-scrollbar-thumb { background: #222; }
+.sb-asset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  gap: 6px;
+}
+.sb-asset-item:hover { background: #111; border-left-color: #333; }
+.sb-asset-item.active { background: #111; border-left-color: #FF8C00; }
+.sb-asset-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #FF8C00;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sb-asset-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  flex: 1;
+}
+
+/* ── main chart zone ─────────────────────────────────────────────────────── */
+.analyse-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+
+.analyse-header {
+  padding: 7px 14px;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-shrink: 0;
+  min-height: 36px;
+  flex-wrap: wrap;
+}
+.ah-ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #FF8C00;
+  letter-spacing: 0.5px;
+}
+.ah-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #666;
+}
+.ah-price {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+.ah-curr {
+  font-size: 9px;
+  color: #555;
+}
+.ah-change {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+}
+.ah-change.pos { color: #00C853; }
+.ah-change.neg { color: #FF3D00; }
+.ah-pru {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #555;
+  margin-left: auto;
+}
+.ah-placeholder {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #444;
+}
+
+#analyse-chart {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+}
+
+.analyse-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: #444;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+</style>
+
+<div class="analyse-layout">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════ -->
+  <div class="analyse-sidebar">
+
+    <!-- ACTIF -->
+    <div class="sb-block">
+      <div class="sb-label">Actif</div>
+      <input class="sb-input" id="analyse-input" type="text"
+             placeholder="AAPL, IWDA.AS, BTC-USD…"
+             autocomplete="off" spellcheck="false"
+             value="{{ initial_ticker }}">
+      <button class="sb-analyser-btn" id="btn-analyser">ANALYSER</button>
+    </div>
+
+    <!-- PÉRIODE -->
+    <div class="sb-block">
+      <div class="sb-label">Période</div>
+      <div class="sb-toggles" id="period-toggles">
+        <button class="sb-toggle" data-period="1s">1S</button>
+        <button class="sb-toggle" data-period="1m">1M</button>
+        <button class="sb-toggle" data-period="3m">3M</button>
+        <button class="sb-toggle" data-period="6m">6M</button>
+        <button class="sb-toggle active" data-period="1a">1A</button>
+        <button class="sb-toggle" data-period="2a">2A</button>
+        <button class="sb-toggle" data-period="5a">5A</button>
+      </div>
+    </div>
+
+    <!-- TYPE -->
+    <div class="sb-block">
+      <div class="sb-label">Type de graphique</div>
+      <div class="sb-toggles" id="type-toggles">
+        <button class="sb-toggle active" data-chart-type="candle">CHANDELIERS</button>
+        <button class="sb-toggle" data-chart-type="line">LIGNE</button>
+      </div>
+    </div>
+
+    <!-- INDICATEURS -->
+    <div class="sb-block">
+      <div class="sb-label">Indicateurs</div>
+      <div id="indicators-list"></div>
+    </div>
+
+    <!-- MON PORTEFEUILLE -->
+    <div class="sb-block" style="flex:1;overflow:hidden;display:flex;flex-direction:column;border-bottom:none;padding-bottom:0;">
+      <div class="sb-label">Mon portefeuille</div>
+      <div class="sb-assets-wrap" id="portfolio-list">
+        {% for a in portfolio_tickers %}
+        <div class="sb-asset-item" data-ticker="{{ a.ticker }}"
+             onclick="selectAsset('{{ a.ticker }}')">
+          <span class="sb-asset-ticker">{{ a.ticker }}</span>
+          <span class="sb-asset-name" title="{{ a.name }}">{{ a.name }}</span>
+        </div>
+        {% endfor %}
+        {% if not portfolio_tickers %}
+        <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#444;">
+          Aucun actif en portefeuille
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ══ MAIN ═════════════════════════════════════════════════════════════ -->
+  <div class="analyse-main">
+
+    <!-- HEADER -->
+    <div class="analyse-header" id="analyse-header">
+      <span class="ah-placeholder">Entrez un ticker ou choisissez un actif dans la sidebar →</span>
+    </div>
+
+    <!-- CHART -->
+    <div id="analyse-chart">
+      <div class="analyse-loading" id="chart-loading" style="display:none;">CHARGEMENT…</div>
+    </div>
+
+  </div><!-- /main -->
+
+</div><!-- /layout -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+var PORTFOLIO_TICKERS = {{ portfolio_tickers | tojson }};
+var currentTicker  = '';
+var currentData    = null;
+var currentPeriod  = '1a';
+var currentType    = 'candle';
+var activeIndicators = {};
+
+var INDICATORS = [
+  { id: 'sma20',  label: 'SMA 20',          color: '#4DD0E1' },
+  { id: 'sma50',  label: 'SMA 50',          color: '#FFD54F' },
+  { id: 'sma200', label: 'SMA 200',         color: '#EF9A9A' },
+  { id: 'boll',   label: 'Bollinger (20,2)', color: '#CE93D8' },
+  { id: 'volume', label: 'Volume',           color: '#607D8B' },
+  { id: 'rsi',    label: 'RSI 14',          color: '#80DEEA' },
+  { id: 'macd',   label: 'MACD (12,26,9)', color: '#A5D6A7' },
+];
+
+// ── Build indicator checkboxes ────────────────────────────────────────────────
+(function() {
+  var el = document.getElementById('indicators-list');
+  INDICATORS.forEach(function(ind) {
+    activeIndicators[ind.id] = false;
+    var row = document.createElement('div');
+    row.className = 'indic-row';
+    row.id = 'irow-' + ind.id;
+    row.innerHTML =
+      '<div class="indic-box" id="ibox-' + ind.id + '"></div>' +
+      '<div class="indic-swatch" style="background:' + ind.color + ';opacity:0.6;"></div>' +
+      '<span class="indic-name" id="iname-' + ind.id + '">' + ind.label + '</span>';
+    row.addEventListener('click', function() { toggleIndicator(ind.id); });
+    el.appendChild(row);
+  });
+})();
+
+// ── Period toggles ─────────────────────────────────────────────────────────────
+document.querySelectorAll('#period-toggles .sb-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#period-toggles .sb-toggle').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    if (currentTicker) loadChart(currentTicker, currentPeriod);
+  });
+});
+
+// ── Type toggles ───────────────────────────────────────────────────────────────
+document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    currentType = btn.dataset.chartType;
+    if (currentData) renderChart(currentData);
+  });
+});
+
+// ── Analyser button ────────────────────────────────────────────────────────────
+document.getElementById('btn-analyser').addEventListener('click', function() {
+  analyserTicker();
+});
+document.getElementById('analyse-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') analyserTicker();
+});
+
+function analyserTicker() {
+  var ticker = document.getElementById('analyse-input').value.trim().toUpperCase();
+  if (!ticker) return;
+  loadChart(ticker, currentPeriod);
+}
+
+// ── Portfolio sidebar click ────────────────────────────────────────────────────
+function selectAsset(ticker) {
+  document.getElementById('analyse-input').value = ticker;
+  loadChart(ticker, currentPeriod);
+}
+
+// ── Indicator toggle ───────────────────────────────────────────────────────────
+function toggleIndicator(id) {
+  activeIndicators[id] = !activeIndicators[id];
+  var box  = document.getElementById('ibox-'  + id);
+  var name = document.getElementById('iname-' + id);
+  if (activeIndicators[id]) {
+    box.classList.add('checked');
+    name.classList.add('checked');
+  } else {
+    box.classList.remove('checked');
+    name.classList.remove('checked');
+  }
+  if (currentData) renderChart(currentData);
+}
+
+// ── Load chart data from API ───────────────────────────────────────────────────
+function loadChart(ticker, period) {
+  currentTicker = ticker;
+
+  document.querySelectorAll('.sb-asset-item').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.ticker === ticker);
+  });
+
+  var header = document.getElementById('analyse-header');
+  header.innerHTML = '<span class="ah-placeholder">Chargement ' + ticker + '…</span>';
+
+  var loadEl = document.getElementById('chart-loading');
+  loadEl.style.display = 'block';
+
+  fetch('/api/analyse/chart-data?ticker=' + encodeURIComponent(ticker) + '&period=' + encodeURIComponent(period))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loadEl.style.display = 'none';
+      if (data.error) {
+        header.innerHTML = '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR — ' + data.error + '</span>';
+        currentData = null;
+        return;
+      }
+      currentData = data;
+      updateHeader(data);
+      renderChart(data);
+    })
+    .catch(function() {
+      loadEl.style.display = 'none';
+      header.innerHTML = '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR RÉSEAU</span>';
+    });
+}
+
+// ── Update header bar ──────────────────────────────────────────────────────────
+function updateHeader(data) {
+  var header  = document.getElementById('analyse-header');
+  var sign    = data.change_pct >= 0 ? '+' : '';
+  var cls     = data.change_pct >= 0 ? 'pos' : 'neg';
+  var pruHtml = data.pru
+    ? '<span class="ah-pru">PRU&nbsp;' + data.pru.toFixed(4) + '&nbsp;' + (data.currency || '') + '</span>'
+    : '';
+  header.innerHTML =
+    '<span class="ah-ticker">' + data.ticker + '</span>' +
+    '<span class="ah-name">'   + (data.name || '') + '</span>' +
+    '<span class="ah-price">'  + (data.current_price || '—') +
+      ' <span class="ah-curr">' + (data.currency || '') + '</span></span>' +
+    '<span class="ah-change ' + cls + '">' +
+      sign + data.change_pct.toFixed(2) + '% (' + sign + data.change_abs.toFixed(4) + ')' +
+    '</span>' +
+    pruHtml;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Technical indicator calculations
+// ─────────────────────────────────────────────────────────────────────────────
+
+function calcSMA(closes, n) {
+  var out = new Array(closes.length).fill(null);
+  for (var i = n - 1; i < closes.length; i++) {
+    var s = 0;
+    for (var j = i - n + 1; j <= i; j++) s += closes[j];
+    out[i] = s / n;
+  }
+  return out;
+}
+
+function calcBollinger(closes, n, sigma) {
+  var sma   = calcSMA(closes, n);
+  var upper = new Array(closes.length).fill(null);
+  var lower = new Array(closes.length).fill(null);
+  for (var i = n - 1; i < closes.length; i++) {
+    var mean = sma[i];
+    var sl   = closes.slice(i - n + 1, i + 1);
+    var vari = sl.reduce(function(a, v) { return a + (v - mean) * (v - mean); }, 0) / n;
+    var std  = Math.sqrt(vari);
+    upper[i] = mean + sigma * std;
+    lower[i] = mean - sigma * std;
+  }
+  return { upper: upper, mid: sma, lower: lower };
+}
+
+function calcRSI(closes, n) {
+  var out = new Array(closes.length).fill(null);
+  if (closes.length < n + 1) return out;
+  var gains = 0, losses = 0;
+  for (var i = 1; i <= n; i++) {
+    var d = closes[i] - closes[i - 1];
+    if (d >= 0) gains += d; else losses -= d;
+  }
+  var ag = gains / n, al = losses / n;
+  out[n] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
+  for (var i = n + 1; i < closes.length; i++) {
+    var d = closes[i] - closes[i - 1];
+    var g = d >= 0 ? d : 0;
+    var l = d < 0  ? -d : 0;
+    ag = (ag * (n - 1) + g) / n;
+    al = (al * (n - 1) + l) / n;
+    out[i] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
+  }
+  return out;
+}
+
+function calcEMA(closes, n) {
+  var out = new Array(closes.length).fill(null);
+  var k   = 2 / (n + 1);
+  var fi  = n - 1;
+  if (fi >= closes.length) return out;
+  var sum = 0;
+  for (var i = 0; i < n; i++) sum += closes[i];
+  out[fi] = sum / n;
+  for (var i = fi + 1; i < closes.length; i++) {
+    out[i] = closes[i] * k + out[i - 1] * (1 - k);
+  }
+  return out;
+}
+
+function calcMACD(closes) {
+  var ema12 = calcEMA(closes, 12);
+  var ema26 = calcEMA(closes, 26);
+  var macdLine = closes.map(function(_, i) {
+    return (ema12[i] !== null && ema26[i] !== null) ? ema12[i] - ema26[i] : null;
+  });
+  var signal = new Array(closes.length).fill(null);
+  var k9 = 2 / 10;
+  var vs = macdLine.findIndex(function(v) { return v !== null; });
+  if (vs === -1) return { macd: macdLine, signal: signal, hist: signal.slice() };
+  var e9s = vs + 8;
+  if (e9s >= closes.length) return { macd: macdLine, signal: signal, hist: signal.slice() };
+  var s9 = 0;
+  for (var i = vs; i <= e9s; i++) s9 += macdLine[i];
+  signal[e9s] = s9 / 9;
+  for (var i = e9s + 1; i < closes.length; i++) {
+    if (macdLine[i] !== null) signal[i] = macdLine[i] * k9 + signal[i - 1] * (1 - k9);
+  }
+  var hist = closes.map(function(_, i) {
+    return (macdLine[i] !== null && signal[i] !== null) ? macdLine[i] - signal[i] : null;
+  });
+  return { macd: macdLine, signal: signal, hist: hist };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Render chart
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderChart(data) {
+  var ohlcv = data.ohlcv;
+  if (!ohlcv || ohlcv.length === 0) return;
+
+  var dates  = ohlcv.map(function(d) { return d.date; });
+  var opens  = ohlcv.map(function(d) { return d.open; });
+  var highs  = ohlcv.map(function(d) { return d.high; });
+  var lows   = ohlcv.map(function(d) { return d.low; });
+  var closes = ohlcv.map(function(d) { return d.close; });
+  var vols   = ohlcv.map(function(d) { return d.volume; });
+
+  var traces = [];
+
+  // Main price trace
+  if (currentType === 'candle') {
+    traces.push({
+      type: 'candlestick',
+      x: dates, open: opens, high: highs, low: lows, close: closes,
+      name: data.ticker,
+      increasing: { line: { color: '#00C853', width: 1 }, fillcolor: '#00C853' },
+      decreasing: { line: { color: '#FF3D00', width: 1 }, fillcolor: '#FF3D00' },
+      yaxis: 'y', xaxis: 'x',
+      showlegend: false,
+      whiskerwidth: 0.3,
+    });
+  } else {
+    traces.push({
+      type: 'scatter', mode: 'lines',
+      x: dates, y: closes,
+      name: data.ticker,
+      line: { color: '#FF8C00', width: 1.5 },
+      yaxis: 'y', xaxis: 'x',
+      showlegend: false,
+    });
+  }
+
+  // PRU horizontal line
+  if (data.pru && data.pru > 0) {
+    traces.push({
+      type: 'scatter', mode: 'lines',
+      x: [dates[0], dates[dates.length - 1]],
+      y: [data.pru, data.pru],
+      name: 'PRU',
+      line: { color: '#FF8C00', width: 1, dash: 'dot' },
+      yaxis: 'y', xaxis: 'x',
+      showlegend: false,
+    });
+  }
+
+  // Overlay indicators (main yaxis)
+  if (activeIndicators['sma20']) {
+    var v = calcSMA(closes, 20);
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA20',
+                  line:{color:'#4DD0E1',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+  }
+  if (activeIndicators['sma50']) {
+    var v = calcSMA(closes, 50);
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA50',
+                  line:{color:'#FFD54F',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+  }
+  if (activeIndicators['sma200']) {
+    var v = calcSMA(closes, 200);
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA200',
+                  line:{color:'#EF9A9A',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+  }
+  if (activeIndicators['boll']) {
+    var b = calcBollinger(closes, 20, 2);
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.upper, name:'BB+',
+                  line:{color:'#CE93D8',width:1,dash:'dot'}, yaxis:'y', xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.mid, name:'BB mid',
+                  line:{color:'#CE93D8',width:0.8}, yaxis:'y', xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.lower, name:'BB-',
+                  line:{color:'#CE93D8',width:1,dash:'dot'}, yaxis:'y', xaxis:'x', showlegend:false });
+  }
+
+  // Transaction markers (buy / sell)
+  if (data.transactions && data.transactions.length > 0) {
+    var buys  = data.transactions.filter(function(t) { return t.type === 'buy'; });
+    var sells = data.transactions.filter(function(t) { return t.type === 'sell'; });
+    if (buys.length > 0) {
+      traces.push({
+        type: 'scatter', mode: 'markers',
+        x: buys.map(function(t) { return t.date; }),
+        y: buys.map(function(t) { return t.price; }),
+        name: 'Achat',
+        marker: { symbol: 'triangle-up', size: 9, color: '#00C853', line: { width: 0 } },
+        yaxis: 'y', xaxis: 'x', showlegend: false,
+      });
+    }
+    if (sells.length > 0) {
+      traces.push({
+        type: 'scatter', mode: 'markers',
+        x: sells.map(function(t) { return t.date; }),
+        y: sells.map(function(t) { return t.price; }),
+        name: 'Vente',
+        marker: { symbol: 'triangle-down', size: 9, color: '#FF3D00', line: { width: 0 } },
+        yaxis: 'y', xaxis: 'x', showlegend: false,
+      });
+    }
+  }
+
+  // Sub-chart domains (bottom-up)
+  var subH  = 0.16;
+  var gap   = 0.015;
+  var floor = 0.0;
+  var doms  = {};
+
+  if (activeIndicators['macd']) {
+    doms['macd']   = [floor, floor + subH]; floor += subH + gap;
+  }
+  if (activeIndicators['rsi']) {
+    doms['rsi']    = [floor, floor + subH]; floor += subH + gap;
+  }
+  if (activeIndicators['volume']) {
+    doms['volume'] = [floor, floor + subH]; floor += subH + gap;
+  }
+  var mainDom = [floor, 1.0];
+
+  var BASE_YAXIS = {
+    gridcolor: '#1a1a1a', color: '#777',
+    tickfont: { size: 9, color: '#777' },
+    showgrid: true, zeroline: false, automargin: true,
+  };
+
+  var layout = {
+    paper_bgcolor: '#0a0a0a',
+    plot_bgcolor:  '#0a0a0a',
+    margin: { t: 6, b: 28, l: 60, r: 12 },
+    xaxis: {
+      gridcolor: '#1a1a1a', color: '#777',
+      tickfont: { size: 9, color: '#777' },
+      rangeslider: { visible: false },
+      showgrid: true, zeroline: false, type: 'date',
+    },
+    yaxis: Object.assign({}, BASE_YAXIS, { domain: mainDom, fixedrange: false }),
+    showlegend: false,
+    font: { family: 'IBM Plex Mono', color: '#777', size: 9 },
+    hovermode: 'x unified',
+    hoverlabel: {
+      bgcolor: '#111', bordercolor: '#333',
+      font: { family: 'IBM Plex Mono', size: 10, color: '#e0e0e0' },
+    },
+  };
+
+  var yIdx = 2;
+
+  if (activeIndicators['volume']) {
+    var dom = doms['volume'];
+    var volColors = ohlcv.map(function(d, i) {
+      return i > 0 && d.close >= ohlcv[i - 1].close ? '#00C85360' : '#FF3D0060';
+    });
+    traces.push({
+      type: 'bar', x: dates, y: vols, name: 'Vol',
+      marker: { color: volColors },
+      yaxis: 'y' + yIdx, xaxis: 'x', showlegend: false,
+    });
+    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
+      domain: dom, showgrid: false,
+      title: { text: 'VOL', font: { size: 8, color: '#555' } },
+      tickformat: '.2s',
+    });
+    yIdx++;
+  }
+
+  if (activeIndicators['rsi']) {
+    var dom = doms['rsi'];
+    var rsi = calcRSI(closes, 14);
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:rsi, name:'RSI',
+                  line:{color:'#80DEEA',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines',
+                  x:[dates[0], dates[dates.length-1]], y:[70,70],
+                  line:{color:'#FF3D00',width:0.8,dash:'dot'}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines',
+                  x:[dates[0], dates[dates.length-1]], y:[30,30],
+                  line:{color:'#00C853',width:0.8,dash:'dot'}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
+      domain: dom, range: [0, 100], showgrid: false,
+      title: { text: 'RSI', font: { size: 8, color: '#555' } },
+    });
+    yIdx++;
+  }
+
+  if (activeIndicators['macd']) {
+    var dom = doms['macd'];
+    var mc  = calcMACD(closes);
+    var hc  = mc.hist.map(function(v) { return v !== null && v >= 0 ? '#00C85360' : '#FF3D0060'; });
+    traces.push({ type:'bar',     x:dates, y:mc.hist,   name:'MACD hist',
+                  marker:{color:hc}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:mc.macd,   name:'MACD',
+                  line:{color:'#A5D6A7',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    traces.push({ type:'scatter', mode:'lines', x:dates, y:mc.signal, name:'Signal',
+                  line:{color:'#EF9A9A',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
+    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
+      domain: dom, showgrid: false,
+      zeroline: true, zerolinecolor: '#333',
+      title: { text: 'MACD', font: { size: 8, color: '#555' } },
+    });
+    yIdx++;
+  }
+
+  var config = {
+    responsive: true,
+    displaylogo: false,
+    scrollZoom: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+  };
+
+  var chartEl = document.getElementById('analyse-chart');
+  Plotly.react(chartEl, traces, layout, config);
+}
+
+// ── Auto-load if ticker provided ───────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var t = '{{ initial_ticker }}';
+  if (t) loadChart(t, currentPeriod);
+});
+</script>
+{% endblock %}
