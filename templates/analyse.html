@@ -2,26 +2,23 @@
 {% block title %}F11 · ANALYSE — PortfolioTrack{% endblock %}
 
 {% block content %}
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-/* ── page-content override for full-height layout ─────────────────────────── */
 #page-content {
   padding: 0 !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
 }
-
-/* ── layout ──────────────────────────────────────────────────────────────── */
 .analyse-layout {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
-
-/* ── sidebar ─────────────────────────────────────────────────────────────── */
+/* ── sidebar ── */
 .analyse-sidebar {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
   overflow-y: auto;
   border-right: 1px solid #1a1a1a;
@@ -32,9 +29,7 @@
   scrollbar-color: #222 transparent;
 }
 .analyse-sidebar::-webkit-scrollbar { width: 3px; }
-.analyse-sidebar::-webkit-scrollbar-track { background: transparent; }
 .analyse-sidebar::-webkit-scrollbar-thumb { background: #222; }
-
 .sb-block {
   border-bottom: 1px solid #1a1a1a;
   padding: 10px 12px;
@@ -57,7 +52,6 @@
   font-size: 11px;
   padding: 6px 8px;
   outline: none;
-  letter-spacing: 0.3px;
 }
 .sb-input:focus { border-color: #FF8C00; }
 .sb-analyser-btn {
@@ -74,8 +68,6 @@
   cursor: pointer;
 }
 .sb-analyser-btn:hover { background: #ffa030; }
-
-/* ── period / type toggles ───────────────────────────────────────────────── */
 .sb-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -91,20 +83,11 @@
   cursor: pointer;
   flex: 1;
   text-align: center;
-  min-width: 28px;
-  letter-spacing: 0.3px;
+  min-width: 26px;
 }
-.sb-toggle.active {
-  background: #1a1200;
-  border-color: #FF8C00;
-  color: #FF8C00;
-}
-.sb-toggle:hover:not(.active) {
-  border-color: #444;
-  color: #ccc;
-}
-
-/* ── indicator checkboxes ────────────────────────────────────────────────── */
+.sb-toggle.active { background: #1a1200; border-color: #FF8C00; color: #FF8C00; }
+.sb-toggle:hover:not(.active) { border-color: #444; color: #ccc; }
+/* indicator rows */
 .indic-row {
   display: flex;
   align-items: center;
@@ -122,34 +105,39 @@
   flex-shrink: 0;
   position: relative;
 }
-.indic-box.checked {
-  border-color: #FF8C00;
-  background: #1a1200;
-}
+.indic-box.checked { border-color: #FF8C00; background: #1a1200; }
 .indic-box.checked::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 6px;
-  height: 6px;
+  top: 2px; left: 2px;
+  width: 6px; height: 6px;
   background: #FF8C00;
 }
-.indic-swatch {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 0;
-}
-.indic-name {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: #666;
-  flex: 1;
-}
+.indic-swatch { width: 8px; height: 8px; flex-shrink: 0; }
+.indic-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; flex: 1; }
 .indic-name.checked { color: #e0e0e0; }
-
-/* ── portfolio asset list ────────────────────────────────────────────────── */
+/* drawing tools */
+.draw-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.draw-btn {
+  background: #111;
+  border: 1px solid #222;
+  color: #666;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 5px 4px;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+.draw-btn:hover { border-color: #444; color: #ccc; }
+.draw-btn.active { background: #1a1200; border-color: #FF8C00; color: #FF8C00; }
+.draw-btn.clear-btn { grid-column: span 2; color: #555; }
+.draw-btn.clear-btn:hover { color: #FF3D00; border-color: #FF3D00; }
+/* portfolio list */
 .sb-assets-wrap {
   flex: 1;
   overflow-y: auto;
@@ -170,25 +158,9 @@
 }
 .sb-asset-item:hover { background: #111; border-left-color: #333; }
 .sb-asset-item.active { background: #111; border-left-color: #FF8C00; }
-.sb-asset-ticker {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: #FF8C00;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.sb-asset-name {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  color: #555;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-  flex: 1;
-}
-
-/* ── main chart zone ─────────────────────────────────────────────────────── */
+.sb-asset-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #FF8C00; font-weight: 600; flex-shrink: 0; }
+.sb-asset-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
+/* main zone */
 .analyse-main {
   flex: 1;
   min-width: 0;
@@ -197,64 +169,62 @@
   overflow: hidden;
   background: #0a0a0a;
 }
-
 .analyse-header {
-  padding: 7px 14px;
+  padding: 6px 14px;
   border-bottom: 1px solid #1a1a1a;
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
   flex-shrink: 0;
-  min-height: 36px;
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 34px;
 }
-.ah-ticker {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 15px;
-  font-weight: 700;
-  color: #FF8C00;
-  letter-spacing: 0.5px;
-}
-.ah-name {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: #666;
-}
-.ah-price {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: #e0e0e0;
-}
-.ah-curr {
-  font-size: 9px;
-  color: #555;
-}
-.ah-change {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-}
+.ah-row1 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ah-row2 { display: flex; align-items: center; gap: 10px; }
+.ah-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: #FF8C00; }
+.ah-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; }
+.ah-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #e0e0e0; }
+.ah-curr { font-size: 9px; color: #555; }
+.ah-change { font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
 .ah-change.pos { color: #00C853; }
 .ah-change.neg { color: #FF3D00; }
-.ah-pru {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  color: #555;
-  margin-left: auto;
-}
-.ah-placeholder {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: #444;
-}
-
-#analyse-chart {
+.ah-pru { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; margin-left: auto; }
+.ah-placeholder { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #444; }
+.ah-dim { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; margin-right: 2px; }
+.ah-val { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #aaa; margin-right: 6px; }
+/* charts area */
+#charts-area {
   flex: 1;
   min-height: 0;
-  width: 100%;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-
+#chart-main-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+#chart-main { width: 100%; height: 100%; }
+.chart-panel-wrap {
+  height: 120px;
+  flex-shrink: 0;
+  border-top: 1px solid #1a1a1a;
+  position: relative;
+  overflow: hidden;
+}
+.panel-label {
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #444;
+  z-index: 2;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+.panel-chart-el { width: 100%; height: 100%; }
 .analyse-loading {
   position: absolute;
   top: 50%;
@@ -265,41 +235,42 @@
   color: #444;
   letter-spacing: 1px;
   pointer-events: none;
+  z-index: 5;
 }
 </style>
 
 <div class="analyse-layout">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════ -->
+  <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
   <div class="analyse-sidebar">
 
     <!-- ACTIF -->
     <div class="sb-block">
       <div class="sb-label">Actif</div>
       <input class="sb-input" id="analyse-input" type="text"
-             placeholder="AAPL, IWDA.AS, BTC-USD…"
+             placeholder="AAPL, MC.PA, BTC-USD…"
              autocomplete="off" spellcheck="false"
              value="{{ initial_ticker }}">
       <button class="sb-analyser-btn" id="btn-analyser">ANALYSER</button>
     </div>
 
-    <!-- PÉRIODE -->
+    <!-- TIMEFRAME -->
     <div class="sb-block">
-      <div class="sb-label">Période</div>
-      <div class="sb-toggles" id="period-toggles">
-        <button class="sb-toggle" data-period="1s">1S</button>
-        <button class="sb-toggle" data-period="1m">1M</button>
-        <button class="sb-toggle" data-period="3m">3M</button>
-        <button class="sb-toggle" data-period="6m">6M</button>
-        <button class="sb-toggle active" data-period="1a">1A</button>
-        <button class="sb-toggle" data-period="2a">2A</button>
-        <button class="sb-toggle" data-period="5a">5A</button>
+      <div class="sb-label">Timeframe</div>
+      <div class="sb-toggles" id="timeframe-toggles">
+        <button class="sb-toggle" data-tf="5m">5m</button>
+        <button class="sb-toggle" data-tf="15m">15m</button>
+        <button class="sb-toggle" data-tf="1h">1h</button>
+        <button class="sb-toggle" data-tf="4h">4h</button>
+        <button class="sb-toggle active" data-tf="1D">1D</button>
+        <button class="sb-toggle" data-tf="1W">1W</button>
+        <button class="sb-toggle" data-tf="1M">1M</button>
       </div>
     </div>
 
     <!-- TYPE -->
     <div class="sb-block">
-      <div class="sb-label">Type de graphique</div>
+      <div class="sb-label">Type</div>
       <div class="sb-toggles" id="type-toggles">
         <button class="sb-toggle active" data-chart-type="candle">CHANDELIERS</button>
         <button class="sb-toggle" data-chart-type="line">LIGNE</button>
@@ -310,6 +281,18 @@
     <div class="sb-block">
       <div class="sb-label">Indicateurs</div>
       <div id="indicators-list"></div>
+    </div>
+
+    <!-- OUTILS DE DESSIN -->
+    <div class="sb-block">
+      <div class="sb-label">Outils de dessin</div>
+      <div class="draw-grid">
+        <button class="draw-btn" data-tool="trend">✎ Tendance</button>
+        <button class="draw-btn" data-tool="hline">⟷ Horizontal</button>
+        <button class="draw-btn" data-tool="rect">◱ Rectangle</button>
+        <button class="draw-btn" data-tool="channel">↗ Canal</button>
+        <button class="draw-btn clear-btn" data-tool="clear">⌫ Tout effacer</button>
+      </div>
     </div>
 
     <!-- MON PORTEFEUILLE -->
@@ -333,17 +316,18 @@
 
   </div><!-- /sidebar -->
 
-  <!-- ══ MAIN ═════════════════════════════════════════════════════════════ -->
+  <!-- ═══ MAIN ══════════════════════════════════════════════════════════ -->
   <div class="analyse-main">
 
-    <!-- HEADER -->
     <div class="analyse-header" id="analyse-header">
       <span class="ah-placeholder">Entrez un ticker ou choisissez un actif dans la sidebar →</span>
     </div>
 
-    <!-- CHART -->
-    <div id="analyse-chart">
-      <div class="analyse-loading" id="chart-loading" style="display:none;">CHARGEMENT…</div>
+    <div id="charts-area">
+      <div id="chart-main-wrap">
+        <div id="chart-main"></div>
+        <div class="analyse-loading" id="chart-loading" style="display:none;">CHARGEMENT…</div>
+      </div>
     </div>
 
   </div><!-- /main -->
@@ -351,162 +335,76 @@
 </div><!-- /layout -->
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
 var PORTFOLIO_TICKERS = {{ portfolio_tickers | tojson }};
-var currentTicker  = '';
-var currentData    = null;
-var currentPeriod  = '1a';
-var currentType    = 'candle';
-var activeIndicators = {};
+var currentTicker    = '';
+var currentData      = null;
+var currentTimeframe = '1D';
+var currentType      = 'candle';
+var activeIndicators = { mm20:false, mm50:false, mm200:false, boll:false, volume:false, rsi:false, macd:false };
 
+var mainChart        = null;
+var mainSeries       = null;
+var overlaySeriesMap = {};
+var panelCharts      = {};
+var _syncHandlers    = [];
+var _priceLineStore  = []; // {pl, series} for drawings
+
+var activeTool        = null;
+var drawingInProgress = null;
+var drawings          = [];
+var overlayCanvas     = null;
+var overlayCtx        = null;
+var _hoverPt          = null;
+var _ohlcvEl          = null;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INDICATOR META
+// ═══════════════════════════════════════════════════════════════════════════
 var INDICATORS = [
-  { id: 'sma20',  label: 'SMA 20',          color: '#4DD0E1' },
-  { id: 'sma50',  label: 'SMA 50',          color: '#FFD54F' },
-  { id: 'sma200', label: 'SMA 200',         color: '#EF9A9A' },
-  { id: 'boll',   label: 'Bollinger (20,2)', color: '#CE93D8' },
-  { id: 'volume', label: 'Volume',           color: '#607D8B' },
-  { id: 'rsi',    label: 'RSI 14',          color: '#80DEEA' },
-  { id: 'macd',   label: 'MACD (12,26,9)', color: '#A5D6A7' },
+  { id:'mm20',   label:'MM20',               color:'#FF8C00' },
+  { id:'mm50',   label:'MM50',               color:'#00BCD4' },
+  { id:'mm200',  label:'MM200',              color:'#9C27B0' },
+  { id:'boll',   label:'Bandes de Bollinger',color:'#888'    },
+  { id:'volume', label:'Volume',             color:'#607D8B' },
+  { id:'rsi',    label:'RSI 14',             color:'#80DEEA' },
+  { id:'macd',   label:'MACD',               color:'#A5D6A7' },
 ];
 
-// ── Build indicator checkboxes ────────────────────────────────────────────────
-(function() {
+(function buildIndicatorCheckboxes() {
   var el = document.getElementById('indicators-list');
   INDICATORS.forEach(function(ind) {
-    activeIndicators[ind.id] = false;
     var row = document.createElement('div');
     row.className = 'indic-row';
     row.id = 'irow-' + ind.id;
     row.innerHTML =
       '<div class="indic-box" id="ibox-' + ind.id + '"></div>' +
-      '<div class="indic-swatch" style="background:' + ind.color + ';opacity:0.6;"></div>' +
+      '<div class="indic-swatch" style="background:' + ind.color + ';opacity:0.7;"></div>' +
       '<span class="indic-name" id="iname-' + ind.id + '">' + ind.label + '</span>';
     row.addEventListener('click', function() { toggleIndicator(ind.id); });
     el.appendChild(row);
   });
 })();
 
-// ── Period toggles ─────────────────────────────────────────────────────────────
-document.querySelectorAll('#period-toggles .sb-toggle').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('#period-toggles .sb-toggle').forEach(function(b) {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
-    currentPeriod = btn.dataset.period;
-    if (currentTicker) loadChart(currentTicker, currentPeriod);
-  });
-});
-
-// ── Type toggles ───────────────────────────────────────────────────────────────
-document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(b) {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
-    currentType = btn.dataset.chartType;
-    if (currentData) renderChart(currentData);
-  });
-});
-
-// ── Analyser button ────────────────────────────────────────────────────────────
-document.getElementById('btn-analyser').addEventListener('click', function() {
-  analyserTicker();
-});
-document.getElementById('analyse-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') analyserTicker();
-});
-
-function analyserTicker() {
-  var ticker = document.getElementById('analyse-input').value.trim().toUpperCase();
-  if (!ticker) return;
-  loadChart(ticker, currentPeriod);
-}
-
-// ── Portfolio sidebar click ────────────────────────────────────────────────────
-function selectAsset(ticker) {
-  document.getElementById('analyse-input').value = ticker;
-  loadChart(ticker, currentPeriod);
-}
-
-// ── Indicator toggle ───────────────────────────────────────────────────────────
-function toggleIndicator(id) {
-  activeIndicators[id] = !activeIndicators[id];
-  var box  = document.getElementById('ibox-'  + id);
-  var name = document.getElementById('iname-' + id);
-  if (activeIndicators[id]) {
-    box.classList.add('checked');
-    name.classList.add('checked');
-  } else {
-    box.classList.remove('checked');
-    name.classList.remove('checked');
-  }
-  if (currentData) renderChart(currentData);
-}
-
-// ── Load chart data from API ───────────────────────────────────────────────────
-function loadChart(ticker, period) {
-  currentTicker = ticker;
-
-  document.querySelectorAll('.sb-asset-item').forEach(function(el) {
-    el.classList.toggle('active', el.dataset.ticker === ticker);
-  });
-
-  var header = document.getElementById('analyse-header');
-  header.innerHTML = '<span class="ah-placeholder">Chargement ' + ticker + '…</span>';
-
-  var loadEl = document.getElementById('chart-loading');
-  loadEl.style.display = 'block';
-
-  fetch('/api/analyse/chart-data?ticker=' + encodeURIComponent(ticker) + '&period=' + encodeURIComponent(period))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      loadEl.style.display = 'none';
-      if (data.error) {
-        header.innerHTML = '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR — ' + data.error + '</span>';
-        currentData = null;
-        return;
-      }
-      currentData = data;
-      updateHeader(data);
-      renderChart(data);
-    })
-    .catch(function() {
-      loadEl.style.display = 'none';
-      header.innerHTML = '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR RÉSEAU</span>';
-    });
-}
-
-// ── Update header bar ──────────────────────────────────────────────────────────
-function updateHeader(data) {
-  var header  = document.getElementById('analyse-header');
-  var sign    = data.change_pct >= 0 ? '+' : '';
-  var cls     = data.change_pct >= 0 ? 'pos' : 'neg';
-  var pruHtml = data.pru
-    ? '<span class="ah-pru">PRU&nbsp;' + data.pru.toFixed(4) + '&nbsp;' + (data.currency || '') + '</span>'
-    : '';
-  header.innerHTML =
-    '<span class="ah-ticker">' + data.ticker + '</span>' +
-    '<span class="ah-name">'   + (data.name || '') + '</span>' +
-    '<span class="ah-price">'  + (data.current_price || '—') +
-      ' <span class="ah-curr">' + (data.currency || '') + '</span></span>' +
-    '<span class="ah-change ' + cls + '">' +
-      sign + data.change_pct.toFixed(2) + '% (' + sign + data.change_abs.toFixed(4) + ')' +
-    '</span>' +
-    pruHtml;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Technical indicator calculations
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ═══════════════════════════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════════════════════════
 function calcSMA(closes, n) {
-  var out = new Array(closes.length).fill(null);
-  for (var i = n - 1; i < closes.length; i++) {
+  return closes.map(function(_, i) {
+    if (i < n - 1) return null;
     var s = 0;
     for (var j = i - n + 1; j <= i; j++) s += closes[j];
-    out[i] = s / n;
+    return s / n;
+  });
+}
+
+function calcEMA(arr, n) {
+  var k = 2 / (n + 1);
+  var out = [arr[0]];
+  for (var i = 1; i < arr.length; i++) {
+    out.push(arr[i] * k + out[i - 1] * (1 - k));
   }
   return out;
 }
@@ -518,12 +416,11 @@ function calcBollinger(closes, n, sigma) {
   for (var i = n - 1; i < closes.length; i++) {
     var mean = sma[i];
     var sl   = closes.slice(i - n + 1, i + 1);
-    var vari = sl.reduce(function(a, v) { return a + (v - mean) * (v - mean); }, 0) / n;
-    var std  = Math.sqrt(vari);
+    var std  = Math.sqrt(sl.reduce(function(a, v) { return a + (v - mean) * (v - mean); }, 0) / n);
     upper[i] = mean + sigma * std;
     lower[i] = mean - sigma * std;
   }
-  return { upper: upper, mid: sma, lower: lower };
+  return { upper:upper, mid:sma, lower:lower };
 }
 
 function calcRSI(closes, n) {
@@ -538,272 +435,726 @@ function calcRSI(closes, n) {
   out[n] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
   for (var i = n + 1; i < closes.length; i++) {
     var d = closes[i] - closes[i - 1];
-    var g = d >= 0 ? d : 0;
-    var l = d < 0  ? -d : 0;
-    ag = (ag * (n - 1) + g) / n;
-    al = (al * (n - 1) + l) / n;
+    ag = (ag * (n - 1) + Math.max(d,  0)) / n;
+    al = (al * (n - 1) + Math.max(-d, 0)) / n;
     out[i] = al === 0 ? 100 : 100 - (100 / (1 + ag / al));
   }
   return out;
 }
 
-function calcEMA(closes, n) {
-  var out = new Array(closes.length).fill(null);
-  var k   = 2 / (n + 1);
-  var fi  = n - 1;
-  if (fi >= closes.length) return out;
-  var sum = 0;
-  for (var i = 0; i < n; i++) sum += closes[i];
-  out[fi] = sum / n;
-  for (var i = fi + 1; i < closes.length; i++) {
-    out[i] = closes[i] * k + out[i - 1] * (1 - k);
-  }
-  return out;
-}
-
 function calcMACD(closes) {
-  var ema12 = calcEMA(closes, 12);
-  var ema26 = calcEMA(closes, 26);
-  var macdLine = closes.map(function(_, i) {
-    return (ema12[i] !== null && ema26[i] !== null) ? ema12[i] - ema26[i] : null;
-  });
-  var signal = new Array(closes.length).fill(null);
-  var k9 = 2 / 10;
-  var vs = macdLine.findIndex(function(v) { return v !== null; });
-  if (vs === -1) return { macd: macdLine, signal: signal, hist: signal.slice() };
-  var e9s = vs + 8;
-  if (e9s >= closes.length) return { macd: macdLine, signal: signal, hist: signal.slice() };
-  var s9 = 0;
-  for (var i = vs; i <= e9s; i++) s9 += macdLine[i];
-  signal[e9s] = s9 / 9;
-  for (var i = e9s + 1; i < closes.length; i++) {
-    if (macdLine[i] !== null) signal[i] = macdLine[i] * k9 + signal[i - 1] * (1 - k9);
-  }
-  var hist = closes.map(function(_, i) {
-    return (macdLine[i] !== null && signal[i] !== null) ? macdLine[i] - signal[i] : null;
-  });
-  return { macd: macdLine, signal: signal, hist: hist };
+  var ema12    = calcEMA(closes, 12);
+  var ema26    = calcEMA(closes, 26);
+  var macdRaw  = closes.map(function(_, i) { return ema12[i] - ema26[i]; });
+  var sigRaw   = calcEMA(macdRaw.slice(25), 9);
+  var signal   = new Array(25).fill(null).concat(sigRaw);
+  var macdLine = macdRaw.map(function(v, i) { return i < 25 ? null : v; });
+  var hist     = macdLine.map(function(v, i) { return v !== null && signal[i] !== null ? v - signal[i] : null; });
+  return { macd:macdLine, signal:signal, hist:hist };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Render chart
-// ─────────────────────────────────────────────────────────────────────────────
+function resample4h(ohlcv) {
+  var result = [], group = null, groupKey = null;
+  ohlcv.forEach(function(c) {
+    var k = Math.floor(c.time / (4 * 3600)) * (4 * 3600);
+    if (k !== groupKey) {
+      if (group) result.push(group);
+      group    = { time:k, open:c.open, high:c.high, low:c.low, close:c.close, volume:c.volume };
+      groupKey = k;
+    } else {
+      group.high   = Math.max(group.high, c.high);
+      group.low    = Math.min(group.low,  c.low);
+      group.close  = c.close;
+      group.volume += c.volume;
+    }
+  });
+  if (group) result.push(group);
+  return result;
+}
 
-function renderChart(data) {
-  var ohlcv = data.ohlcv;
-  if (!ohlcv || ohlcv.length === 0) return;
+function toSeriesData(times, values) {
+  return times.map(function(t, i) {
+    return values[i] !== null ? { time:t, value:values[i] } : null;
+  }).filter(Boolean);
+}
 
-  var dates  = ohlcv.map(function(d) { return d.date; });
-  var opens  = ohlcv.map(function(d) { return d.open; });
-  var highs  = ohlcv.map(function(d) { return d.high; });
-  var lows   = ohlcv.map(function(d) { return d.low; });
-  var closes = ohlcv.map(function(d) { return d.close; });
-  var vols   = ohlcv.map(function(d) { return d.volume; });
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART OPTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+function mainChartOpts() {
+  return {
+    autoSize: true,
+    layout: {
+      background: { type:'solid', color:'#0a0a0a' },
+      textColor: '#888',
+      fontFamily: "'IBM Plex Mono', monospace",
+      fontSize: 11,
+    },
+    grid: { vertLines:{ color:'#1a1a1a' }, horzLines:{ color:'#1a1a1a' } },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color:'#444', labelBackgroundColor:'#FF8C00' },
+      horzLine: { color:'#444', labelBackgroundColor:'#FF8C00' },
+    },
+    rightPriceScale: { borderColor:'#1a1a1a' },
+    timeScale: { borderColor:'#1a1a1a', timeVisible:true, secondsVisible:false },
+  };
+}
 
-  var traces = [];
+function panelChartOpts() {
+  return {
+    autoSize: true,
+    layout: {
+      background: { type:'solid', color:'#0a0a0a' },
+      textColor: '#555',
+      fontFamily: "'IBM Plex Mono', monospace",
+      fontSize: 9,
+    },
+    grid: { vertLines:{ color:'#111' }, horzLines:{ color:'#111' } },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color:'#333', labelBackgroundColor:'#222' },
+      horzLine: { color:'#333', labelBackgroundColor:'#222' },
+    },
+    rightPriceScale: { borderColor:'#1a1a1a' },
+    timeScale: { borderColor:'#1a1a1a', visible:false },
+    handleScroll: false,
+    handleScale:  false,
+  };
+}
 
-  // Main price trace
+// ═══════════════════════════════════════════════════════════════════════════
+// DESTROY
+// ═══════════════════════════════════════════════════════════════════════════
+function destroyAll() {
+  console.log('[analyse] destroyAll');
+  _syncHandlers.forEach(function(h) {
+    try { h.chart.timeScale().unsubscribeVisibleLogicalRangeChange(h.fn); } catch(e) {}
+  });
+  _syncHandlers = [];
+
+  if (mainChart) { try { mainChart.remove(); } catch(e) {} mainChart = null; }
+  mainSeries       = null;
+  overlaySeriesMap = {};
+  _priceLineStore  = [];
+
+  Object.values(panelCharts).forEach(function(pd) {
+    try { pd.chart.remove(); } catch(e) {}
+    try { pd.wrap.remove();  } catch(e) {}
+  });
+  panelCharts = {};
+
+  drawings          = [];
+  drawingInProgress = null;
+  activeTool        = null;
+  document.querySelectorAll('.draw-btn').forEach(function(b) { b.classList.remove('active'); });
+  var wrap = document.getElementById('chart-main-wrap');
+  if (wrap) wrap.style.cursor = '';
+
+  if (overlayCanvas) { try { overlayCanvas.remove(); } catch(e) {} overlayCanvas = null; overlayCtx = null; }
+  _ohlcvEl = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN SERIES
+// ═══════════════════════════════════════════════════════════════════════════
+function setMainSeries(ohlcv) {
+  var LS = LightweightCharts.LineStyle;
   if (currentType === 'candle') {
-    traces.push({
-      type: 'candlestick',
-      x: dates, open: opens, high: highs, low: lows, close: closes,
-      name: data.ticker,
-      increasing: { line: { color: '#00C853', width: 1 }, fillcolor: '#00C853' },
-      decreasing: { line: { color: '#FF3D00', width: 1 }, fillcolor: '#FF3D00' },
-      yaxis: 'y', xaxis: 'x',
-      showlegend: false,
-      whiskerwidth: 0.3,
+    mainSeries = mainChart.addCandlestickSeries({
+      upColor: '#00C853', downColor: '#FF3D00',
+      borderUpColor: '#00C853', borderDownColor: '#FF3D00',
+      wickUpColor:   '#00C853', wickDownColor:   '#FF3D00',
+      priceLineVisible: false,
     });
+    mainSeries.setData(ohlcv.map(function(d) {
+      return { time:d.time, open:d.open, high:d.high, low:d.low, close:d.close };
+    }));
   } else {
-    traces.push({
-      type: 'scatter', mode: 'lines',
-      x: dates, y: closes,
-      name: data.ticker,
-      line: { color: '#FF8C00', width: 1.5 },
-      yaxis: 'y', xaxis: 'x',
-      showlegend: false,
+    mainSeries = mainChart.addLineSeries({
+      color: '#FF8C00', lineWidth: 1.5, priceLineVisible: false,
     });
+    mainSeries.setData(ohlcv.map(function(d) { return { time:d.time, value:d.close }; }));
   }
+}
 
-  // PRU horizontal line
-  if (data.pru && data.pru > 0) {
-    traces.push({
-      type: 'scatter', mode: 'lines',
-      x: [dates[0], dates[dates.length - 1]],
-      y: [data.pru, data.pru],
-      name: 'PRU',
-      line: { color: '#FF8C00', width: 1, dash: 'dot' },
-      yaxis: 'y', xaxis: 'x',
-      showlegend: false,
-    });
-  }
+function setPRU(pru) {
+  if (!mainSeries || !pru || pru <= 0) return;
+  var pl = mainSeries.createPriceLine({
+    price: pru,
+    color: 'rgba(255,255,255,0.4)',
+    lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dashed,
+    axisLabelVisible: true,
+    title: 'PRU',
+  });
+  _priceLineStore.push({ pl:pl, series:mainSeries });
+}
 
-  // Overlay indicators (main yaxis)
-  if (activeIndicators['sma20']) {
-    var v = calcSMA(closes, 20);
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA20',
-                  line:{color:'#4DD0E1',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+function setMarkers(transactions) {
+  if (!mainSeries || !transactions || !transactions.length) return;
+  var markers = transactions.map(function(tx) {
+    return {
+      time:     tx.date,
+      position: tx.type === 'buy' ? 'belowBar' : 'aboveBar',
+      color:    tx.type === 'buy' ? '#00C853'  : '#FF3D00',
+      shape:    tx.type === 'buy' ? 'arrowUp'  : 'arrowDown',
+      text: '', size: 1,
+    };
+  }).sort(function(a, b) { return String(a.time).localeCompare(String(b.time)); });
+  try { mainSeries.setMarkers(markers); } catch(e) { console.log('[analyse] markers err', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// OVERLAY INDICATORS
+// ═══════════════════════════════════════════════════════════════════════════
+function addOverlayIndicators(times, closes) {
+  var LS = LightweightCharts.LineStyle;
+  var base = { lastValueVisible:false, priceLineVisible:false };
+
+  if (activeIndicators['mm20']) {
+    var s = mainChart.addLineSeries(Object.assign({}, base, { color:'#FF8C00', lineWidth:1 }));
+    s.setData(toSeriesData(times, calcSMA(closes, 20)));
+    overlaySeriesMap['mm20'] = s;
   }
-  if (activeIndicators['sma50']) {
-    var v = calcSMA(closes, 50);
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA50',
-                  line:{color:'#FFD54F',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+  if (activeIndicators['mm50']) {
+    var s = mainChart.addLineSeries(Object.assign({}, base, { color:'#00BCD4', lineWidth:1 }));
+    s.setData(toSeriesData(times, calcSMA(closes, 50)));
+    overlaySeriesMap['mm50'] = s;
   }
-  if (activeIndicators['sma200']) {
-    var v = calcSMA(closes, 200);
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:v, name:'SMA200',
-                  line:{color:'#EF9A9A',width:1}, yaxis:'y', xaxis:'x', showlegend:false });
+  if (activeIndicators['mm200']) {
+    var s = mainChart.addLineSeries(Object.assign({}, base, { color:'#9C27B0', lineWidth:1 }));
+    s.setData(toSeriesData(times, calcSMA(closes, 200)));
+    overlaySeriesMap['mm200'] = s;
   }
   if (activeIndicators['boll']) {
     var b = calcBollinger(closes, 20, 2);
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.upper, name:'BB+',
-                  line:{color:'#CE93D8',width:1,dash:'dot'}, yaxis:'y', xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.mid, name:'BB mid',
-                  line:{color:'#CE93D8',width:0.8}, yaxis:'y', xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:b.lower, name:'BB-',
-                  line:{color:'#CE93D8',width:1,dash:'dot'}, yaxis:'y', xaxis:'x', showlegend:false });
+    var opts = Object.assign({}, base, { color:'#888', lineWidth:1, lineStyle:LS.Dashed });
+    var su = mainChart.addLineSeries(opts);
+    su.setData(toSeriesData(times, b.upper));
+    var sm = mainChart.addLineSeries(Object.assign({}, opts, { color:'#555' }));
+    sm.setData(toSeriesData(times, b.mid));
+    var sl = mainChart.addLineSeries(opts);
+    sl.setData(toSeriesData(times, b.lower));
+    overlaySeriesMap['boll_upper'] = su;
+    overlaySeriesMap['boll_mid']   = sm;
+    overlaySeriesMap['boll_lower'] = sl;
   }
-
-  // Transaction markers (buy / sell)
-  if (data.transactions && data.transactions.length > 0) {
-    var buys  = data.transactions.filter(function(t) { return t.type === 'buy'; });
-    var sells = data.transactions.filter(function(t) { return t.type === 'sell'; });
-    if (buys.length > 0) {
-      traces.push({
-        type: 'scatter', mode: 'markers',
-        x: buys.map(function(t) { return t.date; }),
-        y: buys.map(function(t) { return t.price; }),
-        name: 'Achat',
-        marker: { symbol: 'triangle-up', size: 9, color: '#00C853', line: { width: 0 } },
-        yaxis: 'y', xaxis: 'x', showlegend: false,
-      });
-    }
-    if (sells.length > 0) {
-      traces.push({
-        type: 'scatter', mode: 'markers',
-        x: sells.map(function(t) { return t.date; }),
-        y: sells.map(function(t) { return t.price; }),
-        name: 'Vente',
-        marker: { symbol: 'triangle-down', size: 9, color: '#FF3D00', line: { width: 0 } },
-        yaxis: 'y', xaxis: 'x', showlegend: false,
-      });
-    }
-  }
-
-  // Sub-chart domains (bottom-up)
-  var subH  = 0.16;
-  var gap   = 0.015;
-  var floor = 0.0;
-  var doms  = {};
-
-  if (activeIndicators['macd']) {
-    doms['macd']   = [floor, floor + subH]; floor += subH + gap;
-  }
-  if (activeIndicators['rsi']) {
-    doms['rsi']    = [floor, floor + subH]; floor += subH + gap;
-  }
-  if (activeIndicators['volume']) {
-    doms['volume'] = [floor, floor + subH]; floor += subH + gap;
-  }
-  var mainDom = [floor, 1.0];
-
-  var BASE_YAXIS = {
-    gridcolor: '#1a1a1a', color: '#777',
-    tickfont: { size: 9, color: '#777' },
-    showgrid: true, zeroline: false, automargin: true,
-  };
-
-  var layout = {
-    paper_bgcolor: '#0a0a0a',
-    plot_bgcolor:  '#0a0a0a',
-    margin: { t: 6, b: 28, l: 60, r: 12 },
-    xaxis: {
-      gridcolor: '#1a1a1a', color: '#777',
-      tickfont: { size: 9, color: '#777' },
-      rangeslider: { visible: false },
-      showgrid: true, zeroline: false, type: 'date',
-    },
-    yaxis: Object.assign({}, BASE_YAXIS, { domain: mainDom, fixedrange: false }),
-    showlegend: false,
-    font: { family: 'IBM Plex Mono', color: '#777', size: 9 },
-    hovermode: 'x unified',
-    hoverlabel: {
-      bgcolor: '#111', bordercolor: '#333',
-      font: { family: 'IBM Plex Mono', size: 10, color: '#e0e0e0' },
-    },
-  };
-
-  var yIdx = 2;
-
-  if (activeIndicators['volume']) {
-    var dom = doms['volume'];
-    var volColors = ohlcv.map(function(d, i) {
-      return i > 0 && d.close >= ohlcv[i - 1].close ? '#00C85360' : '#FF3D0060';
-    });
-    traces.push({
-      type: 'bar', x: dates, y: vols, name: 'Vol',
-      marker: { color: volColors },
-      yaxis: 'y' + yIdx, xaxis: 'x', showlegend: false,
-    });
-    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
-      domain: dom, showgrid: false,
-      title: { text: 'VOL', font: { size: 8, color: '#555' } },
-      tickformat: '.2s',
-    });
-    yIdx++;
-  }
-
-  if (activeIndicators['rsi']) {
-    var dom = doms['rsi'];
-    var rsi = calcRSI(closes, 14);
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:rsi, name:'RSI',
-                  line:{color:'#80DEEA',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines',
-                  x:[dates[0], dates[dates.length-1]], y:[70,70],
-                  line:{color:'#FF3D00',width:0.8,dash:'dot'}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines',
-                  x:[dates[0], dates[dates.length-1]], y:[30,30],
-                  line:{color:'#00C853',width:0.8,dash:'dot'}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
-      domain: dom, range: [0, 100], showgrid: false,
-      title: { text: 'RSI', font: { size: 8, color: '#555' } },
-    });
-    yIdx++;
-  }
-
-  if (activeIndicators['macd']) {
-    var dom = doms['macd'];
-    var mc  = calcMACD(closes);
-    var hc  = mc.hist.map(function(v) { return v !== null && v >= 0 ? '#00C85360' : '#FF3D0060'; });
-    traces.push({ type:'bar',     x:dates, y:mc.hist,   name:'MACD hist',
-                  marker:{color:hc}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:mc.macd,   name:'MACD',
-                  line:{color:'#A5D6A7',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    traces.push({ type:'scatter', mode:'lines', x:dates, y:mc.signal, name:'Signal',
-                  line:{color:'#EF9A9A',width:1.5}, yaxis:'y'+yIdx, xaxis:'x', showlegend:false });
-    layout['yaxis' + yIdx] = Object.assign({}, BASE_YAXIS, {
-      domain: dom, showgrid: false,
-      zeroline: true, zerolinecolor: '#333',
-      title: { text: 'MACD', font: { size: 8, color: '#555' } },
-    });
-    yIdx++;
-  }
-
-  var config = {
-    responsive: true,
-    displaylogo: false,
-    scrollZoom: true,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
-  };
-
-  var chartEl = document.getElementById('analyse-chart');
-  Plotly.react(chartEl, traces, layout, config);
 }
 
-// ── Auto-load if ticker provided ───────────────────────────────────────────────
+function removeOverlayIndicators() {
+  ['mm20','mm50','mm200','boll_upper','boll_mid','boll_lower'].forEach(function(k) {
+    if (overlaySeriesMap[k]) {
+      try { mainChart.removeSeries(overlaySeriesMap[k]); } catch(e) {}
+      delete overlaySeriesMap[k];
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANELS
+// ═══════════════════════════════════════════════════════════════════════════
+function createPanelWrap(id, label) {
+  var wrap = document.createElement('div');
+  wrap.id = id;
+  wrap.className = 'chart-panel-wrap';
+  var lbl = document.createElement('div');
+  lbl.className = 'panel-label';
+  lbl.textContent = label;
+  var el = document.createElement('div');
+  el.className = 'panel-chart-el';
+  wrap.appendChild(lbl);
+  wrap.appendChild(el);
+  document.getElementById('charts-area').appendChild(wrap);
+  return wrap;
+}
+
+function addVolumePanel(ohlcv) {
+  console.log('[analyse] addVolumePanel');
+  if (panelCharts['volume']) return;
+  var wrap = createPanelWrap('panel-volume', 'VOLUME');
+  var el   = wrap.querySelector('.panel-chart-el');
+  var pc   = LightweightCharts.createChart(el, panelChartOpts());
+  var vs   = pc.addHistogramSeries({ lastValueVisible:false, priceLineVisible:false });
+  vs.priceScale().applyOptions({ scaleMargins:{ top:0.1, bottom:0 } });
+  vs.setData(ohlcv.map(function(d, i) {
+    return { time:d.time, value:d.volume,
+             color: i > 0 && d.close >= ohlcv[i-1].close ? '#00C85355' : '#FF3D0055' };
+  }));
+  panelCharts['volume'] = { chart:pc, series:vs, wrap:wrap };
+}
+
+function addRSIPanel(times, closes) {
+  console.log('[analyse] addRSIPanel');
+  if (panelCharts['rsi']) return;
+  var wrap = createPanelWrap('panel-rsi', 'RSI 14');
+  var el   = wrap.querySelector('.panel-chart-el');
+  var pc   = LightweightCharts.createChart(el, panelChartOpts());
+  var rs   = pc.addLineSeries({ color:'#80DEEA', lineWidth:1.5, lastValueVisible:true, priceLineVisible:false });
+  rs.setData(toSeriesData(times, calcRSI(closes, 14)));
+  rs.createPriceLine({ price:70, color:'#FF3D00', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, axisLabelVisible:true });
+  rs.createPriceLine({ price:30, color:'#00C853', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, axisLabelVisible:true });
+  panelCharts['rsi'] = { chart:pc, series:rs, wrap:wrap };
+}
+
+function addMACDPanel(times, closes) {
+  console.log('[analyse] addMACDPanel');
+  if (panelCharts['macd']) return;
+  var wrap = createPanelWrap('panel-macd', 'MACD');
+  var el   = wrap.querySelector('.panel-chart-el');
+  var pc   = LightweightCharts.createChart(el, panelChartOpts());
+  var mc   = calcMACD(closes);
+  var hs   = pc.addHistogramSeries({ lastValueVisible:false, priceLineVisible:false });
+  hs.setData(times.map(function(t, i) {
+    var v = mc.hist[i];
+    return v !== null ? { time:t, value:v, color: v >= 0 ? '#00C85355' : '#FF3D0055' } : null;
+  }).filter(Boolean));
+  var ms = pc.addLineSeries({ color:'#FF8C00', lineWidth:1.5, lastValueVisible:false, priceLineVisible:false });
+  ms.setData(toSeriesData(times, mc.macd));
+  var ss = pc.addLineSeries({ color:'#00BCD4', lineWidth:1.5, lastValueVisible:false, priceLineVisible:false });
+  ss.setData(toSeriesData(times, mc.signal));
+  panelCharts['macd'] = { chart:pc, series:hs, wrap:wrap };
+}
+
+function removePanel(id) {
+  var pd = panelCharts[id];
+  if (!pd) return;
+  try { pd.chart.remove(); } catch(e) {}
+  pd.wrap.remove();
+  delete panelCharts[id];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TIME-SCALE SYNC
+// ═══════════════════════════════════════════════════════════════════════════
+function setupSync() {
+  _syncHandlers.forEach(function(h) {
+    try { h.chart.timeScale().unsubscribeVisibleLogicalRangeChange(h.fn); } catch(e) {}
+  });
+  _syncHandlers = [];
+
+  var all = [mainChart].concat(
+    Object.values(panelCharts).map(function(pd) { return pd.chart; })
+  ).filter(Boolean);
+
+  console.log('[analyse] setupSync charts:', all.length);
+
+  all.forEach(function(src) {
+    var fn = function(range) {
+      if (!range) return;
+      all.forEach(function(dst) {
+        if (dst === src) return;
+        try {
+          var cur = dst.timeScale().getVisibleLogicalRange();
+          if (cur && Math.abs(cur.from - range.from) < 0.001 && Math.abs(cur.to - range.to) < 0.001) return;
+          dst.timeScale().setVisibleLogicalRange(range);
+        } catch(e) {}
+      });
+    };
+    src.timeScale().subscribeVisibleLogicalRangeChange(fn);
+    _syncHandlers.push({ chart:src, fn:fn });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CROSSHAIR → OHLCV DISPLAY
+// ═══════════════════════════════════════════════════════════════════════════
+function setupCrosshairHover() {
+  if (!mainChart || !mainSeries) return;
+  mainChart.subscribeCrosshairMove(function(param) {
+    redrawOverlay(_hoverPt);
+    _ohlcvEl = _ohlcvEl || document.getElementById('ah-ohlcv');
+    if (!_ohlcvEl) return;
+    if (!param.time || !param.seriesData) { _ohlcvEl.innerHTML = ''; return; }
+    var bar = param.seriesData.get(mainSeries);
+    if (!bar) { _ohlcvEl.innerHTML = ''; return; }
+    var o = bar.open  !== undefined ? bar.open  : bar.value;
+    var h = bar.high  !== undefined ? bar.high  : bar.value;
+    var l = bar.low   !== undefined ? bar.low   : bar.value;
+    var c = bar.close !== undefined ? bar.close : bar.value;
+    _ohlcvEl.innerHTML =
+      '<span class="ah-dim">O</span><span class="ah-val">' + fmtP(o) + '</span>' +
+      '<span class="ah-dim">H</span><span class="ah-val">' + fmtP(h) + '</span>' +
+      '<span class="ah-dim">L</span><span class="ah-val">' + fmtP(l) + '</span>' +
+      '<span class="ah-dim">C</span><span class="ah-val">' + fmtP(c) + '</span>';
+  });
+}
+
+function fmtP(v) {
+  if (v == null) return '—';
+  var n = parseFloat(v);
+  return n >= 100 ? n.toFixed(2) : n.toFixed(4);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HEADER
+// ═══════════════════════════════════════════════════════════════════════════
+function updateHeader(data) {
+  var sign = data.change_pct >= 0 ? '+' : '';
+  var cls  = data.change_pct >= 0 ? 'pos' : 'neg';
+  var pru  = data.pru
+    ? '<span class="ah-pru">PRU&nbsp;' + data.pru.toFixed(4) + '&nbsp;' + (data.currency||'') + '</span>'
+    : '';
+  document.getElementById('analyse-header').innerHTML =
+    '<div class="ah-row1">' +
+      '<span class="ah-ticker">' + data.ticker + '</span>' +
+      '<span class="ah-name">' + (data.name||'') + '</span>' +
+      '<span class="ah-price">' + (data.current_price||'—') +
+        ' <span class="ah-curr">' + (data.currency||'') + '</span></span>' +
+      '<span class="ah-change ' + cls + '">' +
+        sign + data.change_pct.toFixed(2) + '% (' + sign + data.change_abs.toFixed(4) + ')' +
+      '</span>' + pru +
+    '</div>' +
+    '<div class="ah-row2" id="ah-ohlcv"></div>';
+  _ohlcvEl = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DRAWING TOOLS
+// ═══════════════════════════════════════════════════════════════════════════
+function initOverlay() {
+  var wrap = document.getElementById('chart-main-wrap');
+  if (overlayCanvas) try { overlayCanvas.remove(); } catch(e) {}
+  overlayCanvas = document.createElement('canvas');
+  overlayCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+  wrap.appendChild(overlayCanvas);
+  overlayCtx = overlayCanvas.getContext('2d');
+
+  function resize() {
+    var w = wrap.offsetWidth, h = wrap.offsetHeight;
+    if (w && h) { overlayCanvas.width = w; overlayCanvas.height = h; redrawOverlay(null); }
+  }
+  new ResizeObserver(resize).observe(wrap);
+  resize();
+
+  if (mainChart) {
+    mainChart.timeScale().subscribeVisibleLogicalRangeChange(function() { redrawOverlay(null); });
+  }
+  wrap.addEventListener('mousedown', onOverlayMousedown);
+  wrap.addEventListener('mousemove', onOverlayMousemove);
+}
+
+function setActiveTool(tool) {
+  if (tool === activeTool) { activeTool = null; }
+  else { activeTool = tool; }
+  drawingInProgress = null;
+  _hoverPt = null;
+  document.querySelectorAll('.draw-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tool === activeTool);
+  });
+  var wrap = document.getElementById('chart-main-wrap');
+  if (wrap) wrap.style.cursor = (activeTool && activeTool !== 'clear') ? 'crosshair' : '';
+  console.log('[analyse] activeTool=', activeTool);
+}
+
+function getCoords(e) {
+  var wrap = document.getElementById('chart-main-wrap');
+  if (!wrap || !mainChart || !mainSeries) return null;
+  var rect  = wrap.getBoundingClientRect();
+  var x     = e.clientX - rect.left;
+  var y     = e.clientY - rect.top;
+  var time  = mainChart.timeScale().coordinateToTime(x);
+  var price = mainSeries.coordinateToPrice(y);
+  if (time == null || price == null) return null;
+  return { x:x, y:y, time:time, price:price };
+}
+
+function onOverlayMousedown(e) {
+  if (!activeTool || activeTool === 'clear') return;
+  var co = getCoords(e);
+  if (!co) return;
+
+  if (activeTool === 'hline') {
+    var pl = mainSeries.createPriceLine({
+      price: co.price, color: '#FF8C00', lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: fmtP(co.price),
+    });
+    _priceLineStore.push({ pl:pl, series:mainSeries });
+    drawings.push({ type:'hline', price:co.price });
+    setActiveTool(null);
+    return;
+  }
+
+  if (!drawingInProgress) {
+    drawingInProgress = { type:activeTool, points:[{ time:co.time, price:co.price }] };
+  } else {
+    drawingInProgress.points.push({ time:co.time, price:co.price });
+    var needed = activeTool === 'channel' ? 3 : 2;
+    if (drawingInProgress.points.length >= needed) {
+      drawings.push(JSON.parse(JSON.stringify(drawingInProgress)));
+      drawingInProgress = null;
+      setActiveTool(null);
+      redrawOverlay(null);
+    }
+  }
+}
+
+function onOverlayMousemove(e) {
+  if (!activeTool || activeTool === 'clear' || !drawingInProgress) return;
+  var wrap = document.getElementById('chart-main-wrap');
+  var rect = wrap.getBoundingClientRect();
+  _hoverPt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  redrawOverlay(_hoverPt);
+}
+
+function clearDrawings() {
+  drawings.forEach(function(d) {
+    if (d.type === 'hline' && d.pl && mainSeries) {
+      try { mainSeries.removePriceLine(d.pl); } catch(ee) {}
+    }
+  });
+  _priceLineStore.forEach(function(item) {
+    try { item.series.removePriceLine(item.pl); } catch(ee) {}
+  });
+  drawings = [];
+  _priceLineStore = [];
+  drawingInProgress = null;
+  redrawOverlay(null);
+  setActiveTool(null);
+}
+
+function redrawOverlay(hoverPt) {
+  if (!overlayCanvas || !overlayCtx || !mainChart || !mainSeries) return;
+  var ctx = overlayCtx;
+  ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  function toPx(time, price) {
+    var x = mainChart.timeScale().timeToCoordinate(time);
+    var y = mainSeries.priceToCoordinate(price);
+    return (x == null || y == null) ? null : { x:x, y:y };
+  }
+
+  drawings.filter(function(d) { return d.type !== 'hline'; }).forEach(function(d) {
+    drawShape(ctx, d, '#FF8C00', toPx);
+  });
+
+  if (drawingInProgress && hoverPt) {
+    var hTime  = mainChart.timeScale().coordinateToTime(hoverPt.x);
+    var hPrice = mainSeries.coordinateToPrice(hoverPt.y);
+    if (hTime != null && hPrice != null) {
+      var preview = { type:drawingInProgress.type,
+                      points: drawingInProgress.points.concat([{ time:hTime, price:hPrice }]) };
+      drawShape(ctx, preview, 'rgba(255,140,0,0.45)', toPx);
+    }
+  }
+}
+
+function drawShape(ctx, shape, color, toPx) {
+  if (!shape.points || shape.points.length < 2) return;
+  var pts = shape.points.map(function(p) { return toPx(p.time, p.price); }).filter(Boolean);
+  if (pts.length < 2) return;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 1.5;
+  ctx.setLineDash([]);
+
+  if (shape.type === 'trend') {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.stroke();
+    pts.slice(0, 2).forEach(function(p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+
+  } else if (shape.type === 'rect') {
+    var x1 = pts[0].x, y1 = pts[0].y, x2 = pts[1].x, y2 = pts[1].y;
+    var rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+    var rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.fillStyle = 'rgba(255,140,0,0.05)';
+    ctx.fillRect(rx, ry, rw, rh);
+
+  } else if (shape.type === 'channel') {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.stroke();
+    if (pts.length >= 3) {
+      var dx  = pts[1].x - pts[0].x;
+      var dy  = pts[1].y - pts[0].y;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx  = -dy / len, ny = dx / len;
+      var perp = (pts[2].y - pts[0].y) * (dx / len) - (pts[2].x - pts[0].x) * (dy / len);
+      var ox = nx * perp, oy = ny * perp;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x + ox, pts[0].y + oy);
+      ctx.lineTo(pts[1].x + ox, pts[1].y + oy);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,140,0,0.04)';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      ctx.lineTo(pts[1].x, pts[1].y);
+      ctx.lineTo(pts[1].x + ox, pts[1].y + oy);
+      ctx.lineTo(pts[0].x + ox, pts[0].y + oy);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER CHART
+// ═══════════════════════════════════════════════════════════════════════════
+function renderChart(data) {
+  console.log('[analyse] renderChart', data.ticker, data.timeframe, data.ohlcv.length, 'bars');
+  destroyAll();
+
+  var ohlcv = data.ohlcv;
+  if (data.timeframe === '4h') { ohlcv = resample4h(ohlcv); console.log('[analyse] 4h resampled:', ohlcv.length); }
+  if (!ohlcv.length) { console.log('[analyse] no data after resample'); return; }
+
+  var closes = ohlcv.map(function(d) { return d.close; });
+  var times  = ohlcv.map(function(d) { return d.time; });
+
+  mainChart = LightweightCharts.createChart(document.getElementById('chart-main'), mainChartOpts());
+  setMainSeries(ohlcv);
+  setPRU(data.pru);
+  setMarkers(data.transactions);
+  addOverlayIndicators(times, closes);
+
+  if (activeIndicators['volume']) addVolumePanel(ohlcv);
+  if (activeIndicators['rsi'])    addRSIPanel(times, closes);
+  if (activeIndicators['macd'])   addMACDPanel(times, closes);
+
+  mainChart.timeScale().fitContent();
+  setupSync();
+  setupCrosshairHover();
+  initOverlay();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TOGGLE INDICATOR
+// ═══════════════════════════════════════════════════════════════════════════
+function toggleIndicator(id) {
+  activeIndicators[id] = !activeIndicators[id];
+  var box  = document.getElementById('ibox-'  + id);
+  var name = document.getElementById('iname-' + id);
+  if (activeIndicators[id]) { box.classList.add('checked'); name.classList.add('checked'); }
+  else { box.classList.remove('checked'); name.classList.remove('checked'); }
+
+  if (!currentData || !mainChart) return;
+
+  var ohlcv = currentData.ohlcv;
+  if (currentData.timeframe === '4h') ohlcv = resample4h(ohlcv);
+  var closes = ohlcv.map(function(d) { return d.close; });
+  var times  = ohlcv.map(function(d) { return d.time; });
+
+  if (['mm20','mm50','mm200','boll'].indexOf(id) >= 0) {
+    removeOverlayIndicators();
+    addOverlayIndicators(times, closes);
+    return;
+  }
+
+  if (id === 'volume') {
+    if (activeIndicators['volume']) { addVolumePanel(ohlcv); setupSync(); }
+    else { removePanel('volume'); }
+  }
+  if (id === 'rsi') {
+    if (activeIndicators['rsi']) { addRSIPanel(times, closes); setupSync(); }
+    else { removePanel('rsi'); }
+  }
+  if (id === 'macd') {
+    if (activeIndicators['macd']) { addMACDPanel(times, closes); setupSync(); }
+    else { removePanel('macd'); }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOAD (FETCH)
+// ═══════════════════════════════════════════════════════════════════════════
+function loadChart(ticker, timeframe) {
+  currentTicker    = ticker;
+  currentTimeframe = timeframe;
+  console.log('[analyse] loadChart', ticker, timeframe);
+
+  document.querySelectorAll('.sb-asset-item').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.ticker === ticker);
+  });
+
+  document.getElementById('analyse-header').innerHTML =
+    '<span class="ah-placeholder">Chargement ' + ticker + '…</span>';
+  _ohlcvEl = null;
+
+  var loadEl = document.getElementById('chart-loading');
+  loadEl.style.display = 'block';
+
+  fetch('/api/analyse/chart-data?ticker=' + encodeURIComponent(ticker) + '&timeframe=' + encodeURIComponent(timeframe))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loadEl.style.display = 'none';
+      if (data.error) {
+        document.getElementById('analyse-header').innerHTML =
+          '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR — ' + data.error + '</span>';
+        currentData = null;
+        return;
+      }
+      currentData = data;
+      updateHeader(data);
+      renderChart(data);
+    })
+    .catch(function(err) {
+      console.log('[analyse] fetch error:', err);
+      loadEl.style.display = 'none';
+      document.getElementById('analyse-header').innerHTML =
+        '<span class="ah-placeholder" style="color:#FF3D00;">ERREUR RÉSEAU</span>';
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UI HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════
+function analyserTicker() {
+  var t = document.getElementById('analyse-input').value.trim().toUpperCase();
+  if (t) loadChart(t, currentTimeframe);
+}
+
+function selectAsset(ticker) {
+  document.getElementById('analyse-input').value = ticker;
+  loadChart(ticker, currentTimeframe);
+}
+
+document.getElementById('btn-analyser').addEventListener('click', analyserTicker);
+document.getElementById('analyse-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') analyserTicker();
+});
+
+document.querySelectorAll('#timeframe-toggles .sb-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#timeframe-toggles .sb-toggle').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentTimeframe = btn.dataset.tf;
+    if (currentTicker) loadChart(currentTicker, currentTimeframe);
+  });
+});
+
+document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#type-toggles .sb-toggle').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentType = btn.dataset.chartType;
+    if (currentData) renderChart(currentData);
+  });
+});
+
+document.querySelectorAll('.draw-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var tool = btn.dataset.tool;
+    if (tool === 'clear') { clearDrawings(); return; }
+    setActiveTool(tool);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTO-LOAD
+// ═══════════════════════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function() {
   var t = '{{ initial_ticker }}';
-  if (t) loadChart(t, currentPeriod);
+  if (t) loadChart(t, currentTimeframe);
 });
 </script>
 {% endblock %}

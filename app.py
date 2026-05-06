@@ -2755,24 +2755,28 @@ def analyse():
 @login_required
 def analyse_chart_data():
     import yfinance as _yf
+    import datetime as _dt
     from database import get_purchases_by_asset as _gpba, get_sales_by_asset as _gsba
 
-    ticker = request.args.get('ticker', '').strip().upper()
-    period = request.args.get('period', '1a').strip()
+    ticker    = request.args.get('ticker',    '').strip().upper()
+    timeframe = request.args.get('timeframe', '1D').strip()
 
     if not ticker:
         return jsonify({'error': 'Ticker manquant'}), 400
 
-    PERIOD_MAP = {
-        '1s': ('5d',  '15m'),
-        '1m': ('1mo', '1h'),
-        '3m': ('3mo', '1d'),
-        '6m': ('6mo', '1d'),
-        '1a': ('1y',  '1d'),
-        '2a': ('2y',  '1wk'),
-        '5a': ('5y',  '1wk'),
+    # timeframe → (yf_period, yf_interval, is_intraday)
+    TIMEFRAME_MAP = {
+        '5m':  ('5d',  '5m',  True),
+        '15m': ('60d', '15m', True),
+        '1h':  ('2y',  '1h',  True),
+        '4h':  ('2y',  '1h',  True),   # client resamples 1h→4h
+        '1D':  ('max', '1d',  False),
+        '1W':  ('max', '1wk', False),
+        '1M':  ('max', '1mo', False),
     }
-    yf_period, yf_interval = PERIOD_MAP.get(period, ('1y', '1d'))
+    yf_period, yf_interval, is_intraday = TIMEFRAME_MAP.get(timeframe, ('max', '1d', False))
+
+    print(f'[analyse_chart_data] ticker={ticker} timeframe={timeframe} yf={yf_period}/{yf_interval}')
 
     try:
         t    = _yf.Ticker(ticker)
@@ -2791,9 +2795,16 @@ def analyse_chart_data():
 
         ohlcv = []
         for idx, row in hist.iterrows():
-            ts = idx.strftime('%Y-%m-%dT%H:%M:%S') if hasattr(idx, 'strftime') else str(idx)
+            # LW Charts expects Unix seconds for intraday, "YYYY-MM-DD" for daily+
+            if is_intraday:
+                try:
+                    ts = int(idx.timestamp())
+                except Exception:
+                    ts = int(_dt.datetime.strptime(str(idx)[:19], '%Y-%m-%d %H:%M:%S').timestamp())
+            else:
+                ts = idx.strftime('%Y-%m-%d') if hasattr(idx, 'strftime') else str(idx)[:10]
             ohlcv.append({
-                'date':   ts,
+                'time':   ts,
                 'open':   round(float(row['Open']),   4),
                 'high':   round(float(row['High']),   4),
                 'low':    round(float(row['Low']),    4),
@@ -2806,7 +2817,7 @@ def analyse_chart_data():
         change_abs    = current_price - prev_close
         change_pct    = (change_abs / prev_close * 100) if prev_close else 0
 
-        # PRU + transactions from portfolio
+        # PRU + transactions
         pru          = None
         transactions = []
         summary      = get_portfolio_summary(current_user.id)
@@ -2826,6 +2837,7 @@ def analyse_chart_data():
                                     'type':  'buy',
                                     'date':  str(p['date'])[:10],
                                     'price': round(float(p['price_per_share']), 4),
+                                    'qty':   round(float(p.get('shares') or 0), 6),
                                 })
                         for s in _gsba(asset_id, current_user.id):
                             if s.get('date') and s.get('price_per_share'):
@@ -2833,10 +2845,12 @@ def analyse_chart_data():
                                     'type':  'sell',
                                     'date':  str(s['date'])[:10],
                                     'price': round(float(s['price_per_share']), 4),
+                                    'qty':   round(float(s.get('shares') or 0), 6),
                                 })
                     except Exception as _e:
                         print(f'[analyse_chart_data] tx error: {_e}')
 
+        print(f'[analyse_chart_data] {ticker} → {len(ohlcv)} bars, pru={pru}, tx={len(transactions)}')
         return jsonify({
             'ticker':        ticker,
             'name':          name,
@@ -2847,6 +2861,8 @@ def analyse_chart_data():
             'ohlcv':         ohlcv,
             'pru':           pru,
             'transactions':  transactions,
+            'timeframe':     timeframe,
+            'is_intraday':   is_intraday,
         })
     except Exception as e:
         print(f'[analyse_chart_data] error: {e}')
