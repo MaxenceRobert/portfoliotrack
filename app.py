@@ -2869,6 +2869,255 @@ def analyse_chart_data():
         return jsonify({'error': str(e)}), 500
 
 
+# ── F12 Valorisation ──────────────────────────────────────────────────────────
+@main_bp.route('/valorisation')
+@login_required
+def valorisation():
+    summary = get_portfolio_summary(current_user.id)
+    portfolio_tickers = []
+    seen = set()
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            tk = (a.get('ticker') or '').strip()
+            if tk and not a.get('fully_sold') and tk not in seen:
+                seen.add(tk)
+                portfolio_tickers.append({
+                    'ticker': tk,
+                    'name':   (a.get('name') or tk)[:28],
+                    'shares': round(float(a.get('shares_held') or 0), 6),
+                    'pru':    round(float(a.get('avg_price') or 0), 4),
+                    'value':  round(float(a.get('current_value') or 0), 2),
+                    'asset_type': a.get('asset_type', ''),
+                })
+    portfolio_tickers.sort(key=lambda x: x['ticker'])
+    total_value = sum(p['value'] for p in portfolio_tickers)
+    initial_ticker = request.args.get('ticker', '').strip().upper()
+    return render_template('valorisation.html',
+                           portfolio_tickers=portfolio_tickers,
+                           total_value=round(total_value, 2),
+                           initial_ticker=initial_ticker)
+
+
+@main_bp.route('/api/valorisation/data')
+@login_required
+def valorisation_data():
+    import yfinance as _yf
+    import threading as _th
+    import datetime as _dt
+
+    ticker = request.args.get('ticker', '').strip().upper()
+    if not ticker:
+        return jsonify({'error': 'Ticker manquant'}), 400
+
+    results = {}
+    errors  = []
+
+    def fetch_info():
+        try:
+            t = _yf.Ticker(ticker)
+            info = t.info or {}
+            results['info'] = info
+        except Exception as e:
+            errors.append(f'info: {e}')
+            results['info'] = {}
+
+    def fetch_financials():
+        try:
+            t = _yf.Ticker(ticker)
+            cf  = t.cashflow
+            bs  = t.balance_sheet
+            inc = t.income_stmt
+            results['cashflow']       = cf
+            results['balance_sheet']  = bs
+            results['income_stmt']    = inc
+        except Exception as e:
+            errors.append(f'financials: {e}')
+            results['cashflow']      = None
+            results['balance_sheet'] = None
+            results['income_stmt']   = None
+
+    def fetch_history():
+        try:
+            t    = _yf.Ticker(ticker)
+            hist = t.history(period='1y', interval='1d', auto_adjust=True)
+            results['history'] = hist
+        except Exception as e:
+            errors.append(f'history: {e}')
+            results['history'] = None
+
+    threads = [
+        _th.Thread(target=fetch_info),
+        _th.Thread(target=fetch_financials),
+        _th.Thread(target=fetch_history),
+    ]
+    for th in threads: th.start()
+    for th in threads: th.join(timeout=8)
+
+    info = results.get('info', {})
+    cf   = results.get('cashflow')
+    bs   = results.get('balance_sheet')
+    hist = results.get('history')
+
+    # ── FCF ───────────────────────────────────────────────────────────────────
+    fcf = None
+    try:
+        if cf is not None and not cf.empty:
+            ocf_row  = next((r for r in ['Operating Cash Flow', 'Total Cash From Operating Activities'] if r in cf.index), None)
+            capex_row = next((r for r in ['Capital Expenditure', 'Capital Expenditures'] if r in cf.index), None)
+            if ocf_row:
+                ocf   = float(cf.loc[ocf_row].iloc[0])
+                capex = float(cf.loc[capex_row].iloc[0]) if capex_row else 0
+                fcf   = ocf + capex  # capex is typically negative
+    except Exception:
+        pass
+
+    # ── Net debt ──────────────────────────────────────────────────────────────
+    net_debt = None
+    try:
+        if bs is not None and not bs.empty:
+            debt_row  = next((r for r in ['Total Debt', 'Long Term Debt'] if r in bs.index), None)
+            cash_row  = next((r for r in ['Cash And Cash Equivalents', 'Cash Cash Equivalents And Short Term Investments'] if r in bs.index), None)
+            if debt_row and cash_row:
+                net_debt = float(bs.loc[debt_row].iloc[0]) - float(bs.loc[cash_row].iloc[0])
+    except Exception:
+        pass
+
+    # ── EBITDA ────────────────────────────────────────────────────────────────
+    ebitda = info.get('ebitda') or None
+    try:
+        if ebitda is None and results.get('income_stmt') is not None:
+            inc = results['income_stmt']
+            if not inc.empty:
+                ebit_row = next((r for r in ['EBIT', 'Operating Income'] if r in inc.index), None)
+                da_row   = next((r for r in ['Depreciation And Amortization', 'Reconciled Depreciation'] if r in inc.index), None)
+                if ebit_row and da_row:
+                    ebitda = float(inc.loc[ebit_row].iloc[0]) + abs(float(inc.loc[da_row].iloc[0]))
+    except Exception:
+        pass
+
+    # ── Shares outstanding ────────────────────────────────────────────────────
+    shares_out = (info.get('sharesOutstanding') or info.get('impliedSharesOutstanding') or
+                  info.get('floatShares'))
+
+    # ── Current price & mkt cap ───────────────────────────────────────────────
+    current_price = info.get('currentPrice') or info.get('regularMarketPrice')
+    if current_price is None and hist is not None and not hist.empty:
+        current_price = float(hist['Close'].iloc[-1])
+    mkt_cap = info.get('marketCap')
+
+    # ── Historical growth (5yr EPS CAGR fallback → revenue) ──────────────────
+    revenue_growth = info.get('revenueGrowth')
+    earnings_growth = info.get('earningsGrowth') or info.get('earningsQuarterlyGrowth')
+
+    # ── Risk score from cache ─────────────────────────────────────────────────
+    risk_data = {}
+    try:
+        asset_type = info.get('quoteType', 'EQUITY').lower()
+        risk_data = get_risk_score(ticker, asset_type)
+    except Exception:
+        pass
+
+    payload = {
+        'ticker':          ticker,
+        'name':            (info.get('longName') or info.get('shortName') or ticker)[:50],
+        'currency':        info.get('currency', 'USD'),
+        'sector':          info.get('sector', ''),
+        'industry':        info.get('industry', ''),
+        'quote_type':      info.get('quoteType', 'EQUITY'),
+        'current_price':   round(float(current_price), 4) if current_price else None,
+        'mkt_cap':         int(mkt_cap) if mkt_cap else None,
+        'pe_ratio':        info.get('trailingPE') or info.get('forwardPE'),
+        'forward_pe':      info.get('forwardPE'),
+        'ev_ebitda':       info.get('enterpriseToEbitda'),
+        'ev':              info.get('enterpriseValue'),
+        'price_to_book':   info.get('priceToBook'),
+        'fcf':             round(fcf) if fcf else None,
+        'net_debt':        round(net_debt) if net_debt else None,
+        'shares_out':      int(shares_out) if shares_out else None,
+        'ebitda':          round(ebitda) if ebitda else None,
+        'beta':            info.get('beta'),
+        'revenue_growth':  round(revenue_growth * 100, 2) if revenue_growth else None,
+        'earnings_growth': round(earnings_growth * 100, 2) if earnings_growth else None,
+        'dividend_yield':  info.get('dividendYield'),
+        'risk_score':      risk_data.get('score'),
+        'volatility':      risk_data.get('volatilite'),
+        'sharpe':          risk_data.get('sharpe'),
+        'description':     (info.get('longBusinessSummary') or '')[:400],
+    }
+    return jsonify(payload)
+
+
+@main_bp.route('/api/valorisation/portfolio-context')
+@login_required
+def valorisation_portfolio_context():
+    import threading as _th
+
+    summary = get_portfolio_summary(current_user.id)
+    positions = []
+    seen = set()
+    total_value = 0.0
+
+    for assets_list in summary.get('by_type', {}).values():
+        for a in assets_list:
+            tk = (a.get('ticker') or '').strip()
+            if not tk or a.get('fully_sold') or tk in seen:
+                continue
+            seen.add(tk)
+            val = float(a.get('current_value') or 0)
+            total_value += val
+            positions.append({
+                'ticker':     tk,
+                'name':       (a.get('name') or tk)[:28],
+                'shares':     float(a.get('shares_held') or 0),
+                'pru':        float(a.get('avg_price') or 0),
+                'value':      val,
+                'asset_type': a.get('asset_type', ''),
+            })
+
+    # Guess country from ticker suffix
+    def guess_country(tk):
+        if '.' not in tk:
+            return 'US'
+        suffix = tk.rsplit('.', 1)[1].upper()
+        return {
+            'PA': 'FR', 'DE': 'DE', 'AS': 'NL', 'MI': 'IT', 'MC': 'ES',
+            'L':  'GB', 'SW': 'CH', 'ST': 'SE', 'CO': 'DK', 'HE': 'FI',
+            'TO': 'CA', 'AX': 'AU', 'HK': 'HK', 'T':  'JP', 'SS': 'CN',
+        }.get(suffix, 'OTHER')
+
+    # Fetch risk scores in parallel
+    risk_results = {}
+    def fetch_risk(tk, atype):
+        try:
+            risk_results[tk] = get_risk_score(tk, atype)
+        except Exception:
+            risk_results[tk] = {}
+
+    threads = [_th.Thread(target=fetch_risk, args=(p['ticker'], p['asset_type'])) for p in positions]
+    for th in threads: th.start()
+    for th in threads: th.join(timeout=6)
+
+    result = []
+    for p in positions:
+        risk = risk_results.get(p['ticker'], {})
+        weight = (p['value'] / total_value * 100) if total_value > 0 else 0
+        result.append({
+            **p,
+            'value':       round(p['value'], 2),
+            'weight_pct':  round(weight, 2),
+            'country':     guess_country(p['ticker']),
+            'beta':        risk.get('beta'),
+            'risk_score':  risk.get('score'),
+            'volatility':  risk.get('volatilite'),
+        })
+
+    result.sort(key=lambda x: x['value'], reverse=True)
+    return jsonify({
+        'positions':   result,
+        'total_value': round(total_value, 2),
+    })
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required

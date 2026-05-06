@@ -59,6 +59,7 @@
     ('F9', 'ALERTES',    '/alerts'),
     ('F10', 'LIENS',    '/links'),
     ('F11', 'ANALYSE',  '/analyse'),
+    ('F12', 'VALORIS.', '/valorisation'),
   ] -%}
   {% for key, label, path in _tabs %}
   <a href="{{ path }}"
@@ -149,6 +150,16 @@
         <rect x="17" y="9" width="4" height="9"/>
       </svg>
       <span>Analyse</span>
+    </a>
+    <a href="{{ url_for('main.valorisation') }}"
+       class="rail-icon{% if request.path == '/valorisation' %} active{% endif %}"
+       title="Valorisation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v5l3 3"/>
+        <path d="M7 12h2m6 0h2"/>
+      </svg>
+      <span>Valeur</span>
     </a>
     <div class="rail-spacer"></div>
     <a href="{{ url_for('main.settings') }}"
@@ -261,6 +272,7 @@
     'ALERTES': '/alerts', 'ALERTS': '/alerts', 'F9': '/alerts',
     'LIENS': '/links', 'LINKS': '/links', 'RESSOURCES': '/links', 'F10': '/links',
     'ANALYSE': '/analyse', 'ANALYSIS': '/analyse', 'F11': '/analyse',
+    'VALORISATION': '/valorisation', 'VALEUR': '/valorisation', 'DCF': '/valorisation', 'F12': '/valorisation',
     'SETTINGS': '/settings', 'CONFIG': '/settings', 'F0': '/settings',
     'IMPORT': '/import', 'EXPORT': '/export/csv',
     'ACHAT': '/purchases/add', 'VENTE': '/sales/add',

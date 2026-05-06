@@ -252,6 +252,12 @@
              autocomplete="off" spellcheck="false"
              value="{{ initial_ticker }}">
       <button class="sb-analyser-btn" id="btn-analyser">ANALYSER</button>
+      <a class="sb-analyser-btn" id="btn-valoriser"
+         href="/valorisation"
+         style="display:none;text-decoration:none;text-align:center;margin-top:3px;
+                background:#111;border:1px solid #FF8C00;color:#FF8C00;font-size:9px;">
+        VALORISER CET ACTIF →
+      </a>
     </div>
 
     <!-- TIMEFRAME -->
@@ -1071,6 +1077,12 @@ function loadChart(ticker, timeframe) {
   currentTicker    = ticker;
   currentTimeframe = timeframe;
   console.log('[analyse] loadChart', ticker, timeframe);
+
+  var vBtn = document.getElementById('btn-valoriser');
+  if (vBtn) {
+    vBtn.href = '/valorisation?ticker=' + encodeURIComponent(ticker);
+    vBtn.style.display = 'block';
+  }
 
   document.querySelectorAll('.sb-asset-item').forEach(function(el) {
     el.classList.toggle('active', el.dataset.ticker === ticker);

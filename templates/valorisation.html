@@ -1,0 +1,631 @@
+{% extends "base.html" %}
+{% block title %}F12 · VALORISATION — PortfolioTrack{% endblock %}
+
+{% block content %}
+<style>
+#page-content {
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.val-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+/* ── sidebar ── */
+.val-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid #1a1a1a;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #222 transparent;
+}
+.val-sidebar::-webkit-scrollbar { width: 3px; }
+.val-sidebar::-webkit-scrollbar-thumb { background: #222; }
+.vsb-block { border-bottom: 1px solid #1a1a1a; padding: 10px 12px; }
+.vsb-label {
+  font-size: 9px; color: #555; letter-spacing: 0.8px;
+  font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; margin-bottom: 8px;
+}
+.vsb-input {
+  width: 100%; box-sizing: border-box;
+  background: #111; border: 1px solid #222; color: #e0e0e0;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  padding: 6px 8px; outline: none;
+}
+.vsb-input:focus { border-color: #FF8C00; }
+.vsb-btn {
+  width: 100%; margin-top: 6px; background: #FF8C00; color: #000;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.5px; border: none; padding: 6px 0; cursor: pointer;
+}
+.vsb-btn:hover { background: #ffa030; }
+.vsb-asset {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 12px; cursor: pointer; border-left: 2px solid transparent; gap: 6px;
+}
+.vsb-asset:hover { background: #111; border-left-color: #333; }
+.vsb-asset.active { background: #111; border-left-color: #FF8C00; }
+.vsb-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #FF8C00; font-weight: 600; }
+.vsb-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
+.vsb-weight { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #444; flex-shrink: 0; }
+/* ── main content ── */
+.val-main {
+  flex: 1; min-width: 0; overflow-y: auto; background: #0a0a0a;
+  scrollbar-width: thin; scrollbar-color: #1a1a1a transparent;
+}
+.val-main::-webkit-scrollbar { width: 4px; }
+.val-main::-webkit-scrollbar-thumb { background: #1a1a1a; }
+/* header strip */
+.val-header {
+  padding: 10px 16px; border-bottom: 1px solid #1a1a1a;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 40px;
+}
+.vh-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: #FF8C00; }
+.vh-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; }
+.vh-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #e0e0e0; }
+.vh-tag { font-family: 'IBM Plex Mono', monospace; font-size: 8px; padding: 2px 5px; border: 1px solid #333; color: #555; letter-spacing: 0.5px; }
+.vh-placeholder { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #444; }
+/* section containers */
+.val-section { padding: 14px 16px; border-bottom: 1px solid #111; }
+.val-section-title {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555;
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
+  border-left: 2px solid #FF8C00; padding-left: 8px;
+}
+/* ── param grid ── */
+.dcf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.param-card {
+  background: #0d0d0d; border: 1px solid #1a1a1a; padding: 8px 10px;
+}
+.param-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #555; letter-spacing: 0.5px; margin-bottom: 4px; }
+.param-input {
+  width: 100%; box-sizing: border-box; background: #111; border: 1px solid #222;
+  color: #e0e0e0; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  padding: 4px 6px; outline: none;
+}
+.param-input:focus { border-color: #FF8C00; }
+.param-hint { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #333; margin-top: 3px; }
+/* ── results column ── */
+.dcf-results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.result-card {
+  background: #0d0d0d; border: 1px solid #1a1a1a; padding: 10px 12px;
+}
+.result-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #555; letter-spacing: 0.5px; margin-bottom: 6px; }
+.result-value { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; color: #e0e0e0; }
+.result-sub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; margin-top: 3px; }
+/* ── verdict ── */
+.verdict-block {
+  margin-top: 12px; padding: 12px 14px;
+  border: 1px solid #1a1a1a; background: #0d0d0d;
+  display: flex; align-items: center; gap: 14px;
+}
+.verdict-badge {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;
+  padding: 5px 10px; letter-spacing: 0.5px; flex-shrink: 0;
+}
+.verdict-badge.sous-evalue { background: #002005; border: 1px solid #00C853; color: #00C853; }
+.verdict-badge.sur-evalue { background: #1a0000; border: 1px solid #FF3D00; color: #FF3D00; }
+.verdict-badge.fair { background: #0d0c00; border: 1px solid #FF8C00; color: #FF8C00; }
+.verdict-badge.nc { background: #111; border: 1px solid #333; color: #555; }
+.verdict-text { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #666; line-height: 1.6; }
+/* ── multiples table ── */
+.mult-table { width: 100%; border-collapse: collapse; }
+.mult-table th, .mult-table td {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+  padding: 5px 8px; text-align: left; border-bottom: 1px solid #111;
+}
+.mult-table th { color: #444; font-weight: 400; letter-spacing: 0.5px; }
+.mult-table td { color: #aaa; }
+.mult-table td.val-metric { color: #FF8C00; }
+.mult-table td.val-median { color: #555; }
+.mult-table td.val-ratio { font-weight: 600; }
+.mult-table td.val-ratio.cheap { color: #00C853; }
+.mult-table td.val-ratio.expensive { color: #FF3D00; }
+.mult-table td.val-ratio.fair { color: #FF8C00; }
+/* ── simulator ── */
+.sim-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.sim-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; flex-shrink: 0; min-width: 80px; }
+.sim-input {
+  background: #111; border: 1px solid #222; color: #e0e0e0;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  padding: 4px 8px; outline: none; width: 100px;
+}
+.sim-input:focus { border-color: #FF8C00; }
+.sim-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.sim-table th, .sim-table td {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+  padding: 5px 8px; text-align: left; border-bottom: 1px solid #111;
+}
+.sim-table th { color: #444; font-weight: 400; letter-spacing: 0.5px; }
+.sim-table td { color: #aaa; }
+.sim-table td.sim-before { color: #555; }
+.sim-table td.sim-after { color: #e0e0e0; font-weight: 600; }
+.sim-table td.sim-warn { color: #FF3D00; font-weight: 600; }
+.sim-table td.sim-ok { color: #00C853; }
+/* ── warnings ── */
+.warn-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.warn-item {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+  padding: 5px 8px; border-left: 2px solid;
+}
+.warn-item.red { border-color: #FF3D00; color: #FF3D00; background: #120000; }
+.warn-item.orange { border-color: #FF8C00; color: #FF8C00; background: #100800; }
+.warn-item.green { border-color: #00C853; color: #00C853; background: #001a05; }
+/* ── description ── */
+.val-desc {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555;
+  line-height: 1.7; margin-top: 8px;
+}
+/* spinner */
+.val-loading {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #444;
+  letter-spacing: 1px; text-align: center; padding: 40px 16px;
+}
+</style>
+
+<div class="val-layout">
+
+  <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
+  <div class="val-sidebar">
+
+    <div class="vsb-block">
+      <div class="vsb-label">Actif à valoriser</div>
+      <input class="vsb-input" id="val-input" type="text"
+             placeholder="AAPL, MC.PA, MSFT…"
+             autocomplete="off" spellcheck="false"
+             value="{{ initial_ticker }}">
+      <button class="vsb-btn" id="btn-valoriser">ANALYSER</button>
+    </div>
+
+    <div class="vsb-block" style="flex:1;overflow:hidden;display:flex;flex-direction:column;border-bottom:none;padding-bottom:0;">
+      <div class="vsb-label">Mon portefeuille</div>
+      <div style="flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#222 transparent;">
+        {% for p in portfolio_tickers %}
+        <div class="vsb-asset" data-ticker="{{ p.ticker }}"
+             onclick="selectTicker('{{ p.ticker }}')">
+          <span class="vsb-ticker">{{ p.ticker }}</span>
+          <span class="vsb-name" title="{{ p.name }}">{{ p.name }}</span>
+          {% if total_value > 0 %}
+          <span class="vsb-weight">{{ '%.0f'|format(p.value / total_value * 100) }}%</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% if not portfolio_tickers %}
+        <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#444;">
+          Aucun actif en portefeuille
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ═══ MAIN ══════════════════════════════════════════════════════════ -->
+  <div class="val-main" id="val-main">
+
+    <div class="val-header" id="val-header">
+      <span class="vh-placeholder">Entrez un ticker ou choisissez un actif →</span>
+    </div>
+
+    <div id="val-content">
+      <!-- populated by JS -->
+    </div>
+
+  </div><!-- /main -->
+
+</div><!-- /layout -->
+
+<script>
+var PORTFOLIO_TICKERS = {{ portfolio_tickers | tojson }};
+var TOTAL_VALUE       = {{ total_value }};
+var currentTicker     = '';
+var currentData       = null;
+var portfolioCtx      = null;
+
+// ─── Sector P/E medians ───────────────────────────────────────────────────
+var SECTOR_MEDIANS = {
+  'Technology':             { pe: 28, pe_fwd: 22, ev_ebitda: 22 },
+  'Healthcare':             { pe: 22, pe_fwd: 16, ev_ebitda: 14 },
+  'Consumer Cyclical':      { pe: 20, pe_fwd: 15, ev_ebitda: 12 },
+  'Consumer Defensive':     { pe: 23, pe_fwd: 18, ev_ebitda: 14 },
+  'Financial Services':     { pe: 14, pe_fwd: 12, ev_ebitda: 10 },
+  'Communication Services': { pe: 18, pe_fwd: 14, ev_ebitda: 12 },
+  'Energy':                 { pe: 12, pe_fwd: 10, ev_ebitda: 7  },
+  'Industrials':            { pe: 19, pe_fwd: 16, ev_ebitda: 13 },
+  'Basic Materials':        { pe: 14, pe_fwd: 12, ev_ebitda: 9  },
+  'Real Estate':            { pe: 30, pe_fwd: 24, ev_ebitda: 18 },
+  'Utilities':              { pe: 18, pe_fwd: 15, ev_ebitda: 12 },
+};
+var DEFAULT_MEDIAN = { pe: 18, pe_fwd: 15, ev_ebitda: 12 };
+
+// ─── DCF live calculation ─────────────────────────────────────────────────
+function calcDCF() {
+  var fcfBase  = parseFloat(document.getElementById('dcf-fcf').value)     || 0;
+  var growth1  = parseFloat(document.getElementById('dcf-g1').value)      / 100 || 0.10;
+  var growth2  = parseFloat(document.getElementById('dcf-g2').value)      / 100 || 0.03;
+  var discount = parseFloat(document.getElementById('dcf-wacc').value)    / 100 || 0.09;
+  var years    = parseInt(document.getElementById('dcf-years').value)     || 10;
+  var margin   = parseFloat(document.getElementById('dcf-margin').value)  / 100 || 0.30;
+  var sharesEl = document.getElementById('dcf-shares');
+  var netDebtEl= document.getElementById('dcf-netdebt');
+  var shares   = parseFloat(sharesEl ? sharesEl.value : 0) || 0;
+  var netDebt  = parseFloat(netDebtEl ? netDebtEl.value : 0) || 0;
+
+  if (!fcfBase || !shares) {
+    updateDCFResults(null);
+    return;
+  }
+
+  // Project FCFs: each year from fcf_base, not compounded cumulatively
+  var pvSum = 0;
+  for (var yr = 1; yr <= years; yr++) {
+    var fcfYr = fcfBase * Math.pow(1 + growth1, yr);
+    pvSum += fcfYr / Math.pow(1 + discount, yr);
+  }
+
+  // Terminal value (Gordon Growth)
+  var fcfTerminal = fcfBase * Math.pow(1 + growth1, years) * (1 + growth2);
+  var terminalVal = fcfTerminal / (discount - growth2);
+  var pvTerminal  = terminalVal / Math.pow(1 + discount, years);
+
+  var enterpriseValue  = pvSum + pvTerminal;
+  var equityValue      = enterpriseValue - netDebt;
+  var intrinsicPrice   = equityValue / shares;
+  var safetyMarginPrice = intrinsicPrice * (1 - margin);
+
+  updateDCFResults({
+    pv_fcf:   pvSum,
+    pv_tv:    pvTerminal,
+    ev:       enterpriseValue,
+    equity:   equityValue,
+    price:    intrinsicPrice,
+    safety:   safetyMarginPrice,
+    shares:   shares,
+    netDebt:  netDebt,
+    years:    years,
+    margin:   margin * 100,
+  });
+}
+
+function updateDCFResults(r) {
+  var el = document.getElementById('dcf-results-block');
+  if (!el) return;
+  if (!r) {
+    el.innerHTML = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#333;">Données insuffisantes pour calculer le DCF</span>';
+    return;
+  }
+  function fmt(n) {
+    if (Math.abs(n) >= 1e12) return (n/1e12).toFixed(2) + 'T';
+    if (Math.abs(n) >= 1e9)  return (n/1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6)  return (n/1e6).toFixed(2) + 'M';
+    return n.toFixed(2);
+  }
+  var curPrice = currentData ? currentData.current_price : null;
+  var updown = '';
+  if (curPrice && r.price) {
+    var pct = ((r.price - curPrice) / curPrice * 100);
+    updown = '<span style="color:' + (pct >= 0 ? '#00C853' : '#FF3D00') + ';font-size:10px;margin-left:8px;">' +
+             (pct >= 0 ? '▲' : '▼') + Math.abs(pct).toFixed(1) + '%</span>';
+  }
+  var verdictHtml = '';
+  if (curPrice && r.safety) {
+    if (curPrice <= r.safety) {
+      verdictHtml = '<div class="verdict-block"><span class="verdict-badge sous-evalue">SOUS-ÉVALUÉ</span>' +
+        '<span class="verdict-text">Le cours actuel (' + curPrice.toFixed(2) + ') est inférieur au prix avec marge de sécurité (' + r.safety.toFixed(2) + '). ' +
+        'Le titre semble offrir une opportunité d\'achat selon le modèle DCF.</span></div>';
+    } else if (curPrice > r.price) {
+      verdictHtml = '<div class="verdict-block"><span class="verdict-badge sur-evalue">SUR-ÉVALUÉ</span>' +
+        '<span class="verdict-text">Le cours actuel (' + curPrice.toFixed(2) + ') dépasse la valeur intrinsèque calculée (' + r.price.toFixed(2) + '). ' +
+        'Attention à ne pas surpayer.</span></div>';
+    } else {
+      verdictHtml = '<div class="verdict-block"><span class="verdict-badge fair">ZONE FAIR VALUE</span>' +
+        '<span class="verdict-text">Le cours actuel (' + curPrice.toFixed(2) + ') est compris entre la valeur intrinsèque et le prix avec marge. ' +
+        'Potentiel limité selon le DCF.</span></div>';
+    }
+  }
+  el.innerHTML =
+    '<div class="dcf-results-grid">' +
+    '<div class="result-card"><div class="result-label">VALEUR ACTUA. FCF</div><div class="result-value">' + fmt(r.pv_fcf) + '</div><div class="result-sub">' + r.years + ' ans de FCF projetés</div></div>' +
+    '<div class="result-card"><div class="result-label">VALEUR TERMINALE</div><div class="result-value">' + fmt(r.pv_tv) + '</div><div class="result-sub">Gordon Growth actualisé</div></div>' +
+    '<div class="result-card"><div class="result-label">VALEUR ENTREPRISE</div><div class="result-value">' + fmt(r.ev) + '</div><div class="result-sub">FCF + Val. terminale</div></div>' +
+    '<div class="result-card"><div class="result-label">CAPITAUX PROPRES</div><div class="result-value">' + fmt(r.equity) + '</div><div class="result-sub">VE – dette nette</div></div>' +
+    '<div class="result-card"><div class="result-label">PRIX INTRINSÈQUE</div><div class="result-value" style="color:#FF8C00;">' + r.price.toFixed(2) + updown + '</div><div class="result-sub">Par action</div></div>' +
+    '<div class="result-card"><div class="result-label">PRIX AVEC MARGE ' + r.margin.toFixed(0) + '%</div><div class="result-value" style="color:#00C853;">' + r.safety.toFixed(2) + '</div><div class="result-sub">Marge de sécurité</div></div>' +
+    '</div>' + verdictHtml;
+}
+
+// ─── Simulator ────────────────────────────────────────────────────────────
+function calcSimulator() {
+  var sharesAdd = parseFloat(document.getElementById('sim-shares').value) || 0;
+  var el = document.getElementById('sim-results');
+  if (!el || !currentData || !portfolioCtx) return;
+
+  var ticker = currentTicker;
+  var price  = currentData.current_price || 0;
+  var addVal = sharesAdd * price;
+  var tv     = portfolioCtx.total_value;
+  var newTv  = tv + addVal;
+
+  // Current position
+  var pos = portfolioCtx.positions.find(function(p) { return p.ticker === ticker; });
+  var curVal   = pos ? pos.value : 0;
+  var curWt    = tv > 0 ? curVal / tv * 100 : 0;
+  var newVal   = curVal + addVal;
+  var newWt    = newTv > 0 ? newVal / newTv * 100 : 0;
+
+  // US exposure
+  var usValCur = portfolioCtx.positions.reduce(function(s, p) {
+    return p.country === 'US' ? s + p.value : s; }, 0);
+  var usValNew = usValCur + (currentData.currency === 'USD' ? addVal : 0);
+  var usPctCur = tv > 0 ? usValCur / tv * 100 : 0;
+  var usPctNew = newTv > 0 ? usValNew / newTv * 100 : 0;
+
+  // Weighted portfolio beta
+  var betaSum = portfolioCtx.positions.reduce(function(s, p) {
+    return s + (p.beta || 1) * p.value; }, 0);
+  var betaCur = tv > 0 ? betaSum / tv : null;
+  var newBetaSum = betaSum - (pos ? (pos.beta || 1) * pos.value : 0)
+                           + (pos ? (pos.beta || 1) * newVal : (currentData.beta || 1) * addVal);
+  var betaNew = newTv > 0 ? newBetaSum / newTv : null;
+
+  // Risk score weighted
+  var riskSum = portfolioCtx.positions.reduce(function(s, p) {
+    return s + (p.risk_score || 5) * p.value; }, 0);
+  var riskCur = tv > 0 ? riskSum / tv : null;
+  var newRiskSum = riskSum - (pos ? (pos.risk_score || 5) * pos.value : 0)
+                           + (pos ? (pos.risk_score || 5) * newVal : (currentData.risk_score || 5) * addVal);
+  var riskNew = newTv > 0 ? newRiskSum / newTv : null;
+
+  function warn(before, after, thresholds) {
+    if (after >= thresholds.red)   return 'sim-warn';
+    if (after >= thresholds.orange) return 'sim-after';
+    return 'sim-ok';
+  }
+  function td(val, cls) { return '<td class="' + cls + '">' + (val !== null ? val : '—') + '</td>'; }
+  function pct(v) { return v !== null ? v.toFixed(1) + '%' : '—'; }
+  function num(v, dec) { return v !== null ? v.toFixed(dec !== undefined ? dec : 2) : '—'; }
+
+  var rows = [
+    ['Position (' + ticker + ')', pct(curWt), pct(newWt), warn(curWt, newWt, {orange:20, red:30})],
+    ['Exposition US',             pct(usPctCur), pct(usPctNew), warn(usPctCur, usPctNew, {orange:60, red:75})],
+    ['Beta portefeuille',         num(betaCur), num(betaNew), warn(betaCur, betaNew, {orange:1.1, red:1.3})],
+    ['Score de risque moy.',      num(riskCur, 1), num(riskNew, 1), warn(riskCur, riskNew, {orange:6, red:7.5})],
+    ['Valeur investie',           num(addVal, 2) + ' ' + (currentData.currency || ''), '', 'sim-after'],
+    ['Valeur totale portefeuille',num(tv, 2), num(newTv, 2), 'sim-after'],
+  ];
+
+  var warnings = [];
+  if (newWt >= 30) warnings.push({ cls:'red', msg: 'Concentration > 30% sur ' + ticker + ' — risque idiosyncratique élevé.' });
+  else if (newWt >= 20) warnings.push({ cls:'orange', msg: 'Concentration > 20% sur ' + ticker + ' — surveiller.' });
+  if (usPctNew >= 75) warnings.push({ cls:'red', msg: 'Exposition US > 75% — diversification géographique insuffisante.' });
+  else if (usPctNew >= 60) warnings.push({ cls:'orange', msg: 'Exposition US > 60%.' });
+  if (betaNew !== null && betaNew >= 1.3) warnings.push({ cls:'red', msg: 'Beta portefeuille ≥ 1.3 — sensibilité marché élevée.' });
+  if (warnings.length === 0) warnings.push({ cls:'green', msg: 'Aucune alerte de concentration ou de risque déclenchée.' });
+
+  var html = '<table class="sim-table"><thead><tr>' +
+    '<th>MÉTRIQUE</th><th>AVANT</th><th>APRÈS</th><th></th>' +
+    '</tr></thead><tbody>';
+  rows.forEach(function(r) {
+    html += '<tr><td>' + r[0] + '</td><td class="sim-before">' + r[1] + '</td>' + td(r[2], r[3]) + '<td></td></tr>';
+  });
+  html += '</tbody></table><div class="warn-list">';
+  warnings.forEach(function(w) {
+    html += '<div class="warn-item ' + w.cls + '">' + w.msg + '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ─── Render full page ─────────────────────────────────────────────────────
+function renderPage(data) {
+  currentData = data;
+  var currency = data.currency || '';
+  var priceFmt = data.current_price ? data.current_price.toFixed(2) + ' ' + currency : '—';
+
+  // Header
+  document.getElementById('val-header').innerHTML =
+    '<span class="vh-ticker">' + data.ticker + '</span>' +
+    '<span class="vh-name">' + (data.name || '') + '</span>' +
+    '<span class="vh-price">' + priceFmt + '</span>' +
+    '<span class="vh-tag">' + (data.sector || data.quote_type || '—') + '</span>' +
+    (data.beta ? '<span class="vh-tag">β ' + parseFloat(data.beta).toFixed(2) + '</span>' : '') +
+    (data.risk_score ? '<span class="vh-tag">RISK ' + parseFloat(data.risk_score).toFixed(1) + '</span>' : '');
+
+  // Active sidebar item
+  document.querySelectorAll('.vsb-asset').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.ticker === data.ticker);
+  });
+
+  var median = SECTOR_MEDIANS[data.sector] || DEFAULT_MEDIAN;
+  var gcf = data.fcf ? (data.fcf / 1e9).toFixed(2) + 'B' : '—';
+  var gnd = data.net_debt ? (data.net_debt / 1e9).toFixed(2) + 'B' : '—';
+  var gsh = data.shares_out ? (data.shares_out / 1e9).toFixed(3) + 'B' : '—';
+
+  // Growth guess for defaults
+  var guessCagrPct = '';
+  if (data.earnings_growth) guessCagrPct = data.earnings_growth.toFixed(1);
+  else if (data.revenue_growth) guessCagrPct = (data.revenue_growth * 0.7).toFixed(1);
+  else guessCagrPct = '10.0';
+
+  // Multiples
+  function multRow(label, metric, median, isEV) {
+    var val = metric !== null && metric !== undefined ? parseFloat(metric) : null;
+    var med = parseFloat(median);
+    var ratio = val !== null ? (val / med) : null;
+    var cls = '';
+    if (ratio !== null) {
+      if (ratio <= 0.85) cls = 'cheap';
+      else if (ratio >= 1.15) cls = 'expensive';
+      else cls = 'fair';
+    }
+    return '<tr>' +
+      '<td>' + label + '</td>' +
+      '<td class="val-metric">' + (val !== null ? val.toFixed(1) + 'x' : '—') + '</td>' +
+      '<td class="val-median">' + med.toFixed(1) + 'x</td>' +
+      '<td class="val-ratio ' + cls + '">' +
+        (ratio !== null ? (ratio <= 0.85 ? '↓ Pas cher' : ratio >= 1.15 ? '↑ Cher' : '= Fair') : '—') +
+      '</td></tr>';
+  }
+
+  var html = '';
+
+  // ── DCF ──────────────────────────────────────────────────────────────
+  html += '<div class="val-section">';
+  html += '<div class="val-section-title">Modèle DCF — Flux de trésorerie actualisés</div>';
+  html += '<div class="dcf-grid">';
+  html += '<div class="param-card"><div class="param-label">FCF DE BASE (' + currency + ')</div>' +
+    '<input class="param-input" id="dcf-fcf" type="number" value="' + (data.fcf || '') + '" oninput="calcDCF()">' +
+    '<div class="param-hint">Actuel : ' + gcf + '</div></div>';
+  html += '<div class="param-card"><div class="param-label">CROISSANCE PHASE 1 (%)</div>' +
+    '<input class="param-input" id="dcf-g1" type="number" step="0.5" value="' + guessCagrPct + '" oninput="calcDCF()">' +
+    '<div class="param-hint">Durée = années ci-dessous</div></div>';
+  html += '<div class="param-card"><div class="param-label">CROISSANCE TERMINALE (%)</div>' +
+    '<input class="param-input" id="dcf-g2" type="number" step="0.1" value="3.0" oninput="calcDCF()">' +
+    '<div class="param-hint">PIB long terme ≈ 2–4%</div></div>';
+  html += '<div class="param-card"><div class="param-label">WACC / TAUX ACTUALISATION (%)</div>' +
+    '<input class="param-input" id="dcf-wacc" type="number" step="0.1" value="9.0" oninput="calcDCF()">' +
+    '<div class="param-hint">Coût moyen du capital</div></div>';
+  html += '<div class="param-card"><div class="param-label">HORIZON (ANNÉES)</div>' +
+    '<input class="param-input" id="dcf-years" type="number" min="5" max="20" value="10" oninput="calcDCF()">' +
+    '<div class="param-hint">Généralement 10</div></div>';
+  html += '<div class="param-card"><div class="param-label">MARGE DE SÉCURITÉ (%)</div>' +
+    '<input class="param-input" id="dcf-margin" type="number" step="5" value="30" oninput="calcDCF()">' +
+    '<div class="param-hint">Tampon Graham (20–40%)</div></div>';
+  html += '<div class="param-card"><div class="param-label">ACTIONS EN CIRCULATION</div>' +
+    '<input class="param-input" id="dcf-shares" type="number" value="' + (data.shares_out || '') + '" oninput="calcDCF()">' +
+    '<div class="param-hint">Actuel : ' + gsh + '</div></div>';
+  html += '<div class="param-card"><div class="param-label">DETTE NETTE (' + currency + ')</div>' +
+    '<input class="param-input" id="dcf-netdebt" type="number" value="' + (data.net_debt || '') + '" oninput="calcDCF()">' +
+    '<div class="param-hint">Actuel : ' + gnd + '</div></div>';
+  html += '</div>'; // /dcf-grid
+  html += '<div id="dcf-results-block" style="margin-top:12px;"></div>';
+  html += '</div>'; // /val-section DCF
+
+  // ── Multiples ─────────────────────────────────────────────────────────
+  html += '<div class="val-section">';
+  html += '<div class="val-section-title">Valorisation par multiples' +
+    (data.sector ? ' — ' + data.sector : '') + '</div>';
+  html += '<table class="mult-table"><thead><tr>' +
+    '<th>MULTIPLE</th><th>VALEUR</th><th>MÉDIANE SECTEUR</th><th>SIGNAL</th>' +
+    '</tr></thead><tbody>';
+  html += multRow('P/E Trailing',    data.pe_ratio,  median.pe,       false);
+  html += multRow('P/E Forward',     data.forward_pe, median.pe_fwd,   false);
+  html += multRow('EV/EBITDA',       data.ev_ebitda, median.ev_ebitda, true);
+  html += '</tbody></table>';
+  if (data.ebitda) {
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#333;margin-top:6px;">' +
+      'EBITDA : ' + (data.ebitda/1e9).toFixed(2) + 'B ' + currency +
+      (data.ev ? '  |  EV : ' + (data.ev/1e9).toFixed(2) + 'B ' + currency : '') + '</div>';
+  }
+  html += '</div>'; // /multiples
+
+  // ── Portfolio impact simulator ─────────────────────────────────────────
+  html += '<div class="val-section">';
+  html += '<div class="val-section-title">Simulateur d\'impact portefeuille</div>';
+  html += '<div class="sim-row">' +
+    '<span class="sim-label">Nb d\'actions</span>' +
+    '<input class="sim-input" id="sim-shares" type="number" step="1" value="1" oninput="calcSimulator()">' +
+    (data.current_price ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#555;margin-left:4px;">× ' +
+      data.current_price.toFixed(2) + ' ' + currency + ' = <span id="sim-cost" style="color:#FF8C00;">' +
+      data.current_price.toFixed(2) + ' ' + currency + '</span></span>' : '') +
+    '</div>';
+  html += '<div id="sim-results"></div>';
+  html += '</div>'; // /simulator
+
+  // ── Description ───────────────────────────────────────────────────────
+  if (data.description) {
+    html += '<div class="val-section">';
+    html += '<div class="val-section-title">Description</div>';
+    html += '<div class="val-desc">' + data.description + '</div>';
+    html += '</div>';
+  }
+
+  document.getElementById('val-content').innerHTML = html;
+
+  // sim-cost live update on input
+  var simSharesEl = document.getElementById('sim-shares');
+  if (simSharesEl && data.current_price) {
+    simSharesEl.addEventListener('input', function() {
+      var costEl = document.getElementById('sim-cost');
+      if (costEl) costEl.textContent = (parseFloat(this.value || 0) * data.current_price).toFixed(2) + ' ' + currency;
+    });
+  }
+
+  // Trigger initial calculations
+  calcDCF();
+  if (portfolioCtx) calcSimulator();
+}
+
+// ─── Load ticker data ─────────────────────────────────────────────────────
+function loadTicker(ticker) {
+  currentTicker = ticker;
+  document.getElementById('val-input').value = ticker;
+  document.getElementById('val-header').innerHTML =
+    '<span class="vh-placeholder">Chargement ' + ticker + '…</span>';
+  document.getElementById('val-content').innerHTML =
+    '<div class="val-loading">CHARGEMENT…</div>';
+
+  fetch('/api/valorisation/data?ticker=' + encodeURIComponent(ticker))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        document.getElementById('val-header').innerHTML =
+          '<span class="vh-placeholder" style="color:#FF3D00;">ERREUR — ' + data.error + '</span>';
+        document.getElementById('val-content').innerHTML = '';
+        return;
+      }
+      renderPage(data);
+    })
+    .catch(function(err) {
+      document.getElementById('val-header').innerHTML =
+        '<span class="vh-placeholder" style="color:#FF3D00;">ERREUR RÉSEAU</span>';
+      document.getElementById('val-content').innerHTML = '';
+    });
+}
+
+function selectTicker(tk) {
+  loadTicker(tk);
+}
+
+// ─── Portfolio context (background fetch) ─────────────────────────────────
+function fetchPortfolioContext() {
+  fetch('/api/valorisation/portfolio-context')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      portfolioCtx = data;
+      if (currentTicker) calcSimulator();
+    })
+    .catch(function() {});
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+document.getElementById('btn-valoriser').addEventListener('click', function() {
+  var t = document.getElementById('val-input').value.trim().toUpperCase();
+  if (t) loadTicker(t);
+});
+document.getElementById('val-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    var t = this.value.trim().toUpperCase();
+    if (t) loadTicker(t);
+  }
+});
+
+fetchPortfolioContext();
+
+var initial = '{{ initial_ticker }}';
+if (initial) {
+  loadTicker(initial);
+} else if (PORTFOLIO_TICKERS.length > 0) {
+  loadTicker(PORTFOLIO_TICKERS[0].ticker);
+}
+</script>
+
+{% endblock %}
