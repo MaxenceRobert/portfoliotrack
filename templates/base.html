@@ -60,6 +60,7 @@
     ('F10', 'LIENS',    '/links'),
     ('F11', 'ANALYSE',  '/analyse'),
     ('F12', 'VALORIS.', '/valorisation'),
+    ('F13', 'SCREENER', '/screener'),
   ] -%}
   {% for key, label, path in _tabs %}
   <a href="{{ path }}"
@@ -160,6 +161,14 @@
         <path d="M7 12h2m6 0h2"/>
       </svg>
       <span>Valeur</span>
+    </a>
+    <a href="{{ url_for('main.screener') }}"
+       class="rail-icon{% if request.path == '/screener' %} active{% endif %}"
+       title="Screener fondamental">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 6h18M7 12h10M10 18h4"/>
+      </svg>
+      <span>Screen</span>
     </a>
     <div class="rail-spacer"></div>
     <a href="{{ url_for('main.settings') }}"
@@ -273,6 +282,7 @@
     'LIENS': '/links', 'LINKS': '/links', 'RESSOURCES': '/links', 'F10': '/links',
     'ANALYSE': '/analyse', 'ANALYSIS': '/analyse', 'F11': '/analyse',
     'VALORISATION': '/valorisation', 'VALEUR': '/valorisation', 'DCF': '/valorisation', 'F12': '/valorisation',
+    'SCREENER': '/screener', 'SCREEN': '/screener', 'F13': '/screener',
     'SETTINGS': '/settings', 'CONFIG': '/settings', 'F0': '/settings',
     'IMPORT': '/import', 'EXPORT': '/export/csv',
     'ACHAT': '/purchases/add', 'VENTE': '/sales/add',

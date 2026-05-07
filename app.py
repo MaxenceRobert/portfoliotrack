@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, Res
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import Config
 from database import (
-    init_db, populate_asset_catalog,
+    init_db, populate_asset_catalog, get_db, is_postgres, placeholder,
     add_asset, get_user_assets, get_asset_by_id, delete_asset,
     add_purchase, add_purchases_bulk, get_all_purchases,
     get_purchase_by_id, update_purchase, delete_purchase,
@@ -34,6 +34,10 @@ from auth import auth_bp, get_user_object
 import plotly.graph_objects as go
 import plotly.utils
 import json
+import threading
+import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+import data_jobs
 
 # ── Init ──────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -3138,6 +3142,306 @@ def valorisation_portfolio_context():
     })
 
 
+# ── Fundamentals status ───────────────────────────────────────────────────────
+@main_bp.route('/api/fundamentals/status')
+@login_required
+def fundamentals_status():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM fundamentals")
+    total = c.fetchone()[0]
+    c.execute("SELECT MAX(updated_at) FROM fundamentals")
+    last_update = c.fetchone()[0]
+    conn.close()
+    from universe import UNIVERSE_ALL
+    return jsonify({
+        'tickers_in_db':   total,
+        'universe_size':   len(UNIVERSE_ALL),
+        'last_update':     last_update,
+        'coverage_pct':    round(total / len(UNIVERSE_ALL) * 100, 1) if UNIVERSE_ALL else 0,
+    })
+
+
+# ── Screener ─────────────────────────────────────────────────────────────────
+@main_bp.route('/screener')
+@login_required
+def screener():
+    return render_template('screener.html')
+
+
+@main_bp.route('/api/screener')
+@login_required
+def api_screener():
+    from universe import SP500_TOP100, CAC40, DAX_TOP30
+
+    # ── params ────────────────────────────────────────────────────────────────
+    secteur        = request.args.get('secteur', '')
+    pays           = request.args.get('pays', '')
+    univers        = request.args.get('univers', '')
+    pe_min         = request.args.get('pe_min', type=float)
+    pe_max         = request.args.get('pe_max', type=float)
+    include_na_pe  = request.args.get('include_na_pe', 'true').lower() == 'true'
+    croissance_min = request.args.get('croissance_min', type=float)
+    croissance_max = request.args.get('croissance_max', type=float)
+    marge_min      = request.args.get('marge_min', type=float)
+    marge_max      = request.args.get('marge_max', type=float)
+    roe_min        = request.args.get('roe_min', type=float)
+    roe_max        = request.args.get('roe_max', type=float)
+    dte_min        = request.args.get('dte_min', type=float)
+    dte_max        = request.args.get('dte_max', type=float)
+    score_min      = request.args.get('score_min', type=int)
+    score_max      = request.args.get('score_max', type=int)
+    sort_col       = request.args.get('sort', 'quality_score')
+    order          = request.args.get('order', 'desc')
+    page           = max(1, request.args.get('page', 1, type=int))
+    per_page       = 25
+
+    ALLOWED_SORT = {
+        'ticker', 'name', 'sector', 'country', 'current_price',
+        'pe_forward', 'revenue_growth', 'operating_margin',
+        'roe', 'debt_to_equity', 'quality_score', 'analyst_upside',
+    }
+    if sort_col not in ALLOWED_SORT:
+        sort_col = 'quality_score'
+    order_sql = 'DESC' if order.lower() == 'desc' else 'ASC'
+
+    print(f"[screener] secteur={secteur} pays={pays} univers={univers} pe_max={pe_max} score_min={score_min} sort={sort_col} {order_sql} page={page}")
+
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+
+    conditions = []
+    params = []
+
+    if secteur:
+        conditions.append(f"sector = {p}")
+        params.append(secteur)
+
+    if pays:
+        if pays == 'US':
+            conditions.append(f"country = {p}")
+            params.append('United States')
+        elif pays == 'France':
+            conditions.append(f"country = {p}")
+            params.append('France')
+        elif pays == 'Allemagne':
+            conditions.append(f"country = {p}")
+            params.append('Germany')
+        elif pays == 'Europe':
+            conditions.append(f"(country IN ({p},{p},{p},{p},{p},{p},{p},{p}))")
+            params.extend(['France', 'Germany', 'Netherlands', 'Spain', 'Italy', 'Belgium', 'Switzerland', 'Sweden'])
+
+    if univers:
+        if univers == 'SP500':
+            tickers_in = SP500_TOP100
+        elif univers == 'CAC40':
+            tickers_in = CAC40
+        elif univers == 'DAX':
+            tickers_in = DAX_TOP30
+        else:
+            tickers_in = None
+
+        if tickers_in:
+            placeholders_list = ','.join([p] * len(tickers_in))
+            conditions.append(f"ticker IN ({placeholders_list})")
+            params.extend(tickers_in)
+
+    # PE forward — avec option inclure N/A
+    if pe_min is not None or pe_max is not None:
+        numeric_parts = []
+        if pe_min is not None:
+            numeric_parts.append(f"pe_forward >= {p}")
+            params.append(pe_min)
+        if pe_max is not None:
+            numeric_parts.append(f"pe_forward <= {p}")
+            params.append(pe_max)
+        numeric_clause = " AND ".join(numeric_parts)
+        if include_na_pe:
+            conditions.append(f"(pe_forward IS NULL OR ({numeric_clause}))")
+        else:
+            conditions.append(f"({numeric_clause})")
+
+    if croissance_min is not None:
+        conditions.append(f"revenue_growth >= {p}")
+        params.append(croissance_min)
+    if croissance_max is not None:
+        conditions.append(f"revenue_growth <= {p}")
+        params.append(croissance_max)
+
+    if marge_min is not None:
+        conditions.append(f"operating_margin >= {p}")
+        params.append(marge_min)
+    if marge_max is not None:
+        conditions.append(f"operating_margin <= {p}")
+        params.append(marge_max)
+
+    if roe_min is not None:
+        conditions.append(f"roe >= {p}")
+        params.append(roe_min)
+    if roe_max is not None:
+        conditions.append(f"roe <= {p}")
+        params.append(roe_max)
+
+    if dte_min is not None:
+        conditions.append(f"debt_to_equity >= {p}")
+        params.append(dte_min)
+    if dte_max is not None:
+        conditions.append(f"debt_to_equity <= {p}")
+        params.append(dte_max)
+
+    if score_min is not None:
+        conditions.append(f"quality_score >= {p}")
+        params.append(score_min)
+    if score_max is not None:
+        conditions.append(f"quality_score <= {p}")
+        params.append(score_max)
+
+    where_sql = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    # total
+    count_sql = f"SELECT COUNT(*) FROM fundamentals {where_sql}"
+    c.execute(count_sql, params)
+    total = c.fetchone()[0]
+    print(f"[screener] total résultats = {total}")
+
+    # résultats paginés
+    offset = (page - 1) * per_page
+    p_offset = p
+    p_limit  = p
+    query_sql = f"""
+        SELECT ticker, name, sector, country, current_price,
+               pe_forward, revenue_growth, operating_margin,
+               roe, debt_to_equity, quality_score, analyst_upside,
+               currency, updated_at
+        FROM fundamentals
+        {where_sql}
+        ORDER BY {sort_col} {order_sql} NULLS LAST
+        LIMIT {p_limit} OFFSET {p_offset}
+    """
+    c.execute(query_sql, params + [per_page, offset])
+    raw_rows = c.fetchall()
+    if is_postgres():
+        col_names = [d[0] for d in c.description]
+        dicts = [dict(zip(col_names, row)) for row in raw_rows]
+    else:
+        dicts = [dict(row) for row in raw_rows]
+    conn.close()
+
+    results = []
+    for r in dicts:
+        au = r.get('analyst_upside')
+        r['analyst_upside_pct'] = round(au * 100, 1) if au is not None else None
+        results.append(r)
+
+    return jsonify({
+        'total':    total,
+        'page':     page,
+        'per_page': per_page,
+        'results':  results,
+    })
+
+
+@main_bp.route('/api/screener/detail')
+@login_required
+def api_screener_detail():
+    ticker = request.args.get('ticker', '').upper().strip()
+    if not ticker:
+        return jsonify({'error': 'ticker requis'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+    c.execute(f"SELECT * FROM fundamentals WHERE ticker = {p}", [ticker])
+    row = c.fetchone()
+    if row:
+        if is_postgres():
+            cols = [d[0] for d in c.description]
+            data = dict(zip(cols, row))
+        else:
+            data = dict(row)
+    conn.close()
+
+    if not row:
+        return jsonify({'error': 'ticker non trouvé'}), 404
+
+    # analyst_upside en %
+    au = data.get('analyst_upside')
+    data['analyst_upside_pct'] = round(au * 100, 1) if au is not None else None
+
+    print(f"[screener/detail] {ticker} → score={data.get('quality_score')}")
+    return jsonify(data)
+
+
+@main_bp.route('/api/screener/save', methods=['POST'])
+@login_required
+def api_screener_save():
+    body = request.get_json(silent=True) or {}
+    name = (body.get('name') or '').strip()
+    filters = body.get('filters') or {}
+
+    if not name:
+        return jsonify({'error': 'nom requis'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+    c.execute(
+        f"INSERT INTO saved_screens (user_id, name, filters_json) VALUES ({p},{p},{p})",
+        [current_user.id, name, json.dumps(filters)]
+    )
+    conn.commit()
+    new_id = c.lastrowid
+    conn.close()
+    print(f"[screener/save] user={current_user.id} name={name} id={new_id}")
+    return jsonify({'ok': True, 'id': new_id})
+
+
+@main_bp.route('/api/screener/saved')
+@login_required
+def api_screener_saved():
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+    c.execute(
+        f"SELECT id, name, filters_json, created_at FROM saved_screens WHERE user_id = {p} ORDER BY created_at DESC",
+        [current_user.id]
+    )
+    rows = c.fetchall()
+    if is_postgres():
+        col_names = [d[0] for d in c.description]
+        dicts = [dict(zip(col_names, row)) for row in rows]
+    else:
+        dicts = [dict(row) for row in rows]
+    conn.close()
+
+    results = []
+    for r in dicts:
+        try:
+            r['filters'] = json.loads(r.get('filters_json') or '{}')
+        except Exception:
+            r['filters'] = {}
+        results.append(r)
+
+    return jsonify(results)
+
+
+@main_bp.route('/api/screener/delete/<int:screen_id>', methods=['DELETE'])
+@login_required
+def api_screener_delete(screen_id):
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+    c.execute(
+        f"DELETE FROM saved_screens WHERE id = {p} AND user_id = {p}",
+        [screen_id, current_user.id]
+    )
+    conn.commit()
+    conn.close()
+    print(f"[screener/delete] id={screen_id} user={current_user.id}")
+    return jsonify({'ok': True})
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required
@@ -3371,6 +3675,22 @@ app.register_blueprint(main_bp)
 
 init_db()
 populate_asset_catalog()
+
+# ── Scheduler fondamentaux ────────────────────────────────────────────────────
+def _start_fundamentals_scheduler():
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(
+        data_jobs.refresh_all_fundamentals,
+        trigger="cron",
+        hour=18, minute=0,
+        id="fundamentals_daily",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logging.getLogger("data_jobs").info("Scheduler fondamentaux démarré (cron 18:00).")
+
+# Délai de 30 s pour ne pas bloquer le démarrage de Flask
+threading.Timer(30, _start_fundamentals_scheduler).start()
 
 if __name__ == '__main__':
     app.run(debug=True)

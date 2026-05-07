@@ -689,6 +689,128 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Saved screens ─────────────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS saved_screens (
+                    id           SERIAL PRIMARY KEY,
+                    user_id      INTEGER NOT NULL,
+                    name         TEXT    NOT NULL,
+                    filters_json TEXT    NOT NULL DEFAULT '{}',
+                    created_at   TIMESTAMP DEFAULT NOW(),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS saved_screens (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id      INTEGER NOT NULL,
+                    name         TEXT    NOT NULL,
+                    filters_json TEXT    NOT NULL DEFAULT '{}',
+                    created_at   TEXT    DEFAULT (datetime('now')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # ── Fundamentals (screener / scores qualité) ──────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS fundamentals (
+                    id                 SERIAL PRIMARY KEY,
+                    ticker             TEXT    NOT NULL UNIQUE,
+                    name               TEXT,
+                    sector             TEXT,
+                    industry           TEXT,
+                    country            TEXT,
+                    currency           TEXT,
+                    current_price      REAL,
+                    market_cap         REAL,
+                    week52_high        REAL,
+                    week52_low         REAL,
+                    price_vs_52w_high  REAL,
+                    pe_trailing        REAL,
+                    pe_forward         REAL,
+                    pb_ratio           REAL,
+                    ps_ratio           REAL,
+                    ev_ebitda          REAL,
+                    peg_ratio          REAL,
+                    revenue_growth     REAL,
+                    earnings_growth    REAL,
+                    roe                REAL,
+                    roa                REAL,
+                    profit_margin      REAL,
+                    operating_margin   REAL,
+                    gross_margin       REAL,
+                    debt_to_equity     REAL,
+                    current_ratio      REAL,
+                    quick_ratio        REAL,
+                    total_debt         REAL,
+                    total_cash         REAL,
+                    free_cashflow      REAL,
+                    operating_cashflow REAL,
+                    price_to_fcf       REAL,
+                    dividend_yield     REAL,
+                    payout_ratio       REAL,
+                    target_mean_price  REAL,
+                    analyst_upside     REAL,
+                    quality_score      INTEGER,
+                    updated_at         TIMESTAMP DEFAULT NOW()
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS fundamentals (
+                    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker             TEXT    NOT NULL UNIQUE,
+                    name               TEXT,
+                    sector             TEXT,
+                    industry           TEXT,
+                    country            TEXT,
+                    currency           TEXT,
+                    current_price      REAL,
+                    market_cap         REAL,
+                    week52_high        REAL,
+                    week52_low         REAL,
+                    price_vs_52w_high  REAL,
+                    pe_trailing        REAL,
+                    pe_forward         REAL,
+                    pb_ratio           REAL,
+                    ps_ratio           REAL,
+                    ev_ebitda          REAL,
+                    peg_ratio          REAL,
+                    revenue_growth     REAL,
+                    earnings_growth    REAL,
+                    roe                REAL,
+                    roa                REAL,
+                    profit_margin      REAL,
+                    operating_margin   REAL,
+                    gross_margin       REAL,
+                    debt_to_equity     REAL,
+                    current_ratio      REAL,
+                    quick_ratio        REAL,
+                    total_debt         REAL,
+                    total_cash         REAL,
+                    free_cashflow      REAL,
+                    operating_cashflow REAL,
+                    price_to_fcf       REAL,
+                    dividend_yield     REAL,
+                    payout_ratio       REAL,
+                    target_mean_price  REAL,
+                    analyst_upside     REAL,
+                    quality_score      INTEGER,
+                    updated_at         TEXT    DEFAULT (datetime('now'))
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 
