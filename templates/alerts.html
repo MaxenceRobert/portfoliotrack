@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Alertes de prix — PortfolioTrack{% endblock %}
+{% block title %}Alertes — PortfolioTrack{% endblock %}
 {% block content %}
 <style>
 .page-content { padding: 0 !important; }
@@ -42,6 +42,87 @@
     color: var(--text-dim);
 }
 .al-panel-body { padding: 16px; }
+/* ── Form tabs (left panel) ── */
+.al-form-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+}
+.al-ftab {
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 10px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: color 0.1s, border-color 0.1s;
+}
+.al-ftab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+.al-ftab:not(.active):hover { color: var(--text); }
+/* Form body tabs */
+.al-form-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+}
+.al-form-body.active {
+    max-height: 9999px;
+}
+/* ── List tabs (right panel) ── */
+.al-list-tabs {
+    display: flex;
+    background: #0d0d0d;
+    border-bottom: 1px solid var(--border);
+}
+.al-ltab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: color 0.1s, border-color 0.1s;
+    white-space: nowrap;
+}
+.al-ltab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+.al-ltab:not(.active):hover { color: var(--text); }
+.al-ltab .tab-count {
+    display: inline-block;
+    background: var(--border);
+    color: var(--text-dim);
+    font-size: 7px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+.al-ltab.active .tab-count {
+    background: var(--accent);
+    color: #000;
+}
+/* List tab content */
+.al-list-section {
+    overflow: hidden;
+    max-height: 0;
+}
+.al-list-section.active {
+    max-height: 99999px;
+}
 /* ── Form fields ── */
 .al-field { margin-bottom: 14px; }
 .al-field label {
@@ -69,6 +150,21 @@
     transition: border-bottom-color 0.1s;
 }
 .al-input:focus { border-bottom-color: var(--accent); }
+.al-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-light);
+    color: var(--text-bright);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 7px 10px;
+    outline: none;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: border-bottom-color 0.1s;
+}
+.al-select:focus { border-bottom-color: var(--accent); }
 .al-hint {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 8px;
@@ -116,6 +212,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+/* Autocomplete fondamentale (sans display:none) */
+.al-fund-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: none;
+    z-index: 50;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.15s ease;
+}
+.al-fund-suggestions.open {
+    max-height: 180px;
+    overflow-y: auto;
 }
 /* ── Condition toggle ── */
 .al-condition-toggle {
@@ -306,6 +419,17 @@
     font-size: 8px;
     color: var(--text-dim);
 }
+/* ── Fundamental alert row extras ── */
+.al-metric-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-dim);
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    padding: 2px 6px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
 /* ── Empty state ── */
 .al-empty {
     padding: 40px 20px;
@@ -330,230 +454,420 @@
 }
 </style>
 
-{% set active_alerts    = alerts | selectattr('status', 'equalto', 'active')    | list %}
-{% set triggered_alerts = alerts | selectattr('status', 'equalto', 'triggered') | list %}
+{# ── Sépare prix vs fondamentaux ── #}
+{% set active_alerts      = alerts | selectattr('status', 'equalto', 'active')    | list %}
+{% set triggered_alerts   = alerts | selectattr('status', 'equalto', 'triggered') | list %}
+{% set fa_active          = fundamental_alerts | selectattr('status', 'equalto', 'active')    | list %}
+{% set fa_triggered       = fundamental_alerts | selectattr('status', 'equalto', 'triggered') | list %}
 
 <div class="alerts-outer">
 
     <!-- Page header -->
     <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--text-bright); letter-spacing:2px; text-transform:uppercase;">F9 · ALERTES DE PRIX</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--text-bright); letter-spacing:2px; text-transform:uppercase;">F9 · ALERTES</span>
         <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">
-            Surveillance automatique · Vérification à chaque visite
+            Prix · Fondamentaux · Vérification automatique
         </span>
     </div>
 
     <div class="alerts-grid">
 
-        <!-- ── LEFT : Formulaire ── -->
+        <!-- ═══════════════ LEFT : Formulaires ═══════════════ -->
         <div class="al-panel">
-            <div class="al-panel-head">
-                <span class="al-panel-title">Nouvelle alerte</span>
-                <span class="al-panel-meta">{{ active_alerts|length }} active(s)</span>
+            <div style="background:#111; border-bottom:1px solid var(--border);">
+                <div class="al-form-tabs" id="form-tabs">
+                    <button class="al-ftab active" onclick="switchFormTab('prix', this)">PRIX</button>
+                    <button class="al-ftab" onclick="switchFormTab('fondamentaux', this)">FONDAMENTAUX</button>
+                </div>
             </div>
-            <div class="al-panel-body">
-                <form method="POST" action="{{ url_for('main.add_alert') }}" id="alert-form">
 
-                    <!-- Ticker -->
-                    <div class="al-field">
-                        <label for="alert-ticker-input">Actif (ticker)</label>
-                        <div class="al-autocomplete-wrap">
-                            <input type="text" id="alert-ticker-input" class="al-input"
-                                   placeholder="Ex: AAPL, IWDA, BTC-USD…"
-                                   autocomplete="off"
-                                   oninput="alertFetchSuggestions(this.value)"
-                                   onkeydown="alertHandleKey(event)">
-                            <div class="al-suggestions" id="alert-suggestions"></div>
-                        </div>
-                        <!-- Hidden fields submitted -->
-                        <input type="hidden" id="alert-ticker-val"  name="ticker">
-                        <input type="hidden" id="alert-name-val"    name="ticker_name">
-                        <input type="hidden" id="alert-price-val"   name="current_price">
-                        <div class="al-hint" id="alert-price-hint" style="display:none;">
-                            Prix actuel : <span id="alert-price-display" style="color:var(--accent); font-weight:700;">—</span>
-                        </div>
-                    </div>
-
-                    <!-- Condition -->
-                    <div class="al-field">
-                        <label>Condition</label>
-                        <input type="hidden" name="condition" id="condition-val" value="above">
-                        <div class="al-condition-toggle">
-                            <button type="button" class="al-cond-btn active" id="btn-above"
-                                    onclick="setCondition('above')">▲ AU-DESSUS DE</button>
-                            <button type="button" class="al-cond-btn" id="btn-below"
-                                    onclick="setCondition('below')">▼ EN-DESSOUS DE</button>
-                        </div>
-                    </div>
-
-                    <!-- Target price -->
-                    <div class="al-field">
-                        <label for="target-price">Prix cible</label>
-                        <input type="number" id="target-price" name="target_price"
-                               class="al-input" step="0.01" min="0.01"
-                               placeholder="0.00" required>
-                        <div class="al-hint" id="target-hint" style="display:none;"></div>
-                    </div>
-
-                    <button type="submit" class="btn-create-alert">▶ CRÉER L'ALERTE</button>
-
-                </form>
-
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div style="padding:10px 16px 0;">
                 {% for cat, msg in messages %}
-                <div style="margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:9px;
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:9px;
                             padding:6px 10px; border-left:2px solid {{ 'var(--green)' if cat=='success' else 'var(--red)' }};
-                            color:{{ 'var(--green)' if cat=='success' else 'var(--red)' }};">
+                            color:{{ 'var(--green)' if cat=='success' else 'var(--red)' }}; margin-bottom:6px;">
                     {{ msg }}
                 </div>
                 {% endfor %}
-                {% endif %}
-                {% endwith %}
             </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- ── Formulaire PRIX ── -->
+            <div class="al-form-body active" id="form-body-prix">
+                <div class="al-panel-body">
+                    <form method="POST" action="{{ url_for('main.add_alert') }}" id="alert-form">
+
+                        <div class="al-field">
+                            <label for="alert-ticker-input">Actif (ticker)</label>
+                            <div class="al-autocomplete-wrap">
+                                <input type="text" id="alert-ticker-input" class="al-input"
+                                       placeholder="Ex: AAPL, IWDA, BTC-USD…"
+                                       autocomplete="off"
+                                       oninput="alertFetchSuggestions(this.value)"
+                                       onkeydown="alertHandleKey(event)">
+                                <div class="al-suggestions" id="alert-suggestions"></div>
+                            </div>
+                            <input type="hidden" id="alert-ticker-val"  name="ticker">
+                            <input type="hidden" id="alert-name-val"    name="ticker_name">
+                            <input type="hidden" id="alert-price-val"   name="current_price">
+                            <div class="al-hint" id="alert-price-hint" style="display:none;">
+                                Prix actuel : <span id="alert-price-display" style="color:var(--accent); font-weight:700;">—</span>
+                            </div>
+                        </div>
+
+                        <div class="al-field">
+                            <label>Condition</label>
+                            <input type="hidden" name="condition" id="condition-val" value="above">
+                            <div class="al-condition-toggle">
+                                <button type="button" class="al-cond-btn active" id="btn-above"
+                                        onclick="setCondition('above')">▲ AU-DESSUS DE</button>
+                                <button type="button" class="al-cond-btn" id="btn-below"
+                                        onclick="setCondition('below')">▼ EN-DESSOUS DE</button>
+                            </div>
+                        </div>
+
+                        <div class="al-field">
+                            <label for="target-price">Prix cible</label>
+                            <input type="number" id="target-price" name="target_price"
+                                   class="al-input" step="0.01" min="0.01"
+                                   placeholder="0.00" required>
+                            <div class="al-hint" id="target-hint" style="display:none;"></div>
+                        </div>
+
+                        <button type="submit" class="btn-create-alert">▶ CRÉER L'ALERTE PRIX</button>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- ── Formulaire FONDAMENTAUX ── -->
+            <div class="al-form-body" id="form-body-fondamentaux">
+                <div class="al-panel-body">
+                    <form method="POST" action="{{ url_for('main.add_fundamental_alert') }}" id="fund-form">
+
+                        <div class="al-field">
+                            <label for="fund-ticker-input">Ticker</label>
+                            <div class="al-autocomplete-wrap" style="position:relative;">
+                                <input type="text" id="fund-ticker-input" class="al-input"
+                                       placeholder="Ex: AAPL, MSFT…"
+                                       autocomplete="off"
+                                       oninput="fundFetchSuggestions(this.value)"
+                                       onkeydown="fundHandleKey(event)">
+                                <div class="al-fund-suggestions" id="fund-suggestions"></div>
+                            </div>
+                            <input type="hidden" id="fund-ticker-val" name="ticker">
+                            <div class="al-hint">Autocomplétion sur les tickers avec données fondamentales disponibles</div>
+                        </div>
+
+                        <div class="al-field">
+                            <label for="fund-metric">Métrique surveillée</label>
+                            <select id="fund-metric" name="metric" class="al-select" onchange="updateMetricHint()">
+                                <option value="pe_forward">PE Forward</option>
+                                <option value="pe_trailing">PE Trailing</option>
+                                <option value="revenue_growth">Croissance revenus (%)</option>
+                                <option value="operating_margin">Marge opérationnelle (%)</option>
+                                <option value="roe">ROE (%)</option>
+                                <option value="quality_score">Score qualité (0–100)</option>
+                                <option value="analyst_upside">Upside analyste (%)</option>
+                                <option value="price_vs_52w_high">Prix vs 52w high (%)</option>
+                            </select>
+                            <div class="al-hint" id="metric-hint">Valeur en multiple (ex: 25 pour PE 25x)</div>
+                        </div>
+
+                        <div class="al-field">
+                            <label>Condition</label>
+                            <input type="hidden" name="condition" id="fund-condition-val" value="above">
+                            <div class="al-condition-toggle">
+                                <button type="button" class="al-cond-btn active" id="fund-btn-above"
+                                        onclick="setFundCondition('above')">▲ AU-DESSUS DE</button>
+                                <button type="button" class="al-cond-btn" id="fund-btn-below"
+                                        onclick="setFundCondition('below')">▼ EN-DESSOUS DE</button>
+                            </div>
+                        </div>
+
+                        <div class="al-field">
+                            <label for="fund-target">Valeur cible</label>
+                            <input type="number" id="fund-target" name="target_value"
+                                   class="al-input" step="0.01"
+                                   placeholder="0" required>
+                            <div class="al-hint" id="fund-target-hint"></div>
+                        </div>
+
+                        <button type="submit" class="btn-create-alert">▶ CRÉER L'ALERTE FONDAMENTALE</button>
+
+                    </form>
+                </div>
+            </div>
+
         </div>
 
-        <!-- ── RIGHT : Liste des alertes ── -->
-        <div class="al-panel">
-            <div class="al-panel-head">
-                <span class="al-panel-title">Mes alertes</span>
-                <span class="al-panel-meta">{{ alerts|length }} total</span>
+        <!-- ═══════════════ RIGHT : Liste ═══════════════ -->
+        <div class="al-panel" id="tab-fondamentaux">
+            <!-- Onglets -->
+            <div class="al-list-tabs">
+                <button class="al-ltab active" id="ltab-actives"
+                        onclick="switchListTab('actives', this)">
+                    ACTIVES
+                    <span class="tab-count">{{ active_alerts|length }}</span>
+                </button>
+                <button class="al-ltab" id="ltab-declenchees"
+                        onclick="switchListTab('declenchees', this)">
+                    DÉCLENCHÉES
+                    <span class="tab-count">{{ triggered_alerts|length }}</span>
+                </button>
+                <button class="al-ltab" id="ltab-fondamentaux"
+                        onclick="switchListTab('fondamentaux', this)">
+                    FONDAMENTAUX
+                    <span class="tab-count">{{ fundamental_alerts|length }}</span>
+                </button>
             </div>
 
-            {% if not alerts %}
-            <div class="al-empty">
-                <div class="al-empty-icon">[ — ]</div>
-                <div class="al-empty-label">Aucune alerte configurée</div>
-            </div>
-            {% else %}
-
-            <!-- Section Actives -->
-            <div class="al-section-label">
-                ACTIVES
-                <span class="al-count-badge{% if active_alerts|length > 0 %} orange{% endif %}">{{ active_alerts|length }}</span>
-            </div>
-
-            {% if not active_alerts %}
-            <div style="padding:16px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); text-align:center; text-transform:uppercase; letter-spacing:1px;">
-                Aucune alerte active
-            </div>
-            {% else %}
-            {% for alert in active_alerts %}
-            {% set cp = alert['current_price'] | float(0) %}
-            {% set tp = alert['target_price']  | float %}
-            {% set has_price = cp > 0 %}
-            {% if has_price %}
-                {% set gap_abs = (cp - tp) | abs %}
-                {% set gap_pct = ((cp - tp) / tp * 100) | round(2) %}
-                {# Proximity 0-1: how close current is to target #}
-                {% set dist_pct = (gap_abs / tp * 100) %}
-                {% set prox = [[(100 - dist_pct), 0] | max, 100] | min %}
-                {% if prox >= 90 %}{% set bar_color = '#FF1744' %}
-                {% elif prox >= 70 %}{% set bar_color = '#00D4C8' %}
-                {% elif prox >= 40 %}{% set bar_color = '#FFD600' %}
-                {% else %}{% set bar_color = '#00C853' %}
+            <!-- ── Tab ACTIVES ── -->
+            <div class="al-list-section active" id="list-actives">
+                {% if not active_alerts %}
+                <div class="al-empty">
+                    <div class="al-empty-icon">[ — ]</div>
+                    <div class="al-empty-label">Aucune alerte de prix active</div>
+                </div>
+                {% else %}
+                {% for alert in active_alerts %}
+                {% set cp = alert['current_price'] | float(0) %}
+                {% set tp = alert['target_price']  | float %}
+                {% set has_price = cp > 0 %}
+                {% if has_price %}
+                    {% set gap_abs = (cp - tp) | abs %}
+                    {% set gap_pct = ((cp - tp) / tp * 100) | round(2) %}
+                    {% set dist_pct = (gap_abs / tp * 100) %}
+                    {% set prox = [[(100 - dist_pct), 0] | max, 100] | min %}
+                    {% if prox >= 90 %}{% set bar_color = '#FF1744' %}
+                    {% elif prox >= 70 %}{% set bar_color = '#00D4C8' %}
+                    {% elif prox >= 40 %}{% set bar_color = '#FFD600' %}
+                    {% else %}{% set bar_color = '#00C853' %}
+                    {% endif %}
+                {% else %}
+                    {% set gap_pct = 0 %}
+                    {% set prox = 0 %}
+                    {% set bar_color = '#2A2A2A' %}
                 {% endif %}
-            {% else %}
-                {% set gap_pct = 0 %}
-                {% set prox = 0 %}
-                {% set bar_color = '#2A2A2A' %}
-            {% endif %}
-
-            <div class="al-row">
-                <div class="al-row-top">
-                    <span class="al-ticker">{{ alert['ticker'] }}</span>
-                    <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
-                    <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
-                    <div class="al-prices">
-                        <div class="al-price-cell">
-                            <span class="al-price-label">Cible</span>
-                            <span class="al-price-val target">{{ tp | round(2) }}</span>
+                <div class="al-row">
+                    <div class="al-row-top">
+                        <span class="al-ticker">{{ alert['ticker'] }}</span>
+                        <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                        <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
+                        <div class="al-prices">
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Cible</span>
+                                <span class="al-price-val target">{{ tp | round(2) }}</span>
+                            </div>
+                            {% if has_price %}
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Actuel</span>
+                                <span class="al-price-val">{{ cp | round(2) }}</span>
+                            </div>
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Écart</span>
+                                <span class="al-gap-val" style="color:{{ '#00C853' if gap_pct >= 0 else '#FF1744' }};">
+                                    {{ '+' if gap_pct >= 0 else '' }}{{ gap_pct }}%
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% if has_price %}
-                        <div class="al-price-cell">
-                            <span class="al-price-label">Actuel</span>
-                            <span class="al-price-val">{{ cp | round(2) }}</span>
-                        </div>
-                        <div class="al-price-cell">
-                            <span class="al-price-label">Écart</span>
-                            <span class="al-gap-val" style="color:{{ '#00C853' if gap_pct >= 0 else '#FF1744' }};">
-                                {{ '+' if gap_pct >= 0 else '' }}{{ gap_pct }}%
-                            </span>
-                        </div>
-                        {% endif %}
+                        <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
+                              onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                            <button type="submit" class="al-delete-btn">×</button>
+                        </form>
                     </div>
-                    <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
-                          onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
-                        <button type="submit" class="al-delete-btn">×</button>
-                    </form>
-                </div>
-                <!-- Progress bar -->
-                <div class="al-progress-wrap">
-                    <div class="al-progress-fill" style="width:{{ prox | round(1) }}%; background:{{ bar_color }};"></div>
-                </div>
-                <div style="font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-dim); display:flex; justify-content:space-between; padding:0 1px;">
-                    <span>0%</span>
-                    <span style="color:{{ bar_color }};">{{ prox | round(0) | int }}% de proximité au déclenchement</span>
-                    <span>100%</span>
-                </div>
-            </div>
-            {% endfor %}
-            {% endif %}
-
-            <!-- Section Déclenchées -->
-            <div class="al-section-label" style="margin-top:2px;">
-                DÉCLENCHÉES
-                <span class="al-count-badge">{{ triggered_alerts|length }}</span>
-            </div>
-
-            {% if not triggered_alerts %}
-            <div style="padding:16px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); text-align:center; text-transform:uppercase; letter-spacing:1px;">
-                Aucune alerte déclenchée
-            </div>
-            {% else %}
-            {% for alert in triggered_alerts %}
-            {% set cp = alert['current_price'] | float(0) %}
-            {% set tp = alert['target_price']  | float %}
-            <div class="al-row triggered">
-                <div class="al-row-top">
-                    <span class="al-ticker">{{ alert['ticker'] }}</span>
-                    <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
-                    <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
-                    <div class="al-prices">
-                        <div class="al-price-cell">
-                            <span class="al-price-label">Cible</span>
-                            <span class="al-price-val target">{{ tp | round(2) }}</span>
-                        </div>
-                        {% if cp > 0 %}
-                        <div class="al-price-cell">
-                            <span class="al-price-label">Au trigger</span>
-                            <span class="al-price-val">{{ cp | round(2) }}</span>
-                        </div>
-                        {% endif %}
+                    <div class="al-progress-wrap">
+                        <div class="al-progress-fill" style="width:{{ prox | round(1) }}%; background:{{ bar_color }};"></div>
                     </div>
-                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-                        <span class="triggered-tag">TRIGGERED</span>
-                        {% if alert['triggered_at'] %}
-                        <span class="triggered-date">{{ alert['triggered_at'][:10] }}</span>
-                        {% endif %}
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-dim); display:flex; justify-content:space-between; padding:0 1px;">
+                        <span>0%</span>
+                        <span style="color:{{ bar_color }};">{{ prox | round(0) | int }}% de proximité au déclenchement</span>
+                        <span>100%</span>
                     </div>
-                    <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
-                          onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
-                        <button type="submit" class="al-delete-btn">×</button>
-                    </form>
                 </div>
+                {% endfor %}
+                {% endif %}
             </div>
-            {% endfor %}
-            {% endif %}
 
-            {% endif %}
+            <!-- ── Tab DÉCLENCHÉES ── -->
+            <div class="al-list-section" id="list-declenchees">
+                {% if not triggered_alerts %}
+                <div class="al-empty">
+                    <div class="al-empty-icon">[ ✓ ]</div>
+                    <div class="al-empty-label">Aucune alerte déclenchée</div>
+                </div>
+                {% else %}
+                {% for alert in triggered_alerts %}
+                {% set cp = alert['current_price'] | float(0) %}
+                {% set tp = alert['target_price']  | float %}
+                <div class="al-row triggered">
+                    <div class="al-row-top">
+                        <span class="al-ticker">{{ alert['ticker'] }}</span>
+                        <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                        <span class="al-ticker-name">{{ alert['ticker_name'] or '' }}</span>
+                        <div class="al-prices">
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Cible</span>
+                                <span class="al-price-val target">{{ tp | round(2) }}</span>
+                            </div>
+                            {% if cp > 0 %}
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Au trigger</span>
+                                <span class="al-price-val">{{ cp | round(2) }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                            <span class="triggered-tag">TRIGGERED</span>
+                            {% if alert['triggered_at'] %}
+                            <span class="triggered-date">{{ alert['triggered_at'][:10] }}</span>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('main.delete_alert_route', alert_id=alert['id']) }}"
+                              onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                            <button type="submit" class="al-delete-btn">×</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- ── Tab FONDAMENTAUX ── -->
+            <div class="al-list-section" id="list-fondamentaux">
+
+                {% if not fundamental_alerts %}
+                <div class="al-empty">
+                    <div class="al-empty-icon">[ — ]</div>
+                    <div class="al-empty-label">Aucune alerte fondamentale</div>
+                </div>
+                {% else %}
+
+                {# Actives fondamentales #}
+                {% if fa_active %}
+                <div class="al-section-label">
+                    ACTIVES
+                    <span class="al-count-badge{% if fa_active|length > 0 %} orange{% endif %}">{{ fa_active|length }}</span>
+                </div>
+                {% for alert in fa_active %}
+                {% set cv = alert['current_value'] | float(0) %}
+                {% set tv = alert['target_value']  | float %}
+                {% set has_val = cv != 0 %}
+                {% if has_val and tv != 0 %}
+                    {% if alert['condition'] == 'above' %}
+                        {% set prox_raw = cv / tv * 100 %}
+                    {% else %}
+                        {% set prox_raw = tv / cv * 100 if cv != 0 else 0 %}
+                    {% endif %}
+                    {% set prox = [[prox_raw, 0] | max, 100] | min %}
+                    {% if prox >= 90 %}{% set bar_color = '#FF1744' %}
+                    {% elif prox >= 70 %}{% set bar_color = '#00D4C8' %}
+                    {% elif prox >= 40 %}{% set bar_color = '#FFD600' %}
+                    {% else %}{% set bar_color = '#00C853' %}
+                    {% endif %}
+                {% else %}
+                    {% set prox = 0 %}
+                    {% set bar_color = '#2A2A2A' %}
+                {% endif %}
+
+                <div class="al-row">
+                    <div class="al-row-top">
+                        <span class="al-ticker">{{ alert['ticker'] }}</span>
+                        <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                        <span class="al-metric-tag">{{ alert['metric'] | replace('_', ' ') | upper }}</span>
+                        <div class="al-prices">
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Cible</span>
+                                <span class="al-price-val target">{{ tv | round(2) }}</span>
+                            </div>
+                            {% if has_val %}
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Actuel</span>
+                                <span class="al-price-val">{{ cv | round(2) }}</span>
+                            </div>
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Écart</span>
+                                {% set ecart = cv - tv %}
+                                <span class="al-gap-val" style="color:{{ '#00C853' if ecart >= 0 else '#FF1744' }};">
+                                    {{ '+' if ecart >= 0 else '' }}{{ ecart | round(2) }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('main.delete_fundamental_alert_route', alert_id=alert['id']) }}"
+                              onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                            <button type="submit" class="al-delete-btn">×</button>
+                        </form>
+                    </div>
+                    <div class="al-progress-wrap">
+                        <div class="al-progress-fill" style="width:{{ prox | round(1) }}%; background:{{ bar_color }};"></div>
+                    </div>
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-dim); display:flex; justify-content:space-between; padding:0 1px;">
+                        <span>0%</span>
+                        <span style="color:{{ bar_color }};">{{ prox | round(0) | int }}% de proximité au déclenchement</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {# Déclenchées fondamentales #}
+                {% if fa_triggered %}
+                <div class="al-section-label" style="margin-top:2px;">
+                    DÉCLENCHÉES
+                    <span class="al-count-badge">{{ fa_triggered|length }}</span>
+                </div>
+                {% for alert in fa_triggered %}
+                {% set cv = alert['current_value'] | float(0) %}
+                {% set tv = alert['target_value']  | float %}
+                <div class="al-row triggered">
+                    <div class="al-row-top">
+                        <span class="al-ticker">{{ alert['ticker'] }}</span>
+                        <span class="al-cond-icon {{ alert['condition'] }}">{{ '▲' if alert['condition'] == 'above' else '▼' }}</span>
+                        <span class="al-metric-tag">{{ alert['metric'] | replace('_', ' ') | upper }}</span>
+                        <div class="al-prices">
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Cible</span>
+                                <span class="al-price-val target">{{ tv | round(2) }}</span>
+                            </div>
+                            {% if cv != 0 %}
+                            <div class="al-price-cell">
+                                <span class="al-price-label">Au trigger</span>
+                                <span class="al-price-val">{{ cv | round(2) }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                            <span class="triggered-tag">TRIGGERED</span>
+                            {% if alert['triggered_at'] %}
+                            <span class="triggered-date">{{ alert['triggered_at'][:10] }}</span>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('main.delete_fundamental_alert_route', alert_id=alert['id']) }}"
+                              onsubmit="return confirm('Supprimer cette alerte ?')" style="margin-left:8px;">
+                            <button type="submit" class="al-delete-btn">×</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% endif %}
+            </div>
+
         </div>
 
     </div>
 </div>
 
 <script>
-// ── Autocomplete ──
+// ══════════════════════════════════════════════════════
+// ALERTES DE PRIX — code original inchangé
+// ══════════════════════════════════════════════════════
 var alertAbort = null;
 var alertSugIdx = -1;
 
@@ -587,14 +901,11 @@ async function pickAlertAsset(ticker, name) {
     document.getElementById('alert-ticker-val').value   = ticker;
     document.getElementById('alert-name-val').value     = name;
     document.getElementById('alert-suggestions').style.display = 'none';
-
-    // Fetch current price
     var hint   = document.getElementById('alert-price-hint');
     var dispEl = document.getElementById('alert-price-display');
     hint.style.display = '';
     dispEl.textContent = '…';
     document.getElementById('alert-price-val').value = '';
-
     try {
         var res  = await fetch('/api/price/' + encodeURIComponent(ticker));
         var data = await res.json();
@@ -602,7 +913,6 @@ async function pickAlertAsset(ticker, name) {
             var p = parseFloat(data.price);
             dispEl.textContent = p.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('alert-price-val').value = p;
-            // Pre-fill target price with current price if empty
             var tp = document.getElementById('target-price');
             if (!tp.value) tp.value = p.toFixed(2);
             updateTargetHint(p);
@@ -638,7 +948,6 @@ document.addEventListener('click', function(e) {
         document.getElementById('alert-suggestions').style.display = 'none';
 });
 
-// ── Condition toggle ──
 function setCondition(cond) {
     document.getElementById('condition-val').value = cond;
     document.getElementById('btn-above').classList.toggle('active', cond === 'above');
@@ -646,7 +955,6 @@ function setCondition(cond) {
     updateTargetHint(parseFloat(document.getElementById('alert-price-val').value) || 0);
 }
 
-// ── Target hint ──
 function updateTargetHint(currentPrice) {
     var hint   = document.getElementById('target-hint');
     var target = parseFloat(document.getElementById('target-price').value) || 0;
@@ -664,13 +972,146 @@ document.getElementById('target-price').addEventListener('input', function() {
     updateTargetHint(parseFloat(document.getElementById('alert-price-val').value) || 0);
 });
 
-// ── Form validation ──
 document.getElementById('alert-form').addEventListener('submit', function(e) {
     var ticker = document.getElementById('alert-ticker-val').value;
     if (!ticker) {
         e.preventDefault();
         alert('Sélectionne un actif dans la liste de suggestions.');
     }
+});
+
+// ══════════════════════════════════════════════════════
+// ONGLETS — formulaire gauche
+// ══════════════════════════════════════════════════════
+function switchFormTab(tab, btn) {
+    console.log('[alerts] switchFormTab:', tab);
+    document.querySelectorAll('.al-ftab').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.al-form-body').forEach(function(d) { d.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('form-body-' + tab).classList.add('active');
+}
+
+// ── Onglets liste droite ──
+function switchListTab(tab, btn) {
+    console.log('[alerts] switchListTab:', tab);
+    document.querySelectorAll('.al-ltab').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.al-list-section').forEach(function(d) { d.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('list-' + tab).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+// ALERTES FONDAMENTALES — autocomplete + formulaire
+// ══════════════════════════════════════════════════════
+var fundAcTimer = null;
+var fundSugIdx  = -1;
+
+function fundFetchSuggestions(q) {
+    clearTimeout(fundAcTimer);
+    var box = document.getElementById('fund-suggestions');
+    if (!q || q.length < 1) { box.classList.remove('open'); return; }
+    fundAcTimer = setTimeout(function() {
+        fetch('/api/comparateur/autocomplete?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(items) {
+                console.log('[fund-ac] q=' + q + ' → ' + items.length + ' résultats');
+                if (!items.length) { box.classList.remove('open'); return; }
+                box.innerHTML = items.slice(0, 8).map(function(item) {
+                    return '<div class="al-sug-item" onmousedown="pickFundAsset(\'' + escQ(item.ticker) + '\')">' +
+                           '<span class="al-sug-ticker">' + item.ticker + '</span>' +
+                           '<span class="al-sug-name">' + escQ(item.name || '') + '</span>' +
+                           '</div>';
+                }).join('');
+                box.classList.add('open');
+                fundSugIdx = -1;
+            })
+            .catch(function(e) { console.error('[fund-ac] error:', e); });
+    }, 200);
+}
+
+function pickFundAsset(ticker) {
+    console.log('[fund-ac] picked:', ticker);
+    document.getElementById('fund-ticker-input').value = ticker;
+    document.getElementById('fund-ticker-val').value   = ticker;
+    document.getElementById('fund-suggestions').classList.remove('open');
+}
+
+function fundHandleKey(e) {
+    var box   = document.getElementById('fund-suggestions');
+    var items = box.querySelectorAll('.al-sug-item');
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        fundSugIdx = Math.min(fundSugIdx + 1, items.length - 1);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === fundSugIdx); });
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        fundSugIdx = Math.max(fundSugIdx - 1, 0);
+        items.forEach(function(el, i) { el.classList.toggle('active', i === fundSugIdx); });
+    } else if (e.key === 'Enter' && fundSugIdx >= 0) {
+        e.preventDefault();
+        var active = items[fundSugIdx];
+        if (active) active.dispatchEvent(new MouseEvent('mousedown'));
+    } else if (e.key === 'Escape') {
+        box.classList.remove('open');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#fund-ticker-input') && !e.target.closest('#fund-suggestions'))
+        document.getElementById('fund-suggestions').classList.remove('open');
+});
+
+// Sync hidden field quand l'input est modifié manuellement
+document.getElementById('fund-ticker-input').addEventListener('blur', function() {
+    document.getElementById('fund-ticker-val').value = this.value.trim().toUpperCase();
+});
+
+function setFundCondition(cond) {
+    document.getElementById('fund-condition-val').value = cond;
+    document.getElementById('fund-btn-above').classList.toggle('active', cond === 'above');
+    document.getElementById('fund-btn-below').classList.toggle('active', cond === 'below');
+}
+
+// Hints par métrique
+var METRIC_HINTS = {
+    'pe_forward':        'Valeur en multiple (ex: 25 pour PE Forward 25x)',
+    'pe_trailing':       'Valeur en multiple (ex: 30 pour PE Trailing 30x)',
+    'revenue_growth':    'Valeur en % (ex: 15 pour une croissance de 15%)',
+    'operating_margin':  'Valeur en % (ex: 20 pour une marge de 20%)',
+    'roe':               'Valeur en % (ex: 15 pour ROE 15%)',
+    'quality_score':     'Score de 0 à 100 (ex: 70 pour score qualité ≥ 70)',
+    'analyst_upside':    'Valeur en % (ex: 20 pour un upside analyste de 20%)',
+    'price_vs_52w_high': 'Valeur en % du plus haut 52 semaines (ex: 90 pour 90% du plus haut)',
+};
+
+function updateMetricHint() {
+    var metric = document.getElementById('fund-metric').value;
+    var hint   = document.getElementById('metric-hint');
+    hint.textContent = METRIC_HINTS[metric] || '';
+    console.log('[fund-form] metric changed:', metric);
+}
+
+document.getElementById('fund-form').addEventListener('submit', function(e) {
+    var ticker = document.getElementById('fund-ticker-val').value.trim();
+    if (!ticker) {
+        e.preventDefault();
+        document.getElementById('fund-ticker-input').focus();
+        console.warn('[fund-form] ticker manquant');
+    }
+});
+
+// ══════════════════════════════════════════════════════
+// AUTO-ACTIVATION DU BON ONGLET AU CHARGEMENT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    // Si l'URL contient #tab-fondamentaux (redirect après POST)
+    if (window.location.hash === '#tab-fondamentaux' || window.location.search.includes('tab=fondamentaux')) {
+        var lBtn = document.getElementById('ltab-fondamentaux');
+        var fBtn = document.querySelectorAll('.al-ftab')[1];
+        if (lBtn) switchListTab('fondamentaux', lBtn);
+        if (fBtn) switchFormTab('fondamentaux', fBtn);
+    }
+    console.log('[alerts] init — prix={{ alerts|length }} fondamentaux={{ fundamental_alerts|length }}');
 });
 </script>
 {% endblock %}

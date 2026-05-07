@@ -811,6 +811,44 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Alertes fondamentales ─────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS alerts_fundamental (
+                    id            SERIAL PRIMARY KEY,
+                    user_id       INTEGER NOT NULL,
+                    ticker        TEXT    NOT NULL,
+                    metric        TEXT    NOT NULL,
+                    condition     TEXT    NOT NULL,
+                    target_value  REAL    NOT NULL,
+                    current_value REAL,
+                    status        TEXT    NOT NULL DEFAULT 'active',
+                    created_at    TIMESTAMP DEFAULT NOW(),
+                    triggered_at  TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS alerts_fundamental (
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id       INTEGER NOT NULL,
+                    ticker        TEXT    NOT NULL,
+                    metric        TEXT    NOT NULL,
+                    condition     TEXT    NOT NULL,
+                    target_value  REAL    NOT NULL,
+                    current_value REAL,
+                    status        TEXT    NOT NULL DEFAULT 'active',
+                    created_at    TEXT    DEFAULT (datetime('now')),
+                    triggered_at  TEXT,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     # ── beta column on fundamentals (migration) ───────────────────────────────
     try:
         if is_postgres():
@@ -1319,6 +1357,215 @@ def get_triggered_alerts_count(user_id):
     row = fetchone_as_dict(c)
     conn.close()
     return int(row['n']) if row else 0
+
+
+# ── Alertes fondamentales ─────────────────────────────────────────────────────
+
+FUNDAMENTAL_METRIC_LABELS = {
+    'pe_forward':        'PE Forward',
+    'pe_trailing':       'PE Trailing',
+    'revenue_growth':    'Croissance revenus',
+    'operating_margin':  'Marge opérationnelle',
+    'roe':               'ROE',
+    'quality_score':     'Score qualité',
+    'analyst_upside':    'Upside analyste',
+    'price_vs_52w_high': 'Prix vs 52w high',
+}
+
+# Facteur : valeur_affichée = valeur_DB * scale
+# Ex: revenue_growth stocké 0.15 → affiché 15%
+FUNDAMENTAL_METRIC_SCALE = {
+    'pe_forward':        1.0,
+    'pe_trailing':       1.0,
+    'revenue_growth':    100.0,
+    'operating_margin':  100.0,
+    'roe':               100.0,
+    'quality_score':     1.0,
+    'analyst_upside':    100.0,
+    'price_vs_52w_high': 100.0,
+}
+
+
+def create_fundamental_alert(user_id, ticker, metric, condition, target_value):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f'INSERT INTO alerts_fundamental (user_id, ticker, metric, condition, target_value) VALUES ({p},{p},{p},{p},{p})',
+            (user_id, ticker, metric, condition, target_value)
+        )
+        conn.commit()
+        print(f'[fundamental_alerts] created: user={user_id} {ticker} {metric} {condition} {target_value}')
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_user_fundamental_alerts(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f"SELECT * FROM alerts_fundamental WHERE user_id = {p} ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, created_at DESC",
+        (user_id,)
+    )
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+
+def delete_fundamental_alert(alert_id, user_id):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM alerts_fundamental WHERE id = {p} AND user_id = {p}', (alert_id, user_id))
+        conn.commit()
+        print(f'[fundamental_alerts] deleted: id={alert_id} user={user_id}')
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
+
+
+def get_triggered_fundamental_alerts_count(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f"SELECT COUNT(*) as n FROM alerts_fundamental WHERE user_id={p} AND status='triggered'", (user_id,))
+    row = fetchone_as_dict(c)
+    conn.close()
+    return int(row['n']) if row else 0
+
+
+def check_and_update_fundamental_alerts_for_user(user_id):
+    """Vérifie les alertes fondamentales actives d'un user contre la table fundamentals.
+    Appelé à chaque visite de la page F9.
+    Retourne (count, newly_triggered).
+    """
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM alerts_fundamental WHERE user_id = {p} AND status = 'active'", (user_id,))
+    active = fetchall_as_dict(c)
+    if not active:
+        conn.close()
+        return 0, []
+
+    tickers = list(set(row['ticker'] for row in active))
+    fundamentals = {}
+    for ticker in tickers:
+        c.execute(f"SELECT * FROM fundamentals WHERE ticker = {p}", (ticker,))
+        row = fetchone_as_dict(c)
+        if row:
+            fundamentals[ticker] = row
+
+    now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    updated = 0
+    newly_triggered = []
+
+    for row in active:
+        ticker = row['ticker']
+        if ticker not in fundamentals:
+            continue
+        db_val = fundamentals[ticker].get(row['metric'])
+        if db_val is None:
+            continue
+        scale = FUNDAMENTAL_METRIC_SCALE.get(row['metric'], 1.0)
+        display_val = float(db_val) * scale
+        target    = float(row['target_value'])
+        condition = row['condition']
+        triggered = (condition == 'above' and display_val >= target) or \
+                    (condition == 'below' and display_val <= target)
+        if triggered:
+            c.execute(
+                f"UPDATE alerts_fundamental SET current_value={p}, status='triggered', triggered_at={p} WHERE id={p} AND user_id={p}",
+                (display_val, now_str, row['id'], user_id)
+            )
+            updated += 1
+            newly_triggered.append({
+                'ticker':        ticker,
+                'metric':        row['metric'],
+                'metric_label':  FUNDAMENTAL_METRIC_LABELS.get(row['metric'], row['metric']),
+                'condition':     condition,
+                'target_value':  target,
+                'current_value': display_val,
+                'triggered_at':  now_str,
+            })
+            print(f'[fundamental_alerts] triggered (user): user={user_id} {ticker} {row["metric"]} {condition} {target} @ {display_val:.3f}')
+        else:
+            c.execute(
+                f"UPDATE alerts_fundamental SET current_value={p} WHERE id={p} AND user_id={p}",
+                (display_val, row['id'], user_id)
+            )
+
+    conn.commit()
+    conn.close()
+    return updated, newly_triggered
+
+
+def check_and_update_fundamental_alerts_for_ticker(ticker, data):
+    """Vérifie toutes les alertes fondamentales actives (tous users) pour un ticker.
+    Appelé depuis data_jobs après chaque mise à jour des fondamentaux.
+    Retourne la liste des alertes déclenchées avec user_email pour envoi email.
+    """
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        f"""SELECT af.*, u.email as user_email
+            FROM alerts_fundamental af
+            JOIN users u ON u.id = af.user_id
+            WHERE af.ticker = {p} AND af.status = 'active'""",
+        (ticker,)
+    )
+    active = fetchall_as_dict(c)
+    if not active:
+        conn.close()
+        return []
+
+    now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    triggered_list = []
+
+    for row in active:
+        db_val = data.get(row['metric'])
+        if db_val is None:
+            continue
+        scale = FUNDAMENTAL_METRIC_SCALE.get(row['metric'], 1.0)
+        display_val = float(db_val) * scale
+        target    = float(row['target_value'])
+        condition = row['condition']
+        triggered = (condition == 'above' and display_val >= target) or \
+                    (condition == 'below' and display_val <= target)
+        if triggered:
+            c.execute(
+                f"UPDATE alerts_fundamental SET current_value={p}, status='triggered', triggered_at={p} WHERE id={p}",
+                (display_val, now_str, row['id'])
+            )
+            triggered_list.append({
+                'user_id':       row['user_id'],
+                'user_email':    row['user_email'],
+                'ticker':        ticker,
+                'metric':        row['metric'],
+                'metric_label':  FUNDAMENTAL_METRIC_LABELS.get(row['metric'], row['metric']),
+                'condition':     condition,
+                'target_value':  target,
+                'current_value': display_val,
+                'triggered_at':  now_str,
+            })
+            print(f'[fundamental_alerts] triggered (job): user={row["user_id"]} {ticker} {row["metric"]} {condition} {target} @ {display_val:.3f}')
+        else:
+            c.execute(
+                f"UPDATE alerts_fundamental SET current_value={p} WHERE id={p}",
+                (display_val, row['id'])
+            )
+
+    conn.commit()
+    conn.close()
+    return triggered_list
 
 
 # ── Liens ─────────────────────────────────────────────────────────────────────

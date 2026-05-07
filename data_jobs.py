@@ -342,6 +342,21 @@ def refresh_all_fundamentals() -> None:
             if data:
                 save_fundamentals_to_db(data)
                 ok += 1
+                # Vérifier les alertes fondamentales pour ce ticker (tous users)
+                try:
+                    from database import check_and_update_fundamental_alerts_for_ticker
+                    triggered = check_and_update_fundamental_alerts_for_ticker(ticker, data)
+                    for t in triggered:
+                        try:
+                            from auth import send_fundamental_alert_email
+                            send_fundamental_alert_email(
+                                t['user_email'], t['ticker'], t['metric_label'],
+                                t['condition'], t['target_value'], t['current_value'], t['triggered_at'],
+                            )
+                        except Exception as mail_err:
+                            log.warning("send_fundamental_alert_email %s: %s", ticker, mail_err)
+                except Exception as alert_err:
+                    log.warning("check_fundamental_alerts %s: %s", ticker, alert_err)
             else:
                 failed += 1
         except Exception as e:

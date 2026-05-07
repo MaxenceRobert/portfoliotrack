@@ -61,8 +61,9 @@ main_bp = Blueprint('main', __name__)
 def inject_alerts_state():
     if current_user.is_authenticated:
         try:
-            from database import get_triggered_alerts_count
-            n = get_triggered_alerts_count(current_user.id)
+            from database import get_triggered_alerts_count, get_triggered_fundamental_alerts_count
+            n = get_triggered_alerts_count(current_user.id) + \
+                get_triggered_fundamental_alerts_count(current_user.id)
         except Exception:
             n = 0
     else:
@@ -2625,7 +2626,10 @@ def coach_clear():
 @login_required
 def alerts():
     from database import get_user_alerts, check_and_update_alerts
-    from auth import send_alert_email
+    from database import get_user_fundamental_alerts, check_and_update_fundamental_alerts_for_user
+    from auth import send_alert_email, send_fundamental_alert_email
+
+    # Alertes de prix
     _updated, _newly_triggered = check_and_update_alerts(current_user.id)
     for al in _newly_triggered:
         try:
@@ -2638,7 +2642,21 @@ def alerts():
         except Exception as _e:
             print(f"[alerts] email error for {al['ticker']}: {_e}")
     alerts_list = get_user_alerts(current_user.id)
-    return render_template('alerts.html', alerts=alerts_list)
+
+    # Alertes fondamentales
+    _f_updated, _f_newly_triggered = check_and_update_fundamental_alerts_for_user(current_user.id)
+    for al in _f_newly_triggered:
+        try:
+            send_fundamental_alert_email(
+                current_user.email, al['ticker'], al['metric_label'],
+                al['condition'], al['target_value'], al['current_value'], al['triggered_at'],
+            )
+        except Exception as _e:
+            print(f"[fundamental_alerts] email error for {al['ticker']}: {_e}")
+    fundamental_alerts_list = get_user_fundamental_alerts(current_user.id)
+
+    print(f"[alerts] user={current_user.id} prix={len(alerts_list)} fondamentaux={len(fundamental_alerts_list)}")
+    return render_template('alerts.html', alerts=alerts_list, fundamental_alerts=fundamental_alerts_list)
 
 @main_bp.route('/alerts/add', methods=['POST'])
 @login_required
@@ -2668,6 +2686,36 @@ def delete_alert_route(alert_id):
     from database import delete_alert
     delete_alert(alert_id, current_user.id)
     return redirect(url_for('main.alerts'))
+
+@main_bp.route('/alerts/fundamental/add', methods=['POST'])
+@login_required
+def add_fundamental_alert():
+    from database import create_fundamental_alert
+    ticker        = request.form.get('ticker', '').strip().upper()
+    metric        = request.form.get('metric', '').strip()
+    condition     = request.form.get('condition', 'above')
+    try:
+        target_value = float(request.form.get('target_value', 0))
+    except (ValueError, TypeError):
+        target_value = 0
+
+    from database import FUNDAMENTAL_METRIC_LABELS
+    valid_metrics = set(FUNDAMENTAL_METRIC_LABELS.keys())
+
+    if ticker and metric in valid_metrics and target_value != 0 and condition in ('above', 'below'):
+        create_fundamental_alert(current_user.id, ticker, metric, condition, target_value)
+        flash('Alerte fondamentale créée ✓', 'success')
+        print(f"[fundamental_alerts] add: user={current_user.id} {ticker} {metric} {condition} {target_value}")
+    else:
+        flash('Données invalides.', 'error')
+    return redirect(url_for('main.alerts') + '#tab-fondamentaux')
+
+@main_bp.route('/alerts/fundamental/delete/<int:alert_id>', methods=['POST'])
+@login_required
+def delete_fundamental_alert_route(alert_id):
+    from database import delete_fundamental_alert
+    delete_fundamental_alert(alert_id, current_user.id)
+    return redirect(url_for('main.alerts') + '#tab-fondamentaux')
 
 @main_bp.route('/api/alerts/check')
 @login_required
