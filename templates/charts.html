@@ -262,6 +262,18 @@
   .detail-summary { gap: 14px; }
   .cp-chart-controls { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── Loading spinner ────────────────────────────────────────────────────────── */
+.cp-loading {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: #00D4C8;
+  letter-spacing: .1em;
+  padding: 3rem;
+  text-align: center;
+  animation: cp-blink 1s infinite;
+}
+@keyframes cp-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
 
 <div class="charts-page">
@@ -274,16 +286,18 @@
     </div>
   </div>
 
-  {% set has_data = chart_page_data.portfolio.dates | length > 0 or chart_page_data.positions | length > 0 %}
+  <!-- État chargement -->
+  <div id="charts-loading" class="cp-loading">CHARGEMENT...</div>
 
-  {% if not has_data %}
-  <div class="cp-empty">
+  <!-- État vide (aucune donnée) -->
+  <div id="charts-empty" class="cp-empty" style="display:none;">
     <div class="cp-empty-icon">[ — ]</div>
     <div class="cp-empty-label">Aucune donnée — ajoute des achats pour voir tes graphiques</div>
     <a href="{{ url_for('main.add_purchase_route') }}" class="btn btn-primary">+ Ajouter un achat</a>
   </div>
 
-  {% else %}
+  <!-- Contenu principal (affiché après fetch) -->
+  <div id="charts-main" style="display:none;">
 
   <!-- ═══ SECTION 1 — PORTFOLIO CHART ═══ -->
   <div class="cp-chart-section" id="portfolio-section">
@@ -349,13 +363,13 @@
     </div>
   </div>
 
-  {% endif %}
+  </div>{# /charts-main #}
 
 </div>{# /charts-page #}
 
 <script>
-// ── Data ──────────────────────────────────────────────────────────────────────
-var CPD = {{ chart_page_data | tojson }};
+// ── Data (chargé via fetch /api/charts/data) ──────────────────────────────────
+var CPD = null;
 
 // ── State ─────────────────────────────────────────────────────────────────────
 var _chartMode = 'valeur';
@@ -854,8 +868,12 @@ function renderCorrelation() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-window.addEventListener('load', function() {
-  if (!CPD.portfolio.dates.length && !Object.keys(CPD.positions).length) return;
+function initCharts() {
+  if (!CPD.portfolio.dates.length && !Object.keys(CPD.positions).length) {
+    document.getElementById('charts-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('charts-main').style.display = 'block';
 
   renderPortfolioChart();
   renderPositionCards();
@@ -873,6 +891,22 @@ window.addEventListener('load', function() {
       }
     });
   });
+}
+
+window.addEventListener('load', function() {
+  fetch('/api/charts/data')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      CPD = data;
+      console.log('[charts] data loaded positions=' + Object.keys(CPD.positions).length);
+      document.getElementById('charts-loading').style.display = 'none';
+      initCharts();
+    })
+    .catch(function(e) {
+      console.error('[charts] load error:', e);
+      document.getElementById('charts-loading').innerHTML =
+        '<span style="color:#ff4444;">Erreur de chargement — rechargez la page</span>';
+    });
 });
 </script>
 {% endblock %}

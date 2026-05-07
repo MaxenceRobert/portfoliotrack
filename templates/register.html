@@ -202,6 +202,7 @@ html, body {
             {% endwith %}
 
             <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <!-- Email -->
                 <div class="auth-field">

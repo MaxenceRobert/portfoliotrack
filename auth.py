@@ -11,6 +11,16 @@ from database import (
     create_reset_token, get_reset_token, invalidate_reset_token,
     update_user_password,
 )
+from security import limiter
+
+
+def hash_password(password: str) -> str:
+    """Hash explicite pbkdf2:sha256 avec salt 16 bytes."""
+    return generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
+
+
+def verify_password(stored_hash: str, password: str) -> bool:
+    return check_password_hash(stored_hash, password)
 
 resend.api_key = os.environ.get('RESEND_API_KEY')
 
@@ -174,7 +184,7 @@ def register():
             flash('Le mot de passe doit faire au moins 8 caractères.', 'error')
             return redirect(url_for('auth.register'))
 
-        hashed  = generate_password_hash(password)
+        hashed  = hash_password(password)
         success = create_user(email, hashed)
         if not success:
             flash('Cet email est déjà utilisé.', 'error')
@@ -205,6 +215,7 @@ def verify_email(token):
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if request.method == 'POST':
         email    = request.form['email'].strip().lower()
@@ -312,7 +323,7 @@ def reset_password(token):
             flash('Le mot de passe doit faire au moins 8 caractères.', 'error')
             return redirect(url_for('auth.reset_password', token=token))
 
-        new_hash = generate_password_hash(password)
+        new_hash = hash_password(password)
         update_user_password(row['user_id'], new_hash)
         invalidate_reset_token(token)
         flash('Mot de passe mis à jour. Tu peux te connecter.', 'success')
