@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+{% block title %}F15 · CALENDRIER — PortfolioTrack{% endblock %}
+
+{% block content %}
+<style>
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.cal-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--topbar-h) - var(--statusbar-h) - 36px);
+  gap: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #222;
+  background: #0d0d0d;
+  flex-shrink: 0;
+}
+.cal-toolbar-left  { display: flex; align-items: center; gap: 8px; }
+.cal-toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.cal-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #00D4C8;
+  letter-spacing: 1px;
+}
+
+.cal-nav-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.cal-nav-btn:hover { border-color: #00D4C8; color: #00D4C8; }
+
+.cal-month-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0e0e0;
+  letter-spacing: 0.5px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.cal-filter-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cal-filter-btn.active { border-color: #00D4C8; color: #00D4C8; background: rgba(0,212,200,.06); }
+.cal-filter-btn:hover  { border-color: #555; color: #ccc; }
+
+.cal-view-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cal-view-btn.active { border-color: #555; color: #ccc; background: #1a1a1a; }
+.cal-view-btn:hover  { border-color: #555; color: #ccc; }
+
+/* ── Calendar grid view ──────────────────────────────────────────────────── */
+.cal-grid-wrap {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #222 transparent;
+  padding: 12px 16px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #1a1a1a;
+  border: 1px solid #1a1a1a;
+}
+
+.cal-day-header {
+  background: #0d0d0d;
+  border-bottom: 2px solid #222;
+  font-size: 9px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 1px;
+  padding: 6px 0;
+  text-align: center;
+}
+
+.cal-day {
+  background: #111;
+  min-height: 80px;
+  padding: 6px 5px 5px;
+  position: relative;
+  transition: background .12s;
+}
+.cal-day:hover { background: #141414; }
+.cal-day.today { background: #131e1e; }
+.cal-day.today .cal-day-num { color: #00D4C8; }
+.cal-day.other-month { background: #0d0d0d; }
+.cal-day.other-month .cal-day-num { color: #2a2a2a; }
+
+.cal-day-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* ── Event badges ──────────────────────────────────────────────────────────── */
+.cal-event {
+  display: block;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+  border-radius: 0;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.cal-event.earnings.portfolio {
+  background: #00D4C8;
+  color: #000;
+}
+.cal-event.earnings.watchlist {
+  background: transparent;
+  border: 1px solid #00D4C8;
+  color: #00D4C8;
+}
+.cal-event.dividend.portfolio {
+  background: #00C853;
+  color: #000;
+}
+.cal-event.dividend.watchlist {
+  background: transparent;
+  border: 1px solid #00C853;
+  color: #00C853;
+}
+
+/* ── List view ──────────────────────────────────────────────────────────── */
+.cal-list-wrap {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #222 transparent;
+  padding: 12px 16px;
+}
+
+.cal-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.cal-list-table th {
+  font-size: 9px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 1px;
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #0d0d0d;
+  position: sticky;
+  top: 0;
+}
+.cal-list-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #0f0f0f;
+  color: #ccc;
+  vertical-align: middle;
+}
+.cal-list-table tr:hover td { background: #111; }
+
+.list-type-badge {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  letter-spacing: 0.5px;
+}
+.list-type-badge.earnings { background: #00D4C8; color: #000; }
+.list-type-badge.dividend { background: #00C853; color: #000; }
+.list-type-badge.earnings.outline { background: transparent; border: 1px solid #00D4C8; color: #00D4C8; }
+.list-type-badge.dividend.outline { background: transparent; border: 1px solid #00C853; color: #00C853; }
+
+.list-ticker { color: #00D4C8; font-weight: 700; font-size: 11px; }
+.list-name   { color: #666; font-size: 9px; }
+.list-detail { color: #888; font-size: 9px; }
+.list-port-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #00D4C8;
+  margin-right: 4px;
+}
+
+/* ── Empty / Loading ──────────────────────────────────────────────────────── */
+.cal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 10px;
+  color: #333;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.cal-loading-bar {
+  width: 120px;
+  height: 2px;
+  background: #1a1a1a;
+  position: relative;
+  overflow: hidden;
+}
+.cal-loading-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -40%;
+  width: 40%;
+  height: 100%;
+  background: #00D4C8;
+  animation: cal-slide 1s linear infinite;
+}
+@keyframes cal-slide {
+  to { left: 140%; }
+}
+
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+.cal-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 0 16px 10px;
+  flex-shrink: 0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+.legend-swatch {
+  width: 12px;
+  height: 8px;
+}
+.legend-swatch.earnings-solid { background: #00D4C8; }
+.legend-swatch.earnings-out   { background: transparent; border: 1px solid #00D4C8; }
+.legend-swatch.dividend-solid { background: #00C853; }
+.legend-swatch.dividend-out   { background: transparent; border: 1px solid #00C853; }
+
+/* ── Tooltip ──────────────────────────────────────────────────────────────── */
+.cal-tooltip {
+  position: fixed;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 8px 12px;
+  font-size: 10px;
+  color: #ccc;
+  pointer-events: none;
+  z-index: 9999;
+  max-width: 220px;
+  line-height: 1.6;
+}
+.cal-tooltip-ticker { color: #00D4C8; font-weight: 700; font-size: 11px; }
+.cal-tooltip-type   { font-size: 8px; letter-spacing: 1px; color: #888; }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="cal-page">
+
+  <!-- Toolbar -->
+  <div class="cal-toolbar">
+    <div class="cal-toolbar-left">
+      <span class="cal-title">F15 · CALENDRIER</span>
+      <button class="cal-nav-btn" id="btn-prev">‹</button>
+      <span class="cal-month-label" id="month-label">—</span>
+      <button class="cal-nav-btn" id="btn-next">›</button>
+      <button class="cal-nav-btn" id="btn-today" style="margin-left:4px;">AUJOURD'HUI</button>
+    </div>
+
+    <div style="display:flex;gap:4px;margin-left:24px;">
+      <button class="cal-filter-btn active" id="flt-all"        onclick="setFilter('all')">TOUT</button>
+      <button class="cal-filter-btn"        id="flt-portfolio"  onclick="setFilter('portfolio')">MON PORTEFEUILLE</button>
+      <button class="cal-filter-btn"        id="flt-watchlist"  onclick="setFilter('watchlist')">MA WATCHLIST</button>
+    </div>
+
+    <div class="cal-toolbar-right">
+      <button class="cal-view-btn active" id="vbtn-cal"  onclick="setView('calendar')">CALENDRIER</button>
+      <button class="cal-view-btn"        id="vbtn-list" onclick="setView('list')">LISTE</button>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="cal-legend">
+    <div class="legend-item">
+      <div class="legend-swatch earnings-solid"></div>RÉSULTATS PORTEFEUILLE
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch earnings-out"></div>RÉSULTATS WATCHLIST
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch dividend-solid"></div>DIVIDENDE PORTEFEUILLE
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch dividend-out"></div>DIVIDENDE WATCHLIST
+    </div>
+  </div>
+
+  <!-- Calendar view -->
+  <div class="cal-grid-wrap" id="cal-grid-wrap">
+    <div class="cal-loading" id="cal-loading">
+      <div>CHARGEMENT DES ÉVÉNEMENTS…</div>
+      <div class="cal-loading-bar"></div>
+    </div>
+    <div class="cal-grid" id="cal-grid" style="display:none;"></div>
+  </div>
+
+  <!-- List view -->
+  <div class="cal-list-wrap" id="cal-list-wrap" style="display:none;">
+    <table class="cal-list-table">
+      <thead>
+        <tr>
+          <th>DATE</th>
+          <th>TICKER</th>
+          <th>TYPE</th>
+          <th>DÉTAIL</th>
+          <th>STATUT</th>
+        </tr>
+      </thead>
+      <tbody id="cal-list-body">
+      </tbody>
+    </table>
+    <div class="cal-loading" id="list-loading" style="display:none;">
+      <div>CHARGEMENT…</div>
+      <div class="cal-loading-bar"></div>
+    </div>
+    <div id="list-empty" style="display:none;padding:40px 16px;text-align:center;
+         font-size:10px;color:#333;letter-spacing:1px;">
+      AUCUN ÉVÉNEMENT DANS CES 30 JOURS
+    </div>
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="cal-tooltip" id="cal-tooltip" style="display:none;"></div>
+
+<script>
+var MONTHS_FR = ['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN',
+                 'JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
+var DAYS_FR   = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+
+var allEvents    = [];
+var currentFilter = 'all';
+var currentView   = 'calendar';
+var viewMonth     = null; // {year, month}  0-indexed month
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(function() {
+  var now = new Date();
+  viewMonth = {year: now.getFullYear(), month: now.getMonth()};
+  updateMonthLabel();
+  loadEvents();
+
+  document.getElementById('btn-prev').addEventListener('click', function() {
+    viewMonth.month--;
+    if (viewMonth.month < 0) { viewMonth.month = 11; viewMonth.year--; }
+    updateMonthLabel();
+    renderCalendar();
+  });
+  document.getElementById('btn-next').addEventListener('click', function() {
+    viewMonth.month++;
+    if (viewMonth.month > 11) { viewMonth.month = 0; viewMonth.year++; }
+    updateMonthLabel();
+    renderCalendar();
+  });
+  document.getElementById('btn-today').addEventListener('click', function() {
+    var now = new Date();
+    viewMonth = {year: now.getFullYear(), month: now.getMonth()};
+    updateMonthLabel();
+    renderCalendar();
+  });
+})();
+
+function updateMonthLabel() {
+  document.getElementById('month-label').textContent =
+    MONTHS_FR[viewMonth.month] + ' ' + viewMonth.year;
+}
+
+// ── Data load ─────────────────────────────────────────────────────────────
+function loadEvents() {
+  console.log('[calendrier] loading events…');
+  document.getElementById('cal-loading').style.display = 'flex';
+  document.getElementById('cal-grid').style.display = 'none';
+
+  fetch('/api/calendrier')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      allEvents = data.events || [];
+      console.log('[calendrier] received', allEvents.length, 'events');
+      document.getElementById('cal-loading').style.display = 'none';
+      document.getElementById('cal-grid').style.display = 'grid';
+      renderCalendar();
+      renderList();
+    })
+    .catch(function(err) {
+      console.error('[calendrier] fetch error:', err);
+      document.getElementById('cal-loading').innerHTML =
+        '<div style="color:#FF3D00;">ERREUR DE CHARGEMENT</div>';
+    });
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────
+function setFilter(f) {
+  currentFilter = f;
+  ['all','portfolio','watchlist'].forEach(function(id) {
+    document.getElementById('flt-' + id).classList.toggle('active', id === f);
+  });
+  console.log('[calendrier] filter:', f);
+  renderCalendar();
+  renderList();
+}
+
+function filteredEvents() {
+  return allEvents.filter(function(ev) {
+    if (currentFilter === 'portfolio') return ev.in_portfolio;
+    if (currentFilter === 'watchlist') return ev.in_watchlist;
+    return true;
+  });
+}
+
+// ── View toggle ───────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('vbtn-cal').classList.toggle('active',  v === 'calendar');
+  document.getElementById('vbtn-list').classList.toggle('active', v === 'list');
+  document.getElementById('cal-grid-wrap').style.display  = v === 'calendar' ? '' : 'none';
+  document.getElementById('cal-list-wrap').style.display  = v === 'list'     ? '' : 'none';
+  console.log('[calendrier] view:', v);
+  if (v === 'list') renderList();
+}
+
+// ── Calendar render ───────────────────────────────────────────────────────
+function renderCalendar() {
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Header row
+  DAYS_FR.forEach(function(d) {
+    var th = document.createElement('div');
+    th.className = 'cal-day-header';
+    th.textContent = d;
+    grid.appendChild(th);
+  });
+
+  var year  = viewMonth.year;
+  var month = viewMonth.month;
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  // First day of month (adjust: Mon=0)
+  var firstDay = new Date(year, month, 1);
+  var startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var daysInPrev  = new Date(year, month, 0).getDate();
+
+  // Events indexed by date string
+  var evByDate = {};
+  filteredEvents().forEach(function(ev) {
+    if (!evByDate[ev.date]) evByDate[ev.date] = [];
+    evByDate[ev.date].push(ev);
+  });
+
+  var totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+  for (var i = 0; i < totalCells; i++) {
+    var cell = document.createElement('div');
+    cell.className = 'cal-day';
+
+    var dayNum, dateObj, isOther = false;
+    if (i < startDow) {
+      dayNum  = daysInPrev - startDow + i + 1;
+      dateObj = new Date(year, month - 1, dayNum);
+      isOther = true;
+    } else if (i - startDow < daysInMonth) {
+      dayNum  = i - startDow + 1;
+      dateObj = new Date(year, month, dayNum);
+    } else {
+      dayNum  = i - startDow - daysInMonth + 1;
+      dateObj = new Date(year, month + 1, dayNum);
+      isOther = true;
+    }
+
+    if (isOther) cell.classList.add('other-month');
+    dateObj.setHours(0,0,0,0);
+    if (dateObj.getTime() === today.getTime()) cell.classList.add('today');
+
+    var numEl = document.createElement('span');
+    numEl.className = 'cal-day-num';
+    numEl.textContent = dayNum;
+    cell.appendChild(numEl);
+
+    var dateStr = fmtDateKey(dateObj);
+    var evs = evByDate[dateStr] || [];
+    evs.forEach(function(ev) {
+      var badge = document.createElement('span');
+      var typeClass = ev.type === 'RÉSULTATS' ? 'earnings' : 'dividend';
+      var srcClass  = ev.in_portfolio ? 'portfolio' : 'watchlist';
+      badge.className = 'cal-event ' + typeClass + ' ' + srcClass;
+      badge.textContent = ev.ticker;
+      badge.title = ev.ticker + ' — ' + ev.type + '\n' + (ev.detail || '');
+
+      badge.addEventListener('mouseenter', function(e) { showTooltip(ev, e); });
+      badge.addEventListener('mousemove',  function(e) { moveTooltip(e); });
+      badge.addEventListener('mouseleave', hideTooltip);
+
+      cell.appendChild(badge);
+    });
+
+    grid.appendChild(cell);
+  }
+
+  console.log('[calendrier] rendered calendar month', year, month + 1, '— cells:', totalCells);
+}
+
+function fmtDateKey(d) {
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+// ── List render ───────────────────────────────────────────────────────────
+function renderList() {
+  var tbody    = document.getElementById('cal-list-body');
+  var emptyEl  = document.getElementById('list-empty');
+  tbody.innerHTML = '';
+
+  var today    = new Date();
+  today.setHours(0,0,0,0);
+  var limit    = new Date(today);
+  limit.setDate(limit.getDate() + 30);
+
+  var evs = filteredEvents().filter(function(ev) {
+    var d = new Date(ev.date);
+    return d >= today && d <= limit;
+  });
+
+  console.log('[calendrier] list: showing', evs.length, 'events in next 30 days');
+
+  if (!evs.length) {
+    emptyEl.style.display = '';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  evs.forEach(function(ev) {
+    var tr = document.createElement('tr');
+
+    var dateObj = new Date(ev.date);
+    var dateFmt = String(dateObj.getDate()).padStart(2,'0') + '/'
+                + String(dateObj.getMonth()+1).padStart(2,'0') + '/'
+                + dateObj.getFullYear();
+
+    var typeClass = ev.type === 'RÉSULTATS' ? 'earnings' : 'dividend';
+    var outlineClass = ev.in_portfolio ? '' : ' outline';
+
+    tr.innerHTML =
+      '<td style="color:#888;font-size:10px;white-space:nowrap;">' + dateFmt + '</td>' +
+      '<td><span class="list-ticker">' + ev.ticker + '</span>' +
+          '<div class="list-name">' + (ev.name || '') + '</div></td>' +
+      '<td><span class="list-type-badge ' + typeClass + outlineClass + '">' + ev.type + '</span></td>' +
+      '<td class="list-detail">' + (ev.detail || '—') + '</td>' +
+      '<td style="font-size:9px;">' +
+        (ev.in_portfolio
+          ? '<span style="color:#00D4C8;">&#9679; PORTEFEUILLE</span>'
+          : '<span style="color:#555;">&#9675; WATCHLIST</span>') +
+      '</td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────
+var _tooltip = document.getElementById('cal-tooltip');
+
+function showTooltip(ev, e) {
+  var typeClass = ev.type === 'RÉSULTATS' ? '#00D4C8' : '#00C853';
+  var src = ev.in_portfolio ? 'PORTEFEUILLE' : 'WATCHLIST';
+  _tooltip.innerHTML =
+    '<div class="cal-tooltip-ticker">' + ev.ticker + '</div>' +
+    '<div class="cal-tooltip-type" style="color:' + typeClass + ';">' + ev.type + '</div>' +
+    '<div style="margin-top:4px;font-size:9px;color:#888;">' + (ev.name || '') + '</div>' +
+    '<div style="font-size:9px;color:#666;">' + (ev.detail || '') + '</div>' +
+    '<div style="margin-top:4px;font-size:8px;color:#444;">' + src + ' · ' + ev.date + '</div>';
+  _tooltip.style.display = '';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  var x = e.clientX + 12, y = e.clientY + 12;
+  if (x + 240 > window.innerWidth)  x = e.clientX - 240;
+  if (y + 100 > window.innerHeight) y = e.clientY - 100;
+  _tooltip.style.left = x + 'px';
+  _tooltip.style.top  = y + 'px';
+}
+function hideTooltip() {
+  _tooltip.style.display = 'none';
+}
+</script>
+{% endblock %}

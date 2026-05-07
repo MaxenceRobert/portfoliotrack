@@ -183,6 +183,9 @@
              autocomplete="off" spellcheck="false"
              value="{{ initial_ticker }}">
       <button class="vsb-btn" id="btn-valoriser">ANALYSER</button>
+      <button class="vsb-btn" id="btn-watchlist"
+              style="margin-top:4px;background:transparent;border:1px solid #00C853;color:#00C853;"
+              onclick="toggleWatchlistVal()">+ WATCHLIST</button>
     </div>
 
     <div class="vsb-block" style="flex:1;overflow:hidden;display:flex;flex-direction:column;border-bottom:none;padding-bottom:0;">
@@ -681,6 +684,59 @@ if (initial) {
 } else if (PORTFOLIO_TICKERS.length > 0) {
   loadTicker(PORTFOLIO_TICKERS[0].ticker);
 }
+
+// ── Watchlist (valorisation) ───────────────────────────────────────────────
+var _valWatchlistState = {};
+
+function refreshWatchlistBtnVal() {
+  fetch('/api/watchlist')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var wl = (data.watchlist || []).map(function(w) { return w.ticker; });
+      wl.forEach(function(t) { _valWatchlistState[t] = true; });
+      updateWatchlistBtnVal();
+      console.log('[valorisation] watchlist loaded:', wl);
+    })
+    .catch(function(e) { console.error('[valorisation] watchlist fetch error:', e); });
+}
+
+function updateWatchlistBtnVal() {
+  var btn = document.getElementById('btn-watchlist');
+  if (!btn) return;
+  var inWL = currentTicker && _valWatchlistState[currentTicker];
+  btn.textContent = inWL ? '✓ WATCHLIST' : '+ WATCHLIST';
+  btn.style.color = inWL ? '#888' : '#00C853';
+  btn.style.borderColor = inWL ? '#333' : '#00C853';
+}
+
+function toggleWatchlistVal() {
+  if (!currentTicker) return;
+  var inWL = _valWatchlistState[currentTicker];
+  var url  = inWL ? '/api/watchlist/remove' : '/api/watchlist/add';
+  var nameEl = document.querySelector('#val-header .vh-name');
+  var name = nameEl ? nameEl.textContent : currentTicker;
+  console.log('[valorisation] toggleWatchlist:', currentTicker, inWL ? 'remove' : 'add');
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ticker: currentTicker, name: name}),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      console.log('[valorisation] watchlist toggle result:', data);
+      _valWatchlistState[currentTicker] = !inWL;
+      updateWatchlistBtnVal();
+    })
+    .catch(function(e) { console.error('[valorisation] watchlist toggle error:', e); });
+}
+
+var _origLoadTicker = loadTicker;
+loadTicker = function(ticker) {
+  _origLoadTicker(ticker);
+  setTimeout(updateWatchlistBtnVal, 100);
+};
+
+refreshWatchlistBtnVal();
 </script>
 
 {% endblock %}

@@ -23,6 +23,8 @@ from database import (
     get_user_by_email, create_user,
     add_envelope, get_savings_envelopes, update_envelope_solde, delete_envelope,
     get_dashboard_preferences, save_dashboard_preferences,
+    add_to_watchlist, remove_from_watchlist, get_user_watchlist, is_in_watchlist,
+    get_calendar_cache, save_calendar_events,
 )
 from portfolio import (
     get_portfolio_summary, get_chart_data, get_current_price,
@@ -3811,6 +3813,209 @@ def bilan_pdf():
         headers={'Content-Disposition': f'attachment; filename={filename}'}
     )
 
+
+
+# ── F15 · Calendrier ──────────────────────────────────────────────────────────
+
+@main_bp.route('/calendrier')
+@login_required
+def calendrier():
+    watchlist_items = get_user_watchlist(current_user.id)
+    return render_template('calendrier.html', watchlist_items=watchlist_items)
+
+
+@main_bp.route('/api/calendrier')
+@login_required
+def api_calendrier():
+    import yfinance as _yf
+    import datetime as _dt
+    import threading as _threading
+
+    uid = current_user.id
+    today = _dt.date.today()
+    horizon = today + _dt.timedelta(days=90)
+
+    # ── Collecter les tickers ────────────────────────────────────────────────
+    summary = get_portfolio_summary(uid)
+    portfolio_tickers = set()
+    for a in summary.get('assets', []):
+        if not a.get('fully_sold') and a.get('ticker') and float(a.get('shares_held') or 0) > 0:
+            portfolio_tickers.add(a['ticker'])
+
+    watchlist_rows = get_user_watchlist(uid)
+    watchlist_tickers = {r['ticker'] for r in watchlist_rows}
+
+    all_tickers = portfolio_tickers | watchlist_tickers
+    print(f'[calendrier] uid={uid} portfolio={len(portfolio_tickers)} watchlist={len(watchlist_tickers)} total={len(all_tickers)}')
+
+    if not all_tickers:
+        return jsonify({'events': []})
+
+    events = []
+    lock   = _threading.Lock()
+
+    def fetch_ticker_events(ticker):
+        cached = get_calendar_cache(ticker)
+        if cached:
+            print(f'[calendrier] {ticker}: cache hit ({len(cached)} events)')
+            with lock:
+                for row in cached:
+                    events.append({
+                        'ticker':       ticker,
+                        'name':         row.get('name') or ticker,
+                        'type':         row['type'],
+                        'date':         row['date'],
+                        'detail':       row.get('detail') or '',
+                        'in_portfolio': ticker in portfolio_tickers,
+                        'in_watchlist': ticker in watchlist_tickers,
+                    })
+            return
+
+        ticker_events = []
+        try:
+            stock = _yf.Ticker(ticker)
+            info  = stock.info or {}
+            name  = info.get('shortName') or info.get('longName') or ticker
+
+            # ── Résultats (earnings) ────────────────────────────────────────
+            try:
+                cal = stock.calendar
+                if cal is not None and not cal.empty:
+                    for col in cal.columns:
+                        for val in cal[col]:
+                            if val is None:
+                                continue
+                            try:
+                                if hasattr(val, 'date'):
+                                    ev_date = val.date()
+                                else:
+                                    ev_date = _dt.date.fromisoformat(str(val)[:10])
+                                if today <= ev_date <= horizon:
+                                    ticker_events.append({
+                                        'ticker': ticker, 'name': name,
+                                        'type': 'RÉSULTATS',
+                                        'date': ev_date.strftime('%Y-%m-%d'),
+                                        'detail': 'Résultats trimestriels',
+                                    })
+                                    print(f'[calendrier] {ticker}: RÉSULTATS {ev_date}')
+                            except Exception:
+                                pass
+                elif cal is not None and hasattr(cal, 'items'):
+                    for k, v in cal.items():
+                        if v is None:
+                            continue
+                        try:
+                            if hasattr(v, 'date'):
+                                ev_date = v.date()
+                            elif hasattr(v, '__iter__') and not isinstance(v, str):
+                                v = list(v)[0]
+                                ev_date = v.date() if hasattr(v, 'date') else _dt.date.fromisoformat(str(v)[:10])
+                            else:
+                                ev_date = _dt.date.fromisoformat(str(v)[:10])
+                            if today <= ev_date <= horizon:
+                                ticker_events.append({
+                                    'ticker': ticker, 'name': name,
+                                    'type': 'RÉSULTATS',
+                                    'date': ev_date.strftime('%Y-%m-%d'),
+                                    'detail': 'Résultats trimestriels',
+                                })
+                                print(f'[calendrier] {ticker}: RÉSULTATS dict {ev_date}')
+                        except Exception:
+                            pass
+            except Exception as e:
+                print(f'[calendrier] {ticker}: calendar error: {e}')
+
+            # ── Ex-dividende ─────────────────────────────────────────────────
+            try:
+                ex_ts = info.get('exDividendDate')
+                div_rate = info.get('dividendRate') or info.get('trailingAnnualDividendRate')
+                if ex_ts and div_rate and float(div_rate) > 0:
+                    ex_dt = _dt.datetime.utcfromtimestamp(int(ex_ts)).date()
+                    freq  = int(info.get('dividendFrequency') or 4)
+                    interval_days = max(int(365 / freq), 1)
+                    iters = 0
+                    while ex_dt < today and iters < freq * 2:
+                        ex_dt += _dt.timedelta(days=interval_days)
+                        iters += 1
+                    if today <= ex_dt <= horizon:
+                        currency = info.get('currency', '')
+                        per_div  = round(float(div_rate) / freq, 4)
+                        detail   = f'Ex-dividende {per_div} {currency}'.strip()
+                        ticker_events.append({
+                            'ticker': ticker, 'name': name,
+                            'type': 'DIVIDENDE',
+                            'date': ex_dt.strftime('%Y-%m-%d'),
+                            'detail': detail,
+                        })
+                        print(f'[calendrier] {ticker}: DIVIDENDE ex={ex_dt} {per_div} {currency}')
+            except Exception as e:
+                print(f'[calendrier] {ticker}: dividend error: {e}')
+
+            # ── Mise en cache ─────────────────────────────────────────────────
+            cache_payload = [{'type': e['type'], 'date': e['date'], 'detail': e['detail'], 'name': name}
+                             for e in ticker_events]
+            if not cache_payload:
+                cache_payload = [{'type': 'EMPTY', 'date': today.strftime('%Y-%m-%d'), 'detail': '', 'name': name}]
+            save_calendar_events(ticker, cache_payload)
+
+        except Exception as e:
+            print(f'[calendrier] {ticker}: global error: {e}')
+
+        with lock:
+            for ev in ticker_events:
+                events.append({
+                    'ticker':       ev['ticker'],
+                    'name':         ev['name'],
+                    'type':         ev['type'],
+                    'date':         ev['date'],
+                    'detail':       ev.get('detail', ''),
+                    'in_portfolio': ev['ticker'] in portfolio_tickers,
+                    'in_watchlist': ev['ticker'] in watchlist_tickers,
+                })
+
+    threads = [_threading.Thread(target=fetch_ticker_events, args=(t,), daemon=True) for t in all_tickers]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join(timeout=10)
+
+    # Filtrer EMPTY et trier par date
+    real_events = [e for e in events if e['type'] != 'EMPTY']
+    real_events.sort(key=lambda x: x['date'])
+    print(f'[calendrier] total events retournés: {len(real_events)}')
+    return jsonify({'events': real_events})
+
+
+# ── Watchlist CRUD ─────────────────────────────────────────────────────────────
+
+@main_bp.route('/api/watchlist')
+@login_required
+def api_watchlist_get():
+    rows = get_user_watchlist(current_user.id)
+    return jsonify({'watchlist': [dict(r) for r in rows]})
+
+
+@main_bp.route('/api/watchlist/add', methods=['POST'])
+@login_required
+def api_watchlist_add():
+    data   = request.get_json(silent=True) or {}
+    ticker = (data.get('ticker') or '').strip().upper()
+    name   = (data.get('name') or '').strip()
+    if not ticker:
+        return jsonify({'error': 'ticker requis'}), 400
+    ok = add_to_watchlist(current_user.id, ticker, name)
+    return jsonify({'ok': ok, 'ticker': ticker})
+
+
+@main_bp.route('/api/watchlist/remove', methods=['POST'])
+@login_required
+def api_watchlist_remove():
+    data   = request.get_json(silent=True) or {}
+    ticker = (data.get('ticker') or '').strip().upper()
+    if not ticker:
+        return jsonify({'error': 'ticker requis'}), 400
+    ok = remove_from_watchlist(current_user.id, ticker)
+    return jsonify({'ok': ok, 'ticker': ticker})
 
 
 # ── Enregistrement blueprint + lancement ──────────────────────────────────────

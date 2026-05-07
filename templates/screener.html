@@ -644,6 +644,11 @@
                 onclick="addToComparateur()">
           COMPARER (F14)
         </button>
+        <button class="btn btn-sm" id="dp-btn-watchlist"
+                style="border-color:#00C853;color:#00C853;width:100%;margin-top:2px;"
+                onclick="toggleWatchlist()">
+          + WATCHLIST
+        </button>
       </div>
     </div>
 
@@ -1054,6 +1059,54 @@ function fillDetail(d) {
   // action buttons
   document.getElementById('dp-btn-analyse').href   = '/analyse?ticker=' + encodeURIComponent(d.ticker);
   document.getElementById('dp-btn-valoriser').href = '/valorisation?ticker=' + encodeURIComponent(d.ticker);
+
+  // watchlist button state
+  checkWatchlistState(d.ticker);
+}
+
+var _watchlistState = {};
+
+function checkWatchlistState(ticker) {
+  fetch('/api/watchlist')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var inWL = (data.watchlist || []).some(function(w) { return w.ticker === ticker; });
+      _watchlistState[ticker] = inWL;
+      var btn = document.getElementById('dp-btn-watchlist');
+      if (btn) {
+        btn.textContent = inWL ? '✓ WATCHLIST' : '+ WATCHLIST';
+        btn.style.color = inWL ? '#888' : '#00C853';
+        btn.style.borderColor = inWL ? '#333' : '#00C853';
+      }
+      console.log('[screener] watchlist state for', ticker, ':', inWL);
+    })
+    .catch(function(e) { console.error('[screener] watchlist check error:', e); });
+}
+
+function toggleWatchlist() {
+  var ticker = document.getElementById('dp-ticker').textContent.trim();
+  var name   = document.getElementById('dp-name').textContent.trim();
+  if (!ticker || ticker === '—') return;
+  var inWL = _watchlistState[ticker];
+  var url  = inWL ? '/api/watchlist/remove' : '/api/watchlist/add';
+  console.log('[screener] toggleWatchlist:', ticker, inWL ? 'remove' : 'add');
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ticker: ticker, name: name}),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      console.log('[screener] watchlist toggle result:', data);
+      _watchlistState[ticker] = !inWL;
+      var btn = document.getElementById('dp-btn-watchlist');
+      if (btn) {
+        btn.textContent = !inWL ? '✓ WATCHLIST' : '+ WATCHLIST';
+        btn.style.color = !inWL ? '#888' : '#00C853';
+        btn.style.borderColor = !inWL ? '#333' : '#00C853';
+      }
+    })
+    .catch(function(e) { console.error('[screener] watchlist toggle error:', e); });
 }
 
 function closeDetail() {

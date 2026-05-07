@@ -859,6 +859,68 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── Watchlist utilisateur ─────────────────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS watchlist (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER NOT NULL,
+                    ticker     TEXT    NOT NULL,
+                    name       TEXT,
+                    added_at   TIMESTAMP DEFAULT NOW(),
+                    UNIQUE(user_id, ticker),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS watchlist (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id    INTEGER NOT NULL,
+                    ticker     TEXT    NOT NULL,
+                    name       TEXT,
+                    added_at   TEXT    DEFAULT (datetime('now')),
+                    UNIQUE(user_id, ticker),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+    # ── Cache calendrier (24h par ticker) ─────────────────────────────────────
+    try:
+        if is_postgres():
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS calendar_cache (
+                    id        SERIAL PRIMARY KEY,
+                    ticker    TEXT NOT NULL,
+                    type      TEXT NOT NULL,
+                    date      TEXT NOT NULL,
+                    detail    TEXT,
+                    name      TEXT,
+                    cached_at TIMESTAMP DEFAULT NOW(),
+                    UNIQUE(ticker, type, date)
+                )
+            ''')
+        else:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS calendar_cache (
+                    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker    TEXT NOT NULL,
+                    type      TEXT NOT NULL,
+                    date      TEXT NOT NULL,
+                    detail    TEXT,
+                    name      TEXT,
+                    cached_at TEXT DEFAULT (datetime('now')),
+                    UNIQUE(ticker, type, date)
+                )
+            ''')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 
@@ -1566,6 +1628,124 @@ def check_and_update_fundamental_alerts_for_ticker(ticker, data):
     conn.commit()
     conn.close()
     return triggered_list
+
+
+# ── Watchlist ─────────────────────────────────────────────────────────────────
+
+def add_to_watchlist(user_id, ticker, name=''):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        if is_postgres():
+            c.execute(
+                f'INSERT INTO watchlist (user_id, ticker, name) VALUES ({p},{p},{p}) ON CONFLICT (user_id, ticker) DO NOTHING',
+                (user_id, ticker, name)
+            )
+        else:
+            c.execute(
+                f'INSERT OR IGNORE INTO watchlist (user_id, ticker, name) VALUES ({p},{p},{p})',
+                (user_id, ticker, name)
+            )
+        conn.commit()
+        print(f'[watchlist] added: user={user_id} ticker={ticker}')
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f'[watchlist] add error: {e}')
+        return False
+    finally:
+        conn.close()
+
+
+def remove_from_watchlist(user_id, ticker):
+    p = placeholder()
+    conn = get_db()
+    try:
+        c = conn.cursor()
+        c.execute(f'DELETE FROM watchlist WHERE user_id={p} AND ticker={p}', (user_id, ticker))
+        conn.commit()
+        print(f'[watchlist] removed: user={user_id} ticker={ticker}')
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f'[watchlist] remove error: {e}')
+        return False
+    finally:
+        conn.close()
+
+
+def get_user_watchlist(user_id):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT * FROM watchlist WHERE user_id={p} ORDER BY added_at DESC', (user_id,))
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+
+def is_in_watchlist(user_id, ticker):
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(f'SELECT id FROM watchlist WHERE user_id={p} AND ticker={p}', (user_id, ticker))
+    row = c.fetchone()
+    conn.close()
+    return row is not None
+
+
+# ── Calendar cache ─────────────────────────────────────────────────────────────
+
+def get_calendar_cache(ticker):
+    """Retourne les événements en cache pour ce ticker si < 24h."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    if is_postgres():
+        c.execute(
+            f"SELECT * FROM calendar_cache WHERE ticker={p} AND cached_at > NOW() - INTERVAL '24 hours'",
+            (ticker,)
+        )
+    else:
+        c.execute(
+            f"SELECT * FROM calendar_cache WHERE ticker={p} AND cached_at > datetime('now', '-24 hours')",
+            (ticker,)
+        )
+    rows = fetchall_as_dict(c)
+    conn.close()
+    return rows
+
+
+def save_calendar_events(ticker, events):
+    """Sauvegarde la liste d'événements pour un ticker (upsert par ticker+type+date)."""
+    p = placeholder()
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        # Supprimer les anciens événements pour ce ticker
+        c.execute(f'DELETE FROM calendar_cache WHERE ticker={p}', (ticker,))
+        for ev in events:
+            if is_postgres():
+                c.execute(
+                    f'''INSERT INTO calendar_cache (ticker, type, date, detail, name)
+                        VALUES ({p},{p},{p},{p},{p})
+                        ON CONFLICT (ticker, type, date) DO UPDATE SET
+                            detail=EXCLUDED.detail, name=EXCLUDED.name, cached_at=NOW()''',
+                    (ticker, ev['type'], ev['date'], ev.get('detail', ''), ev.get('name', ''))
+                )
+            else:
+                c.execute(
+                    f'INSERT OR REPLACE INTO calendar_cache (ticker, type, date, detail, name) VALUES ({p},{p},{p},{p},{p})',
+                    (ticker, ev['type'], ev['date'], ev.get('detail', ''), ev.get('name', ''))
+                )
+        conn.commit()
+        print(f'[calendar_cache] saved {len(events)} events for {ticker}')
+    except Exception as e:
+        conn.rollback()
+        print(f'[calendar_cache] save error {ticker}: {e}')
+    finally:
+        conn.close()
 
 
 # ── Liens ─────────────────────────────────────────────────────────────────────
