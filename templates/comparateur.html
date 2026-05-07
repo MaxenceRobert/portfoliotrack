@@ -709,22 +709,33 @@ function renderComparison(data) {
 function renderFallbackNotices(data) {
   var container = document.getElementById('cmp-fallback-notices');
   container.innerHTML = '';
-  var fallbacks = data.filter(function(d) { return d.from_fallback && !d.error; });
-  var errors = data.filter(function(d) { return d.error; });
+
+  var fallbacks = data.filter(function(d) { return d.from_fallback && !d.error && !d.partial; });
+  var partials  = data.filter(function(d) { return d.partial && !d.error; });
+  var errors    = data.filter(function(d) { return d.error; });
 
   if (fallbacks.length > 0) {
     var div = document.createElement('div');
     div.className = 'cmp-fallback-notice';
-    div.textContent = '⚠ ' + fallbacks.map(function(d){ return d.ticker; }).join(', ') +
-      ' — données chargées en direct (hors univers), peut être plus lent';
+    div.textContent = '⚡ ' + fallbacks.map(function(d){ return d.ticker; }).join(', ') +
+      ' — données chargées en direct (hors univers screener), peut être plus lent';
     container.appendChild(div);
+  }
+  if (partials.length > 0) {
+    var divp = document.createElement('div');
+    divp.className = 'cmp-fallback-notice';
+    divp.style.color = '#FFD93D';
+    divp.textContent = '⚠ Données partielles pour ' +
+      partials.map(function(d){ return d.ticker; }).join(', ') +
+      ' — certaines métriques indisponibles';
+    container.appendChild(divp);
   }
   if (errors.length > 0) {
     var div2 = document.createElement('div');
     div2.className = 'cmp-fallback-notice';
     div2.style.color = 'var(--red)';
     div2.textContent = '✕ ' + errors.map(function(d){ return d.ticker; }).join(', ') +
-      ' — ticker non disponible, utilisez la recherche libre';
+      ' — ticker invalide ou données inaccessibles';
     container.appendChild(div2);
   }
 }

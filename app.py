@@ -3193,6 +3193,16 @@ def valorisation_portfolio_context():
 
 
 # ── Fundamentals status ───────────────────────────────────────────────────────
+@main_bp.route('/api/fundamentals/refresh-now')
+@login_required
+def api_fundamentals_refresh_now():
+    from universe import UNIVERSE_ALL
+    t = threading.Thread(target=data_jobs.refresh_all_fundamentals, daemon=True)
+    t.start()
+    print(f"[refresh-now] lancé par {current_user.email} ({len(UNIVERSE_ALL)} tickers)")
+    return jsonify({'status': 'started', 'tickers': len(UNIVERSE_ALL)})
+
+
 @main_bp.route('/api/fundamentals/status')
 @login_required
 def fundamentals_status():
@@ -3539,18 +3549,42 @@ def api_comparateur():
         else:
             print(f"[comparateur] {ticker} → absent de fundamentals, fallback yfinance")
             try:
-                from data_jobs import fetch_fundamentals, save_fundamentals_to_db
-                d = fetch_fundamentals(ticker)
+                d = data_jobs.fetch_fundamentals(ticker)
                 if d:
-                    save_fundamentals_to_db(d)
+                    data_jobs.save_fundamentals_to_db(d)
                     au = d.get('analyst_upside')
                     d['analyst_upside_pct'] = round(au * 100, 1) if au is not None else None
                     d['from_fallback'] = True
-                    print(f"[comparateur] {ticker} → fallback OK, score={d.get('quality_score')}")
+                    print(f"[FALLBACK] {ticker} chargé à la volée (score={d.get('quality_score')})")
                     results.append(d)
                 else:
-                    results.append({'ticker': ticker, 'error': 'unavailable', 'from_fallback': True})
-                    print(f"[comparateur] {ticker} → fallback FAILED")
+                    # fetch_fundamentals retourne None → tentative partielle minimale
+                    print(f"[FALLBACK] {ticker}: fetch_fundamentals None, tentative partielle…")
+                    try:
+                        import yfinance as _yf
+                        info = _yf.Ticker(ticker).info or {}
+                        name = info.get('shortName') or info.get('longName') or ticker
+                        price = info.get('currentPrice') or info.get('regularMarketPrice')
+                        partial = {
+                            'ticker':        ticker,
+                            'name':          name,
+                            'current_price': price,
+                            'currency':      info.get('currency', 'USD'),
+                            'sector':        info.get('sector', ''),
+                            'market_cap':    info.get('marketCap'),
+                            'pe_trailing':   info.get('trailingPE'),
+                            'pe_forward':    info.get('forwardPE'),
+                            'dividend_yield':info.get('dividendYield'),
+                            'beta':          info.get('beta'),
+                            'from_fallback': True,
+                            'partial':       True,
+                        }
+                        partial['analyst_upside_pct'] = None
+                        print(f"[FALLBACK] {ticker}: données partielles — {name}, prix={price}")
+                        results.append(partial)
+                    except Exception as e2:
+                        print(f"[FALLBACK] {ticker}: fallback partiel aussi échoué: {e2}")
+                        results.append({'ticker': ticker, 'error': 'unavailable', 'from_fallback': True})
             except Exception as e:
                 print(f"[comparateur] {ticker} → exception fallback: {e}")
                 results.append({'ticker': ticker, 'error': str(e), 'from_fallback': True})
@@ -4023,6 +4057,44 @@ app.register_blueprint(main_bp)
 
 init_db()
 populate_asset_catalog()
+
+# ── Refresh priority tickers au démarrage ─────────────────────────────────────
+PRIORITY_TICKERS = [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "MC.PA",
+    "AIR.PA", "NVDA", "META", "TSLA", "BNP.PA",
+]
+
+def _startup_priority_refresh():
+    """Charge les 10 tickers prioritaires en DB si la table est peu peuplée."""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM fundamentals")
+        count = c.fetchone()[0]
+        conn.close()
+    except Exception:
+        count = 0
+
+    if count >= len(PRIORITY_TICKERS):
+        print(f"[STARTUP] DB déjà peuplée ({count} tickers) — skip priority refresh")
+        return
+
+    print(f"[STARTUP] DB peu peuplée ({count} tickers) — refresh priority ({len(PRIORITY_TICKERS)} tickers)…")
+    ok = 0
+    for t in PRIORITY_TICKERS:
+        try:
+            d = data_jobs.fetch_fundamentals(t)
+            if d:
+                data_jobs.save_fundamentals_to_db(d)
+                ok += 1
+                print(f"[STARTUP] {t} OK (score={d.get('quality_score')})")
+            else:
+                print(f"[STARTUP] {t} FAILED (yfinance returned None)")
+        except Exception as e:
+            print(f"[STARTUP] {t} ERROR: {e}")
+    print(f"[STARTUP] Priority refresh terminé: {ok}/{len(PRIORITY_TICKERS)}")
+
+threading.Timer(5, _startup_priority_refresh).start()
 
 # ── Scheduler fondamentaux ────────────────────────────────────────────────────
 def _start_fundamentals_scheduler():
