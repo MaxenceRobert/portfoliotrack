@@ -3442,6 +3442,101 @@ def api_screener_delete(screen_id):
     return jsonify({'ok': True})
 
 
+# ── Comparateur ───────────────────────────────────────────────────────────────
+@main_bp.route('/comparateur')
+@login_required
+def comparateur():
+    return render_template('comparateur.html')
+
+
+@main_bp.route('/api/comparateur')
+@login_required
+def api_comparateur():
+    raw = request.args.get('tickers', '')
+    tickers = [t.strip().upper() for t in raw.split(',') if t.strip()][:4]
+
+    if not tickers:
+        return jsonify({'error': 'tickers requis'}), 400
+
+    print(f"[comparateur] tickers demandés: {tickers}")
+
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+
+    placeholders_list = ','.join([p] * len(tickers))
+    c.execute(
+        f"SELECT * FROM fundamentals WHERE ticker IN ({placeholders_list})",
+        tickers
+    )
+    rows = c.fetchall()
+    if is_postgres():
+        col_names = [d[0] for d in c.description]
+        db_data = {dict(zip(col_names, row))['ticker']: dict(zip(col_names, row)) for row in rows}
+    else:
+        db_data = {dict(row)['ticker']: dict(row) for row in rows}
+    conn.close()
+
+    results = []
+    for ticker in tickers:
+        if ticker in db_data:
+            d = db_data[ticker]
+            au = d.get('analyst_upside')
+            d['analyst_upside_pct'] = round(au * 100, 1) if au is not None else None
+            d['from_fallback'] = False
+            print(f"[comparateur] {ticker} → DB ok, score={d.get('quality_score')}")
+            results.append(d)
+        else:
+            print(f"[comparateur] {ticker} → absent de fundamentals, fallback yfinance")
+            try:
+                from data_jobs import fetch_fundamentals, save_fundamentals_to_db
+                d = fetch_fundamentals(ticker)
+                if d:
+                    save_fundamentals_to_db(d)
+                    au = d.get('analyst_upside')
+                    d['analyst_upside_pct'] = round(au * 100, 1) if au is not None else None
+                    d['from_fallback'] = True
+                    print(f"[comparateur] {ticker} → fallback OK, score={d.get('quality_score')}")
+                    results.append(d)
+                else:
+                    results.append({'ticker': ticker, 'error': 'unavailable', 'from_fallback': True})
+                    print(f"[comparateur] {ticker} → fallback FAILED")
+            except Exception as e:
+                print(f"[comparateur] {ticker} → exception fallback: {e}")
+                results.append({'ticker': ticker, 'error': str(e), 'from_fallback': True})
+
+    return jsonify(results)
+
+
+@main_bp.route('/api/comparateur/autocomplete')
+@login_required
+def api_comparateur_autocomplete():
+    q = request.args.get('q', '').strip()
+    if len(q) < 1:
+        return jsonify([])
+
+    conn = get_db()
+    c = conn.cursor()
+    p = placeholder()
+
+    pattern = q.upper() + '%'
+    name_pattern = q[0].upper() + q[1:].lower() + '%' if len(q) > 1 else q.upper() + '%'
+    c.execute(
+        f"SELECT ticker, name, sector FROM fundamentals WHERE ticker LIKE {p} OR name LIKE {p} ORDER BY ticker LIMIT 12",
+        [pattern, '%' + q + '%']
+    )
+    rows = c.fetchall()
+    if is_postgres():
+        col_names = [d[0] for d in c.description]
+        results = [dict(zip(col_names, row)) for row in rows]
+    else:
+        results = [dict(row) for row in rows]
+    conn.close()
+
+    print(f"[comparateur/autocomplete] q={q!r} → {len(results)} résultats")
+    return jsonify(results)
+
+
 # ── Bilan PDF ─────────────────────────────────────────────────────────────────
 @main_bp.route('/bilan-pdf')
 @login_required

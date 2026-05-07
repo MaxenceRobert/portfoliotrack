@@ -60,7 +60,8 @@
     ('F10', 'LIENS',    '/links'),
     ('F11', 'ANALYSE',  '/analyse'),
     ('F12', 'VALORIS.', '/valorisation'),
-    ('F13', 'SCREENER', '/screener'),
+    ('F13', 'SCREENER',    '/screener'),
+    ('F14', 'COMPARATEUR', '/comparateur'),
   ] -%}
   {% for key, label, path in _tabs %}
   <a href="{{ path }}"
@@ -169,6 +170,15 @@
         <path d="M3 6h18M7 12h10M10 18h4"/>
       </svg>
       <span>Screen</span>
+    </a>
+    <a href="{{ url_for('main.comparateur') }}"
+       class="rail-icon{% if request.path == '/comparateur' %} active{% endif %}"
+       title="Comparateur de titres">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="8" height="18" rx="1"/>
+        <rect x="13" y="3" width="8" height="18" rx="1"/>
+      </svg>
+      <span>Comp.</span>
     </a>
     <div class="rail-spacer"></div>
     <a href="{{ url_for('main.settings') }}"
@@ -283,6 +293,7 @@
     'ANALYSE': '/analyse', 'ANALYSIS': '/analyse', 'F11': '/analyse',
     'VALORISATION': '/valorisation', 'VALEUR': '/valorisation', 'DCF': '/valorisation', 'F12': '/valorisation',
     'SCREENER': '/screener', 'SCREEN': '/screener', 'F13': '/screener',
+    'COMPARATEUR': '/comparateur', 'COMPARE': '/comparateur', 'CMP': '/comparateur', 'F14': '/comparateur',
     'SETTINGS': '/settings', 'CONFIG': '/settings', 'F0': '/settings',
     'IMPORT': '/import', 'EXPORT': '/export/csv',
     'ACHAT': '/purchases/add', 'VENTE': '/sales/add',

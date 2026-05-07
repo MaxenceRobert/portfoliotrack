@@ -811,6 +811,16 @@ def init_db():
     except Exception:
         conn.rollback()
 
+    # ── beta column on fundamentals (migration) ───────────────────────────────
+    try:
+        if is_postgres():
+            c.execute("ALTER TABLE fundamentals ADD COLUMN IF NOT EXISTS beta REAL")
+        else:
+            c.execute("ALTER TABLE fundamentals ADD COLUMN beta REAL")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
     print("Base de données initialisée.")
 

@@ -65,6 +65,9 @@ def fetch_fundamentals(ticker: str) -> dict | None:
         total_debt      = info.get("totalDebt")
         total_cash      = info.get("totalCash")
 
+        # ── Beta ──────────────────────────────────────────────────────────
+        beta            = info.get("beta")
+
         # ── Dividendes ────────────────────────────────────────────────────
         dividend_yield  = info.get("dividendYield")
         payout_ratio    = info.get("payoutRatio")
@@ -141,6 +144,7 @@ def fetch_fundamentals(ticker: str) -> dict | None:
             "target_mean_price": target_mean,
             "analyst_upside": analyst_upside,
             "quality_score": quality_score,
+            "beta": beta,
         }
 
     except Exception as e:
@@ -298,7 +302,7 @@ def save_fundamentals_to_db(data: dict) -> None:
         "free_cashflow", "operating_cashflow", "price_to_fcf",
         "dividend_yield", "payout_ratio",
         "target_mean_price", "analyst_upside",
-        "quality_score",
+        "quality_score", "beta",
     ]
     values = [data.get(c) for c in cols]
 
