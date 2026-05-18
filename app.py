@@ -2809,6 +2809,12 @@ def links():
     print(f'[links] user={current_user.id} count={len(links_list)}')
     return render_template('links.html', links=links_list)
 
+@main_bp.route('/aide')
+@login_required
+def aide():
+    print(f'[aide] user={current_user.id}')
+    return render_template('aide.html')
+
 @main_bp.route('/links/add', methods=['POST'])
 @login_required
 def add_link():

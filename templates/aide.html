@@ -1,0 +1,720 @@
+{% extends 'base.html' %}
+{% block title %}Aide & Documentation — PortfolioTrack{% endblock %}
+{% block content %}
+<style>
+.page-content { padding: 0 !important; }
+
+/* ── Layout ── */
+.aide-outer {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* ── En-tête ── */
+.aide-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.aide-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.aide-subtitle {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Barre de recherche ── */
+.aide-search-wrap {
+  margin-bottom: 20px;
+  position: relative;
+}
+.aide-search {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-light);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 9px 12px 9px 36px;
+  outline: none;
+  transition: border-bottom-color 0.1s;
+  box-sizing: border-box;
+}
+.aide-search:focus { border-bottom-color: var(--accent); }
+.aide-search::placeholder { color: var(--text-dim); }
+.aide-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+#aide-no-results {
+  display: none;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 32px 0;
+  letter-spacing: 0.5px;
+}
+
+/* ── Accordion ── */
+.aide-accordion { display: flex; flex-direction: column; gap: 2px; }
+
+.aide-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.aide-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  gap: 12px;
+}
+.aide-section-header:hover { background: var(--surface-hover); }
+
+.aide-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.aide-section-badge {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  background: var(--border);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+.aide-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.aide-section-toggle {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+
+.aide-section.open .aide-section-header { background: var(--accent-bg); }
+.aide-section.open .aide-section-title { color: var(--accent); }
+.aide-section.open .aide-section-toggle { transform: rotate(45deg); }
+.aide-section.open .aide-section-badge { background: var(--accent-bg); color: var(--accent); }
+
+.aide-section-body {
+  display: none;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+.aide-section.open .aide-section-body { display: block; }
+
+/* ── Contenu body ── */
+.aide-desc {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+
+.aide-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.aide-list li {
+  font-size: 10px;
+  color: var(--text);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.6;
+}
+.aide-list li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+.aide-list li strong {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.aide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--accent);
+  padding: 4px 10px;
+  margin-top: 4px;
+  margin-right: 6px;
+  transition: background 0.1s;
+}
+.aide-link:hover { background: var(--accent-bg); }
+
+.aide-links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* ── Score bar (visualisation) ── */
+.aide-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+.aide-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.aide-score-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  width: 120px;
+  flex-shrink: 0;
+}
+.aide-score-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  position: relative;
+}
+.aide-score-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: var(--accent);
+}
+.aide-score-pts {
+  font-size: 9px;
+  color: var(--text-dim);
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Zone score seuil ── */
+.aide-score-thresholds {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.aide-threshold {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  font-size: 9px;
+}
+.aide-threshold-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-bright);
+  display: block;
+  margin-bottom: 3px;
+}
+.aide-threshold-val.green { color: var(--green); }
+.aide-threshold-val.red { color: var(--red); }
+.aide-threshold-label { color: var(--text-dim); letter-spacing: 0.3px; }
+
+/* ── Glossaire imbriqué ── */
+.aide-glossary { display: flex; flex-direction: column; gap: 1px; }
+.aide-gloss-item {
+  border: 1px solid var(--border);
+}
+.aide-gloss-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+.aide-gloss-header:hover { background: var(--surface-hover); }
+.aide-gloss-term {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.aide-gloss-toggle {
+  font-size: 12px;
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+.aide-gloss-item.open .aide-gloss-header { background: var(--accent-bg); }
+.aide-gloss-item.open .aide-gloss-term { color: var(--accent); }
+.aide-gloss-item.open .aide-gloss-toggle { transform: rotate(45deg); }
+.aide-gloss-body {
+  display: none;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+.aide-gloss-item.open .aide-gloss-body { display: block; }
+
+/* ── Alerte types ── */
+.aide-alert-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.aide-alert-box {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+.aide-alert-box-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.aide-alert-box-desc {
+  font-size: 9px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+</style>
+
+<div class="aide-outer">
+
+  <!-- En-tête -->
+  <div class="aide-header">
+    <span class="aide-title">Aide</span>
+    <span class="aide-subtitle">· Documentation</span>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="aide-search-wrap">
+    <svg class="aide-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input class="aide-search" id="aide-search-input" type="text"
+           placeholder="Rechercher — Portfolio, RSI, DCF, Score..." autocomplete="off" spellcheck="false">
+  </div>
+  <div id="aide-no-results">Aucune section ne correspond à votre recherche.</div>
+
+  <!-- Accordion principal -->
+  <div class="aide-accordion" id="aide-accordion">
+
+    <!-- ── PORTFOLIO ── -->
+    <div class="aide-section" data-keywords="portfolio dashboard f1 valeur p&l pnl performance position sparkline risque score">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F1</span>
+          <span class="aide-section-title">Portfolio</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Votre tableau de bord principal. Affiche la valeur totale, les performances et toutes vos positions en temps réel.</p>
+        <ul class="aide-list">
+          <li><strong>Valeur portefeuille</strong> — somme de toutes vos positions au cours actuel, mise à jour en direct via Yahoo Finance.</li>
+          <li><strong>P&amp;L</strong> — différence entre la valeur actuelle et le montant total investi (achats - ventes + dividendes).</li>
+          <li><strong>Score risque</strong> — calculé depuis votre profil investisseur (page PROFIL F3). Reflète votre tolérance au risque déclarée.</li>
+          <li><strong>Sparkline</strong> — mini-graphique de l'évolution de votre portefeuille sur les 6 derniers mois.</li>
+          <li><strong>Personnaliser</strong> — cliquez le bouton ⚙ pour choisir les blocs à afficher sur votre tableau de bord.</li>
+        </ul>
+        <div class="aide-links-row">
+          <a href="/" class="aide-link">→ Ouvrir Portfolio</a>
+          <a href="/charts" class="aide-link">→ Graphiques F5</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANALYSE ── -->
+    <div class="aide-section" data-keywords="analyse analyse technique valorisation comparateur f11 f12 f14 graphique chandeliers indicateurs rsi macd bollinger mm dcf multiples pe intrinsèque">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F11 · F12 · F14</span>
+          <span class="aide-section-title">Analyse</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Trois outils pour étudier un actif avant d'investir — technique, fondamentale et comparative.</p>
+        <ul class="aide-list">
+          <li><strong>Analyse technique (F11)</strong> — graphique avec chandeliers japonais, indicateurs (Moyennes mobiles, RSI, MACD, Bandes de Bollinger) et outils de dessin.</li>
+          <li><strong>Valorisation (F12)</strong> — modèle DCF + multiples sectoriels pour estimer le prix intrinsèque d'une action. Indique aussi l'impact d'un achat sur votre portefeuille.</li>
+          <li><strong>Comparateur (F14)</strong> — comparez 2 à 4 titres côte à côte sur toutes leurs métriques fondamentales (PE, croissance, marges, bilan).</li>
+        </ul>
+        <div class="aide-links-row">
+          <a href="/analyse" class="aide-link">→ Analyse F11</a>
+          <a href="/valorisation" class="aide-link">→ Valorisation F12</a>
+          <a href="/comparateur" class="aide-link">→ Comparateur F14</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MARCHÉ ── -->
+    <div class="aide-section" data-keywords="marché screener calendrier f13 f15 filtre sp500 cac40 dax pe croissance marge score qualité résultats trimestriels dividende watchlist ex-dividende">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F13 · F15</span>
+          <span class="aide-section-title">Marché</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Outils de découverte et de suivi du marché.</p>
+        <ul class="aide-list">
+          <li><strong>Screener (F13)</strong> — filtrez ~300 titres issus du S&amp;P500, CAC40 et DAX par PE, croissance des revenus, marge opérationnelle, score qualité et bien d'autres critères.</li>
+          <li><strong>Calendrier (F15)</strong> — suivez les dates de résultats trimestriels et les dates ex-dividende pour vos positions et votre watchlist.</li>
+        </ul>
+        <div class="aide-links-row">
+          <a href="/screener" class="aide-link">→ Screener F13</a>
+          <a href="/calendrier" class="aide-link">→ Calendrier F15</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCORE QUALITÉ ── -->
+    <div class="aide-section" data-keywords="score qualité valorisation croissance rentabilité bilan roe marge free cash flow dette liquidité 100 75 40">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">Screener</span>
+          <span class="aide-section-title">Score de qualité</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Le score (0 – 100) synthétise 4 dimensions fondamentales pour identifier les entreprises solides à prix raisonnable.</p>
+        <div class="aide-score-bars">
+          <div class="aide-score-row">
+            <span class="aide-score-label">Valorisation</span>
+            <div class="aide-score-track"><div class="aide-score-fill" style="width:25%"></div></div>
+            <span class="aide-score-pts">25 pts</span>
+          </div>
+          <div class="aide-score-row">
+            <span class="aide-score-label">Croissance</span>
+            <div class="aide-score-track"><div class="aide-score-fill" style="width:25%"></div></div>
+            <span class="aide-score-pts">25 pts</span>
+          </div>
+          <div class="aide-score-row">
+            <span class="aide-score-label">Rentabilité</span>
+            <div class="aide-score-track"><div class="aide-score-fill" style="width:25%"></div></div>
+            <span class="aide-score-pts">25 pts</span>
+          </div>
+          <div class="aide-score-row">
+            <span class="aide-score-label">Bilan</span>
+            <div class="aide-score-track"><div class="aide-score-fill" style="width:25%"></div></div>
+            <span class="aide-score-pts">25 pts</span>
+          </div>
+        </div>
+        <ul class="aide-list">
+          <li><strong>Valorisation (25 pts)</strong> — PE forward comparé à l'historique sectoriel. Un titre bon marché par rapport à ses pairs score mieux.</li>
+          <li><strong>Croissance (25 pts)</strong> — taux de croissance des revenus et des bénéfices sur 1 et 3 ans.</li>
+          <li><strong>Rentabilité (25 pts)</strong> — ROE (retour sur fonds propres) et marge opérationnelle.</li>
+          <li><strong>Bilan (25 pts)</strong> — niveau d'endettement, ratio de liquidité et génération de free cash flow.</li>
+        </ul>
+        <div class="aide-score-thresholds">
+          <div class="aide-threshold">
+            <span class="aide-threshold-val green">&gt; 75</span>
+            <span class="aide-threshold-label">Entreprise de qualité à prix raisonnable</span>
+          </div>
+          <div class="aide-threshold">
+            <span class="aide-threshold-val red">&lt; 40</span>
+            <span class="aide-threshold-label">Prudence — qualité faible ou valorisation élevée</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTES ── -->
+    <div class="aide-section" data-keywords="alertes f9 prix email seuil fondamentales pe croissance refresh quotidien">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F9</span>
+          <span class="aide-section-title">Alertes</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Deux types d'alertes pour ne rater aucun événement important sur vos actifs.</p>
+        <div class="aide-alert-types">
+          <div class="aide-alert-box">
+            <div class="aide-alert-box-title">Prix</div>
+            <div class="aide-alert-box-desc">Déclenchée quand un actif passe au-dessus ou en-dessous d'un seuil de prix que vous définissez. Notification envoyée par email.</div>
+          </div>
+          <div class="aide-alert-box">
+            <div class="aide-alert-box-title">Fondamentales</div>
+            <div class="aide-alert-box-desc">Déclenchée quand une métrique fondamentale (PE, taux de croissance…) dépasse un seuil. Vérifiée à chaque refresh quotidien des données.</div>
+          </div>
+        </div>
+        <div class="aide-links-row">
+          <a href="/alerts" class="aide-link">→ Gérer les alertes</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROFIL & RISQUE ── -->
+    <div class="aide-section" data-keywords="profil risque f3 questionnaire investisseur tolérance patrimoniale objectifs comportement horizon score recommandations">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F3</span>
+          <span class="aide-section-title">Profil &amp; Risque</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Questionnaire de 12 questions pour définir votre profil investisseur et calibrer les recommandations de l'application.</p>
+        <ul class="aide-list">
+          <li><strong>Situation patrimoniale</strong> — revenus, épargne disponible, charges.</li>
+          <li><strong>Objectifs</strong> — préparation retraite, projet court terme, constitution de capital…</li>
+          <li><strong>Comportement face aux pertes</strong> — réaction simulée à des scénarios de baisse.</li>
+          <li><strong>Horizon d'investissement</strong> — durée pendant laquelle vous pouvez laisser votre argent investi sans y toucher.</li>
+        </ul>
+        <p class="aide-desc">Le score influence le score risque de votre portefeuille et les alertes de diversification affichées sur le dashboard.</p>
+        <div class="aide-links-row">
+          <a href="/test-profil" class="aide-link">→ Passer le questionnaire</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DCA ── -->
+    <div class="aide-section" data-keywords="dca f4 simulateur investissement programmé régulier projection mensuel annuel">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">F4</span>
+          <span class="aide-section-title">DCA — Investissement programmé</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Simulateur d'investissement programmé (Dollar-Cost Averaging). Projetez l'impact d'achats réguliers sur votre portefeuille.</p>
+        <ul class="aide-list">
+          <li>Entrez un montant mensuel et un horizon en années.</li>
+          <li>Le simulateur calcule la valeur finale projetée en appliquant un rendement annuel moyen paramétrable.</li>
+          <li>Comparez plusieurs scénarios côte à côte.</li>
+        </ul>
+        <div class="aide-links-row">
+          <a href="/simulateur" class="aide-link">→ Ouvrir le simulateur</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GLOSSAIRE ── -->
+    <div class="aide-section" data-keywords="glossaire pe per ev ebitda roe wacc dcf free cash flow beta sharpe max drawdown corrélation définition terme">
+      <div class="aide-section-header" onclick="toggleSection(this)">
+        <div class="aide-section-header-left">
+          <span class="aide-section-badge">Référence</span>
+          <span class="aide-section-title">Glossaire financier</span>
+        </div>
+        <span class="aide-section-toggle">+</span>
+      </div>
+      <div class="aide-section-body">
+        <p class="aide-desc">Définitions courtes des termes clés utilisés dans PortfolioTrack.</p>
+        <div class="aide-glossary">
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">PE / PER — Price-to-Earnings</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Cours de l'action divisé par le bénéfice par action. Indique combien les investisseurs paient pour chaque euro de bénéfice. Un PE de 20 signifie qu'on paye 20 € pour 1 € de bénéfice annuel. À comparer à la médiane sectorielle.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">EV/EBITDA</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Valeur d'entreprise (capitalisation + dette − trésorerie) divisée par le résultat opérationnel avant amortissements. Plus robuste que le PE car indépendant de la structure financière et de la fiscalité.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">ROE — Return on Equity</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Bénéfice net / capitaux propres. Mesure l'efficacité avec laquelle une entreprise utilise l'argent de ses actionnaires pour générer des profits. Un ROE &gt; 15 % est généralement considéré comme solide.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">WACC — Coût moyen pondéré du capital</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Taux d'actualisation utilisé dans le modèle DCF, représentant le rendement minimum exigé par les actionnaires et créanciers. Un WACC élevé réduit la valeur intrinsèque calculée.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">DCF — Discounted Cash Flow</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Méthode d'évaluation qui projette les flux de trésorerie futurs et les actualise au WACC pour obtenir leur valeur présente. La somme donne la valeur intrinsèque estimée de l'entreprise.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">Free Cash Flow (FCF)</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Cash généré après toutes les dépenses d'exploitation et d'investissement (Capex). C'est l'argent réellement disponible pour rembourser la dette, verser des dividendes ou racheter des actions.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">Bêta (β)</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Mesure la sensibilité d'un actif aux mouvements du marché. β = 1 : l'actif suit le marché. β &gt; 1 : plus volatile. β &lt; 1 : moins volatile. β négatif : évolue en sens inverse (rare, ex : or dans certaines périodes).
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">Ratio de Sharpe</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              (Rendement − taux sans risque) / volatilité. Mesure le rendement obtenu par unité de risque pris. Sharpe &gt; 1 est bon, &gt; 2 est excellent. Permet de comparer des portefeuilles à niveaux de risque différents.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">Max Drawdown</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Plus grande perte de valeur enregistrée entre un pic et un creux sur une période donnée. Exprimé en pourcentage. Indique le pire scénario historique que vous auriez subi si vous étiez investi au pire moment.
+            </div>
+          </div>
+
+          <div class="aide-gloss-item">
+            <div class="aide-gloss-header" onclick="toggleGloss(this)">
+              <span class="aide-gloss-term">Corrélation</span>
+              <span class="aide-gloss-toggle">+</span>
+            </div>
+            <div class="aide-gloss-body">
+              Coefficient entre −1 et +1 qui mesure la relation entre les mouvements de deux actifs. +1 : ils bougent identiquement. 0 : indépendants. −1 : ils bougent en sens opposés. Une corrélation faible entre vos positions améliore la diversification.
+            </div>
+          </div>
+
+        </div><!-- /.aide-glossary -->
+      </div>
+    </div>
+
+  </div><!-- /#aide-accordion -->
+</div><!-- /.aide-outer -->
+
+<script>
+console.log('[aide] page chargée');
+
+function toggleSection(header) {
+  var section = header.closest('.aide-section');
+  var isOpen = section.classList.contains('open');
+  console.log('[aide] toggle section:', section.querySelector('.aide-section-title').textContent.trim(), '→', isOpen ? 'fermer' : 'ouvrir');
+  section.classList.toggle('open', !isOpen);
+}
+
+function toggleGloss(header) {
+  var item = header.closest('.aide-gloss-item');
+  var isOpen = item.classList.contains('open');
+  console.log('[aide] toggle gloss:', item.querySelector('.aide-gloss-term').textContent.trim(), '→', isOpen ? 'fermer' : 'ouvrir');
+  item.classList.toggle('open', !isOpen);
+}
+
+// ── Recherche ─────────────────────────────────────────────────────────────
+(function() {
+  var input = document.getElementById('aide-search-input');
+  var accordion = document.getElementById('aide-accordion');
+  var noResults = document.getElementById('aide-no-results');
+
+  input.addEventListener('input', function() {
+    var q = input.value.trim().toLowerCase();
+    console.log('[aide] search:', q);
+
+    var sections = accordion.querySelectorAll('.aide-section');
+    var visible = 0;
+
+    sections.forEach(function(section) {
+      if (!q) {
+        section.style.display = '';
+        visible++;
+        return;
+      }
+      var keywords = (section.getAttribute('data-keywords') || '').toLowerCase();
+      var title = (section.querySelector('.aide-section-title') || {}).textContent || '';
+      var body = (section.querySelector('.aide-section-body') || {}).textContent || '';
+      var haystack = keywords + ' ' + title.toLowerCase() + ' ' + body.toLowerCase();
+
+      var words = q.split(/\s+/).filter(Boolean);
+      var match = words.every(function(w) { return haystack.indexOf(w) !== -1; });
+
+      section.style.display = match ? '' : 'none';
+      if (match) {
+        visible++;
+        // Auto-ouvrir si recherche active
+        if (!section.classList.contains('open')) section.classList.add('open');
+      }
+    });
+
+    noResults.style.display = (visible === 0) ? 'block' : 'none';
+
+    // Refermer les sections si on efface la recherche
+    if (!q) {
+      sections.forEach(function(s) { s.classList.remove('open'); });
+    }
+  });
+})();
+</script>
+
+{% endblock %}

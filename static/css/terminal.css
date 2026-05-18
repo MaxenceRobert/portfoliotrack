@@ -246,6 +246,50 @@ body {
 }
 .fn-tab.active .fn-key { background: var(--accent-dim); color: #000; }
 
+/* ── Fn-tab dropdown (groupe OUTILS) ──────────────────────────────────── */
+.fn-tab-group {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.fn-tab-group:hover .fn-dropdown-menu,
+.fn-tab-group:focus-within .fn-dropdown-menu { display: flex; }
+.fn-dropdown-menu {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 200;
+  min-width: 160px;
+  background: var(--fntabs-bg);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  padding: 4px 0;
+}
+.fn-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.1s, background 0.1s;
+}
+.fn-dropdown-item:hover { color: var(--accent); background: var(--surface-hover); }
+.fn-dropdown-item.active { color: var(--accent); }
+.fn-dropdown-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
 /* ══ MAIN LAYOUT ══════════════════════════════════════════════════════════ */
 .main-layout {
   display: grid;
