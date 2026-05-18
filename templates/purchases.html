@@ -48,20 +48,20 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
-.env-pea    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-peapme { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-cto    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-av     { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-per    { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-livret { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
-.env-autre  { background: transparent; color: #4a7a9b; border: 1px solid #1a2a3a; }
+.env-pea    { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-peapme { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-cto    { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-av     { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-per    { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-livret { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.env-autre  { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
 
 /* ── Envelope edit button ── */
 .env-edit-btn {
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba(232,240,255,0.25);
+    color: var(--text-dim);
     font-size: 0.8rem;
     padding: 2px 4px;
     border-radius: 4px;
@@ -70,7 +70,7 @@
     vertical-align: middle;
     margin-left: 2px;
 }
-.env-edit-btn:hover { color: #e8f0ff; background: rgba(74,122,155,0.07); }
+.env-edit-btn:hover { color: var(--text-bright); background: rgba(74,122,155,0.07); }
 
 /* ── Modal ── */
 .env-modal-overlay {
@@ -85,8 +85,8 @@
 }
 .env-modal-overlay.active { display: flex; }
 .env-modal-box {
-    background: #070d18;
-    border: 1px solid #1a2a3a;
+    background: var(--panel);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.75rem;
     width: 340px;
@@ -97,7 +97,7 @@
     margin: 0 0 1.25rem;
     font-size: 1rem;
     font-weight: 700;
-    color: #e8f0ff;
+    color: var(--text-bright);
 }
 .env-modal-box select {
     width: 100%;
@@ -198,10 +198,10 @@
                     <td class="neutral" style="white-space:nowrap;">
                         {% if p['fees'] and p['fees'] | float > 0 %}{{ p['fees'] }} €{% else %}—{% endif %}
                     </td>
-                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;"><strong style="color:#e8f0ff;">{{ p['total_cost'] }} €</strong></td>
+                    <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;"><strong style="color:var(--text-bright);">{{ p['total_cost'] }} €</strong></td>
                     <td style="white-space:nowrap; min-width:110px; text-align:right; padding:8px 14px;">
                         {% if cv is not none %}
-                        <strong style="color:#e8f0ff;">{{ cv }} €</strong>
+                        <strong style="color:var(--text-bright);">{{ cv }} €</strong>
                         {% else %}
                         <span style="color:rgba(232,240,255,0.2);">—</span>
                         {% endif %}
@@ -252,7 +252,7 @@
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                 <span class="badge badge-etf">{{ p['ticker'] }}</span>
-                <span style="font-size:0.85rem; color:#e8f0ff; font-weight:600;">{{ p['name'] }}</span>
+                <span style="font-size:0.85rem; color:var(--text-bright); font-weight:600;">{{ p['name'] }}</span>
                 {% if env %}
                 <span class="env-badge-row-{{ p['asset_id'] }} env-badge {% if env == 'PEA' %}env-pea{% elif env == 'PEA-PME' %}env-peapme{% elif env == 'CTO' %}env-cto{% elif env == 'Assurance Vie' %}env-av{% elif env == 'PER' %}env-per{% elif env in ['Livret A','LDDS','LEP'] %}env-livret{% else %}env-autre{% endif %}">{{ env }}</span>
                 {% else %}
@@ -270,12 +270,12 @@
         </div>
         <div class="pm-row">
             <span class="pm-label">Total investi</span>
-            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ p['total_cost'] }} €</span>
+            <span class="pm-value" style="color:var(--text-bright); font-weight:700;">{{ p['total_cost'] }} €</span>
         </div>
         {% if cv is not none %}
         <div class="pm-row">
             <span class="pm-label">Valeur actuelle</span>
-            <span class="pm-value" style="color:#e8f0ff; font-weight:700;">{{ cv }} €</span>
+            <span class="pm-value" style="color:var(--text-bright); font-weight:700;">{{ cv }} €</span>
         </div>
         {% endif %}
         {% if gain is not none %}

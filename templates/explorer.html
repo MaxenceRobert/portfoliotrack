@@ -561,20 +561,20 @@
         height: isMobile ? 200 : 280,
         margin: isMobile ? { l:46, r:10, t:6, b:36 } : { l:20, r:20, t:6, b:36 },
         hoverlabel: {
-          bgcolor: '#111111',
-          bordercolor: 'rgba(0,212,200,0.2)',
-          font: { color: '#C8C8C8', size: 10, family: 'IBM Plex Mono' }
+          bgcolor: getThemeColors().panelHead,
+          bordercolor: getThemeColors().accent,
+          font: { color: getThemeColors().text, size: 10, family: 'IBM Plex Mono' }
         },
         hovermode: 'x unified',
         xaxis: {
-          gridcolor: 'rgba(255,255,255,0.03)',
-          tickfont: { color: '#666666', size: 9, family: 'IBM Plex Mono' },
-          linecolor: '#1E1E1E'
+          gridcolor: getThemeColors().border,
+          tickfont: { color: getThemeColors().textDim, size: 9, family: 'IBM Plex Mono' },
+          linecolor: getThemeColors().border
         },
         yaxis: {
-          gridcolor: 'rgba(255,255,255,0.03)',
-          tickfont: { color: '#666666', size: 9, family: 'IBM Plex Mono' },
-          linecolor: '#1E1E1E',
+          gridcolor: getThemeColors().border,
+          tickfont: { color: getThemeColors().textDim, size: 9, family: 'IBM Plex Mono' },
+          linecolor: getThemeColors().border,
           ticksuffix: ' {{ info.currency }}'
         }
       }, { responsive: true, displayModeBar: false });

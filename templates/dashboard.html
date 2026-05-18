@@ -166,8 +166,8 @@
   top: 0; right: 0;
   height: 100%;
   width: 320px;
-  background: #111;
-  border-left: 3px solid #00D4C8;
+  background: var(--panel-header);
+  border-left: 3px solid var(--accent);
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -177,7 +177,7 @@
 .custom-panel.open { transform: translateX(0); }
 .custom-panel-head {
   padding: 16px 18px 14px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .custom-panel-title {
@@ -185,14 +185,14 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #00D4C8;
+  color: var(--accent);
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 .custom-panel-sub {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 8px;
-  color: #888;
+  color: var(--text-dim);
   letter-spacing: 0.5px;
 }
 .custom-panel-body {
@@ -211,31 +211,31 @@
 .custom-toggle-row:hover { background: var(--surface-hover); }
 .custom-toggle-box {
   width: 14px; height: 14px;
-  background: #222;
-  border: 1px solid #444;
+  background: var(--border);
+  border: 1px solid var(--border-light);
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s, border-color 0.15s;
 }
 .custom-toggle-box.checked {
-  background: rgba(0,212,200,0.15);
-  border-color: #00D4C8;
+  background: var(--accent-bg);
+  border-color: var(--accent);
 }
 .custom-toggle-check {
   width: 8px; height: 8px;
-  background: #00D4C8;
+  background: var(--accent);
   display: none;
 }
 .custom-toggle-box.checked .custom-toggle-check { display: block; }
 .custom-toggle-label {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
-  color: #ccc;
+  color: var(--text);
   letter-spacing: 0.3px;
 }
 .custom-panel-foot {
   padding: 14px 18px;
-  border-top: 1px solid #222;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 .btn-appliquer {
@@ -245,7 +245,7 @@
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  background: #00D4C8;
+  background: var(--accent);
   color: var(--bg);
   border: none;
   padding: 10px;

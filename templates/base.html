@@ -301,6 +301,20 @@
 
 <script>
 // ── Thème clair/sombre ───────────────────────────────────────────────────
+function getThemeColors() {
+  var s = getComputedStyle(document.documentElement);
+  return {
+    bg:          s.getPropertyValue('--bg').trim()           || '#000000',
+    panel:       s.getPropertyValue('--panel').trim()        || '#0a0a0a',
+    panelHead:   s.getPropertyValue('--panel-header').trim() || '#111111',
+    border:      s.getPropertyValue('--border').trim()       || '#1e1e1e',
+    borderLight: s.getPropertyValue('--border-light').trim() || '#2a2a2a',
+    text:        s.getPropertyValue('--text').trim()         || '#c8c8c8',
+    textDim:     s.getPropertyValue('--text-dim').trim()     || '#666666',
+    textBright:  s.getPropertyValue('--text-bright').trim()  || '#ffffff',
+    accent:      s.getPropertyValue('--accent').trim()       || '#00d4c8',
+  };
+}
 function toggleTheme() {
   var root = document.documentElement;
   var current = root.getAttribute('data-theme') || 'dark';
@@ -308,6 +322,7 @@ function toggleTheme() {
   root.setAttribute('data-theme', next);
   document.getElementById('theme-icon').textContent = next === 'dark' ? '☀' : '☾';
   localStorage.setItem('theme', next);
+  document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: next } }));
 }
 document.addEventListener('DOMContentLoaded', function() {
   var saved = localStorage.getItem('theme') || 'dark';

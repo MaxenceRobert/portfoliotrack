@@ -26,17 +26,17 @@
   display: flex;
   flex-direction: column;
   scrollbar-width: thin;
-  scrollbar-color: #222 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .analyse-sidebar::-webkit-scrollbar { width: 3px; }
-.analyse-sidebar::-webkit-scrollbar-thumb { background: #222; }
+.analyse-sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 .sb-block {
   border-bottom: 1px solid var(--border);
   padding: 10px 12px;
 }
 .sb-label {
   font-size: 9px;
-  color: #555;
+  color: var(--text-dim);
   letter-spacing: 0.8px;
   font-family: 'IBM Plex Mono', monospace;
   text-transform: uppercase;
@@ -45,15 +45,15 @@
 .sb-input {
   width: 100%;
   box-sizing: border-box;
-  background: #111;
-  border: 1px solid #222;
-  color: #e0e0e0;
+  background: var(--panel-header);
+  border: 1px solid var(--border);
+  color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   padding: 6px 8px;
   outline: none;
 }
-.sb-input:focus { border-color: #00D4C8; }
+.sb-input:focus { border-color: var(--accent); }
 .sb-analyser-btn {
   width: 100%;
   margin-top: 6px;
@@ -72,8 +72,8 @@
 .sb-val-btn {
   width: 100%;
   background: transparent;
-  border: 1px solid #333;
-  color: #444;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   text-transform: uppercase;
@@ -82,12 +82,12 @@
   cursor: not-allowed;
 }
 .sb-val-btn.active {
-  border-color: #00D4C8;
-  color: #00D4C8;
+  border-color: var(--accent);
+  color: var(--accent);
   cursor: pointer;
 }
 .sb-val-btn.active:hover {
-  background: #00D4C8;
+  background: var(--accent);
   color: var(--bg);
 }
 .sb-toggles {
@@ -96,9 +96,9 @@
   gap: 3px;
 }
 .sb-toggle {
-  background: #111;
-  border: 1px solid #222;
-  color: #666;
+  background: var(--panel-header);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   padding: 4px 0;
@@ -107,8 +107,8 @@
   text-align: center;
   min-width: 26px;
 }
-.sb-toggle.active { background: #001a1a; border-color: #00D4C8; color: #00D4C8; }
-.sb-toggle:hover:not(.active) { border-color: #444; color: #ccc; }
+.sb-toggle.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.sb-toggle:hover:not(.active) { border-color: var(--border-light); color: var(--text); }
 /* indicator rows */
 .indic-row {
   display: flex;
@@ -118,26 +118,26 @@
   cursor: pointer;
   user-select: none;
 }
-.indic-row:hover .indic-name { color: #ccc; }
+.indic-row:hover .indic-name { color: var(--text); }
 .indic-box {
   width: 12px;
   height: 12px;
-  border: 1px solid #333;
-  background: #111;
+  border: 1px solid var(--border-light);
+  background: var(--panel-header);
   flex-shrink: 0;
   position: relative;
 }
-.indic-box.checked { border-color: #00D4C8; background: #001a1a; }
+.indic-box.checked { border-color: var(--accent); background: var(--accent-bg); }
 .indic-box.checked::after {
   content: '';
   position: absolute;
   top: 2px; left: 2px;
   width: 6px; height: 6px;
-  background: #00D4C8;
+  background: var(--accent);
 }
 .indic-swatch { width: 8px; height: 8px; flex-shrink: 0; }
-.indic-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; flex: 1; }
-.indic-name.checked { color: #e0e0e0; }
+.indic-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); flex: 1; }
+.indic-name.checked { color: var(--text); }
 /* drawing tools */
 .draw-grid {
   display: grid;
@@ -145,9 +145,9 @@
   gap: 3px;
 }
 .draw-btn {
-  background: #111;
-  border: 1px solid #222;
-  color: #666;
+  background: var(--panel-header);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   padding: 5px 4px;
@@ -155,9 +155,9 @@
   text-align: center;
   letter-spacing: 0.2px;
 }
-.draw-btn:hover { border-color: #444; color: #ccc; }
-.draw-btn.active { background: #001a1a; border-color: #00D4C8; color: #00D4C8; }
-.draw-btn.clear-btn { grid-column: span 2; color: #555; }
+.draw-btn:hover { border-color: var(--border-light); color: var(--text); }
+.draw-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.draw-btn.clear-btn { grid-column: span 2; color: var(--text-dim); }
 .draw-btn.clear-btn:hover { color: #FF3D00; border-color: #FF3D00; }
 /* portfolio list */
 .sb-assets-wrap {
@@ -165,10 +165,10 @@
   overflow-y: auto;
   padding: 6px 0;
   scrollbar-width: thin;
-  scrollbar-color: #222 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .sb-assets-wrap::-webkit-scrollbar { width: 3px; }
-.sb-assets-wrap::-webkit-scrollbar-thumb { background: #222; }
+.sb-assets-wrap::-webkit-scrollbar-thumb { background: var(--border); }
 .sb-asset-item {
   display: flex;
   justify-content: space-between;
@@ -178,10 +178,10 @@
   border-left: 2px solid transparent;
   gap: 6px;
 }
-.sb-asset-item:hover { background: #111; border-left-color: #333; }
-.sb-asset-item.active { background: #111; border-left-color: #00D4C8; }
-.sb-asset-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #00D4C8; font-weight: 600; flex-shrink: 0; }
-.sb-asset-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
+.sb-asset-item:hover { background: var(--panel-header); border-left-color: var(--border-light); }
+.sb-asset-item.active { background: var(--panel-header); border-left-color: var(--accent); }
+.sb-asset-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--accent); font-weight: 600; flex-shrink: 0; }
+.sb-asset-name { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex: 1; }
 /* main zone */
 .analyse-main {
   flex: 1;
@@ -202,17 +202,17 @@
 }
 .ah-row1 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .ah-row2 { display: flex; align-items: center; gap: 10px; }
-.ah-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: #00D4C8; }
-.ah-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #666; }
-.ah-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #e0e0e0; }
-.ah-curr { font-size: 9px; color: #555; }
+.ah-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: var(--accent); }
+.ah-name { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.ah-price { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text); }
+.ah-curr { font-size: 9px; color: var(--text-dim); }
 .ah-change { font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
 .ah-change.pos { color: #00C853; }
 .ah-change.neg { color: #FF3D00; }
-.ah-pru { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; margin-left: auto; }
-.ah-placeholder { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #444; }
-.ah-dim { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #555; margin-right: 2px; }
-.ah-val { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #aaa; margin-right: 6px; }
+.ah-pru { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim); margin-left: auto; }
+.ah-placeholder { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.ah-dim { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim); margin-right: 2px; }
+.ah-val { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim); margin-right: 6px; }
 /* charts area */
 #charts-area {
   flex: 1;
@@ -241,7 +241,7 @@
   left: 8px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
-  color: #444;
+  color: var(--text-dim);
   z-index: 2;
   pointer-events: none;
   letter-spacing: 0.5px;
@@ -254,7 +254,7 @@
   transform: translate(-50%, -50%);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
-  color: #444;
+  color: var(--text-dim);
   letter-spacing: 1px;
   pointer-events: none;
   z-index: 5;
@@ -336,7 +336,7 @@
         </div>
         {% endfor %}
         {% if not portfolio_tickers %}
-        <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#444;">
+        <div style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);">
           Aucun actif en portefeuille
         </div>
         {% endif %}
@@ -511,42 +511,44 @@ function toSeriesData(times, values) {
 // CHART OPTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 function mainChartOpts() {
+  var _tc = getThemeColors();
   return {
     autoSize: true,
     layout: {
-      background: { type:'solid', color:'#0a0a0a' },
-      textColor: '#888',
+      background: { type:'solid', color: _tc.panel },
+      textColor: _tc.textDim,
       fontFamily: "'IBM Plex Mono', monospace",
       fontSize: 11,
     },
-    grid: { vertLines:{ color:'#1a1a1a' }, horzLines:{ color:'#1a1a1a' } },
+    grid: { vertLines:{ color: _tc.border }, horzLines:{ color: _tc.border } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color:'#444', labelBackgroundColor:'#00D4C8' },
-      horzLine: { color:'#444', labelBackgroundColor:'#00D4C8' },
+      vertLine: { color: _tc.border, labelBackgroundColor: _tc.accent },
+      horzLine: { color: _tc.border, labelBackgroundColor: _tc.accent },
     },
-    rightPriceScale: { borderColor:'#1a1a1a' },
-    timeScale: { borderColor:'#1a1a1a', timeVisible:true, secondsVisible:false },
+    rightPriceScale: { borderColor: _tc.border },
+    timeScale: { borderColor: _tc.border, timeVisible:true, secondsVisible:false },
   };
 }
 
 function panelChartOpts() {
+  var _tc = getThemeColors();
   return {
     autoSize: true,
     layout: {
-      background: { type:'solid', color:'#0a0a0a' },
-      textColor: '#555',
+      background: { type:'solid', color: _tc.panel },
+      textColor: _tc.textDim,
       fontFamily: "'IBM Plex Mono', monospace",
       fontSize: 9,
     },
-    grid: { vertLines:{ color:'#111' }, horzLines:{ color:'#111' } },
+    grid: { vertLines:{ color: _tc.border }, horzLines:{ color: _tc.border } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color:'#333', labelBackgroundColor:'#222' },
-      horzLine: { color:'#333', labelBackgroundColor:'#222' },
+      vertLine: { color: _tc.border, labelBackgroundColor: _tc.panelHead },
+      horzLine: { color: _tc.border, labelBackgroundColor: _tc.panelHead },
     },
-    rightPriceScale: { borderColor:'#1a1a1a' },
-    timeScale: { borderColor:'#1a1a1a', visible:false },
+    rightPriceScale: { borderColor: _tc.border },
+    timeScale: { borderColor: _tc.border, visible:false },
     handleScroll: false,
     handleScale:  false,
   };
@@ -1197,6 +1199,28 @@ document.querySelectorAll('.draw-btn').forEach(function(btn) {
 window.addEventListener('DOMContentLoaded', function() {
   var t = '{{ initial_ticker }}';
   if (t) loadChart(t, currentTimeframe);
+});
+
+// ── Rechargement des couleurs lors du changement de thème ──────────────────
+document.addEventListener('themeChanged', function() {
+  if (mainChart) {
+    var _tc = getThemeColors();
+    mainChart.applyOptions({
+      layout: { background: { type:'solid', color: _tc.panel }, textColor: _tc.textDim },
+      grid: { vertLines:{ color: _tc.border }, horzLines:{ color: _tc.border } },
+      rightPriceScale: { borderColor: _tc.border },
+      timeScale: { borderColor: _tc.border },
+    });
+  }
+  Object.values(panelCharts).forEach(function(pd) {
+    if (pd && pd.chart) {
+      var _tc = getThemeColors();
+      pd.chart.applyOptions({
+        layout: { background: { type:'solid', color: _tc.panel }, textColor: _tc.textDim },
+        grid: { vertLines:{ color: _tc.border }, horzLines:{ color: _tc.border } },
+      });
+    }
+  });
 });
 </script>
 {% endblock %}

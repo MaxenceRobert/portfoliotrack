@@ -18,7 +18,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border);
   background: var(--fntabs-bg);
   flex-shrink: 0;
 }
@@ -28,26 +28,26 @@
 .cal-title {
   font-size: 11px;
   font-weight: 700;
-  color: #00D4C8;
+  color: var(--accent);
   letter-spacing: 1px;
 }
 
 .cal-nav-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   padding: 3px 8px;
   cursor: pointer;
   transition: border-color .15s, color .15s;
 }
-.cal-nav-btn:hover { border-color: #00D4C8; color: #00D4C8; }
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 .cal-month-label {
   font-size: 12px;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--text);
   letter-spacing: 0.5px;
   min-width: 140px;
   text-align: center;
@@ -55,8 +55,8 @@
 
 .cal-filter-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.5px;
@@ -64,13 +64,13 @@
   cursor: pointer;
   transition: all .15s;
 }
-.cal-filter-btn.active { border-color: #00D4C8; color: #00D4C8; background: rgba(0,212,200,.06); }
-.cal-filter-btn:hover  { border-color: #555; color: #ccc; }
+.cal-filter-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.cal-filter-btn:hover  { border-color: var(--border-light); color: var(--text); }
 
 .cal-view-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #888;
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   letter-spacing: 0.5px;
@@ -78,15 +78,15 @@
   cursor: pointer;
   transition: all .15s;
 }
-.cal-view-btn.active { border-color: #555; color: #ccc; background: var(--panel-header); }
-.cal-view-btn:hover  { border-color: #555; color: #ccc; }
+.cal-view-btn.active { border-color: var(--border-light); color: var(--text); background: var(--panel-header); }
+.cal-view-btn:hover  { border-color: var(--border-light); color: var(--text); }
 
 /* ── Calendar grid view ──────────────────────────────────────────────────── */
 .cal-grid-wrap {
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #222 transparent;
+  scrollbar-color: var(--border) transparent;
   padding: 12px 16px;
 }
 
@@ -100,32 +100,32 @@
 
 .cal-day-header {
   background: var(--fntabs-bg);
-  border-bottom: 2px solid #222;
+  border-bottom: 2px solid var(--border);
   font-size: 9px;
   font-weight: 700;
-  color: #555;
+  color: var(--text-dim);
   letter-spacing: 1px;
   padding: 6px 0;
   text-align: center;
 }
 
 .cal-day {
-  background: #111;
+  background: var(--panel-header);
   min-height: 80px;
   padding: 6px 5px 5px;
   position: relative;
   transition: background .12s;
 }
-.cal-day:hover { background: #141414; }
-.cal-day.today { background: #131e1e; }
-.cal-day.today .cal-day-num { color: #00D4C8; }
+.cal-day:hover { background: var(--surface-hover); }
+.cal-day.today { background: var(--accent-bg); }
+.cal-day.today .cal-day-num { color: var(--accent); }
 .cal-day.other-month { background: var(--fntabs-bg); }
-.cal-day.other-month .cal-day-num { color: #2a2a2a; }
+.cal-day.other-month .cal-day-num { color: var(--border-light); }
 
 .cal-day-num {
   font-size: 10px;
   font-weight: 700;
-  color: #444;
+  color: var(--text-dim);
   margin-bottom: 4px;
   display: block;
 }
@@ -169,7 +169,7 @@
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #222 transparent;
+  scrollbar-color: var(--border) transparent;
   padding: 12px 16px;
 }
 
@@ -181,7 +181,7 @@
 .cal-list-table th {
   font-size: 9px;
   font-weight: 700;
-  color: #555;
+  color: var(--text-dim);
   letter-spacing: 1px;
   text-align: left;
   padding: 6px 10px;
@@ -193,10 +193,10 @@
 .cal-list-table td {
   padding: 7px 10px;
   border-bottom: 1px solid var(--border);
-  color: #ccc;
+  color: var(--text);
   vertical-align: middle;
 }
-.cal-list-table tr:hover td { background: #111; }
+.cal-list-table tr:hover td { background: var(--panel-header); }
 
 .list-type-badge {
   display: inline-block;
@@ -210,9 +210,9 @@
 .list-type-badge.earnings.outline { background: transparent; border: 1px solid #00D4C8; color: #00D4C8; }
 .list-type-badge.dividend.outline { background: transparent; border: 1px solid #00C853; color: #00C853; }
 
-.list-ticker { color: #00D4C8; font-weight: 700; font-size: 11px; }
-.list-name   { color: #666; font-size: 9px; }
-.list-detail { color: #888; font-size: 9px; }
+.list-ticker { color: var(--accent); font-weight: 700; font-size: 11px; }
+.list-name   { color: var(--text-dim); font-size: 9px; }
+.list-detail { color: var(--text-dim); font-size: 9px; }
 .list-port-dot {
   display: inline-block;
   width: 6px;
@@ -229,7 +229,7 @@
   justify-content: center;
   height: 200px;
   gap: 10px;
-  color: #333;
+  color: var(--text-dim);
   font-size: 10px;
   letter-spacing: 1px;
 }
@@ -266,7 +266,7 @@
   align-items: center;
   gap: 5px;
   font-size: 9px;
-  color: #555;
+  color: var(--text-dim);
   letter-spacing: 0.5px;
 }
 .legend-swatch {
@@ -282,17 +282,17 @@
 .cal-tooltip {
   position: fixed;
   background: var(--panel-header);
-  border: 1px solid #333;
+  border: 1px solid var(--border-light);
   padding: 8px 12px;
   font-size: 10px;
-  color: #ccc;
+  color: var(--text);
   pointer-events: none;
   z-index: 9999;
   max-width: 220px;
   line-height: 1.6;
 }
-.cal-tooltip-ticker { color: #00D4C8; font-weight: 700; font-size: 11px; }
-.cal-tooltip-type   { font-size: 8px; letter-spacing: 1px; color: #888; }
+.cal-tooltip-ticker { color: var(--accent); font-weight: 700; font-size: 11px; }
+.cal-tooltip-type   { font-size: 8px; letter-spacing: 1px; color: var(--text-dim); }
 </style>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
@@ -365,7 +365,7 @@
       <div class="cal-loading-bar"></div>
     </div>
     <div id="list-empty" style="display:none;padding:40px 16px;text-align:center;
-         font-size:10px;color:#333;letter-spacing:1px;">
+         font-size:10px;color:var(--text-dim);letter-spacing:1px;">
       AUCUN ÉVÉNEMENT DANS CES 30 JOURS
     </div>
   </div>
@@ -595,15 +595,15 @@ function renderList() {
     var outlineClass = ev.in_portfolio ? '' : ' outline';
 
     tr.innerHTML =
-      '<td style="color:#888;font-size:10px;white-space:nowrap;">' + dateFmt + '</td>' +
+      '<td style="color:var(--text-dim);font-size:10px;white-space:nowrap;">' + dateFmt + '</td>' +
       '<td><span class="list-ticker">' + ev.ticker + '</span>' +
           '<div class="list-name">' + (ev.name || '') + '</div></td>' +
       '<td><span class="list-type-badge ' + typeClass + outlineClass + '">' + ev.type + '</span></td>' +
       '<td class="list-detail">' + (ev.detail || '—') + '</td>' +
       '<td style="font-size:9px;">' +
         (ev.in_portfolio
-          ? '<span style="color:#00D4C8;">&#9679; PORTEFEUILLE</span>'
-          : '<span style="color:#555;">&#9675; WATCHLIST</span>') +
+          ? '<span style="color:var(--accent);">&#9679; PORTEFEUILLE</span>'
+          : '<span style="color:var(--text-dim);">&#9675; WATCHLIST</span>') +
       '</td>';
 
     tbody.appendChild(tr);
@@ -619,9 +619,9 @@ function showTooltip(ev, e) {
   _tooltip.innerHTML =
     '<div class="cal-tooltip-ticker">' + ev.ticker + '</div>' +
     '<div class="cal-tooltip-type" style="color:' + typeClass + ';">' + ev.type + '</div>' +
-    '<div style="margin-top:4px;font-size:9px;color:#888;">' + (ev.name || '') + '</div>' +
-    '<div style="font-size:9px;color:#666;">' + (ev.detail || '') + '</div>' +
-    '<div style="margin-top:4px;font-size:8px;color:#444;">' + src + ' · ' + ev.date + '</div>';
+    '<div style="margin-top:4px;font-size:9px;color:var(--text-dim);">' + (ev.name || '') + '</div>' +
+    '<div style="font-size:9px;color:var(--text-dim);">' + (ev.detail || '') + '</div>' +
+    '<div style="margin-top:4px;font-size:8px;color:var(--text-dim);">' + src + ' · ' + ev.date + '</div>';
   _tooltip.style.display = '';
   moveTooltip(e);
 }

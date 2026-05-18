@@ -39,7 +39,7 @@
 }
 
 .scr-select {
-  background: #111;
+  background: var(--panel-header);
   border: 1px solid var(--border);
   color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
@@ -64,7 +64,7 @@
 }
 .scr-range-input {
   width: 54px;
-  background: #111;
+  background: var(--panel-header);
   border: 1px solid var(--border);
   color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
@@ -110,8 +110,8 @@
   margin-right: 2px;
 }
 .scr-saved-btn {
-  background: #161616;
-  border: 1px solid #2a2a2a;
+  background: var(--panel-header);
+  border: 1px solid var(--border-light);
   color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
@@ -124,7 +124,7 @@
 }
 .scr-saved-btn:hover { border-color: var(--accent); color: var(--accent); }
 .scr-saved-del {
-  color: #555;
+  color: var(--text-dim);
   font-size: 9px;
   cursor: pointer;
   padding: 0 2px;
@@ -132,7 +132,7 @@
 .scr-saved-del:hover { color: var(--red); }
 .scr-no-saved {
   font-size: 9px;
-  color: #444;
+  color: var(--text-dim);
   font-style: italic;
 }
 
@@ -173,7 +173,7 @@
 .scr-table thead th {
   background: var(--fntabs-bg);
   border-bottom: 1px solid var(--border);
-  border-right: 1px solid #161616;
+  border-right: 1px solid var(--border);
   padding: 6px 10px;
   text-align: left;
   font-size: 9px;
@@ -198,17 +198,17 @@
 .scr-table thead th.sort-active .sort-arrow { opacity: 1; }
 
 .scr-table tbody tr {
-  border-bottom: 1px solid #161616;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.08s;
 }
-.scr-table tbody tr:hover { background: #111; }
+.scr-table tbody tr:hover { background: var(--panel-header); }
 .scr-table tbody tr.selected { background: rgba(0,212,200,0.06); }
 .scr-table tbody td {
   padding: 7px 10px;
   color: var(--text);
   white-space: nowrap;
-  border-right: 1px solid #111;
+  border-right: 1px solid var(--border);
 }
 
 /* Cell value colors */
@@ -216,7 +216,7 @@
 .val-red    { color: var(--red); }
 .val-teal   { color: var(--accent); }
 .val-dim    { color: var(--text-dim); }
-.val-na     { color: #444; font-style: italic; }
+.val-na     { color: var(--text-dim); font-style: italic; }
 
 /* Score badge */
 .score-badge {
@@ -227,7 +227,7 @@
   letter-spacing: 0.3px;
 }
 .score-0  { background: rgba(255,61,0,0.15); color: #FF3D00; border: 1px solid rgba(255,61,0,0.3); }
-.score-40 { background: var(--panel-header); color: #888; border: 1px solid #333; }
+.score-40 { background: var(--panel-header); color: var(--text-dim); border: 1px solid var(--border-light); }
 .score-60 { background: rgba(0,158,149,0.12); color: #009E95; border: 1px solid rgba(0,158,149,0.3); }
 .score-75 { background: rgba(0,212,200,0.12); color: var(--accent); border: 1px solid rgba(0,212,200,0.4); }
 .score-90 { background: var(--accent); color: var(--bg); border: 1px solid var(--accent); }
@@ -284,7 +284,7 @@
 .detail-close {
   background: none;
   border: none;
-  color: #555;
+  color: var(--text-dim);
   cursor: pointer;
   font-size: 16px;
   padding: 0;
@@ -294,7 +294,7 @@
 
 .detail-section {
   padding: 10px 14px;
-  border-bottom: 1px solid #161616;
+  border-bottom: 1px solid var(--border);
 }
 .detail-section-title {
   font-size: 9px;
@@ -311,7 +311,7 @@
 }
 .detail-key {
   font-size: 10px;
-  color: #777;
+  color: var(--text-dim);
 }
 .detail-val {
   font-size: 11px;
@@ -339,7 +339,7 @@
   flex-shrink: 0;
 }
 .pg-btn {
-  background: #111;
+  background: var(--panel-header);
   border: 1px solid var(--border);
   color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
@@ -352,7 +352,7 @@
 .pg-btn:hover { border-color: var(--accent); color: var(--accent); }
 .pg-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,200,0.08); }
 .pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.pg-info { font-size: 9px; color: #555; margin: 0 6px; }
+.pg-info { font-size: 9px; color: var(--text-dim); margin: 0 6px; }
 
 /* Empty / loading states */
 .scr-empty {
@@ -367,7 +367,7 @@
 }
 .scr-empty-title {
   font-size: 13px;
-  color: #555;
+  color: var(--text-dim);
   letter-spacing: 0.5px;
 }
 
@@ -398,7 +398,7 @@
   letter-spacing: 0.5px;
 }
 .scr-modal input {
-  background: #111;
+  background: var(--panel-header);
   border: 1px solid var(--border);
   color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
@@ -537,13 +537,13 @@
       <div class="scr-empty hidden" id="state-empty-db">
         <span class="scr-empty-title">DONNÉES EN COURS DE CHARGEMENT</span>
         <span>Le job de collecte automatique n'a pas encore tourné.</span>
-        <span style="color:#555;">Revenez dans quelques minutes — la base sera peuplée à 18h00.</span>
+        <span style="color:var(--text-dim);">Revenez dans quelques minutes — la base sera peuplée à 18h00.</span>
       </div>
 
       <div class="scr-empty hidden" id="state-no-results">
         <span class="scr-empty-title">AUCUN RÉSULTAT</span>
         <span>Aucun titre ne correspond à ces critères.</span>
-        <span style="color:#555;">Élargissez vos filtres ou cliquez sur RÉINITIALISER.</span>
+        <span style="color:var(--text-dim);">Élargissez vos filtres ou cliquez sur RÉINITIALISER.</span>
       </div>
 
       <table class="scr-table" id="scr-table" style="display:none;">

@@ -424,8 +424,8 @@
     font-family: 'IBM Plex Mono', monospace;
     font-size: 8px;
     color: var(--text-dim);
-    background: #161616;
-    border: 1px solid #2a2a2a;
+    background: var(--panel-header);
+    border: 1px solid var(--border-light);
     padding: 2px 6px;
     letter-spacing: 0.3px;
     white-space: nowrap;
@@ -474,7 +474,7 @@
 
         <!-- ═══════════════ LEFT : Formulaires ═══════════════ -->
         <div class="al-panel">
-            <div style="background:#111; border-bottom:1px solid var(--border);">
+            <div style="background:var(--panel-header); border-bottom:1px solid var(--border);">
                 <div class="al-form-tabs" id="form-tabs">
                     <button class="al-ftab active" onclick="switchFormTab('prix', this)">PRIX</button>
                     <button class="al-ftab" onclick="switchFormTab('fondamentaux', this)">FONDAMENTAUX</button>
@@ -650,7 +650,7 @@
                 {% else %}
                     {% set gap_pct = 0 %}
                     {% set prox = 0 %}
-                    {% set bar_color = '#2A2A2A' %}
+                    {% set bar_color = 'var(--border-light)' %}
                 {% endif %}
                 <div class="al-row">
                     <div class="al-row-top">
@@ -771,7 +771,7 @@
                     {% endif %}
                 {% else %}
                     {% set prox = 0 %}
-                    {% set bar_color = '#2A2A2A' %}
+                    {% set bar_color = 'var(--border-light)' %}
                 {% endif %}
 
                 <div class="al-row">

@@ -429,34 +429,37 @@ function filterPortfolio(tf) {
 // ── Portfolio chart rendering ─────────────────────────────────────────────────
 var _plotlyConfig = { displayModeBar: false, responsive: true };
 
-var _baseLayout = {
-  paper_bgcolor: 'transparent',
-  plot_bgcolor:  'transparent',
-  margin:        { l: 8, r: 56, t: 6, b: 36 },
-  showlegend:    false,
-  font:          { family: 'IBM Plex Mono', color: '#666', size: 10 },
-  xaxis: {
-    showgrid: false,
-    tickfont: { size: 9, color: '#666' },
-    linecolor: '#333',
-    zeroline: false,
-  },
-  yaxis: {
-    side: 'right',
-    showgrid: true,
-    gridcolor: 'rgba(255,255,255,0.04)',
-    gridwidth: 0.5,
-    tickfont: { size: 9, color: '#666' },
-    linecolor: 'transparent',
-    zeroline: false,
-  },
-  hovermode: 'x unified',
-  hoverlabel: {
-    bgcolor: '#1a1a1a',
-    bordercolor: '#00D4C8',
-    font: { color: '#fff', family: 'IBM Plex Mono', size: 10 },
-  },
-};
+function getBaseLayout() {
+  var tc = getThemeColors();
+  return {
+    paper_bgcolor: 'transparent',
+    plot_bgcolor:  'transparent',
+    margin:        { l: 8, r: 56, t: 6, b: 36 },
+    showlegend:    false,
+    font:          { family: 'IBM Plex Mono', color: tc.textDim, size: 10 },
+    xaxis: {
+      showgrid: false,
+      tickfont: { size: 9, color: tc.textDim },
+      linecolor: tc.borderLight,
+      zeroline: false,
+    },
+    yaxis: {
+      side: 'right',
+      showgrid: true,
+      gridcolor: tc.border,
+      gridwidth: 0.5,
+      tickfont: { size: 9, color: tc.textDim },
+      linecolor: 'transparent',
+      zeroline: false,
+    },
+    hovermode: 'x unified',
+    hoverlabel: {
+      bgcolor: tc.panelHead,
+      bordercolor: tc.accent,
+      font: { color: tc.textBright, family: 'IBM Plex Mono', size: 10 },
+    },
+  };
+}
 
 function renderPortfolioChart() {
   var f  = filterPortfolio(_chartTf);
@@ -539,7 +542,7 @@ function renderPortfolioChart() {
     traces.push({
       x: [f.dates[0], f.dates[f.dates.length - 1]], y: [0, 0],
       type: 'scatter',
-      line: { color: 'rgba(255,255,255,0.12)', width: 1, dash: 'dot' },
+      line: { color: getThemeColors().borderLight, width: 1, dash: 'dot' },
       hoverinfo: 'skip', showlegend: false,
     });
     layoutPatch = { 'yaxis.ticksuffix': '%', 'yaxis.tickformat': '+.2f', 'yaxis.rangemode': 'normal' };
@@ -564,14 +567,14 @@ function renderPortfolioChart() {
     traces.push({
       x: [f.dates[0], f.dates[f.dates.length - 1]], y: [0, 0],
       type: 'scatter',
-      line: { color: 'rgba(255,255,255,0.12)', width: 1 },
+      line: { color: getThemeColors().borderLight, width: 1 },
       hoverinfo: 'skip', showlegend: false,
     });
     layoutPatch = { 'yaxis.ticksuffix': '%', 'yaxis.tickformat': '.2f', 'yaxis.rangemode': 'normal' };
     if (legendInvested) legendInvested.style.display = 'none';
   }
 
-  var layout = Object.assign({}, _baseLayout, { height: 400 });
+  var layout = Object.assign({}, getBaseLayout(), { height: 400 });
   Plotly.react('portfolio-chart', traces, layout, _plotlyConfig);
   if (Object.keys(layoutPatch).length) {
     Plotly.relayout('portfolio-chart', layoutPatch);
@@ -739,7 +742,7 @@ function showDetail(ticker) {
         x: [pos.hist_dates[0], pos.hist_dates[pos.hist_dates.length - 1]],
         y: [pos.pru, pos.pru],
         type: 'scatter',
-        line: { color: 'rgba(255,255,255,0.45)', width: 1.5, dash: 'dot' },
+        line: { color: getThemeColors().text, width: 1.5, dash: 'dot' },
         name: 'PRU ' + pos.pru.toFixed(2),
         hovertemplate: 'PRU: ' + pos.pru.toFixed(4) + '<extra></extra>',
         showlegend: false,
@@ -756,7 +759,7 @@ function showDetail(ticker) {
       type: 'scatter',
       marker: {
         symbol: 'triangle-up', color: '#00D4C8', size: 9,
-        line: { color: '#1a1a1a', width: 0.5 },
+        line: { color: getThemeColors().bg, width: 0.5 },
       },
       name: 'Achats',
       hovertemplate: 'Achat %{x}<br>%{y:.4f}<br>%{customdata[0]} parts<extra></extra>',
@@ -764,9 +767,10 @@ function showDetail(ticker) {
     });
   }
 
-  var detailLayout = Object.assign({}, _baseLayout, {
+  var _bl = getBaseLayout();
+  var detailLayout = Object.assign({}, _bl, {
     height: 300,
-    yaxis: Object.assign({}, _baseLayout.yaxis, { tickformat: ',.4f', ticksuffix: '' }),
+    yaxis: Object.assign({}, _bl.yaxis, { tickformat: ',.4f', ticksuffix: '' }),
   });
 
   Plotly.react('detail-chart', traces, detailLayout, _plotlyConfig);
@@ -823,6 +827,7 @@ function renderCorrelation() {
 
   console.log('[charts] corr data received:', JSON.stringify(corr));
 
+  var tc = getThemeColors();
   var trace = {
     z: corr.matrix,
     x: corr.tickers,
@@ -831,19 +836,19 @@ function renderCorrelation() {
     colorscale: [
       [0,    '#d73027'],
       [0.25, '#fc8d59'],
-      [0.5,  '#1a1a1a'],
+      [0.5,  tc.panel],
       [0.75, '#91cf60'],
       [1,    '#1a9850'],
     ],
     zmin: -1, zmax: 1,
     texttemplate: '%{z:.2f}',
-    textfont: { color: '#fff', size: 11, family: 'IBM Plex Mono' },
+    textfont: { color: tc.textBright, size: 11, family: 'IBM Plex Mono' },
     hovertemplate: '%{y} vs %{x}: %{z:.2f}<extra></extra>',
     showscale: true,
     colorbar: {
       thickness: 10,
       len: 0.8,
-      tickfont: { color: '#888', size: 9, family: 'IBM Plex Mono' },
+      tickfont: { color: tc.textDim, size: 9, family: 'IBM Plex Mono' },
       tickvals: [-1, -0.5, 0, 0.5, 1],
       outlinewidth: 0,
     },
@@ -855,12 +860,12 @@ function renderCorrelation() {
     height:        h,
     margin:        { l: 70, r: 20, t: 20, b: 70 },
     xaxis: {
-      tickfont: { color: '#00D4C8', size: 10, family: 'IBM Plex Mono' },
-      linecolor: '#333', showgrid: false,
+      tickfont: { color: tc.accent, size: 10, family: 'IBM Plex Mono' },
+      linecolor: tc.borderLight, showgrid: false,
     },
     yaxis: {
-      tickfont: { color: '#00D4C8', size: 10, family: 'IBM Plex Mono' },
-      autorange: 'reversed', linecolor: '#333', showgrid: false,
+      tickfont: { color: tc.accent, size: 10, family: 'IBM Plex Mono' },
+      autorange: 'reversed', linecolor: tc.borderLight, showgrid: false,
     },
     font: { family: 'IBM Plex Mono' },
   }, { displayModeBar: false, responsive: true });
@@ -905,8 +910,18 @@ window.addEventListener('load', function() {
     .catch(function(e) {
       console.error('[charts] load error:', e);
       document.getElementById('charts-loading').innerHTML =
-        '<span style="color:#ff4444;">Erreur de chargement — rechargez la page</span>';
+        '<span style="color:#FF3D00;">Erreur de chargement — rechargez la page</span>';
     });
+});
+
+document.addEventListener('themeChanged', function() {
+  if (typeof CPD !== 'undefined' && CPD.portfolio && CPD.portfolio.dates.length) {
+    renderPortfolioChart();
+    renderCorrelation();
+    if (typeof _selTicker !== 'undefined' && _selTicker) {
+      renderDetailChart(_selTicker);
+    }
+  }
 });
 </script>
 {% endblock %}

@@ -625,26 +625,26 @@ function simulate() {
         plot_bgcolor:  'rgba(0,0,0,0)',
         height: 300,
         margin: { l: 58, r: 12, t: 12, b: 40 },
-        font: { family: 'IBM Plex Mono, monospace', size: 9, color: 'rgba(255,255,255,0.35)' },
+        font: { family: 'IBM Plex Mono, monospace', size: 9, color: getThemeColors().textDim },
         legend: {
             orientation: 'h', y: -0.20,
-            font: { color: 'rgba(255,255,255,0.40)', family: 'IBM Plex Mono, monospace', size: 9 },
+            font: { color: getThemeColors().textDim, family: 'IBM Plex Mono, monospace', size: 9 },
             bgcolor: 'rgba(0,0,0,0)'
         },
         hovermode: 'x unified',
         hoverlabel: {
-            bgcolor: '#0A0A0A', bordercolor: '#1E1E1E',
-            font: { color: 'rgba(255,255,255,0.85)', family: 'IBM Plex Mono, monospace', size: 10 }
+            bgcolor: getThemeColors().panelHead, bordercolor: getThemeColors().border,
+            font: { color: getThemeColors().textBright, family: 'IBM Plex Mono, monospace', size: 10 }
         },
         xaxis: {
-            gridcolor: '#1E1E1E',
-            tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 },
-            linecolor: '#1E1E1E', zeroline: false
+            gridcolor: getThemeColors().border,
+            tickfont: { color: getThemeColors().textDim, family: 'IBM Plex Mono, monospace', size: 9 },
+            linecolor: getThemeColors().border, zeroline: false
         },
         yaxis: {
-            gridcolor: '#1E1E1E',
-            tickfont: { color: 'rgba(255,255,255,0.35)', family: 'IBM Plex Mono, monospace', size: 9 },
-            linecolor: '#1E1E1E', zeroline: false,
+            gridcolor: getThemeColors().border,
+            tickfont: { color: getThemeColors().textDim, family: 'IBM Plex Mono, monospace', size: 9 },
+            linecolor: getThemeColors().border, zeroline: false,
             tickformat: ',.0f', ticksuffix: ' €'
         }
     }, { responsive: true, displayModeBar: false });

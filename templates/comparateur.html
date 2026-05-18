@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border);
-  background: #111;
+  background: var(--panel-header);
   height: 28px;
 }
 .cmp-slot-inner.filled { border-color: var(--accent); }
@@ -61,12 +61,12 @@
   letter-spacing: 0.5px;
   width: 100%;
 }
-.cmp-slot-ticker::placeholder { color: #444; font-size: 10px; text-transform: none; letter-spacing: 0; }
+.cmp-slot-ticker::placeholder { color: var(--text-dim); font-size: 10px; text-transform: none; letter-spacing: 0; }
 
 .cmp-slot-clear {
   background: none;
   border: none;
-  color: #555;
+  color: var(--text-dim);
   cursor: pointer;
   padding: 0 7px;
   font-size: 12px;
@@ -79,7 +79,7 @@
   top: 29px;
   left: 0;
   right: 0;
-  background: #161616;
+  background: var(--panel-header);
   border: 1px solid var(--border);
   border-top: none;
   z-index: 50;
@@ -94,9 +94,9 @@
   align-items: baseline;
   gap: 6px;
 }
-.cmp-ac-item:hover { background: #1e1e1e; }
+.cmp-ac-item:hover { background: var(--surface-hover); }
 .cmp-ac-ticker { font-size: 11px; font-weight: 600; color: var(--accent); min-width: 50px; }
-.cmp-ac-name   { font-size: 9px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-ac-name   { font-size: 9px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .cmp-slot-label {
   font-size: 9px;
@@ -116,15 +116,15 @@
   justify-content: center;
   width: 170px;
   height: 28px;
-  border: 1px dashed #333;
-  color: #444;
+  border: 1px dashed var(--border-light);
+  color: var(--text-dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   cursor: pointer;
   letter-spacing: 0.3px;
   background: none;
 }
-.cmp-slot-add:hover { border-color: #555; color: #777; }
+.cmp-slot-add:hover { border-color: var(--accent); color: var(--accent); }
 
 .cmp-select-actions {
   display: flex;
@@ -178,8 +178,8 @@
   gap: 10px;
   color: var(--text-dim);
 }
-.cmp-empty-title { font-size: 13px; color: #555; letter-spacing: 0.5px; }
-.cmp-empty-sub   { font-size: 10px; color: #444; }
+.cmp-empty-title { font-size: 13px; color: var(--text-dim); letter-spacing: 0.5px; }
+.cmp-empty-sub   { font-size: 10px; color: var(--text-dim); }
 
 /* ── Comparison table ────────────────────────────────────────────────────── */
 .cmp-table {
@@ -227,7 +227,7 @@
 .cmp-th-t3 .cmp-th-ticker-name { color: #6BCB77; border-bottom: 2px solid #6BCB77; padding-bottom: 3px; display: inline-block; }
 .cmp-th-ticker-sub {
   font-size: 9px;
-  color: #666;
+  color: var(--text-dim);
   margin-top: 3px;
   max-width: 130px;
   overflow: hidden;
@@ -244,26 +244,26 @@
 .cmp-section-row td {
   background: var(--panel);
   border-top: 1px solid var(--border);
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid var(--border);
   padding: 5px 12px;
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #555;
+  color: var(--text-dim);
   font-weight: 600;
 }
 
 /* Data rows */
-.cmp-table tbody .cmp-row:hover td { background: #0e0e0e; }
+.cmp-table tbody .cmp-row:hover td { background: var(--surface-hover); }
 .cmp-table .cmp-row td {
   padding: 6px 14px;
-  border-bottom: 1px solid #111;
-  border-right: 1px solid #111;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   vertical-align: middle;
 }
 .cmp-table .cmp-row .cmp-td-metric {
   font-size: 10px;
-  color: #777;
+  color: var(--text-dim);
   white-space: nowrap;
   background: var(--statusbar-bg);
   position: sticky;
@@ -295,13 +295,13 @@
 .v-green  { color: #00C853; }
 .v-red    { color: var(--red); }
 .v-teal   { color: var(--accent); }
-.v-dim    { color: #555; font-style: italic; }
+.v-dim    { color: var(--text-dim); font-style: italic; }
 .v-warn   { color: #FF8800; }
 
 /* Score badge */
 .cmp-score { display: inline-block; padding: 2px 8px; font-weight: 600; font-size: 12px; }
 .s-0  { background: rgba(255,61,0,0.15);    color: #FF3D00; }
-.s-40 { background: var(--panel-header);               color: #888; }
+.s-40 { background: var(--panel-header);               color: var(--text-dim); }
 .s-60 { background: rgba(0,158,149,0.12);  color: #009E95; }
 .s-75 { background: rgba(0,212,200,0.12);  color: #00D4C8; }
 .s-90 { background: #00D4C8;              color: var(--bg); }
@@ -364,7 +364,7 @@
     <div class="cmp-empty" id="cmp-empty">
       <span class="cmp-empty-title">AUCUN TITRE SÉLECTIONNÉ</span>
       <span class="cmp-empty-sub">Entrez 2 à 4 tickers et cliquez sur COMPARER</span>
-      <span class="cmp-empty-sub" style="color:#333;">Ou ajoutez des titres depuis le Screener (F13)</span>
+      <span class="cmp-empty-sub" style="color:var(--text-dim);">Ou ajoutez des titres depuis le Screener (F13)</span>
     </div>
 
     <!-- état chargement -->
@@ -643,7 +643,7 @@ function onSlotKeydown(idx, e) {
 
 function highlightAc(idx, items) {
   items.forEach(function(el, i) {
-    el.style.background = i === acHighlight[idx] ? '#222' : '';
+    el.style.background = i === acHighlight[idx] ? getThemeColors().border : '';
   });
 }
 
@@ -879,28 +879,29 @@ function renderRadar(data) {
     };
   });
 
+  var _tc = getThemeColors();
   var layout = {
     polar: {
-      bgcolor: '#080808',
+      bgcolor: _tc.panel,
       radialaxis: {
         visible: true,
         range: [0, 100],
-        tickfont: { size: 8, color: '#555', family: 'IBM Plex Mono' },
-        gridcolor: '#1a1a1a',
-        linecolor: '#222',
+        tickfont: { size: 8, color: _tc.textDim, family: 'IBM Plex Mono' },
+        gridcolor: _tc.border,
+        linecolor: _tc.border,
         tickvals: [25, 50, 75, 100],
       },
       angularaxis: {
-        tickfont: { size: 9, color: '#888', family: 'IBM Plex Mono' },
-        linecolor: '#333',
-        gridcolor: '#1a1a1a',
+        tickfont: { size: 9, color: _tc.textDim, family: 'IBM Plex Mono' },
+        linecolor: _tc.border,
+        gridcolor: _tc.border,
       },
     },
-    paper_bgcolor: '#080808',
-    plot_bgcolor:  '#080808',
-    font: { family: 'IBM Plex Mono', color: '#888', size: 9 },
+    paper_bgcolor: _tc.panel,
+    plot_bgcolor:  _tc.panel,
+    font: { family: 'IBM Plex Mono', color: _tc.textDim, size: 9 },
     legend: {
-      font: { family: 'IBM Plex Mono', size: 10, color: '#aaa' },
+      font: { family: 'IBM Plex Mono', size: 10, color: _tc.text },
       bgcolor: 'rgba(0,0,0,0)',
       x: 0.5, xanchor: 'center',
       y: -0.05,
