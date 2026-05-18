@@ -47,126 +47,136 @@
 
 {% if current_user.is_authenticated %}
 
+{#-- Calcul des états actifs par groupe --#}
+{%- set _port_active = request.path in ('/', '/dashboard', '/explorer', '/bilan-pdf') -%}
+{%- set _pro_active  = request.path in ('/test-profil', '/resultat-profil', '/mon-profil-investisseur') -%}
+{%- set _hist_active = request.path in ('/history', '/purchases', '/dividends', '/sales') -%}
+{%- set _ana_active  = request.path in ('/analyse', '/valorisation', '/comparateur') -%}
+{%- set _mkt_active  = request.path in ('/screener', '/calendrier') -%}
+{%- set _out_active  = request.path in ('/simulateur', '/coach', '/links', '/aide', '/settings') -%}
+
 <!-- ══ FUNCTION TABS ════════════════════════════════════════════════════ -->
 <div class="fn-tabs">
-  {%- set _tabs = [
-    ('F1', 'PORT',       '/'),
-    ('F2', 'EXPLORER',   '/explorer'),
-    ('F3', 'PROFIL',     '/test-profil'),
-    ('F4', 'DCA',        '/simulateur'),
-    ('F5', 'CHARTS',     '/charts'),
-    ('F6', 'HISTORIQUE', '/history'),
-    ('F7', 'BILAN',      '/bilan-pdf'),
-    ('F8', 'COACH',      '/coach'),
-    ('F9', 'ALERTES',    '/alerts'),
-    ('F10', 'LIENS',    '/links'),
-    ('F11', 'ANALYSE',  '/analyse'),
-    ('F12', 'VALORIS.', '/valorisation'),
-    ('F13', 'SCREENER',    '/screener'),
-    ('F14', 'COMPARATEUR', '/comparateur'),
-    ('F15', 'CALENDRIER',  '/calendrier'),
-  ] -%}
-  {% for key, label, path in _tabs %}
-  <a href="{{ path }}"
-     class="fn-tab{% if request.path == path or (path == '/' and request.path in ('/', '/dashboard')) %} active{% endif %}"
-     style="position:relative;">
-    <span class="fn-key">{{ key }}</span>{{ label }}{% if path == '/alerts' and triggered_alerts_count > 0 %}<span style="display:inline-block;width:5px;height:5px;background:var(--red);vertical-align:super;margin-left:2px;"></span>{% endif %}
-  </a>
-  {% endfor %}
+
+  <!-- 1 · PORTFOLIO (dropdown) -->
   <div class="fn-tab-group">
-    <span class="fn-tab{% if request.path == '/aide' %} active{% endif %}" style="cursor:default;user-select:none;">OUTILS ▾</span>
+    <a href="/" class="fn-tab{% if _port_active %} active{% endif %}">
+      PORTFOLIO<span class="fn-tab-caret">▾</span>
+    </a>
     <div class="fn-dropdown-menu">
-      <a href="/aide" class="fn-dropdown-item{% if request.path == '/aide' %} active{% endif %}">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
-        Aide &amp; Docs
-      </a>
-      <div class="fn-dropdown-sep"></div>
-      <a href="/settings" class="fn-dropdown-item{% if request.path == '/settings' %} active{% endif %}">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/></svg>
-        Paramètres
-      </a>
-      <a href="/links" class="fn-dropdown-item{% if request.path == '/links' %} active{% endif %}">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        Ressources
-      </a>
+      <a href="/" class="fn-dropdown-item{% if request.path in ('/', '/dashboard') %} active{% endif %}">Vue globale</a>
+      <a href="/explorer" class="fn-dropdown-item{% if request.path == '/explorer' %} active{% endif %}">Explorer</a>
+      <a href="/bilan-pdf" class="fn-dropdown-item{% if request.path == '/bilan-pdf' %} active{% endif %}">Bilan PDF</a>
     </div>
   </div>
+
+  <!-- 2 · PROFIL (direct) -->
+  <a href="/test-profil" class="fn-tab{% if _pro_active %} active{% endif %}">PROFIL</a>
+
+  <!-- 3 · CHARTS (direct) -->
+  <a href="/charts" class="fn-tab{% if request.path == '/charts' %} active{% endif %}">CHARTS</a>
+
+  <!-- 4 · HISTORIQUE (direct) -->
+  <a href="/history" class="fn-tab{% if _hist_active %} active{% endif %}">HISTORIQUE</a>
+
+  <!-- 5 · ANALYSE (dropdown) -->
+  <div class="fn-tab-group">
+    <a href="/analyse" class="fn-tab{% if _ana_active %} active{% endif %}">
+      ANALYSE<span class="fn-tab-caret">▾</span>
+    </a>
+    <div class="fn-dropdown-menu">
+      <a href="/analyse" class="fn-dropdown-item{% if request.path == '/analyse' %} active{% endif %}">Technique</a>
+      <a href="/valorisation" class="fn-dropdown-item{% if request.path == '/valorisation' %} active{% endif %}">Valorisation</a>
+      <a href="/comparateur" class="fn-dropdown-item{% if request.path == '/comparateur' %} active{% endif %}">Comparateur</a>
+    </div>
+  </div>
+
+  <!-- 6 · MARCHÉ (dropdown) -->
+  <div class="fn-tab-group">
+    <a href="/screener" class="fn-tab{% if _mkt_active %} active{% endif %}">
+      MARCHÉ<span class="fn-tab-caret">▾</span>
+    </a>
+    <div class="fn-dropdown-menu">
+      <a href="/screener" class="fn-dropdown-item{% if request.path == '/screener' %} active{% endif %}">Screener</a>
+      <a href="/calendrier" class="fn-dropdown-item{% if request.path == '/calendrier' %} active{% endif %}">Calendrier</a>
+    </div>
+  </div>
+
+  <!-- 7 · ALERTES (direct) -->
+  <a href="/alerts" class="fn-tab{% if request.path == '/alerts' %} active{% endif %}" style="position:relative;">
+    ALERTES{% if triggered_alerts_count > 0 %}<span style="display:inline-block;width:5px;height:5px;background:var(--red);vertical-align:super;margin-left:2px;"></span>{% endif %}
+  </a>
+
+  <!-- 8 · OUTILS (dropdown) -->
+  <div class="fn-tab-group">
+    <a href="/simulateur" class="fn-tab{% if _out_active %} active{% endif %}">
+      OUTILS<span class="fn-tab-caret">▾</span>
+    </a>
+    <div class="fn-dropdown-menu">
+      <a href="/simulateur" class="fn-dropdown-item{% if request.path == '/simulateur' %} active{% endif %}">DCA</a>
+      <a href="/coach" class="fn-dropdown-item{% if request.path == '/coach' %} active{% endif %}">Coach IA</a>
+      <a href="/links" class="fn-dropdown-item{% if request.path == '/links' %} active{% endif %}">Liens</a>
+      <a href="/aide" class="fn-dropdown-item{% if request.path == '/aide' %} active{% endif %}">Aide</a>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ MAIN LAYOUT ══════════════════════════════════════════════════════ -->
 <div class="main-layout">
 
-  <!-- SIDE RAIL -->
+  <!-- SIDE RAIL — 8 groupes -->
   <nav class="side-rail">
+
+    <!-- 1 · PORTFOLIO -->
     <a href="{{ url_for('main.dashboard') }}"
-       class="rail-icon{% if request.path in ('/', '/dashboard') %} active{% endif %}"
-       title="Dashboard">
+       class="rail-icon{% if _port_active %} active{% endif %}"
+       title="Portfolio — Vue globale, Explorer, Bilan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="7" height="7"/>
         <rect x="14" y="3" width="7" height="7"/>
         <rect x="3" y="14" width="7" height="7"/>
         <rect x="14" y="14" width="7" height="7"/>
       </svg>
-      <span>Board</span>
+      <span>Port.</span>
     </a>
+
+    <!-- 2 · PROFIL -->
+    <a href="{{ url_for('main.test_profil') }}"
+       class="rail-icon{% if _pro_active %} active{% endif %}"
+       title="Profil investisseur &amp; Risque">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Profil</span>
+    </a>
+
+    <!-- 3 · CHARTS -->
     <a href="{{ url_for('main.charts') }}"
        class="rail-icon{% if request.path == '/charts' %} active{% endif %}"
-       title="Graphiques">
+       title="Charts &amp; Performance">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 3v18h18"/>
         <path d="M7 16l4-8 4 4 6-6"/>
       </svg>
-      <span>Perf</span>
+      <span>Charts</span>
     </a>
-    <a href="{{ url_for('main.explorer') }}"
-       class="rail-icon{% if request.path == '/explorer' %} active{% endif %}"
-       title="Explorer — Allocation">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M12 3v9l6 3"/>
-      </svg>
-      <span>Alloc</span>
-    </a>
-    <a href="{{ url_for('main.test_profil') }}"
-       class="rail-icon{% if request.path in ('/test-profil', '/resultat-profil', '/mon-profil-investisseur') %} active{% endif %}"
-       title="Profil de risque">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
-      </svg>
-      <span>Risk</span>
-    </a>
+
+    <!-- 4 · HISTORIQUE -->
     <a href="{{ url_for('main.history') }}"
-       class="rail-icon{% if request.path in ('/history', '/purchases', '/dividends', '/sales') %} active{% endif %}"
-       title="Historique — Activité">
+       class="rail-icon{% if _hist_active %} active{% endif %}"
+       title="Historique — Achats, Ventes, Dividendes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M4 7h16M4 12h16M4 17h10"/>
       </svg>
-      <span>Feed</span>
+      <span>Histo.</span>
     </a>
-    <a href="{{ url_for('main.alerts') }}"
-       class="rail-icon{% if request.path == '/alerts' %} active{% endif %}"
-       title="Alertes de prix" style="position:relative;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-      {% if triggered_alerts_count > 0 %}
-      <span style="position:absolute;top:4px;right:6px;width:6px;height:6px;background:var(--red);display:block;border-radius:0;"></span>
-      {% endif %}
-      <span>Alerts</span>
-    </a>
-    <a href="{{ url_for('main.links') }}"
-       class="rail-icon{% if request.path == '/links' %} active{% endif %}"
-       title="Liens & Ressources">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-      </svg>
-      <span>Liens</span>
-    </a>
+
+    <!-- 5 · ANALYSE -->
     <a href="{{ url_for('main.analyse') }}"
-       class="rail-icon{% if request.path == '/analyse' %} active{% endif %}"
-       title="Analyse technique">
+       class="rail-icon{% if _ana_active %} active{% endif %}"
+       title="Analyse — Technique, Valorisation, Comparateur">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="6" width="4" height="12"/>
         <rect x="10" y="3" width="4" height="15"/>
@@ -174,44 +184,48 @@
       </svg>
       <span>Analyse</span>
     </a>
-    <a href="{{ url_for('main.valorisation') }}"
-       class="rail-icon{% if request.path == '/valorisation' %} active{% endif %}"
-       title="Valorisation">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M12 7v5l3 3"/>
-        <path d="M7 12h2m6 0h2"/>
-      </svg>
-      <span>Valeur</span>
-    </a>
+
+    <!-- 6 · MARCHÉ -->
     <a href="{{ url_for('main.screener') }}"
-       class="rail-icon{% if request.path == '/screener' %} active{% endif %}"
-       title="Screener fondamental">
+       class="rail-icon{% if _mkt_active %} active{% endif %}"
+       title="Marché — Screener, Calendrier">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 6h18M7 12h10M10 18h4"/>
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
-      <span>Screen</span>
+      <span>Marché</span>
     </a>
-    <a href="{{ url_for('main.comparateur') }}"
-       class="rail-icon{% if request.path == '/comparateur' %} active{% endif %}"
-       title="Comparateur de titres">
+
+    <!-- 7 · ALERTES -->
+    <a href="{{ url_for('main.alerts') }}"
+       class="rail-icon{% if request.path == '/alerts' %} active{% endif %}"
+       title="Alertes de prix et fondamentales" style="position:relative;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="8" height="18" rx="1"/>
-        <rect x="13" y="3" width="8" height="18" rx="1"/>
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
       </svg>
-      <span>Comp.</span>
+      {% if triggered_alerts_count > 0 %}
+      <span style="position:absolute;top:4px;right:6px;width:6px;height:6px;background:var(--red);border-radius:0;"></span>
+      {% endif %}
+      <span>Alertes</span>
     </a>
-    <a href="{{ url_for('main.calendrier') }}"
-       class="rail-icon{% if request.path == '/calendrier' %} active{% endif %}"
-       title="Calendrier financier">
+
+    <!-- 8 · OUTILS -->
+    <a href="{{ url_for('main.simulateur') }}"
+       class="rail-icon{% if _out_active %} active{% endif %}"
+       title="Outils — DCA, Coach IA, Liens, Aide">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <path d="M16 2v4M8 2v4M3 10h18"/>
-        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
       </svg>
-      <span>Agenda</span>
+      <span>Outils</span>
     </a>
+
     <div class="rail-spacer"></div>
+
+    <!-- Paramètres (épinglé en bas) -->
     <a href="{{ url_for('main.settings') }}"
        class="rail-icon{% if request.path == '/settings' %} active{% endif %}"
        title="Paramètres">
@@ -346,6 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     'DIVIDENDE': '/dividends/add', 'DIVIDENDES': '/dividends',
     'ADD': '/assets/add', 'AJOUT': '/assets/add',
     'AIDE': '/aide', 'HELP': '/aide', 'DOC': '/aide', 'DOCS': '/aide',
+    'MARCHE': '/screener', 'MARCHÉ': '/screener',
     'LOGIN': '/login', 'LOGOUT': '/logout', 'REGISTER': '/register',
   };
   cmd.addEventListener('keydown', function(e) {
