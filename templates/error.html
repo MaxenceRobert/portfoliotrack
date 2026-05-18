@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Erreur {{ code }}{% endblock %}
+{% block content %}
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px; text-align:center; padding:40px;">
+    <span style="font-size:64px; font-weight:900; color:var(--accent); font-family:'IBM Plex Mono',monospace; line-height:1;">{{ code }}</span>
+    {% if code == 404 %}
+    <p style="color:var(--text); font-size:16px;">Page introuvable.</p>
+    {% elif code == 500 %}
+    <p style="color:var(--text); font-size:16px;">Erreur serveur interne. Réessayez dans quelques instants.</p>
+    {% else %}
+    <p style="color:var(--text); font-size:16px;">Une erreur est survenue.</p>
+    {% endif %}
+    <a href="{{ url_for('main.dashboard') }}" style="color:var(--accent); text-decoration:none; font-size:13px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--accent); padding:8px 20px; margin-top:8px;">← RETOUR AU DASHBOARD</a>
+</div>
+{% endblock %}

@@ -16,7 +16,7 @@ def get_db():
     else:
         import sqlite3
         conn = sqlite3.connect(Config.DATABASE)
-        conn.row_factory = sqlite3.Row
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 

@@ -78,6 +78,20 @@ def ratelimit_handler(e):
     flash('Trop de tentatives. Réessayez dans une minute.', 'error')
     return redirect(url_for('auth.login'))
 
+@app.errorhandler(404)
+def handle_404(e):
+    print(f"[404] {request.path}")
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Route introuvable'}), 404
+    return render_template('error.html', code=404), 404
+
+@app.errorhandler(500)
+def handle_500(e):
+    print(f"[500] {request.path} — {e}")
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Erreur serveur interne'}), 500
+    return render_template('error.html', code=500), 500
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'

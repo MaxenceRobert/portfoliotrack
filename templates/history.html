@@ -390,7 +390,7 @@
             <tr data-type="achat"
                 data-date="{{ p['date'] }}"
                 data-ticker="{{ p['ticker'] }}"
-                data-envelope="{{ p.get('envelope') or '' }}"
+                data-envelope="{{ p['envelope'] or '' }}"
                 data-amount="{{ p['total_cost'] | float }}"
                 data-shares="{{ p['shares'] | float }}"
                 data-price="{{ p['price_per_share'] | float }}"
