@@ -54,7 +54,7 @@
 /* ── Asset detail row ── */
 .asset-detail-row td {
   padding: 8px 12px;
-  background: #050505;
+  background: var(--siderail-bg);
   border-bottom: 1px solid var(--border);
   font-size: 9px;
   color: var(--text-dim);
@@ -91,7 +91,7 @@
 /* ── Savings item ── */
 .savings-item {
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--row-sep);
   font-size: 9px;
 }
 
@@ -208,7 +208,7 @@
   cursor: pointer;
   transition: background 0.1s;
 }
-.custom-toggle-row:hover { background: rgba(255,255,255,0.03); }
+.custom-toggle-row:hover { background: var(--surface-hover); }
 .custom-toggle-box {
   width: 14px; height: 14px;
   background: #222;
@@ -246,7 +246,7 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   background: #00D4C8;
-  color: #0a0a0a;
+  color: var(--bg);
   border: none;
   padding: 10px;
   cursor: pointer;
@@ -526,7 +526,7 @@
             </td>
           </tr>
           <tr id="detail-{{ a.asset_id }}" style="display:none;">
-            <td colspan="12" class="asset-detail-row" style="padding:8px 12px;background:#050505;border-bottom:1px solid var(--border);border-left:2px solid {{ pl_color }};">
+            <td colspan="12" class="asset-detail-row" style="padding:8px 12px;background:var(--siderail-bg);border-bottom:1px solid var(--border);border-left:2px solid {{ pl_color }};">
               <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
                 <span><span style="color:var(--text-dim);">Investi:</span> {{ a.total_invested }} €</span>
                 <span><span style="color:var(--text-dim);">Devise:</span> {{ a.currency }}</span>

@@ -1,28 +1,60 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PortfolioTrack — Précision institutionnelle.</title>
+<script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-:root {
-    --bg:           #000000;
-    --panel:        #0A0A0A;
-    --panel-hd:     #111111;
-    --border:       #1E1E1E;
-    --border-light: #2A2A2A;
-    --text:         #C8C8C8;
-    --dim:          #666666;
-    --bright:       #FFFFFF;
-    --accent:       #00D4C8;
-    --green:        #00C853;
-    --red:          #FF1744;
-    --blue:         #448AFF;
-    --yellow:       #FFD600;
+[data-theme="dark"] {
+    --bg:            #000000;
+    --panel:         #0A0A0A;
+    --panel-hd:      #111111;
+    --border:        #1E1E1E;
+    --border-light:  #2A2A2A;
+    --text:          #C8C8C8;
+    --dim:           #666666;
+    --bright:        #FFFFFF;
+    --accent:        #00D4C8;
+    --green:         #00C853;
+    --red:           #FF1744;
+    --blue:          #448AFF;
+    --yellow:        #FFD600;
+    --thead-bg:      #0F0F0F;
+    --siderail-bg:   #050505;
+    --row-sep:       rgba(255,255,255,0.02);
+    --row-hover:     rgba(255,255,255,0.015);
+    --surface-hover: rgba(255,255,255,0.03);
+}
+
+[data-theme="light"] {
+    --bg:            #f4f4f2;
+    --panel:         #ffffff;
+    --panel-hd:      #f0f0ee;
+    --border:        #ddddd9;
+    --border-light:  #c8c8c4;
+    --text:          #444444;
+    --dim:           #888888;
+    --bright:        #111111;
+    --accent:        #008a82;
+    --green:         #1a7a3a;
+    --red:           #cc2200;
+    --blue:          #1565c0;
+    --yellow:        #b35a00;
+    --thead-bg:      #e8e8e6;
+    --siderail-bg:   #eaeae8;
+    --row-sep:       rgba(0,0,0,0.05);
+    --row-hover:     rgba(0,0,0,0.04);
+    --surface-hover: rgba(0,0,0,0.06);
+}
+
+body, .nav, .hero, .feature-card, .section-stats, .stat-item,
+.pricing-panel, footer, .hero-ticker, .ticker-item {
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
 }
 
 html { scroll-behavior: smooth; }
@@ -132,6 +164,20 @@ body {
     display: inline-block;
 }
 .nav-btn-solid:hover { opacity: 0.88; }
+
+.nav-theme-toggle {
+    background: rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.2);
+    color: #000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 1;
+    transition: background .15s;
+}
+.nav-theme-toggle:hover { background: rgba(0,0,0,0.22); }
 
 /* ══════════════════════════════════════
    HERO
@@ -346,7 +392,7 @@ body {
     padding: 24px 22px;
     transition: background 0.15s;
 }
-.feature-card:hover { background: #0F0F0F; }
+.feature-card:hover { background: var(--thead-bg); }
 
 .feature-icon {
     color: var(--accent);
@@ -590,6 +636,7 @@ footer {
     </div>
 
     <div class="nav-actions">
+        <button class="nav-theme-toggle" onclick="toggleTheme()"><span id="theme-icon">☀</span></button>
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('main.dashboard') }}" class="nav-btn-solid">Dashboard →</a>
         {% else %}
@@ -788,9 +835,18 @@ footer {
 </footer>
 
 <script>
-// Horloge dans le ticker (optionnel)
-// Le ticker est animé en CSS pur — aucun JS requis.
-// On pourrait ici fetch les vrais prix via /api/price si voulu.
+function toggleTheme() {
+    var root = document.documentElement;
+    var current = root.getAttribute('data-theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    document.getElementById('theme-icon').textContent = next === 'dark' ? '☀' : '☾';
+    localStorage.setItem('theme', next);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var saved = localStorage.getItem('theme') || 'dark';
+    document.getElementById('theme-icon').textContent = saved === 'dark' ? '☀' : '☾';
+});
 </script>
 
 </body>

@@ -150,7 +150,7 @@
   width: 340px;
   min-width: 340px;
   border-left: 1px solid var(--border);
-  background: #080808;
+  background: var(--statusbar-bg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -191,9 +191,9 @@
 
 /* Header row */
 .cmp-table .cmp-th-metric {
-  background: #0d0d0d;
+  background: var(--fntabs-bg);
   border-bottom: 1px solid var(--border);
-  border-right: 1px solid #1a1a1a;
+  border-right: 1px solid var(--border);
   padding: 8px 12px;
   font-size: 9px;
   color: var(--text-dim);
@@ -206,9 +206,9 @@
   min-width: 160px;
 }
 .cmp-table .cmp-th-ticker {
-  background: #0d0d0d;
+  background: var(--fntabs-bg);
   border-bottom: 2px solid var(--border);
-  border-right: 1px solid #1a1a1a;
+  border-right: 1px solid var(--border);
   padding: 8px 14px 6px;
   text-align: center;
   position: sticky;
@@ -242,7 +242,7 @@
 
 /* Section header row */
 .cmp-section-row td {
-  background: #0a0a0a;
+  background: var(--panel);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid #1e1e1e;
   padding: 5px 12px;
@@ -265,11 +265,11 @@
   font-size: 10px;
   color: #777;
   white-space: nowrap;
-  background: #080808;
+  background: var(--statusbar-bg);
   position: sticky;
   left: 0;
   z-index: 1;
-  border-right: 1px solid #1a1a1a;
+  border-right: 1px solid var(--border);
 }
 .cmp-table .cmp-row .cmp-td-val {
   text-align: center;
@@ -301,10 +301,10 @@
 /* Score badge */
 .cmp-score { display: inline-block; padding: 2px 8px; font-weight: 600; font-size: 12px; }
 .s-0  { background: rgba(255,61,0,0.15);    color: #FF3D00; }
-.s-40 { background: #1a1a1a;               color: #888; }
+.s-40 { background: var(--panel-header);               color: #888; }
 .s-60 { background: rgba(0,158,149,0.12);  color: #009E95; }
 .s-75 { background: rgba(0,212,200,0.12);  color: #00D4C8; }
-.s-90 { background: #00D4C8;              color: #0a0a0a; }
+.s-90 { background: #00D4C8;              color: var(--bg); }
 
 /* Verdict */
 .verdict-buy   { color: #00C853; font-weight: 700; letter-spacing: 0.5px; }

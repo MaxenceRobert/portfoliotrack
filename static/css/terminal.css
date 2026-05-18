@@ -5,8 +5,16 @@
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap');
 
-/* ══ Variables ══════════════════════════════════════════════════════════ */
+/* ══ Variables structurelles (indépendantes du thème) ═══════════════════ */
 :root {
+  --topbar-h:    32px;
+  --fntabs-h:    26px;
+  --statusbar-h: 20px;
+  --rail-w:      52px;
+}
+
+/* ══ Thème sombre (défaut) ══════════════════════════════════════════════ */
+[data-theme="dark"] {
   --bg:            #000000;
   --panel:         #0A0A0A;
   --panel-header:  #111111;
@@ -24,10 +32,60 @@
   --red-dim:       rgba(255,23,68,0.12);
   --blue:          #448AFF;
   --yellow:        #FFD600;
-  --topbar-h:      32px;
-  --fntabs-h:      26px;
-  --statusbar-h:   20px;
-  --rail-w:        52px;
+  /* Éléments structurels spécifiques */
+  --fntabs-bg:     #0D0D0D;
+  --siderail-bg:   #050505;
+  --statusbar-bg:  #080808;
+  --thead-bg:      #0F0F0F;
+  --row-sep:       rgba(255,255,255,0.02);
+  --row-hover:     rgba(255,255,255,0.015);
+  --surface-hover: rgba(255,255,255,0.03);
+}
+
+/* ══ Thème clair ════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:            #f4f4f2;
+  --panel:         #ffffff;
+  --panel-header:  #f0f0ee;
+  --border:        #ddddd9;
+  --border-light:  #c8c8c4;
+  --text:          #444444;
+  --text-dim:      #888888;
+  --text-bright:   #111111;
+  --accent:        #008a82;
+  --accent-dim:    #006b63;
+  --accent-bg:     rgba(0,138,130,0.08);
+  --green:         #1a7a3a;
+  --green-dim:     rgba(26,122,58,0.10);
+  --red:           #cc2200;
+  --red-dim:       rgba(204,34,0,0.10);
+  --blue:          #1565c0;
+  --yellow:        #b35a00;
+  /* Éléments structurels spécifiques */
+  --fntabs-bg:     #e2e2e0;
+  --siderail-bg:   #eaeae8;
+  --statusbar-bg:  #ddddd9;
+  --thead-bg:      #e8e8e6;
+  --row-sep:       rgba(0,0,0,0.05);
+  --row-hover:     rgba(0,0,0,0.04);
+  --surface-hover: rgba(0,0,0,0.06);
+}
+
+/* ══ Transition fluide lors du changement de thème ══════════════════════ */
+body, .topbar, .fn-tabs, .fn-tab, .fn-key,
+.side-rail, .rail-icon, .page-content,
+.panel, .panel-head, .hero-strip, .hero-metric,
+.statusbar, .card, .card-head,
+.modal-box, .modal-overlay, .env-modal-box, .env-modal-overlay,
+.auth-card, .auth-wrapper,
+.dtable, .dtable th, .dtable td,
+thead th, tbody td,
+input, select, textarea,
+.btn, .chart-btn, .watch-row, .feed-item, .alloc-bar,
+.section-title, .page-header, .alert,
+.envelope-item, .risk-stat, .risk-bar-track,
+.badge, .tag, .env-badge, .progress-wrap, .progress-bar-wrap {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
 }
 
 /* ══ Reset ══════════════════════════════════════════════════════════════ */
@@ -96,6 +154,7 @@ body {
   outline: none;
   border-radius: 1px;
   min-width: 0;
+  transition: none;
 }
 .topbar-cmd::placeholder { color: rgba(0,0,0,0.45); }
 .topbar-time {
@@ -125,10 +184,26 @@ body {
   opacity: 0.5;
 }
 
+/* ── Bouton toggle thème ─────────────────────────────────────────────── */
+#theme-toggle {
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,0,0,0.28);
+  color: #000;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 2px 7px;
+  cursor: pointer;
+  border-radius: 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+#theme-toggle:hover { background: rgba(0,0,0,0.30); }
+
 /* ══ FUNCTION TABS ════════════════════════════════════════════════════════ */
 .fn-tabs {
   height: var(--fntabs-h);
-  background: #0D0D0D;
+  background: var(--fntabs-bg);
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid var(--border);
@@ -155,7 +230,7 @@ body {
   text-decoration: none;
   font-family: 'IBM Plex Mono', monospace;
 }
-.fn-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.fn-tab:hover { color: var(--text); background: var(--surface-hover); }
 .fn-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
@@ -191,7 +266,7 @@ body {
 
 /* ══ SIDE RAIL ════════════════════════════════════════════════════════════ */
 .side-rail {
-  background: #050505;
+  background: var(--siderail-bg);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -216,7 +291,7 @@ body {
   text-decoration: none;
   flex-shrink: 0;
 }
-.rail-icon:hover  { color: var(--text); background: rgba(255,255,255,0.03); }
+.rail-icon:hover  { color: var(--text); background: var(--surface-hover); }
 .rail-icon.active { color: var(--accent); background: var(--accent-bg); }
 .rail-icon svg    { width: 16px; height: 16px; flex-shrink: 0; }
 .rail-icon span   { font-size: 7px; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
@@ -279,7 +354,7 @@ body {
   background: var(--accent-bg);
   color: var(--accent);
   padding: 1px 5px;
-  border: 1px solid rgba(0,212,200,0.2);
+  border: 1px solid var(--accent-bg);
 }
 .panel-body { flex: 1; overflow-y: auto; }
 
@@ -361,7 +436,7 @@ body {
 .dtable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
 .dtable thead { position: sticky; top: 0; z-index: 2; }
 .dtable th {
-  background: #0F0F0F;
+  background: var(--thead-bg);
   padding: 5px 8px;
   text-align: left;
   font-weight: 500;
@@ -381,12 +456,12 @@ body {
 .dtable th.right, .dtable td.right { text-align: right; }
 .dtable td {
   padding: 4px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--row-sep);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
-.dtable tr:hover td  { background: rgba(255,255,255,0.015); cursor: pointer; }
+.dtable tr:hover td  { background: var(--row-hover); cursor: pointer; }
 .dtable tr.selected td { background: var(--accent-bg); }
 .dtable .ticker { color: var(--text-bright); font-weight: 600; cursor: pointer; }
 .dtable .ticker:hover { color: var(--accent); text-decoration: underline; }
@@ -416,11 +491,11 @@ body {
   display: flex;
   align-items: center;
   padding: 5px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--row-sep);
   cursor: pointer;
   transition: background 0.1s;
 }
-.watch-row:hover  { background: rgba(255,255,255,0.015); }
+.watch-row:hover  { background: var(--row-hover); }
 .watch-ticker { width: 60px; font-weight: 600; color: var(--text-bright); font-size: 10.5px; }
 .watch-price  { flex: 1; text-align: right; font-variant-numeric: tabular-nums; font-size: 10.5px; }
 .watch-change { width: 70px; text-align: right; font-weight: 500; font-size: 10px; font-variant-numeric: tabular-nums; }
@@ -437,7 +512,7 @@ body {
 /* ══ ACTIVITY FEED ═══════════════════════════════════════════════════════ */
 .feed-item {
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--row-sep);
   display: flex;
   gap: 8px;
   align-items: flex-start;
@@ -455,7 +530,7 @@ body {
   left: 0;
   right: 0;
   height: var(--statusbar-h);
-  background: #080808;
+  background: var(--statusbar-bg);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -499,12 +574,12 @@ body {
 .risk-bar-seg   { flex: 1; height: 100%; opacity: 0.3; }
 .risk-bar-seg.filled { opacity: 1; }
 .risk-stats     { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.risk-stat      { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.risk-stat      { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid var(--row-sep); }
 .risk-stat-label { font-size: 9px; color: var(--text-dim); }
 .risk-stat-value { font-size: 9px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* ══ FISCAL ENVELOPES ════════════════════════════════════════════════════ */
-.envelope-item   { display: flex; align-items: center; padding: 5px 10px; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.envelope-item   { display: flex; align-items: center; padding: 5px 10px; gap: 8px; border-bottom: 1px solid var(--row-sep); }
 .envelope-icon   { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; border: 1px solid var(--border-light); color: var(--text-dim); }
 .envelope-info   { flex: 1; }
 .envelope-name   { font-size: 10px; color: var(--text); font-weight: 500; }
@@ -532,11 +607,11 @@ body {
   line-height: 1;
 }
 .btn:hover         { color: var(--text); border-color: var(--text-dim); }
-.btn:active        { background: rgba(255,255,255,0.03); }
+.btn:active        { background: var(--row-hover); }
 .btn-primary       { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.btn-primary:hover { background: rgba(0,212,200,0.14); border-color: var(--accent); color: var(--accent); }
+.btn-primary:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 .btn-success       { border-color: rgba(0,200,83,0.4); color: var(--green); background: var(--green-dim); }
-.btn-success:hover { background: rgba(0,200,83,0.18); }
+.btn-success:hover { background: var(--green-dim); }
 .btn-danger        { border-color: rgba(255,23,68,0.4); color: var(--red); }
 .btn-danger:hover  { background: var(--red-dim); }
 .btn-ghost         { border-color: var(--border-light); color: var(--text-dim); }
@@ -569,7 +644,7 @@ select, textarea {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   outline: none;
-  transition: border-color 0.1s;
+  transition: border-color 0.1s, background-color .2s, color .2s;
   border-radius: 0;
   -webkit-appearance: none;
 }
@@ -767,7 +842,7 @@ a:hover { color: var(--text-bright); }
 /* ══ GENERIC TABLE ═══════════════════════════════════════════════════════ */
 table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; }
 thead th {
-  background: #0F0F0F;
+  background: var(--thead-bg);
   padding: 5px 8px;
   text-align: left;
   font-size: 9px;
@@ -781,12 +856,12 @@ thead th {
 tbody td {
   padding: 5px 8px;
   font-size: 10.5px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--row-sep);
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
-tbody tr:hover td { background: rgba(255,255,255,0.015); cursor: pointer; }
-.hover-row:hover td { background: rgba(255,255,255,0.015); }
+tbody tr:hover td { background: var(--row-hover); cursor: pointer; }
+.hover-row:hover td { background: var(--row-hover); }
 
 /* ══ FOOTER ══════════════════════════════════════════════════════════════ */
 footer {
@@ -802,8 +877,8 @@ footer a:hover { color: var(--text); }
 
 /* ══ DEMO BANNER ═════════════════════════════════════════════════════════ */
 .demo-banner {
-  background: rgba(0,212,200,0.06);
-  border-bottom: 1px solid rgba(0,212,200,0.2);
+  background: var(--accent-bg);
+  border-bottom: 1px solid var(--accent-dim);
   padding: 5px 12px;
   display: flex;
   align-items: center;

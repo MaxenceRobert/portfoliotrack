@@ -97,7 +97,7 @@
   gap: 6px;
   flex-wrap: wrap;
   padding: 6px 14px;
-  background: #0d0d0d;
+  background: var(--fntabs-bg);
   border-bottom: 1px solid var(--border);
   min-height: 32px;
   flex-shrink: 0;
@@ -171,7 +171,7 @@
   font-family: 'IBM Plex Mono', monospace;
 }
 .scr-table thead th {
-  background: #0d0d0d;
+  background: var(--fntabs-bg);
   border-bottom: 1px solid var(--border);
   border-right: 1px solid #161616;
   padding: 6px 10px;
@@ -227,10 +227,10 @@
   letter-spacing: 0.3px;
 }
 .score-0  { background: rgba(255,61,0,0.15); color: #FF3D00; border: 1px solid rgba(255,61,0,0.3); }
-.score-40 { background: #1a1a1a; color: #888; border: 1px solid #333; }
+.score-40 { background: var(--panel-header); color: #888; border: 1px solid #333; }
 .score-60 { background: rgba(0,158,149,0.12); color: #009E95; border: 1px solid rgba(0,158,149,0.3); }
 .score-75 { background: rgba(0,212,200,0.12); color: var(--accent); border: 1px solid rgba(0,212,200,0.4); }
-.score-90 { background: var(--accent); color: #0a0a0a; border: 1px solid var(--accent); }
+.score-90 { background: var(--accent); color: var(--bg); border: 1px solid var(--accent); }
 
 /* Ticker cell */
 .cell-ticker {
@@ -335,7 +335,7 @@
   gap: 4px;
   padding: 8px 14px;
   border-top: 1px solid var(--border);
-  background: #0d0d0d;
+  background: var(--fntabs-bg);
   flex-shrink: 0;
 }
 .pg-btn {

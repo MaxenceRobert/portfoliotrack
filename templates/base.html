@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}PortfolioTrack{% endblock %}</title>
+<script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
@@ -41,6 +42,7 @@
     LOGIN
   </a>
   {% endif %}
+  <button id="theme-toggle" onclick="toggleTheme()"><span id="theme-icon">☀</span></button>
 </div>
 
 {% if current_user.is_authenticated %}
@@ -266,6 +268,20 @@
 </div>
 
 <script>
+// ── Thème clair/sombre ───────────────────────────────────────────────────
+function toggleTheme() {
+  var root = document.documentElement;
+  var current = root.getAttribute('data-theme') || 'dark';
+  var next = current === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  document.getElementById('theme-icon').textContent = next === 'dark' ? '☀' : '☾';
+  localStorage.setItem('theme', next);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var saved = localStorage.getItem('theme') || 'dark';
+  document.getElementById('theme-icon').textContent = saved === 'dark' ? '☀' : '☾';
+});
+
 // ── Horloge live ─────────────────────────────────────────────────────────
 (function() {
   var DAYS   = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];

@@ -25,7 +25,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 16px;
-    background: #111111;
+    background: var(--panel-header);
     border-bottom: 1px solid var(--border);
 }
 .al-panel-title {
@@ -79,7 +79,7 @@
 /* ── List tabs (right panel) ── */
 .al-list-tabs {
     display: flex;
-    background: #0d0d0d;
+    background: var(--fntabs-bg);
     border-bottom: 1px solid var(--border);
 }
 .al-ltab {
@@ -311,7 +311,7 @@
     gap: 6px;
     transition: background 0.08s;
 }
-.al-row:hover { background: rgba(255,255,255,0.015); }
+.al-row:hover { background: var(--row-hover); }
 .al-row.triggered { opacity: 0.55; }
 .al-row-top {
     display: flex;

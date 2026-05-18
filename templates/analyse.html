@@ -21,8 +21,8 @@
   width: 280px;
   flex-shrink: 0;
   overflow-y: auto;
-  border-right: 1px solid #1a1a1a;
-  background: #0d0d0d;
+  border-right: 1px solid var(--border);
+  background: var(--fntabs-bg);
   display: flex;
   flex-direction: column;
   scrollbar-width: thin;
@@ -31,7 +31,7 @@
 .analyse-sidebar::-webkit-scrollbar { width: 3px; }
 .analyse-sidebar::-webkit-scrollbar-thumb { background: #222; }
 .sb-block {
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
   padding: 10px 12px;
 }
 .sb-label {
@@ -88,7 +88,7 @@
 }
 .sb-val-btn.active:hover {
   background: #00D4C8;
-  color: #0a0a0a;
+  color: var(--bg);
 }
 .sb-toggles {
   display: flex;
@@ -189,11 +189,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--panel);
 }
 .analyse-header {
   padding: 6px 14px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -231,7 +231,7 @@
 .chart-panel-wrap {
   height: 120px;
   flex-shrink: 0;
-  border-top: 1px solid #1a1a1a;
+  border-top: 1px solid var(--border);
   position: relative;
   overflow: hidden;
 }

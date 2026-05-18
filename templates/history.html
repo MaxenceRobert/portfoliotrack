@@ -25,7 +25,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 16px;
-    background: #111111;
+    background: var(--panel-header);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     gap: 10px;
@@ -167,7 +167,7 @@
     white-space: nowrap;
 }
 .hist-table thead tr {
-    background: #111111;
+    background: var(--panel-header);
     position: sticky;
     top: 0;
     z-index: 5;
@@ -195,7 +195,7 @@
     color: var(--text);
     border-bottom: 1px solid var(--border);
 }
-.hist-table tbody tr:hover { background: rgba(255,255,255,0.015); }
+.hist-table tbody tr:hover { background: var(--row-hover); }
 .hist-table tbody tr.hidden-row { display: none; }
 /* ── Type tags ── */
 .type-tag {
@@ -241,7 +241,7 @@
     display: flex;
     align-items: center;
     gap: 0;
-    background: #0F0F0F;
+    background: var(--thead-bg);
     border-top: 1px solid var(--border);
     flex-shrink: 0;
     overflow-x: auto;
