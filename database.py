@@ -924,10 +924,16 @@ def init_db():
     conn.close()
     print("Base de données initialisée.")
 
+def _pg_serialize(val):
+    import datetime as _dt
+    if isinstance(val, (_dt.datetime, _dt.date)):
+        return val.strftime('%Y-%m-%d %H:%M:%S') if isinstance(val, _dt.datetime) else val.strftime('%Y-%m-%d')
+    return val
+
 def fetchall_as_dict(cursor):
     if is_postgres():
         cols = [desc[0] for desc in cursor.description]
-        return [dict(zip(cols, row)) for row in cursor.fetchall()]
+        return [dict(zip(cols, (_pg_serialize(v) for v in row))) for row in cursor.fetchall()]
     else:
         return cursor.fetchall()
 
@@ -935,7 +941,7 @@ def fetchone_as_dict(cursor):
     if is_postgres():
         cols = [desc[0] for desc in cursor.description]
         row = cursor.fetchone()
-        return dict(zip(cols, row)) if row else None
+        return dict(zip(cols, (_pg_serialize(v) for v in row))) if row else None
     else:
         return cursor.fetchone()
 

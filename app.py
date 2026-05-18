@@ -2693,38 +2693,57 @@ def coach_clear():
 @main_bp.route('/alerts')
 @login_required
 def alerts():
+    import traceback
     from database import get_user_alerts, check_and_update_alerts
     from database import get_user_fundamental_alerts, check_and_update_fundamental_alerts_for_user
     from auth import send_alert_email, send_fundamental_alert_email
 
-    # Alertes de prix
-    _updated, _newly_triggered = check_and_update_alerts(current_user.id)
-    for al in _newly_triggered:
-        try:
-            send_alert_email(
-                current_user.email,
-                al['ticker'], al['ticker_name'],
-                al['condition'], al['target_price'],
-                al['current_price'], al['triggered_at'],
-            )
-        except Exception as _e:
-            print(f"[alerts] email error for {al['ticker']}: {_e}")
-    alerts_list = get_user_alerts(current_user.id)
+    try:
+        print(f"[alerts] START user={current_user.id}")
 
-    # Alertes fondamentales
-    _f_updated, _f_newly_triggered = check_and_update_fundamental_alerts_for_user(current_user.id)
-    for al in _f_newly_triggered:
-        try:
-            send_fundamental_alert_email(
-                current_user.email, al['ticker'], al['metric_label'],
-                al['condition'], al['target_value'], al['current_value'], al['triggered_at'],
-            )
-        except Exception as _e:
-            print(f"[fundamental_alerts] email error for {al['ticker']}: {_e}")
-    fundamental_alerts_list = get_user_fundamental_alerts(current_user.id)
+        # Alertes de prix
+        print(f"[alerts] calling check_and_update_alerts...")
+        _updated, _newly_triggered = check_and_update_alerts(current_user.id)
+        print(f"[alerts] check_and_update_alerts OK: updated={_updated} triggered={len(_newly_triggered)}")
+        for al in _newly_triggered:
+            try:
+                send_alert_email(
+                    current_user.email,
+                    al['ticker'], al['ticker_name'],
+                    al['condition'], al['target_price'],
+                    al['current_price'], al['triggered_at'],
+                )
+            except Exception as _e:
+                print(f"[alerts] email error for {al['ticker']}: {_e}")
+        print(f"[alerts] calling get_user_alerts...")
+        alerts_list = get_user_alerts(current_user.id)
+        print(f"[alerts] get_user_alerts OK: {len(alerts_list)} rows")
 
-    print(f"[alerts] user={current_user.id} prix={len(alerts_list)} fondamentaux={len(fundamental_alerts_list)}")
-    return render_template('alerts.html', alerts=alerts_list, fundamental_alerts=fundamental_alerts_list)
+        # Alertes fondamentales
+        print(f"[alerts] calling check_and_update_fundamental_alerts_for_user...")
+        _f_updated, _f_newly_triggered = check_and_update_fundamental_alerts_for_user(current_user.id)
+        print(f"[alerts] check_and_update_fundamental OK: updated={_f_updated} triggered={len(_f_newly_triggered)}")
+        for al in _f_newly_triggered:
+            try:
+                send_fundamental_alert_email(
+                    current_user.email, al['ticker'], al['metric_label'],
+                    al['condition'], al['target_value'], al['current_value'], al['triggered_at'],
+                )
+            except Exception as _e:
+                print(f"[fundamental_alerts] email error for {al['ticker']}: {_e}")
+        print(f"[alerts] calling get_user_fundamental_alerts...")
+        fundamental_alerts_list = get_user_fundamental_alerts(current_user.id)
+        print(f"[alerts] get_user_fundamental_alerts OK: {len(fundamental_alerts_list)} rows")
+
+        print(f"[alerts] rendering template...")
+        result = render_template('alerts.html', alerts=alerts_list, fundamental_alerts=fundamental_alerts_list)
+        print(f"[alerts] render OK")
+        return result
+
+    except Exception as _exc:
+        print(f"[alerts] EXCEPTION: {type(_exc).__name__}: {_exc}")
+        print(f"[alerts] TRACEBACK:\n{traceback.format_exc()}")
+        raise
 
 @main_bp.route('/alerts/add', methods=['POST'])
 @login_required
