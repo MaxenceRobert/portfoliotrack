@@ -464,74 +464,178 @@ function calcSimulator() {
   var el = document.getElementById('sim-results');
   if (!el || !currentData || !portfolioCtx) return;
 
-  var ticker = currentTicker;
-  var price  = currentData.current_price || 0;
-  var addVal = sharesAdd * price;
-  var tv     = portfolioCtx.total_value;
-  var newTv  = tv + addVal;
+  var ticker  = currentTicker;
+  var price   = currentData.current_price || 0;
+  var addVal  = sharesAdd * price;
+  var tv      = portfolioCtx.total_value;
+  var newTv   = tv + addVal;
 
-  // Current position
-  var pos = portfolioCtx.positions.find(function(p) { return p.ticker === ticker; });
-  var curVal   = pos ? pos.value : 0;
-  var curWt    = tv > 0 ? curVal / tv * 100 : 0;
-  var newVal   = curVal + addVal;
-  var newWt    = newTv > 0 ? newVal / newTv * 100 : 0;
+  // Current position in portfolio (null if not held yet)
+  var pos    = portfolioCtx.positions.find(function(p) { return p.ticker === ticker; });
+  var curVal = pos ? pos.value : 0;
+  var curWt  = tv > 0 ? curVal / tv * 100 : 0;
+  var newVal = curVal + addVal;
+  var newWt  = newTv > 0 ? newVal / newTv * 100 : 0;
 
   // US exposure
   var usValCur = portfolioCtx.positions.reduce(function(s, p) {
-    return p.country === 'US' ? s + p.value : s; }, 0);
+    return p.country === 'US' ? s + p.value : s;
+  }, 0);
   var usValNew = usValCur + (currentData.currency === 'USD' ? addVal : 0);
   var usPctCur = tv > 0 ? usValCur / tv * 100 : 0;
   var usPctNew = newTv > 0 ? usValNew / newTv * 100 : 0;
 
-  // BUG 2 fix already in backend — betas are now normalised before arriving here
-  // Weighted portfolio beta
-  var betaSum = portfolioCtx.positions.reduce(function(s, p) {
-    return s + (p.beta || 1) * p.value; }, 0);
-  var betaCur = tv > 0 ? betaSum / tv : null;
-  var newBetaSum = betaSum
-    - (pos ? (pos.beta || 1) * pos.value : 0)
-    + (pos ? (pos.beta || 1) * newVal : (currentData.beta || 1) * addVal);
-  var betaNew = newTv > 0 ? newBetaSum / newTv : null;
+  // ── BUG 2 FIX — beta portefeuille pondéré correct ────────────────────────
+  // Le backend normalise déjà les betas null/0, mais on garde un garde-fou JS.
+  var beta_nouvel_actif = currentData.beta || 1.0;
+  console.log('[BETA] Nouvel actif beta:', beta_nouvel_actif);
 
-  // ── BUG 3 : score de risque recalculé dynamiquement avec bonus ────────────
+  function getBetaWithDefault(p) {
+    if (!p.beta || p.beta === 0) {
+      if (p.name && p.name.toLowerCase().includes('emerging')) return 1.1;
+      if (p.ticker && p.ticker.includes('.PA'))               return 0.9;
+      return 1.0;
+    }
+    return p.beta;
+  }
+
+  // Beta AVANT — pondéré sur valeur actuelle
+  var betaCur = null;
+  if (tv > 0) {
+    betaCur = portfolioCtx.positions.reduce(function(acc, p) {
+      var poids = p.value / tv;
+      var beta  = getBetaWithDefault(p);
+      console.log('[BETA] Position:', p.ticker, 'poids:', poids.toFixed(3), 'beta:', beta);
+      return acc + poids * beta;
+    }, 0);
+  }
+
+  // Beta APRÈS — ticker analysé utilise currentData.beta (plus à jour que pos.beta)
+  var ticker_deja_en_portfolio = portfolioCtx.positions.some(function(p) {
+    return p.ticker === ticker;
+  });
+
+  var betaNew = null;
+  if (newTv > 0) {
+    // Contribution des positions existantes (poids recalculés sur newTv)
+    var betaContribExisting = portfolioCtx.positions.reduce(function(acc, p) {
+      var valeur_pos = p.ticker === ticker ? p.value + addVal : p.value;
+      var poids      = valeur_pos / newTv;
+      var beta       = p.ticker === ticker ? beta_nouvel_actif : getBetaWithDefault(p);
+      return acc + poids * beta;
+    }, 0);
+    // Si le ticker n'est pas encore en portfolio, ajouter sa contribution
+    if (!ticker_deja_en_portfolio) {
+      betaNew = betaContribExisting + beta_nouvel_actif * (addVal / newTv);
+    } else {
+      betaNew = betaContribExisting;
+    }
+  }
+
+  console.log('[BETA] Avant:', betaCur !== null ? betaCur.toFixed(3) : '—',
+    'Après:', betaNew !== null ? betaNew.toFixed(3) : '—',
+    'Delta:', (betaNew !== null && betaCur !== null)
+      ? (betaNew - betaCur).toFixed(3) : '—');
+
+  // ── BUG 1 FIX — score de risque : bonuses calculés AVANT et APRÈS ─────────
+  // Le delta ne montre que le CHANGEMENT dû à l'achat, pas la valeur absolue.
   var riskSum = portfolioCtx.positions.reduce(function(s, p) {
-    return s + (p.risk_score || 5) * p.value; }, 0);
-  var riskCur = tv > 0 ? riskSum / tv : null;
+    return s + (p.risk_score || 5) * p.value;
+  }, 0);
+  var riskBase = tv > 0 ? riskSum / tv : null;  // moyenne pondérée brute
 
-  // poids_max_apres = poids maximal d'une seule position après simulation
-  var allWeightsAfter = portfolioCtx.positions.map(function(p) {
+  function calcBonuses(poids_max, beta_ptf, us_pct) {
+    var bc = poids_max > 0.40 ? 12 : poids_max > 0.30 ? 7 : poids_max > 0.25 ? 3 : 0;
+    var bb = beta_ptf > 1.5 ? 8 : beta_ptf > 1.2 ? 4 : beta_ptf > 1.0 ? 2 : 0;
+    var bg = us_pct > 80 ? 5 : us_pct > 70 ? 2 : 0;
+    return { concentration: bc, beta: bb, geo: bg, total: bc + bb + bg };
+  }
+
+  // Poids max AVANT
+  var poids_max_avant = 0;
+  if (tv > 0) {
+    var weightsAvant = portfolioCtx.positions.map(function(p) { return p.value / tv; });
+    poids_max_avant  = weightsAvant.length ? Math.max.apply(null, weightsAvant) : 0;
+  }
+
+  // Poids max APRÈS
+  var weightsApres = portfolioCtx.positions.map(function(p) {
     var v = p.ticker === ticker ? (p.value + addVal) : p.value;
     return newTv > 0 ? v / newTv : 0;
   });
-  if (!pos) allWeightsAfter.push(newTv > 0 ? addVal / newTv : 0);
-  var poidMaxApres = allWeightsAfter.length > 0 ? Math.max.apply(null, allWeightsAfter) : 0;
+  if (!pos) weightsApres.push(newTv > 0 ? addVal / newTv : 0);
+  var poids_max_apres = weightsApres.length ? Math.max.apply(null, weightsApres) : 0;
 
-  var bonusConcentration = poidMaxApres > 0.30 ? 15 : poidMaxApres > 0.20 ? 8 : poidMaxApres > 0.15 ? 4 : 0;
-  var bonusBeta = betaNew !== null ? (betaNew > 1.3 ? 10 : betaNew > 1.0 ? 5 : 0) : 0;
-  var bonusGeo  = usPctNew > 70 ? 8 : usPctNew > 50 ? 3 : 0;
+  var bonusAvant  = riskBase !== null ? calcBonuses(poids_max_avant, betaCur || 0, usPctCur) : null;
+  var bonusApres  = riskBase !== null ? calcBonuses(poids_max_apres, betaNew  || 0, usPctNew) : null;
 
-  var scoreSimule = riskCur !== null
-    ? Math.min(100, Math.round(riskCur) + bonusConcentration + bonusBeta + bonusGeo)
-    : null;
-  var scoreDelta = scoreSimule !== null && riskCur !== null
-    ? scoreSimule - Math.round(riskCur)
-    : null;
+  var scoreAvant  = bonusAvant  !== null ? Math.min(100, Math.round(riskBase) + bonusAvant.total)  : null;
+  var scoreSimule = bonusApres  !== null ? Math.min(100, Math.round(riskBase) + bonusApres.total)  : null;
+  var scoreDelta  = (scoreSimule !== null && scoreAvant !== null) ? scoreSimule - scoreAvant : null;
 
-  console.log('[sim] poidMaxApres=' + (poidMaxApres * 100).toFixed(1) + '%' +
-    ' bonusConc=' + bonusConcentration + ' bonusBeta=' + bonusBeta + ' bonusGeo=' + bonusGeo +
-    ' scoreBase=' + (riskCur ? riskCur.toFixed(1) : null) + ' → scoreSimule=' + scoreSimule);
+  console.log('[SCORE SIM] riskBase:', riskBase !== null ? riskBase.toFixed(1) : '—',
+    '| avant → conc:', bonusAvant ? bonusAvant.concentration : '—',
+    'beta:', bonusAvant ? bonusAvant.beta : '—',
+    'geo:', bonusAvant ? bonusAvant.geo : '—',
+    'score:', scoreAvant,
+    '| après → conc:', bonusApres ? bonusApres.concentration : '—',
+    'beta:', bonusApres ? bonusApres.beta : '—',
+    'geo:', bonusApres ? bonusApres.geo : '—',
+    'score:', scoreSimule,
+    '| delta:', scoreDelta);
 
-  var riskAfterDisplay = '—';
-  if (scoreSimule !== null && riskCur !== null) {
-    var deltaStr   = scoreDelta > 0 ? '+' + scoreDelta : (scoreDelta < 0 ? String(scoreDelta) : '=');
-    var deltaColor = scoreDelta > 0 ? '#FF3D00' : (scoreDelta < 0 ? '#00C853' : '#888');
-    riskAfterDisplay = scoreSimule.toFixed(1) +
-      ' <span style="color:' + deltaColor + ';font-size:8px;">(' + deltaStr + ')</span>';
+  // Vérification de cohérence
+  var delta_poids = newTv > 0 ? addVal / newTv : 0;
+  if (delta_poids < 0.05 && scoreDelta !== null && Math.abs(scoreDelta) > 5) {
+    console.warn('[SCORE SIM] Delta suspect:',
+      (delta_poids * 100).toFixed(1) + '% achat →', scoreDelta, 'pts de score');
   }
-  var riskRowClass = scoreSimule !== null && riskCur !== null
-    ? (scoreSimule > riskCur ? 'sim-warn' : scoreSimule < riskCur ? 'sim-ok' : 'sim-after')
+
+  // ── Affichage beta ────────────────────────────────────────────────────────
+  var betaDelta = (betaNew !== null && betaCur !== null) ? betaNew - betaCur : null;
+  var betaBeforeStr  = betaCur !== null ? betaCur.toFixed(2) : '—';
+  var betaDeltaHtml  = '';
+  if (betaDelta !== null) {
+    if (Math.abs(betaDelta) < 0.005) {
+      betaDeltaHtml = ' <span style="color:#888;font-size:8px;">(stable)</span>';
+    } else if (betaDelta > 0.05) {
+      betaDeltaHtml = ' <span style="color:#FF3D00;font-size:8px;">(+' + betaDelta.toFixed(2) + ')</span>';
+    } else if (betaDelta < -0.05) {
+      betaDeltaHtml = ' <span style="color:#00C853;font-size:8px;">(' + betaDelta.toFixed(2) + ')</span>';
+    } else {
+      betaDeltaHtml = ' <span style="color:#888;font-size:8px;">' +
+        (betaDelta >= 0 ? '(+' : '(') + betaDelta.toFixed(2) + ')</span>';
+    }
+  }
+  var betaAfterDisplay = betaNew !== null ? (betaNew.toFixed(2) + betaDeltaHtml) : '—';
+  var betaRowClass = betaDelta !== null && betaDelta > 0.05 ? 'sim-warn'
+    : betaDelta !== null && betaDelta < -0.05 ? 'sim-ok'
     : 'sim-after';
+
+  // ── Affichage score de risque ─────────────────────────────────────────────
+  var riskBeforeDisplay = scoreAvant !== null ? scoreAvant.toFixed(1) : '—';
+  var riskAfterDisplay  = '—';
+  var riskRowClass      = 'sim-after';
+  if (scoreSimule !== null && scoreDelta !== null) {
+    var scoreDeltaHtml = '';
+    if (scoreDelta === 0) {
+      scoreDeltaHtml = ' <span style="color:#888;font-size:8px;">(stable)</span>';
+      riskRowClass   = 'sim-after';
+    } else if (scoreDelta >= 1 && scoreDelta <= 3) {
+      scoreDeltaHtml = ' <span style="color:#888;font-size:8px;">(+' + scoreDelta + ')</span>';
+      riskRowClass   = 'sim-after';
+    } else if (scoreDelta >= 4 && scoreDelta <= 7) {
+      scoreDeltaHtml = ' <span style="color:#FF8C00;font-size:8px;">(+' + scoreDelta + ')</span>';
+      riskRowClass   = 'sim-after';
+    } else if (scoreDelta > 7) {
+      scoreDeltaHtml = ' <span style="color:#FF3D00;font-size:8px;">(+' + scoreDelta + ')</span>';
+      riskRowClass   = 'sim-warn';
+    } else if (scoreDelta < 0) {
+      scoreDeltaHtml = ' <span style="color:#00C853;font-size:8px;">(' + scoreDelta + ')</span>';
+      riskRowClass   = 'sim-ok';
+    }
+    riskAfterDisplay = scoreSimule.toFixed(1) + scoreDeltaHtml;
+  }
 
   function warn(before, after, thresholds) {
     if (after >= thresholds.red)    return 'sim-warn';
@@ -545,8 +649,8 @@ function calcSimulator() {
   var rows = [
     ['Position (' + ticker + ')', pct(curWt),  pct(newWt),  warn(curWt,  newWt,  {orange:20, red:30})],
     ['Exposition US',             pct(usPctCur), pct(usPctNew), warn(usPctCur, usPctNew, {orange:60, red:75})],
-    ['Beta portefeuille',         num(betaCur),  num(betaNew),  warn(betaCur,  betaNew,  {orange:1.1, red:1.3})],
-    ['Score de risque moy.',      riskCur !== null ? riskCur.toFixed(1) : '—', riskAfterDisplay, riskRowClass],
+    ['Beta portefeuille',         betaBeforeStr, betaAfterDisplay, betaRowClass],
+    ['Score de risque moy.',      riskBeforeDisplay, riskAfterDisplay, riskRowClass],
     ['Valeur investie',           num(addVal, 2) + ' ' + (currentData.currency || ''), '', 'sim-after'],
     ['Valeur totale portefeuille', num(tv, 2), num(newTv, 2), 'sim-after'],
   ];
