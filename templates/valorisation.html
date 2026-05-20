@@ -159,6 +159,20 @@
 .warn-item.red { border-color: #FF3D00; color: #FF3D00; background: rgba(255,61,0,0.06); }
 .warn-item.orange { border-color: var(--accent); color: var(--accent); background: rgba(0,212,200,0.06); }
 .warn-item.green { border-color: #00C853; color: #00C853; background: rgba(0,200,83,0.06); }
+/* ── bloc DCF non applicable / résultat non significatif ── */
+.dcf-na-block {
+  padding: 14px 16px;
+  border: 1px solid #FF3D00;
+  background: rgba(255, 61, 0, 0.06);
+}
+.dcf-na-title {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
+  color: #FF3D00; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.dcf-na-body {
+  font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+  color: var(--text-dim); line-height: 1.7;
+}
 /* ── description ── */
 .val-desc {
   font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim);
@@ -249,6 +263,16 @@ var SECTOR_MEDIANS = {
 };
 var DEFAULT_MEDIAN = { pe: 18, pe_fwd: 15, ev_ebitda: 12 };
 
+// ─── Format large numbers (partagé entre calcDCF et les messages) ─────────
+function fmtBig(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  var abs = Math.abs(n);
+  if (abs >= 1e12) return (n / 1e12).toFixed(2) + 'T';
+  if (abs >= 1e9)  return (n / 1e9).toFixed(2) + 'B';
+  if (abs >= 1e6)  return (n / 1e6).toFixed(2) + 'M';
+  return n.toFixed(2);
+}
+
 // ─── BUG 1 : avertissement si l'utilisateur saisit un taux > 15% ─────────
 function onG1Change(el) {
   var v    = parseFloat(el.value) || 0;
@@ -276,12 +300,31 @@ function calcDCF() {
   var shares   = parseFloat(sharesEl ? sharesEl.value : 0) || 0;
   var netDebt  = parseFloat(netDebtEl ? netDebtEl.value : 0) || 0;
 
-  if (!fcfBase || !shares) {
+  if (!shares) {
+    updateDCFResults(null);
+    return;
+  }
+  if (!fcfBase) {
+    // FCF est 0 ou non défini — données insuffisantes
     updateDCFResults(null);
     return;
   }
 
-  // Project FCFs: each year from fcf_base, not compounded cumulatively
+  // CAS 1b — FCF négatif saisi manuellement
+  if (fcfBase < 0) {
+    console.log('[DCF] CAS 1b — FCF négatif saisi manuellement:', fcfBase);
+    updateDCFResults({ cas: 'fcf_negatif', fcfVal: fcfBase });
+    return;
+  }
+
+  // Garde-fou : WACC doit être > taux terminal pour éviter division par zéro
+  if (discount <= growth2) {
+    console.log('[DCF] WACC ≤ taux terminal, calcul impossible:', discount, '≤', growth2);
+    updateDCFResults(null);
+    return;
+  }
+
+  // Project FCFs
   var pvSum = 0;
   for (var yr = 1; yr <= years; yr++) {
     var fcfYr = fcfBase * Math.pow(1 + growth1, yr);
@@ -289,49 +332,92 @@ function calcDCF() {
   }
 
   // Terminal value (Gordon Growth)
-  var fcfTerminal = fcfBase * Math.pow(1 + growth1, years) * (1 + growth2);
-  var terminalVal = fcfTerminal / (discount - growth2);
-  var pvTerminal  = terminalVal / Math.pow(1 + discount, years);
+  var fcfTerminal  = fcfBase * Math.pow(1 + growth1, years) * (1 + growth2);
+  var terminalVal  = fcfTerminal / (discount - growth2);
+  var pvTerminal   = terminalVal / Math.pow(1 + discount, years);
 
-  var enterpriseValue  = pvSum + pvTerminal;
-  var equityValue      = enterpriseValue - netDebt;
-  var intrinsicPrice   = equityValue / shares;
+  var enterpriseValue = pvSum + pvTerminal;
+  var equityValue     = enterpriseValue - netDebt;
+  var intrinsicPrice  = equityValue / shares;
   var safetyMarginPrice = intrinsicPrice * (1 - margin);
 
+  // CAS 2 — prix intrinsèque négatif ou nul
+  if (intrinsicPrice <= 0) {
+    console.log('[DCF] CAS 2 — prix intrinsèque non significatif:', intrinsicPrice, '(equity:', equityValue, ')');
+    updateDCFResults({ cas: 'prix_negatif', price: intrinsicPrice, equity: equityValue, ev: enterpriseValue });
+    return;
+  }
+
+  // CAS 3 — capitaux propres négatifs (mais prix intrinsèque aussi ≤ 0, déjà capturé ci-dessus)
+  var negativeEquity = equityValue < 0;
+  if (negativeEquity) {
+    console.log('[DCF] CAS 3 — capitaux propres négatifs:', equityValue);
+  }
+
   updateDCFResults({
-    pv_fcf:   pvSum,
-    pv_tv:    pvTerminal,
-    ev:       enterpriseValue,
-    equity:   equityValue,
-    price:    intrinsicPrice,
-    safety:   safetyMarginPrice,
-    shares:   shares,
-    netDebt:  netDebt,
-    years:    years,
-    margin:   margin * 100,
+    pv_fcf:        pvSum,
+    pv_tv:         pvTerminal,
+    ev:            enterpriseValue,
+    equity:        equityValue,
+    price:         intrinsicPrice,
+    safety:        safetyMarginPrice,
+    shares:        shares,
+    netDebt:       netDebt,
+    years:         years,
+    margin:        margin * 100,
+    negativeEquity: negativeEquity,
   });
 }
 
 function updateDCFResults(r) {
   var el = document.getElementById('dcf-results-block');
   if (!el) return;
+
+  // Données insuffisantes (FCF nul, actions manquantes, etc.)
   if (!r) {
     el.innerHTML = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:var(--text-dim);">Données insuffisantes pour calculer le DCF</span>';
     return;
   }
-  function fmt(n) {
-    if (Math.abs(n) >= 1e12) return (n/1e12).toFixed(2) + 'T';
-    if (Math.abs(n) >= 1e9)  return (n/1e9).toFixed(2) + 'B';
-    if (Math.abs(n) >= 1e6)  return (n/1e6).toFixed(2) + 'M';
-    return n.toFixed(2);
+
+  // CAS 1b — FCF négatif saisi manuellement dans les inputs
+  if (r.cas === 'fcf_negatif') {
+    console.log('[DCF] Affichage CAS 1b — FCF négatif:', r.fcfVal);
+    el.innerHTML =
+      '<div class="dcf-na-block">' +
+        '<div class="dcf-na-title">MODÈLE DCF NON APPLICABLE</div>' +
+        '<div class="dcf-na-body">' +
+          'Le Free Cash Flow saisi est négatif ou nul (' + fmtBig(r.fcfVal) + ').<br>' +
+          'Le DCF nécessite un FCF positif stable pour être significatif.<br>' +
+          'Consultez la valorisation par multiples ci-dessous.' +
+        '</div>' +
+      '</div>';
+    return;
   }
+
+  // CAS 2 — prix intrinsèque négatif ou nul
+  if (r.cas === 'prix_negatif') {
+    console.log('[DCF] Affichage CAS 2 — résultat non significatif:', r.price);
+    el.innerHTML =
+      '<div class="dcf-na-block">' +
+        '<div class="dcf-na-title">RÉSULTAT DCF NON SIGNIFICATIF</div>' +
+        '<div class="dcf-na-body">' +
+          'Le modèle produit un prix intrinsèque négatif (' + (r.price ? r.price.toFixed(2) : '—') + '),<br>' +
+          'ce qui indique que les hypothèses actuelles ne permettent pas de valoriser<br>' +
+          'cet actif par DCF (FCF insuffisant vs dette nette).' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  // Rendu normal des résultats DCF
   var curPrice = currentData ? currentData.current_price : null;
   var updown = '';
   if (curPrice && r.price) {
-    var pct = ((r.price - curPrice) / curPrice * 100);
+    var pct = (r.price - curPrice) / curPrice * 100;
     updown = '<span style="color:' + (pct >= 0 ? '#00C853' : '#FF3D00') + ';font-size:10px;margin-left:8px;">' +
              (pct >= 0 ? '▲' : '▼') + Math.abs(pct).toFixed(1) + '%</span>';
   }
+
   var verdictHtml = '';
   if (curPrice && r.safety) {
     if (curPrice <= r.safety) {
@@ -348,15 +434,28 @@ function updateDCFResults(r) {
         'Potentiel limité selon le DCF.</span></div>';
     }
   }
+
+  // CAS 3 — avertissement capitaux propres négatifs (affiché dans le rendu normal)
+  var equityWarningHtml = '';
+  if (r.negativeEquity) {
+    equityWarningHtml =
+      '<div class="warn-item red" style="margin-top:10px;">' +
+        '⚠ Capitaux propres négatifs — dette supérieure à la valeur de l\'entreprise. Actif à risque élevé.' +
+      '</div>';
+    console.log('[DCF] CAS 3 affiché — capitaux propres négatifs:', r.equity);
+  }
+
   el.innerHTML =
     '<div class="dcf-results-grid">' +
-    '<div class="result-card"><div class="result-label">VALEUR ACTUA. FCF</div><div class="result-value">' + fmt(r.pv_fcf) + '</div><div class="result-sub">' + r.years + ' ans de FCF projetés</div></div>' +
-    '<div class="result-card"><div class="result-label">VALEUR TERMINALE</div><div class="result-value">' + fmt(r.pv_tv) + '</div><div class="result-sub">Gordon Growth actualisé</div></div>' +
-    '<div class="result-card"><div class="result-label">VALEUR ENTREPRISE</div><div class="result-value">' + fmt(r.ev) + '</div><div class="result-sub">FCF + Val. terminale</div></div>' +
-    '<div class="result-card"><div class="result-label">CAPITAUX PROPRES</div><div class="result-value">' + fmt(r.equity) + '</div><div class="result-sub">VE – dette nette</div></div>' +
+    '<div class="result-card"><div class="result-label">VALEUR ACTUA. FCF</div><div class="result-value">' + fmtBig(r.pv_fcf) + '</div><div class="result-sub">' + r.years + ' ans de FCF projetés</div></div>' +
+    '<div class="result-card"><div class="result-label">VALEUR TERMINALE</div><div class="result-value">' + fmtBig(r.pv_tv) + '</div><div class="result-sub">Gordon Growth actualisé</div></div>' +
+    '<div class="result-card"><div class="result-label">VALEUR ENTREPRISE</div><div class="result-value">' + fmtBig(r.ev) + '</div><div class="result-sub">FCF + Val. terminale</div></div>' +
+    '<div class="result-card"><div class="result-label">CAPITAUX PROPRES</div><div class="result-value">' + fmtBig(r.equity) + '</div><div class="result-sub">VE – dette nette</div></div>' +
     '<div class="result-card"><div class="result-label">PRIX INTRINSÈQUE</div><div class="result-value" style="color:#00D4C8;">' + r.price.toFixed(2) + updown + '</div><div class="result-sub">Par action</div></div>' +
     '<div class="result-card"><div class="result-label">PRIX AVEC MARGE ' + r.margin.toFixed(0) + '%</div><div class="result-value" style="color:#00C853;">' + r.safety.toFixed(2) + '</div><div class="result-sub">Marge de sécurité</div></div>' +
-    '</div>' + verdictHtml;
+    '</div>' +
+    equityWarningHtml +
+    verdictHtml;
 }
 
 // ─── Simulator ────────────────────────────────────────────────────────────
@@ -478,6 +577,10 @@ function renderPage(data) {
   var currency = data.currency || '';
   var priceFmt = data.current_price ? data.current_price.toFixed(2) + ' ' + currency : '—';
 
+  // Applicabilité DCF transmise par le backend (undefined = traité comme applicable)
+  var dcfApplicable = data.dcf_applicable !== false;
+  var dcfWarning    = data.dcf_warning || null;
+
   // Header
   document.getElementById('val-header').innerHTML =
     '<span class="vh-ticker">' + data.ticker + '</span>' +
@@ -493,23 +596,35 @@ function renderPage(data) {
   });
 
   var median = SECTOR_MEDIANS[data.sector] || DEFAULT_MEDIAN;
-  var gcf = data.fcf ? (data.fcf / 1e9).toFixed(2) + 'B' : '—';
-  var gnd = data.net_debt ? (data.net_debt / 1e9).toFixed(2) + 'B' : '—';
+  var gcf = data.fcf ? fmtBig(data.fcf) : '—';
+  var gnd = data.net_debt ? fmtBig(data.net_debt) : '—';
   var gsh = data.shares_out ? (data.shares_out / 1e9).toFixed(3) + 'B' : '—';
 
-  // ── BUG 1 : taux de croissance plafonné à 15% ─────────────────────────────
+  // ── CAS 4 : taux de croissance négatif plafonné à 0% ─────────────────────
   var rawGrowthPct = null;
   if (data.earnings_growth !== null && data.earnings_growth !== undefined) rawGrowthPct = data.earnings_growth;
   else if (data.revenue_growth !== null && data.revenue_growth !== undefined) rawGrowthPct = data.revenue_growth;
-  var cappedGrowthPct = rawGrowthPct !== null ? Math.min(rawGrowthPct, 15.0) : 7.0;
-  var wasCapped       = rawGrowthPct !== null && rawGrowthPct > 15.0;
-  var guessCagrPct    = cappedGrowthPct.toFixed(1);
-  var growthCapWarnHtml = wasCapped
-    ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#00D4C8;margin-top:4px;' +
+
+  var isNegativeGrowth  = rawGrowthPct !== null && rawGrowthPct < 0;
+  var cappedGrowthPct   = rawGrowthPct !== null ? Math.max(0, Math.min(rawGrowthPct, 15.0)) : 7.0;
+  var wasCappedHigh     = rawGrowthPct !== null && rawGrowthPct > 15.0;
+  var guessCagrPct      = cappedGrowthPct.toFixed(1);
+
+  var growthWarnHtml = '';
+  if (isNegativeGrowth) {
+    growthWarnHtml =
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#FF3D00;margin-top:4px;' +
+      'padding:3px 5px;background:rgba(255,61,0,0.06);border-left:2px solid #FF3D00;">' +
+      '⚠ Croissance historique négative (' + rawGrowthPct.toFixed(1) + '%) — taux ramené à 0%.' +
+      ' Ajustez manuellement si nécessaire.</div>';
+    console.log('[DCF] CAS 4 — croissance négative détectée:', rawGrowthPct, '% → ramené à 0%');
+  } else if (wasCappedHigh) {
+    growthWarnHtml =
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:#00D4C8;margin-top:4px;' +
       'padding:3px 5px;background:#001515;border-left:2px solid #00D4C8;">' +
       '⚠ Taux historique (' + rawGrowthPct.toFixed(1) + '%) plafonné à 15% — ' +
-      'la croissance passée ne préjuge pas de la croissance future.</div>'
-    : '';
+      'la croissance passée ne préjuge pas de la croissance future.</div>';
+  }
 
   // Multiples
   function multRow(label, metric, median, isEV) {
@@ -533,41 +648,58 @@ function renderPage(data) {
 
   var html = '';
 
-  // ── DCF ──────────────────────────────────────────────────────────────
+  // ── DCF ──────────────────────────────────────────────────────────────────
   html += '<div class="val-section">';
   html += '<div class="val-section-title">Modèle DCF — Flux de trésorerie actualisés</div>';
-  html += '<div class="dcf-grid">';
-  html += '<div class="param-card"><div class="param-label">FCF DE BASE (' + currency + ')</div>' +
-    '<input class="param-input" id="dcf-fcf" type="number" value="' + (data.fcf || '') + '" oninput="calcDCF()">' +
-    '<div class="param-hint">Actuel : ' + gcf + '</div></div>';
-  // BUG 1 : min=0 max=25, oninput=onG1Change, hint avec id, warning si plafonnage
-  html += '<div class="param-card"><div class="param-label">CROISSANCE PHASE 1 (%)</div>' +
-    '<input class="param-input" id="dcf-g1" type="number" min="0" max="25" step="0.5" value="' + guessCagrPct + '" oninput="onG1Change(this)">' +
-    '<div class="param-hint" id="dcf-g1-hint">Durée = années ci-dessous</div>' +
-    growthCapWarnHtml + '</div>';
-  html += '<div class="param-card"><div class="param-label">CROISSANCE TERMINALE (%)</div>' +
-    '<input class="param-input" id="dcf-g2" type="number" step="0.1" value="3.0" oninput="calcDCF()">' +
-    '<div class="param-hint">PIB long terme ≈ 2–4%</div></div>';
-  html += '<div class="param-card"><div class="param-label">WACC / TAUX ACTUALISATION (%)</div>' +
-    '<input class="param-input" id="dcf-wacc" type="number" step="0.1" value="9.0" oninput="calcDCF()">' +
-    '<div class="param-hint">Coût moyen du capital</div></div>';
-  html += '<div class="param-card"><div class="param-label">HORIZON (ANNÉES)</div>' +
-    '<input class="param-input" id="dcf-years" type="number" min="5" max="20" value="10" oninput="calcDCF()">' +
-    '<div class="param-hint">Généralement 10</div></div>';
-  html += '<div class="param-card"><div class="param-label">MARGE DE SÉCURITÉ (%)</div>' +
-    '<input class="param-input" id="dcf-margin" type="number" step="5" value="30" oninput="calcDCF()">' +
-    '<div class="param-hint">Tampon Graham (20–40%)</div></div>';
-  html += '<div class="param-card"><div class="param-label">ACTIONS EN CIRCULATION</div>' +
-    '<input class="param-input" id="dcf-shares" type="number" value="' + (data.shares_out || '') + '" oninput="calcDCF()">' +
-    '<div class="param-hint">Actuel : ' + gsh + '</div></div>';
-  html += '<div class="param-card"><div class="param-label">DETTE NETTE (' + currency + ')</div>' +
-    '<input class="param-input" id="dcf-netdebt" type="number" value="' + (data.net_debt || '') + '" oninput="calcDCF()">' +
-    '<div class="param-hint">Actuel : ' + gnd + '</div></div>';
-  html += '</div>'; // /dcf-grid
-  html += '<div id="dcf-results-block" style="margin-top:12px;"></div>';
+
+  if (!dcfApplicable) {
+    // CAS 1 — FCF négatif ou nul détecté côté backend → pas d'inputs, juste le message
+    var fcfDisplay = data.fcf !== null && data.fcf !== undefined ? fmtBig(data.fcf) : 'N/D';
+    console.log('[DCF] CAS 1 — Non applicable:', dcfWarning);
+    html +=
+      '<div class="dcf-na-block">' +
+        '<div class="dcf-na-title">MODÈLE DCF NON APPLICABLE</div>' +
+        '<div class="dcf-na-body">' +
+          'Le Free Cash Flow de ' + data.ticker + ' est négatif ou nul (' + fcfDisplay + ').<br>' +
+          'Le DCF nécessite un FCF positif stable pour être significatif.<br>' +
+          'Consultez la valorisation par multiples ci-dessous.' +
+        '</div>' +
+      '</div>';
+  } else {
+    // DCF applicable — affichage des inputs et du bloc résultat
+    html += '<div class="dcf-grid">';
+    html += '<div class="param-card"><div class="param-label">FCF DE BASE (' + currency + ')</div>' +
+      '<input class="param-input" id="dcf-fcf" type="number" value="' + (data.fcf || '') + '" oninput="calcDCF()">' +
+      '<div class="param-hint">Actuel : ' + gcf + '</div></div>';
+    html += '<div class="param-card"><div class="param-label">CROISSANCE PHASE 1 (%)</div>' +
+      '<input class="param-input" id="dcf-g1" type="number" min="0" max="25" step="0.5" value="' + guessCagrPct + '" oninput="onG1Change(this)">' +
+      '<div class="param-hint" id="dcf-g1-hint">Durée = années ci-dessous</div>' +
+      growthWarnHtml + '</div>';
+    html += '<div class="param-card"><div class="param-label">CROISSANCE TERMINALE (%)</div>' +
+      '<input class="param-input" id="dcf-g2" type="number" step="0.1" value="3.0" oninput="calcDCF()">' +
+      '<div class="param-hint">PIB long terme ≈ 2–4%</div></div>';
+    html += '<div class="param-card"><div class="param-label">WACC / TAUX ACTUALISATION (%)</div>' +
+      '<input class="param-input" id="dcf-wacc" type="number" step="0.1" value="9.0" oninput="calcDCF()">' +
+      '<div class="param-hint">Coût moyen du capital</div></div>';
+    html += '<div class="param-card"><div class="param-label">HORIZON (ANNÉES)</div>' +
+      '<input class="param-input" id="dcf-years" type="number" min="5" max="20" value="10" oninput="calcDCF()">' +
+      '<div class="param-hint">Généralement 10</div></div>';
+    html += '<div class="param-card"><div class="param-label">MARGE DE SÉCURITÉ (%)</div>' +
+      '<input class="param-input" id="dcf-margin" type="number" step="5" value="30" oninput="calcDCF()">' +
+      '<div class="param-hint">Tampon Graham (20–40%)</div></div>';
+    html += '<div class="param-card"><div class="param-label">ACTIONS EN CIRCULATION</div>' +
+      '<input class="param-input" id="dcf-shares" type="number" value="' + (data.shares_out || '') + '" oninput="calcDCF()">' +
+      '<div class="param-hint">Actuel : ' + gsh + '</div></div>';
+    html += '<div class="param-card"><div class="param-label">DETTE NETTE (' + currency + ')</div>' +
+      '<input class="param-input" id="dcf-netdebt" type="number" value="' + (data.net_debt || '') + '" oninput="calcDCF()">' +
+      '<div class="param-hint">Actuel : ' + gnd + '</div></div>';
+    html += '</div>'; // /dcf-grid
+    html += '<div id="dcf-results-block" style="margin-top:12px;"></div>';
+  }
+
   html += '</div>'; // /val-section DCF
 
-  // ── Multiples ─────────────────────────────────────────────────────────
+  // ── Multiples ─────────────────────────────────────────────────────────────
   html += '<div class="val-section">';
   html += '<div class="val-section-title">Valorisation par multiples' +
     (data.sector ? ' — ' + data.sector : '') + '</div>';
@@ -580,12 +712,12 @@ function renderPage(data) {
   html += '</tbody></table>';
   if (data.ebitda) {
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:var(--text-dim);margin-top:6px;">' +
-      'EBITDA : ' + (data.ebitda/1e9).toFixed(2) + 'B ' + currency +
-      (data.ev ? '  |  EV : ' + (data.ev/1e9).toFixed(2) + 'B ' + currency : '') + '</div>';
+      'EBITDA : ' + fmtBig(data.ebitda) + ' ' + currency +
+      (data.ev ? '  |  EV : ' + fmtBig(data.ev) + ' ' + currency : '') + '</div>';
   }
   html += '</div>'; // /multiples
 
-  // ── Portfolio impact simulator ─────────────────────────────────────────
+  // ── Portfolio impact simulator ─────────────────────────────────────────────
   html += '<div class="val-section">';
   html += '<div class="val-section-title">Simulateur d\'impact portefeuille</div>';
   html += '<div class="sim-row">' +
@@ -598,7 +730,7 @@ function renderPage(data) {
   html += '<div id="sim-results"></div>';
   html += '</div>'; // /simulator
 
-  // ── Description ───────────────────────────────────────────────────────
+  // ── Description ───────────────────────────────────────────────────────────
   if (data.description) {
     html += '<div class="val-section">';
     html += '<div class="val-section-title">Description</div>';
@@ -618,7 +750,7 @@ function renderPage(data) {
   }
 
   // Trigger initial calculations
-  calcDCF();
+  if (dcfApplicable) calcDCF();
   if (portfolioCtx) calcSimulator();
 }
 
@@ -643,6 +775,7 @@ function loadTicker(ticker) {
       renderPage(data);
     })
     .catch(function(err) {
+      console.log('[valorisation] fetch error:', err);
       document.getElementById('val-header').innerHTML =
         '<span class="vh-placeholder" style="color:#FF3D00;">ERREUR RÉSEAU</span>';
       document.getElementById('val-content').innerHTML = '';

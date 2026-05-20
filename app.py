@@ -3179,6 +3179,15 @@ def valorisation_data():
     except Exception:
         pass
 
+    # ── DCF applicability check ───────────────────────────────────────────────
+    dcf_applicable = True
+    dcf_warning    = None
+    if fcf is None or fcf <= 0:
+        dcf_applicable = False
+        fcf_display    = f'{fcf:,.0f}' if fcf is not None else 'N/D'
+        dcf_warning    = f'FCF négatif ou indisponible ({fcf_display})'
+        print(f'[DCF] Non applicable pour {ticker}: {dcf_warning}')
+
     payload = {
         'ticker':          ticker,
         'name':            (info.get('longName') or info.get('shortName') or ticker)[:50],
@@ -3205,6 +3214,8 @@ def valorisation_data():
         'volatility':      risk_data.get('volatilite'),
         'sharpe':          risk_data.get('sharpe'),
         'description':     (info.get('longBusinessSummary') or '')[:400],
+        'dcf_applicable':  dcf_applicable,
+        'dcf_warning':     dcf_warning,
     }
     cache.set(_val_ck, payload, timeout=1800)
     return jsonify(payload)
