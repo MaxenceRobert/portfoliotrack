@@ -219,15 +219,23 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* overflow: visible — ne jamais clipper l'axe X */
 }
 #chart-main-wrap {
   flex: 1;
-  min-height: 0;
+  min-height: 300px;
   position: relative;
-  overflow: hidden;
+  /* overflow: visible — l'axe X (25px) doit rester visible */
 }
-#chart-main { width: 100%; height: 100%; }
+/* #chart-main est positionné en absolu pour remplir tout le parent
+   sans dépendre de height:100% qui peut résoudre à 0 en contexte flex */
+#chart-main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
 .chart-panel-wrap {
   height: 120px;
   flex-shrink: 0;
@@ -389,6 +397,8 @@ var overlayCtx        = null;
 var _hoverPt          = null;
 var _ohlcvEl          = null;
 
+var _chartResizeObserver = null; // ResizeObserver explicite pour le chart principal
+
 // ═══════════════════════════════════════════════════════════════════════════
 // INDICATOR META
 // ═══════════════════════════════════════════════════════════════════════════
@@ -512,11 +522,12 @@ function toSeriesData(times, values) {
 // ═══════════════════════════════════════════════════════════════════════════
 function mainChartOpts() {
   var _tc = getThemeColors();
+  console.log('[analyse] mainChartOpts — textColor:', _tc.text, 'borderColor:', _tc.border, 'bg:', _tc.panel);
   return {
     autoSize: true,
     layout: {
       background: { type:'solid', color: _tc.panel },
-      textColor: _tc.textDim,
+      textColor: _tc.text,  // --text (#C8C8C8 dark / #444444 light) — contraste suffisant sur les deux thèmes
       fontFamily: "'IBM Plex Mono', monospace",
       fontSize: 11,
     },
@@ -527,7 +538,21 @@ function mainChartOpts() {
       horzLine: { color: _tc.border, labelBackgroundColor: _tc.accent },
     },
     rightPriceScale: { borderColor: _tc.border },
-    timeScale: { borderColor: _tc.border, timeVisible:true, secondsVisible:false },
+    timeScale: {
+      borderColor: _tc.border,
+      timeVisible: true,
+      secondsVisible: false,
+      ticksVisible: true,
+      tickMarkFormatter: function(time, tickMarkType, locale) {
+        var date  = new Date(time * 1000);
+        var month = date.toLocaleString('fr-FR', { month: 'short' });
+        var year  = date.getFullYear();
+        var day   = date.getDate();
+        if (tickMarkType === LightweightCharts.TickMarkType.Year)  return String(year);
+        if (tickMarkType === LightweightCharts.TickMarkType.Month) return month + ' ' + String(year).slice(2);
+        return day + ' ' + month;
+      },
+    },
   };
 }
 
@@ -563,6 +588,11 @@ function destroyAll() {
     try { h.chart.timeScale().unsubscribeVisibleLogicalRangeChange(h.fn); } catch(e) {}
   });
   _syncHandlers = [];
+
+  if (_chartResizeObserver) {
+    try { _chartResizeObserver.disconnect(); } catch(e) {}
+    _chartResizeObserver = null;
+  }
 
   if (mainChart) { try { mainChart.remove(); } catch(e) {} mainChart = null; }
   mainSeries       = null;
@@ -1042,7 +1072,12 @@ function renderChart(data) {
   var closes = ohlcv.map(function(d) { return d.close; });
   var times  = ohlcv.map(function(d) { return d.time; });
 
-  mainChart = LightweightCharts.createChart(document.getElementById('chart-main'), mainChartOpts());
+  var container = document.getElementById('chart-main');
+  console.log('[analyse] container size:', container.clientWidth, 'x', container.clientHeight);
+
+  mainChart = LightweightCharts.createChart(container, mainChartOpts());
+  console.log('[analyse] chart created');
+
   setMainSeries(ohlcv);
   setPRU(data.pru);
   setMarkers(data.transactions);
@@ -1053,6 +1088,18 @@ function renderChart(data) {
   if (activeIndicators['macd'])   addMACDPanel(times, closes);
 
   mainChart.timeScale().fitContent();
+  console.log('[analyse] fitContent appelé');
+
+  // ResizeObserver explicite pour journalisation et redimensionnement correct
+  var chartWrap = document.getElementById('chart-main-wrap');
+  _chartResizeObserver = new ResizeObserver(function(entries) {
+    for (var i = 0; i < entries.length; i++) {
+      var rect = entries[i].contentRect;
+      console.log('[CHART RESIZE]', rect.width, rect.height);
+    }
+  });
+  _chartResizeObserver.observe(chartWrap);
+
   setupSync();
   setupCrosshairHover();
   initOverlay();
@@ -1203,10 +1250,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
 // ── Rechargement des couleurs lors du changement de thème ──────────────────
 document.addEventListener('themeChanged', function() {
+  console.log('[analyse] themeChanged — re-apply chart options');
   if (mainChart) {
     var _tc = getThemeColors();
     mainChart.applyOptions({
-      layout: { background: { type:'solid', color: _tc.panel }, textColor: _tc.textDim },
+      layout: {
+        background: { type:'solid', color: _tc.panel },
+        textColor: _tc.text,  // --text pour contraste correct dans les deux thèmes
+      },
       grid: { vertLines:{ color: _tc.border }, horzLines:{ color: _tc.border } },
       rightPriceScale: { borderColor: _tc.border },
       timeScale: { borderColor: _tc.border },
